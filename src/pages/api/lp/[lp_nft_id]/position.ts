@@ -1,9 +1,9 @@
-// pages/api/lp/[lp_nft_id]/position.js
+// pages/api/lp/[lp_nft_id]/position.ts
 import { testnetConstants } from "../../../../constants/configConstants";
 import { LiquidityPositionQuerier } from "../../../../utils/protos/services/dex/liquidity-positions";
 import {
   PositionId,
-  Position
+  Position,
 } from "@buf/penumbra-zone_penumbra.bufbuild_es/penumbra/core/component/dex/v1/dex_pb";
 
 export default async function liquidityPositionDataHandler(req: any, res: any) {
@@ -13,11 +13,11 @@ export default async function liquidityPositionDataHandler(req: any, res: any) {
     grpcEndpoint: testnetConstants.grpcEndpoint,
   });
 
-  const positionId = new PositionId({
-    altBech32m: lp_nft_id,
-  });
-
   try {
+    const positionId = new PositionId({
+      altBech32m: lp_nft_id,
+    });
+
     const data = await lp_querier.liquidityPositionById(positionId);
 
     res.status(200).json(data as Position);
