@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { VStack, Text, Badge, HStack, Image, Avatar } from "@chakra-ui/react";
-import { Position } from "@buf/penumbra-zone_penumbra.bufbuild_es/penumbra/core/component/dex/v1/dex_pb";
+import { Position, PositionState } from "@buf/penumbra-zone_penumbra.bufbuild_es/penumbra/core/component/dex/v1/dex_pb";
 import { fromBaseUnit } from "../../utils/math/hiLo";
 import { uint8ArrayToBase64 } from "../../utils/math/base64";
 import { tokenConfigMapOnInner, Token } from "../../constants/tokenConstants";
@@ -27,24 +27,25 @@ const CurrentLPStatus = ({ nftId, position }: CurrentLPStatusProps) => {
   // First process position to human readable pieces
 
   // Get status
-  const status = position.state;
+  const status = (position.state as PositionState).state.toString();
 
   // https://buf.build/penumbra-zone/penumbra/docs/main:penumbra.core.component.dex.v1#penumbra.core.component.dex.v1.PositionState.PositionStateEnum
   let statusText = "";
-  switch (status?.state) {
-    case 0:
+
+  switch (status) {
+    case "POSITION_STATE_ENUM_UNSPECIFIED":
       statusText = "Unspecified";
       break;
-    case 1:
+    case "POSITION_STATE_ENUM_OPENED":
       statusText = "Open";
       break;
-    case 2:
+    case "POSITION_STATE_ENUM_CLOSED":
       statusText = "Closed";
       break;
-    case 3:
+    case "POSITION_STATE_ENUM_WITHDRAWN":
       statusText = "Withdrawn";
       break;
-    case 4:
+    case "POSITION_STATE_ENUM_CLAIMED":
       statusText = "Claimed";
       break;
     default:
