@@ -1,15 +1,6 @@
 import React, { useEffect, useState } from "react";
-import {
-  VStack,
-  Text,
-  Badge,
-  HStack,
-  Image,
-  Avatar,
-} from "@chakra-ui/react";
-import {
-  Position,
-} from "@buf/penumbra-zone_penumbra.bufbuild_es/penumbra/core/component/dex/v1/dex_pb";
+import { VStack, Text, Badge, HStack, Image, Avatar } from "@chakra-ui/react";
+import { Position } from "@buf/penumbra-zone_penumbra.bufbuild_es/penumbra/core/component/dex/v1/dex_pb";
 import { fromBaseUnit } from "../../utils/math/hiLo";
 import { uint8ArrayToBase64 } from "../../utils/math/base64";
 import { tokenConfigMapOnInner, Token } from "../../constants/tokenConstants";
@@ -61,28 +52,24 @@ const CurrentLPStatus = ({ nftId, position }: CurrentLPStatusProps) => {
   }
 
   // Get fee tier
-  const feeTier = position!.phi!.component!.fee;
+  const feeTier = Number(position!.phi!.component!.fee);
 
   const asset1 = position!.phi!.pair!.asset1;
   const asset2 = position!.phi!.pair!.asset2;
 
   // States for tokens
-  const [asset1Token, setAsset1Token] = useState<Token>(
-    {
-      symbol: "UNKNOWN",
-      decimals: 0,
-      inner: "UNKNOWN",
-      imagePath: "UNKNOWN",
-    }
-  );
-  const [asset2Token, setAsset2Token] = useState<Token>(
-    {
-      symbol: "UNKNOWN",
-      decimals: 0,
-      inner: "UNKNOWN",
-      imagePath: "UNKNOWN",
-    }
-  );
+  const [asset1Token, setAsset1Token] = useState<Token>({
+    symbol: "UNKNOWN",
+    decimals: 0,
+    inner: "UNKNOWN",
+    imagePath: "UNKNOWN",
+  });
+  const [asset2Token, setAsset2Token] = useState<Token>({
+    symbol: "UNKNOWN",
+    decimals: 0,
+    inner: "UNKNOWN",
+    imagePath: "UNKNOWN",
+  });
   const [assetError, setAssetError] = useState<string | undefined>();
 
   useEffect(() => {
@@ -122,25 +109,25 @@ const CurrentLPStatus = ({ nftId, position }: CurrentLPStatusProps) => {
   }
 
   const reserves1 = fromBaseUnit(
-    position!.reserves!.r1?.lo,
-    position!.reserves!.r1?.hi,
+    BigInt(position!.reserves!.r1?.lo || 0),
+    BigInt(position!.reserves!.r1?.hi || 0),
     asset1Token.decimals
   );
 
   const reserves2 = fromBaseUnit(
-    position!.reserves!.r2?.lo,
-    position!.reserves!.r2?.hi,
+    BigInt(position!.reserves!.r2?.lo || 0),
+    BigInt(position!.reserves!.r2?.hi || 0),
     asset2Token.decimals
   );
 
   const p: BigNumber = fromBaseUnit(
-    position!.phi!.component!.p!.lo,
-    position!.phi!.component!.p!.hi,
+    BigInt(position!.phi!.component!.p!.lo || 0),
+    BigInt(position!.phi!.component!.p!.hi || 0),
     asset2Token.decimals
   );
   const q: BigNumber = fromBaseUnit(
-    position!.phi!.component!.q!.lo,
-    position!.phi!.component!.q!.hi,
+    BigInt(position!.phi!.component!.q!.lo || 0),
+    BigInt(position!.phi!.component!.q!.hi || 0),
     asset1Token.decimals
   );
 
