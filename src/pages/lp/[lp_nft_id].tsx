@@ -74,7 +74,7 @@ export default function LP() {
 
       Promise.all([liquidityPositionPromise, lpEventsPromise, lpTradesPromise])
         .then(([liquidityPositionResponse, lpEventsData, lpTradesData]) => {
-          if (!liquidityPositionResponse) {
+          if (!liquidityPositionResponse || liquidityPositionResponse.error) {
             console.error("Error fetching liquidity position: no response");
             setError("Error fetching liquidity position: no response");
             return;

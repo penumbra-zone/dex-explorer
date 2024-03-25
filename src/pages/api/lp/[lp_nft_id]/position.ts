@@ -23,6 +23,6 @@ export default async function liquidityPositionDataHandler(req: any, res: any) {
     res.status(200).json(data as Position);
   } catch (error) {
     console.error("Error fetching liquidity position grpc data:", error);
-    res.status(500).json([]);
+    res.status(500).json({"error": "Error fetching liquidity position grpc data"});
   }
 }
