@@ -7,11 +7,11 @@ import {
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import annotationPlugin, { AnnotationOptions } from "chartjs-plugin-annotation";
-import { throttle } from "lodash";
+import { set, throttle } from "lodash";
 import { Chart } from "chart.js/auto";
-import { Text, VStack } from "@chakra-ui/react";
+import { Button, HStack, Text, VStack } from "@chakra-ui/react";
 import { Token } from "@/constants/tokenConstants";
-import zoomPlugin from "chartjs-plugin-zoom";
+import zoomPlugin, { zoom } from "chartjs-plugin-zoom";
 
 // Register the necessary components from chart.js
 ChartJS.register(...registerables, annotationPlugin);
@@ -66,68 +66,145 @@ const DepthChart = ({
 
   const chartRef = useRef<any>();
 
-  // Add an extra data point at the end of the buy dataset
-  // Set default value if data is empty
-  if (buySideData.length === 0) {
-    buySideData = [{ x: 0, y: 0 }];
-  }
-
-  const lastBuyPoint = buySideData[buySideData.length - 1];
-  const extendedBuySideData = [
-    ...buySideData,
+  // RenderedSellSide and RenderedBuySide are the data points that will be rendered on the chart
+  const [renderedSellSideData, setRenderedSellSideData] = useState<
     {
-      x: lastBuyPoint.x + (lastBuyPoint.x - buySideData[0].x*2),
-      y: lastBuyPoint.y,
-    },
-  ];
+      x: number;
+      y: number;
+    }[]
+  >(sellSideData);
+  const [renderedBuySideSingleHopData, setRenderedBuySideSingleHopData] =
+    useState<{ x: number; y: number }[]>(buySideSingleHopData);
 
-  // Add an extra data point at the end of the sell dataset
-  // Set default value if data is empty
-  if (sellSideData.length === 0) {
-    sellSideData = [{ x: 0, y: 0 }];
-  }
-
-  const lastSellPoint = sellSideData[sellSideData.length - 1];
-  const extendedSellSideData = [
-    ...sellSideData,
+  const [renderedBuySideData, setRenderedBuySideData] = useState<
     {
-      x: lastSellPoint.x + (lastSellPoint.x*2 - sellSideData[0].x),
-      y: lastSellPoint.y,
-    },
-  ];
+      x: number;
+      y: number;
+    }[]
+  >(buySideData);
+  const [renderedSellSideSingleHopData, setRenderedSellSideSingleHopData] =
+    useState<{ x: number; y: number }[]>(sellSideSingleHopData);
 
-  // Repeat for single hop data
-  // Set default value if data is empty
-  if (buySideSingleHopData.length === 0) {
-    buySideSingleHopData = [{ x: 0, y: 0 }];
-  }
-  const lastBuySingleHopPoint =
-    buySideSingleHopData[buySideSingleHopData.length - 1];
-  const extendedBuySideSingleHopData = [
-    ...buySideSingleHopData,
-    {
-      x:
-        lastBuySingleHopPoint.x +
-        (lastBuySingleHopPoint.x - buySideSingleHopData[0].x*2),
-      y: lastBuySingleHopPoint.y,
-    },
-  ];
+  // Zoom level state, starting at 50%
+  const [zoomLevel, setZoomLevel] = useState(50);
 
-  // Set default value if data is empty
-  if (sellSideSingleHopData.length === 0) {
-    sellSideSingleHopData = [{ x: 0, y: 0 }];
-  }
-  const lastSellSingleHopPoint =
-    sellSideSingleHopData[sellSideSingleHopData.length - 1];
-  const extendedSellSideSingleHopData = [
-    ...sellSideSingleHopData,
-    {
-      x:
-        lastSellSingleHopPoint.x +
-        (lastSellSingleHopPoint.x*2 - sellSideSingleHopData[0].x),
-      y: lastSellSingleHopPoint.y,
-    },
+  // Increase zoom level by 10%, not exceeding 0%
+  const zoomIn = () => {
+    setZoomLevel((prev) => Math.max(10, prev - 10));
+  };
+
+  // Decrease zoom level by 10%, not going above 100%
+  const zoomOut = () => {
+    setZoomLevel((prev) => Math.min(100, prev + 10));
+  };
+
+  const maxLiquidity = Math.max(
+    ...sellSideData.map((p) => p.y),
+    ...buySideData.map((p) => p.y)
+  );
+  const [maxY, setMaxY] = useState<number>(calculateMaxY(maxLiquidity));
+  const xValues = [
+    ...buySideData.map((d) => d.x),
+    ...sellSideData.map((d) => d.x),
   ];
+  const [minXValue, setMinXValue] = useState<number>(Math.min(...xValues));
+  const [maxXValue, setMaxXValue] = useState<number>(Math.max(...xValues));
+  const xRange = maxXValue - minXValue;
+  const [padding, setPadding] = useState<number>(0);
+
+  // Control the zoom level of the chart
+  useEffect(() => {
+    setRenderedBuySideData(
+      buySideData.slice(0, buySideData.length * (zoomLevel / 100))
+    );
+    setRenderedSellSideData(
+      sellSideData.slice(0, sellSideData.length * (zoomLevel / 100))
+    );
+    setRenderedBuySideSingleHopData(
+      buySideSingleHopData.slice(
+        0,
+        buySideSingleHopData.length * (zoomLevel / 100)
+      )
+    );
+    setRenderedSellSideSingleHopData(
+      sellSideSingleHopData.slice(
+        0,
+        sellSideSingleHopData.length * (zoomLevel / 100)
+      )
+    );
+
+    const liquidityMax = Math.max(
+      ...renderedSellSideData.map((p) => p.y),
+      ...renderedBuySideData.map((p) => p.y)
+    );
+
+    setMaxY(calculateMaxY(liquidityMax));
+    const xVals = [
+      ...renderedBuySideData.map((d) => d.x),
+      ...renderedSellSideData.map((d) => d.x),
+    ];
+
+    console.log("zoomLevel", zoomLevel);
+
+    if (zoomLevel === 100) {
+      setMinXValue(Math.min(...xVals));
+    } else {
+      setMinXValue(Math.min(...xVals.sort().slice(1))); // Min needs to exclude first point unless zoom is 100%
+    }
+
+    setMaxXValue(Math.max(...xVals.slice(0, xVals.length - 1))); // Max needs to exclude last point
+    setPadding(0);
+
+    setTickStepSize(
+      +(
+        (Math.max(
+          ...renderedBuySideData.map((d) => d.x),
+          ...renderedSellSideData.map((d) => d.x)
+        ) -
+          Math.min(
+            ...renderedBuySideData.map((d) => d.x),
+            ...renderedSellSideData.map((d) => d.x)
+          )) /
+        totalTicks
+      ).toPrecision(6)
+    );
+
+    // Add an additional point equal to the same value as the last point to extend the line to the border
+    // first check if the data is not empty
+    setRenderedBuySideData((prev) => {
+      const lastPoint = prev[prev.length - 1];
+      if (lastPoint) {
+        return [...prev, { x: -1, y: lastPoint.y }];
+      }
+      return [{ x: -1, y: 0 }];
+    });
+    setRenderedSellSideData((prev) => {
+      const lastPoint = prev[prev.length - 1];
+      if (lastPoint) {
+        return [...prev, { x: lastPoint.x + 1, y: lastPoint.y }];
+      }
+      return [{ x: -1, y: 0 }];
+    });
+
+    setRenderedBuySideSingleHopData((prev) => {
+      const lastPoint = prev[prev.length - 1];
+      if (lastPoint) {
+        return [...prev, { x: -1, y: lastPoint.y }];
+      }
+      return [{ x: -1, y: 0 }];
+    });
+    setRenderedSellSideSingleHopData((prev) => {
+      const lastPoint = prev[prev.length - 1];
+      if (lastPoint) {
+        return [...prev, { x: lastPoint.x + 1, y: lastPoint.y }];
+      }
+      return [{ x: -1, y: 0 }];
+    });
+  }, [zoomLevel]);
+  // set initial zoom at 50 again
+  useEffect(() => {
+    setZoomLevel(50);
+  }, []);
 
   console.log("multi", buySideData, sellSideData, midMarketPrice);
   console.log("single", buySideSingleHopData, sellSideSingleHopData);
@@ -135,7 +212,7 @@ const DepthChart = ({
     datasets: [
       {
         label: "Incl Synthetic Sell",
-        data: extendedSellSideData.map((point) => ({
+        data: renderedSellSideData.map((point) => ({
           x: point.x.toFixed(6),
           y: point.y.toFixed(6),
         })),
@@ -148,7 +225,7 @@ const DepthChart = ({
       },
       {
         label: "Incl Synthetic Buy",
-        data: extendedBuySideData
+        data: renderedBuySideData
           .map((point) => ({ x: point.x.toFixed(6), y: point.y.toFixed(6) }))
           .reverse(),
         borderColor: "rgba(51, 255, 87, 0.6)", // Neon Green
@@ -162,7 +239,7 @@ const DepthChart = ({
       // Single hops darker data
       {
         label: "Direct Sell",
-        data: extendedSellSideSingleHopData.map((point) => ({
+        data: renderedSellSideSingleHopData.map((point) => ({
           x: point.x.toFixed(6),
           y: point.y.toFixed(6),
         })),
@@ -175,7 +252,7 @@ const DepthChart = ({
       },
       {
         label: "Direct Buy",
-        data: extendedBuySideSingleHopData
+        data: renderedBuySideSingleHopData
           .map((point) => ({ x: point.x.toFixed(6), y: point.y.toFixed(6) }))
           .reverse(),
         borderColor: "rgba(255, 255, 87, .6)", // Neon Green
@@ -232,18 +309,18 @@ const DepthChart = ({
 
   // Set step size for x-axis based on the range of the data
   const totalTicks = 10;
-  const tickStepSize: number = +(
-    (Math.max(...buySideData.map((d) => d.x), ...sellSideData.map((d) => d.x)) -
-      Math.min(
+  const [tickStepSize, setTickStepSize] = useState<number>(
+    +(
+      (Math.max(
         ...buySideData.map((d) => d.x),
         ...sellSideData.map((d) => d.x)
-      )) /
-    totalTicks
-  ).toPrecision(6);
-
-  const maxLiquidity = Math.max(
-    ...sellSideData.map((p) => p.y),
-    ...buySideData.map((p) => p.y)
+      ) -
+        Math.min(
+          ...buySideData.map((d) => d.x),
+          ...sellSideData.map((d) => d.x)
+        )) /
+      totalTicks
+    ).toPrecision(6)
   );
 
   /*
@@ -280,16 +357,6 @@ const DepthChart = ({
     return significantFigure === 1 ? 1.5 * magnitude : maxY;
   }
 
-  const maxY = calculateMaxY(maxLiquidity);
-  const xValues = [
-    ...buySideData.map((d) => d.x),
-    ...sellSideData.map((d) => d.x),
-  ];
-  const minXValue = Math.min(...xValues);
-  const maxXValue = Math.max(...xValues);
-  const xRange = maxXValue - minXValue;
-  const padding = xRange * 0.05;
-
   const options: ChartOptions<"line"> = {
     scales: {
       x: {
@@ -305,7 +372,7 @@ const DepthChart = ({
         type: "linear",
         position: "bottom",
         beginAtZero: false,
-        min: minXValue - padding,
+        min: Math.max(0, minXValue - padding), // Always >=0
         max: maxXValue + padding,
         ticks: {
           // Customize x-axis ticks to show more decimals
@@ -455,6 +522,14 @@ const DepthChart = ({
         >
           <Line ref={chartRef} data={data} options={options} />
         </div>
+        <HStack spacing={2} paddingRight="6" paddingTop="1">
+          <Button onClick={zoomOut} colorScheme="purple" size={"sm"}>
+            -
+          </Button>
+          <Button onClick={zoomIn} colorScheme="purple" size={"sm"}>
+            +
+          </Button>
+        </HStack>
       </VStack>
     </>
   );
