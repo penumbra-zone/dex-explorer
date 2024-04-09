@@ -9,7 +9,7 @@ import { Line } from "react-chartjs-2";
 import annotationPlugin, { AnnotationOptions } from "chartjs-plugin-annotation";
 import { set, throttle } from "lodash";
 import { Chart } from "chart.js/auto";
-import { Button, HStack, Text, VStack } from "@chakra-ui/react";
+import { Button, HStack, Text, useBreakpoint, VStack } from "@chakra-ui/react";
 import { Token } from "@/constants/tokenConstants";
 import zoomPlugin, { zoom } from "chartjs-plugin-zoom";
 
@@ -87,6 +87,7 @@ const DepthChart = ({
 
   // Zoom level state, starting at 50%
   const [zoomLevel, setZoomLevel] = useState(50);
+  const [lastZoomLevel, setLastZoomLevel] = useState(50);
 
   // Increase zoom level by 10%, not exceeding 0%
   const zoomIn = () => {
@@ -110,38 +111,54 @@ const DepthChart = ({
   const [minXValue, setMinXValue] = useState<number>(Math.min(...xValues));
   const [maxXValue, setMaxXValue] = useState<number>(Math.max(...xValues));
   const xRange = maxXValue - minXValue;
-  const [padding, setPadding] = useState<number>(0);
+  const [padding, setPadding] = useState<number>((xRange * 0.05));
 
   // Control the zoom level of the chart
   useEffect(() => {
-    setRenderedBuySideData(
-      buySideData.slice(0, buySideData.length * (zoomLevel / 100))
-    );
-    setRenderedSellSideData(
-      sellSideData.slice(0, sellSideData.length * (zoomLevel / 100))
-    );
-    setRenderedBuySideSingleHopData(
-      buySideSingleHopData.slice(
-        0,
-        buySideSingleHopData.length * (zoomLevel / 100)
-      )
-    );
-    setRenderedSellSideSingleHopData(
-      sellSideSingleHopData.slice(
-        0,
-        sellSideSingleHopData.length * (zoomLevel / 100)
-      )
-    );
+    // Change zoom to only show points within how close they are to the midpoint price,
+    const filterData = (data: { x: number; y: number }[]) => {
+      // Calculate the range of prices to show based on the zoom level
+      const range = (midMarketPrice * zoomLevel) / 100;
+
+      // Filter the data points to only show those within the range
+      const filteredData = data.filter(
+        (point) => Math.abs(point.x - midMarketPrice) <= range
+      );
+
+      return filteredData;
+    };
+
+
+    // Apply the filter function to all data sets
+    const newRenderedBuySideData = filterData(buySideData);
+    const newRenderedSellSideData = filterData(sellSideData);
+    const newRenderedBuySideSingleHopData = filterData(buySideSingleHopData);
+    const newRenderedSellSideSingleHopData = filterData(sellSideSingleHopData);
+    // Stop zooming if there is no data for newRenderedBuySideData & newRenderedSellSideData and reset zoom level
+    if (
+      newRenderedBuySideData.length === 0 ||
+      newRenderedSellSideData.length === 0
+    ) {
+      console.log("resetting zoom level", zoomLevel, lastZoomLevel)
+      setZoomLevel(lastZoomLevel);
+      return;
+    }
+
+    // Update the state for each data set
+    setRenderedBuySideData(newRenderedBuySideData);
+    setRenderedSellSideData(newRenderedSellSideData);
+    setRenderedBuySideSingleHopData(newRenderedBuySideSingleHopData);
+    setRenderedSellSideSingleHopData(newRenderedSellSideSingleHopData);
 
     const liquidityMax = Math.max(
-      ...renderedSellSideData.map((p) => p.y),
-      ...renderedBuySideData.map((p) => p.y)
+      ...newRenderedSellSideData.map((p) => p.y),
+      ...newRenderedBuySideData.map((p) => p.y)
     );
 
     setMaxY(calculateMaxY(liquidityMax));
     const xVals = [
-      ...renderedBuySideData.map((d) => d.x),
-      ...renderedSellSideData.map((d) => d.x),
+      ...newRenderedBuySideData.map((d) => d.x),
+      ...newRenderedSellSideData.map((d) => d.x),
     ];
 
     console.log("zoomLevel", zoomLevel);
@@ -153,17 +170,17 @@ const DepthChart = ({
     }
 
     setMaxXValue(Math.max(...xVals.slice(0, xVals.length - 1))); // Max needs to exclude last point
-    setPadding(0);
+    setPadding((Math.max(...xVals) - Math.min(...xVals)) * 0.05);
 
     setTickStepSize(
       +(
         (Math.max(
-          ...renderedBuySideData.map((d) => d.x),
-          ...renderedSellSideData.map((d) => d.x)
+          ...newRenderedBuySideData.map((d) => d.x),
+          ...newRenderedSellSideData.map((d) => d.x)
         ) -
           Math.min(
-            ...renderedBuySideData.map((d) => d.x),
-            ...renderedSellSideData.map((d) => d.x)
+            ...newRenderedBuySideData.map((d) => d.x),
+            ...newRenderedSellSideData.map((d) => d.x)
           )) /
         totalTicks
       ).toPrecision(6)
@@ -200,8 +217,12 @@ const DepthChart = ({
       }
       return [{ x: -1, y: 0 }];
     });
-  }, [zoomLevel]);
-  // set initial zoom at 50 again
+
+    // Update the last zoom level
+    setLastZoomLevel(zoomLevel);
+  }, [zoomLevel, midMarketPrice, buySideData, sellSideData]);
+
+  // set initial zoom at 50 to load the chart appropriately
   useEffect(() => {
     setZoomLevel(50);
   }, []);
@@ -523,10 +544,11 @@ const DepthChart = ({
           <Line ref={chartRef} data={data} options={options} />
         </div>
         <HStack spacing={2} paddingRight="6" paddingTop="1">
-          <Button onClick={zoomOut} colorScheme="purple" size={"sm"}>
+          <Button onClick={zoomOut} colorScheme="purple" size={"sm"} isDisabled={zoomLevel==100}>
             -
           </Button>
-          <Button onClick={zoomIn} colorScheme="purple" size={"sm"}>
+          <Text fontSize="sm">{100-zoomLevel}%</Text>
+          <Button onClick={zoomIn} colorScheme="purple" size={"sm"} isDisabled={zoomLevel==10}>
             +
           </Button>
         </HStack>
