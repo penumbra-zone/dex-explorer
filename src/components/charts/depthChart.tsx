@@ -264,8 +264,8 @@ const DepthChart = ({
           x: point.x.toFixed(6),
           y: point.y.toFixed(6),
         })),
-        borderColor: "rgba(255, 73, 255, .6)", // Neon Red
-        backgroundColor: "rgba(255, 73, 255, .6)",
+        borderColor: "rgba(255, 150, 130, .6)", // Neon Red
+        backgroundColor: "rgba(255, 150, 130, .6)",
         fill: "origin",
         stepped: "before",
         yAxisID: "left-y",
