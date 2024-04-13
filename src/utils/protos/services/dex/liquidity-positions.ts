@@ -41,7 +41,6 @@ export class LiquidityPositionQuerier implements LiquidityPositionQuerierInterfa
     }
 
     const positions: Position[] = [];
-    console.log("res:", res);
     // Res is Symbol(Symbol.asyncIterator)]: [Function: [Symbol.asyncIterator]]
     for await (const position of res as Readable) {
       positions.push(position);

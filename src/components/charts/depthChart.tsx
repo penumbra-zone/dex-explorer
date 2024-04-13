@@ -552,9 +552,9 @@ const DepthChart = ({
 
   return (
     <>
-      <VStack>
+      <VStack height="600px" width={"60em"}>
         <div
-          style={{ height: "500px", width: "60em" }}
+          style={{ height: "100%", width: "100%" }}
           onMouseOver={handleMouseOverChart}
           onMouseOut={handleMouseOutChart}
         >
@@ -564,6 +564,7 @@ const DepthChart = ({
           <Button
             onClick={zoomOut}
             colorScheme="purple"
+            backgroundColor="var(--complimentary-background)"
             size={"sm"}
             isDisabled={zoomLevel == 100 || disableMinusButton == true}
           >
@@ -573,6 +574,7 @@ const DepthChart = ({
           <Button
             onClick={zoomIn}
             colorScheme="purple"
+            backgroundColor="var(--complimentary-background)"
             size={"sm"}
             isDisabled={zoomLevel == 0 || disablePlusButton == true}
           >
