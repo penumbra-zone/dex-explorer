@@ -543,7 +543,7 @@ export default function TradingPairs() {
       ) : !isChartLoading ? (
         <Center height="100vh">
           <VStack width="85vw">
-            <Box className="neon-box" padding="2em" width="100%" height="100%">
+            <Box className="neon-box" padding="1.5em" width="100%" height="100%">
               <HStack spacing={8} width="100%" height="100%">
                 <VStack flex={1} height="100%">
                   <>
@@ -573,19 +573,24 @@ export default function TradingPairs() {
                     />
                   </>
                 </VStack>
-                <VStack
-                  flex={1}
-                  width={"100%"}
-                  height="650px"
-                  outline={"2px solid var(--complimentary-background)"}
-                  borderRadius={"10px"}
-                >
-                  <BuySellChart
-                    buySidePositions={lpsBuySide}
-                    sellSidePositions={lpsSellSide}
-                    asset1Token={asset1Token!}
-                    asset2Token={asset2Token!}
-                  />
+                <VStack width="60em" height="650px">
+                  <Text fontFamily={"monospace"} fontSize="xs" >
+                    Direct Liq Order Book
+                  </Text>
+                  <VStack
+                    flex={1}
+                    width={"90%"}
+                    outline={"2px solid var(--complimentary-background)"}
+                    borderRadius={"10px"}
+                    height="600px"
+                  >
+                    <BuySellChart
+                      buySidePositions={lpsBuySide}
+                      sellSidePositions={lpsSellSide}
+                      asset1Token={asset1Token!}
+                      asset2Token={asset2Token!}
+                    />
+                  </VStack>
                 </VStack>
               </HStack>
             </Box>

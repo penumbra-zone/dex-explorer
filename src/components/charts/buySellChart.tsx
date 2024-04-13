@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   HStack,
+  Spacer,
   Text,
   useBreakpoint,
   VStack,
@@ -63,13 +64,17 @@ const BuySellChart = ({
         reserves1: Number.parseFloat(reserves1.toFixed(6)),
         reserves2: Number.parseFloat(reserves2.toFixed(6)),
         willingToBuy: willingToBuy,
-        lp_id: "unkown",
+        lp_id: "unknown",
         position: position,
       };
     })
     // Make sure reserves1 is not 0
     .filter((position) => {
       return position.willingToBuy > 0;
+    })
+    .sort((a, b) => {
+      // sort by highest price
+      return b.price - a.price;
     });
 
   const cleaned_sell_side_positions = sellSidePositions
@@ -115,41 +120,131 @@ const BuySellChart = ({
     // Make sure willingToSell is not 0
     .filter((position) => {
       return position.willingToSell > 0;
+    })
+    .sort((a, b) => {
+      // sort by highest price
+      return b.price - a.price;
     });
 
   console.warn("Buy side", cleaned_buy_side_positions);
   console.warn("Sell side", cleaned_sell_side_positions);
 
+  interface PositionData {
+    price: number;
+    reserves1: number;
+    reserves2: number;
+    willingToBuy?: number; // Optional if it only exists on buy positions
+    willingToSell?: number; // Optional if it only exists on sell positions
+    lp_id: string;
+  }
+
+  const DataRow: React.FC<{
+    price: number;
+    amount: number;
+    lpId: string;
+    type: string;
+  }> = ({ price, amount, lpId, type }) => (
+    <HStack
+      width="100%"
+      justifyContent="space-between"
+      fontFamily="monospace"
+      fontSize="10px"
+      _hover={{ backgroundColor: "#4A5568", borderRadius: "2px", cursor: "pointer"}}
+      onClick={() => {
+        // Redirect to the LP page
+        window.open(`/lp/${lpId}`, "_blank", "noopener");
+      }}
+    >
+      <Text color={type == "buy" ? "green.500" : "red.500"}>
+        {price.toFixed(6)}
+      </Text>
+      <Spacer />
+      <Text paddingRight="70px" textAlign={"right"}>
+        {amount.toFixed(2)}
+      </Text>
+      <Text>{lpId}</Text>
+    </HStack>
+  );
+
+  // Ref for scrolling the sell section
+  const sellSectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (sellSectionRef.current) {
+      sellSectionRef.current.scrollTop = sellSectionRef.current.scrollHeight;
+    }
+  }, [sellSidePositions]); // Trigger on sell position changes
+
   return (
     <VStack
       flex={1}
       width="100%"
-      height="100%" // This ensures the VStack takes the full height of its parent
-      justifyContent="stretch" // This will stretch the children to fill the container
-      spacing={0} // Remove any spacing between VStack children
+      justifyContent="stretch"
+      spacing={4}
+      padding="1em"
+      height="600px"
     >
-      <Text fontFamily={"monospace"} fontSize="xs" padding={"1em"}>
-        Direct Liq Order Book
-      </Text>
-      <VStack
-        flex={1} // This allows the VStack to grow and fill the available space
+      <HStack
         width="100%"
-        height="100%" // Ensure the VStack takes full height of its container
-        spacing={2} // Adds space between children; adjust as needed
-        overflowY="auto" // Adds scrollability to the VStack for overflow content
+        fontFamily="monospace"
+        fontSize="10px"
+        justifyContent="space-between"
       >
-        <HStack width="100%" justify="space-between"></HStack>
+        <Text>{`Price (${asset2Token.symbol})`}</Text>
+        <Spacer />
+        <Text
+          paddingRight="80px"
+          textAlign={"right"}
+        >{`Amount (${asset1Token.symbol})`}</Text>
+        <Text>{`LP ID`}</Text>
+      </HStack>
 
-        <VStack flex={1} width="100%" spacing={2}>
-          <Text flex={1} textAlign="left" overflowX="auto">
-            Col1
-          </Text>
-          <HStack flex={1} width="100%" spacing={2} padding="10px">
-            <Text>Price</Text>
-          </HStack>
-          <Text flex={1} textAlign="right" overflowX="auto">
-            Col2
-          </Text>
+      <VStack
+        flex={1} // This ensures that the container flexibly fits within its parent, giving equal opportunity for both children to expand
+        width="100%"
+        height={"50%"}
+        spacing={0}
+      >
+        <VStack
+          ref={sellSectionRef}
+          flex={1} // Use flex=1 to ensure that this box takes up half the space
+          width="100%"
+          spacing={1}
+          overflowY="auto"
+          justifyContent={
+            sellSidePositions.length < 15 ? "flex-end" : "flex-start"
+          } // Conditionally adjust based on the number of sell rows
+        >
+          {cleaned_sell_side_positions.map((position, index) => (
+            <DataRow
+              key={index}
+              price={position.price}
+              amount={position.willingToSell}
+              lpId={position.lp_id}
+              type="sell"
+            />
+          ))}
+        </VStack>
+
+        {/* Divider between buy and sell sections */}
+        <Box width="100%" height="2px" backgroundColor="gray.10000" />
+        <Box width="100%" height="1px" backgroundColor="gray.200" />
+        <Box width="100%" height="2px" backgroundColor="gray.10000" />
+        <VStack
+          flex={1} // Use flex=1 to ensure that this box also takes up half the space
+          width="100%"
+          spacing={1}
+          overflowY="auto"
+        >
+          {cleaned_buy_side_positions.map((position, index) => (
+            <DataRow
+              key={index}
+              price={position.price}
+              amount={position.willingToBuy}
+              lpId={position.lp_id}
+              type="buy"
+            />
+          ))}
         </VStack>
       </VStack>
     </VStack>
