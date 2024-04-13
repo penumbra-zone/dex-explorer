@@ -13,6 +13,7 @@ import { Token } from "@/constants/tokenConstants";
 import { Position } from "@buf/penumbra-zone_penumbra.bufbuild_es/penumbra/core/component/dex/v1/dex_pb";
 import { fromBaseUnit } from "@/utils/math/hiLo";
 import BigNumber from "bignumber.js";
+import { base64ToUint8Array, uint8ArrayToBase64 } from "@/utils/math/base64";
 
 interface BuySellprops {
   buySidePositions: Position[];
@@ -27,37 +28,49 @@ const BuySellChart = ({
   asset1Token,
   asset2Token,
 }: BuySellprops) => {
+  console.warn("buySidePositions", buySidePositions);
+  console.warn("sellSidePositions", sellSidePositions);
   const cleaned_buy_side_positions = buySidePositions
     .filter(
       (position) =>
         position.state?.state.toLocaleString() === "POSITION_STATE_ENUM_OPENED"
     )
     .map((position) => {
+      let direction = 1;
+
+      if (
+        position.phi!.pair!.asset2!.inner as unknown as string ===
+        asset1Token.inner
+      ) {
+        direction = -1;
+      }
       const reserves1 = fromBaseUnit(
         BigInt(position.reserves!.r1!.lo ?? 0),
         BigInt(position.reserves!.r1!.hi ?? 0),
-        asset1Token.decimals
+        direction === 1 ? asset1Token.decimals : asset2Token.decimals
       );
       const reserves2 = fromBaseUnit(
         BigInt(position.reserves!.r2!.lo ?? 0),
         BigInt(position.reserves!.r2!.hi ?? 0),
-        asset2Token.decimals
+        direction === 1 ? asset2Token.decimals : asset1Token.decimals
       );
 
       const p: BigNumber = fromBaseUnit(
         BigInt(position!.phi!.component!.p!.lo || 0),
         BigInt(position!.phi!.component!.p!.hi || 0),
-        asset2Token.decimals
+        direction === 1 ? asset2Token.decimals : asset1Token.decimals
       );
       const q: BigNumber = fromBaseUnit(
         BigInt(position!.phi!.component!.q!.lo || 0),
         BigInt(position!.phi!.component!.q!.hi || 0),
-        asset1Token.decimals
+        direction === 1 ? asset1Token.decimals : asset2Token.decimals
       );
 
-      let price = Number.parseFloat(q.div(p).toFixed(6));
+      let price = Number.parseFloat(
+        direction === 1 ? q.div(p).toFixed(6) : p.div(q).toFixed(6)
+      );
 
-      const willingToBuy = Number.parseFloat(reserves1.toFixed(6));
+      const willingToBuy = Number.parseFloat(direction === 1 ? reserves1.toFixed(6) : reserves2.toFixed(6))
 
       return {
         price: price,
@@ -68,10 +81,7 @@ const BuySellChart = ({
         position: position,
       };
     })
-    // Make sure reserves1 is not 0
-    .filter((position) => {
-      return position.willingToBuy > 0;
-    })
+
     .sort((a, b) => {
       // sort by highest price
       return b.price - a.price;
@@ -83,31 +93,43 @@ const BuySellChart = ({
         position.state?.state.toLocaleString() === "POSITION_STATE_ENUM_OPENED"
     )
     .map((position) => {
+        let direction = 1;
+
+      if (
+        position.phi!.pair!.asset2!.inner as unknown as string ===
+        asset1Token.inner
+      ) {
+        direction = -1;
+      }
+      console.warn("direciton sell", direction)
+      
       const reserves1 = fromBaseUnit(
         BigInt(position.reserves!.r1!.lo ?? 0),
         BigInt(position.reserves!.r1!.hi ?? 0),
-        asset1Token.decimals
+        direction === 1 ? asset1Token.decimals : asset2Token.decimals
       );
       const reserves2 = fromBaseUnit(
         BigInt(position.reserves!.r2!.lo ?? 0),
         BigInt(position.reserves!.r2!.hi ?? 0),
-        asset2Token.decimals
+        direction === 1 ? asset2Token.decimals : asset1Token.decimals
       );
 
       const p: BigNumber = fromBaseUnit(
         BigInt(position!.phi!.component!.p!.lo || 0),
         BigInt(position!.phi!.component!.p!.hi || 0),
-        asset2Token.decimals
+        direction === 1 ? asset2Token.decimals : asset1Token.decimals
       );
       const q: BigNumber = fromBaseUnit(
         BigInt(position!.phi!.component!.q!.lo || 0),
         BigInt(position!.phi!.component!.q!.hi || 0),
-        asset1Token.decimals
+        direction === 1 ? asset1Token.decimals : asset2Token.decimals
       );
 
-      let price = Number.parseFloat(q.div(p).toFixed(6));
+      let price = Number.parseFloat(direction === 1 ? q.div(p).toFixed(6) : p.div(q).toFixed(6));
 
-      const willingToSell = Number.parseFloat(reserves2.toFixed(6)) * price;
+      const willingToSell = Number.parseFloat(
+        direction === 1 ? reserves2.toFixed(6) : reserves1.toFixed(6)
+      ) * price;
       return {
         price: price,
         reserves1: Number.parseFloat(reserves1.toFixed(6)),
