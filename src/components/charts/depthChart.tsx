@@ -84,33 +84,60 @@ const DepthChart = ({
   const [renderedSellSideSingleHopData, setRenderedSellSideSingleHopData] =
     useState<{ x: number; y: number }[]>(sellSideSingleHopData);
 
-  // Zoom level state, starting at 50%
-  const [zoomLevel, setZoomLevel] = useState(50);
-  const [lastZoomLevel, setLastZoomLevel] = useState(50);
+  const zoomLevels = [1, 1.2, 1.4, 2, 4, 8]; // Your zoom levels
+
+  // Zoom level state, starting at 0 (100%)
+  const [zoomIndex, setZoomIndex] = useState(0);
+  const [lastZoomIndex, setLastZoomIndex] = useState(0);
+
+  // Function to update the chart's view to the current zoom level
+  const updateZoomRange = () => {
+    const chartInstance = chartRef.current;
+    if (!chartInstance) return;
+
+    const midMarketPrice =
+      (Math.min(...buySideData.map((d) => d.x)) +
+        Math.max(...sellSideData.map((d) => d.x))) /
+      2;
+    const halfRange =
+      (Math.max(...sellSideData.map((d) => d.x)) -
+        Math.min(...buySideData.map((d) => d.x))) /
+      2;
+
+    const zoomFactor = zoomLevels[zoomIndex];
+    const newMin = midMarketPrice - halfRange / zoomFactor;
+    const newMax = midMarketPrice + halfRange / zoomFactor;
+
+    chartInstance.options.scales.x.min = newMin;
+    chartInstance.options.scales.x.max = newMax;
+    chartInstance.update();
+  };
+  useEffect(() => {
+    updateZoomRange();
+  }, [zoomIndex, buySideData, sellSideData]);
+  const handleZoomIn = () => {
+    if (zoomIndex < zoomLevels.length - 1) {
+      setZoomIndex((prevIndex) => prevIndex + 1); // Increasing index zooms out
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (zoomIndex > 0) {
+      setZoomIndex((prevIndex) => prevIndex - 1); // Decreasing index zooms in
+    }
+  };
   const [pageLoad, setPageLoad] = useState(false);
-
-  // Increase zoom level by 10%, not exceeding 0%
-  const zoomIn = () => {
-    setZoomLevel((prev) => Math.max(0, prev - 10));
-  };
-
-  // Decrease zoom level by 10%, not going above 100%
-  const zoomOut = () => {
-    setZoomLevel((prev) => Math.min(100, prev + 10));
-  };
 
   const maxLiquidity = Math.max(
     ...sellSideData.map((p) => p.y),
     ...buySideData.map((p) => p.y)
   );
   const [maxY, setMaxY] = useState<number>(calculateMaxY(maxLiquidity));
-  const rangeStart = (midMarketPrice * zoomLevel) / 100;
-  const [minXValue, setMinXValue] = useState<number>(
-    midMarketPrice - rangeStart
-  );
+  const [minXValue, setMinXValue] = useState<number>(0);
   const [maxXValue, setMaxXValue] = useState<number>(
-    midMarketPrice + rangeStart
+    sellSideData[sellSideData.length - 1].x
   );
+
   const xRange = maxXValue - minXValue;
   const [padding, setPadding] = useState<number>(xRange * 0.0);
 
@@ -124,9 +151,12 @@ const DepthChart = ({
 
   // Control the zoom level of the chart
   useEffect(() => {
-    if (zoomLevel === lastZoomLevel && pageLoad) return;
+    if (zoomIndex === lastZoomIndex && pageLoad) return;
     // Change zoom to only show points within how close they are to the midpoint price,
-    const range = (midMarketPrice * zoomLevel) / 100;
+    // If zoom index is 1, show all points, if zoom index is 2, show middle 50% of points, if zoom index is 3, show middle 25% of points, etc.
+    const localMin = 0;
+    const localMax = midMarketPrice * 2;
+    const range = (localMax - localMin) / zoomLevels[zoomIndex] / 2;
 
     const filterData = (data: { x: number; y: number }[]) => {
       // Calculate the range of prices to show based on the zoom level
@@ -149,8 +179,8 @@ const DepthChart = ({
       newRenderedBuySideData.length === 0 ||
       newRenderedSellSideData.length === 0
     ) {
-      console.log("resetting zoom level", zoomLevel, lastZoomLevel);
-      setZoomLevel(lastZoomLevel);
+      console.log("resetting zoom level", zoomIndex, lastZoomIndex);
+      setZoomIndex(lastZoomIndex);
 
       if (newRenderedBuySideData.length === 0) {
         setDisablePlusButton(true);
@@ -176,22 +206,7 @@ const DepthChart = ({
       ...newRenderedSellSideData.map((d) => d.x),
     ];
 
-    console.log("zoomLevel", zoomLevel);
-
-    /*
-    setTickStepSize(
-      +(
-        (Math.max(
-          ...newRenderedBuySideData.map((d) => d.x),
-          ...newRenderedSellSideData.map((d) => d.x)
-        ) -
-          Math.min(
-            ...newRenderedBuySideData.map((d) => d.x),
-            ...newRenderedSellSideData.map((d) => d.x)
-          )) /
-        totalTicks
-      ).toPrecision(6)
-    );*/
+    console.log("zoomLevel", zoomLevels[zoomIndex]);
 
     // Add an additional point equal to the same value as the last point to extend the line to the border
     // first check if the data is not empty
@@ -239,16 +254,15 @@ const DepthChart = ({
     setMaxY(calculateMaxY(liquidityMax));
 
     // Update the last zoom level
-    setLastZoomLevel(zoomLevel);
+    setLastZoomIndex(zoomIndex);
     console.log("running");
-  }, [zoomLevel, midMarketPrice, buySideData, sellSideData, pageLoad]);
+  }, [zoomIndex, midMarketPrice, buySideData, sellSideData, pageLoad]);
 
-  // set initial zoom at 50 to load the chart appropriately
+  // set initial zoom at 0 to load the chart appropriately
   useEffect(() => {
-    setZoomLevel(50);
+    setZoomIndex(0);
     setPageLoad(true);
   }, []);
-
 
   console.log("multi", buySideData, sellSideData, midMarketPrice);
   console.log("single", buySideSingleHopData, sellSideSingleHopData);
@@ -310,47 +324,6 @@ const DepthChart = ({
     ],
   };
 
-  /*
-  const [hoverAnnotation, setHoverAnnotation] = useState<AnnotationOptions>({
-    type: "line",
-    scaleID: "x-axis-0",
-    value: 0,
-    borderColor: "rgba(255, 255, 255, 0.8)",
-    borderWidth: 1,
-    yMin: 0,
-    yMax: 1,
-    xMin: midMarketPrice,
-    xMax: midMarketPrice,
-  });
-  const updateHoverLine = throttle(
-    (chart, xValue) => {
-      // Directly access and manipulate the chart instance
-      if (chart) {
-        // Check if the annotation needs an update to prevent unnecessary changes
-        const annotations = chart.options.plugins.annotation.annotations;
-        const currentXMin = annotations.hoverLine?.xMin;
-
-        if (currentXMin !== xValue) {
-          // Prevent update if the value hasn't changed
-          annotations.hoverLine = {
-            ...annotations.hoverLine,
-            xMin: xValue,
-            xMax: xValue,
-            yMin: 0,
-            yMax: Math.max(
-              ...sellSideData.map((p) => p.y),
-              ...buySideData.map((p) => p.y)
-            ),
-          };
-          chart.update("none"); // Update without animation
-        }
-      }
-    },
-    100,
-    { leading: true, trailing: false }
-  );
-  */
-
   // Set step size for x-axis based on the range of the data
   const totalTicks = 10;
   const [tickStepSize, setTickStepSize] = useState<number>(
@@ -367,26 +340,6 @@ const DepthChart = ({
     ).toPrecision(6)
   );
 
-  /*
-  function roundToNextBigNumber(number: number) {
-    if (number <= 10) return 10; // For numbers less than or equal to 10, round up to 10
-
-    // Calculate the order of magnitude of the number
-    const orderOfMagnitude = Math.floor(Math.log10(number));
-    const divisor = Math.pow(10, orderOfMagnitude);
-
-    // Determine the first digit of the number
-    const firstDigit = Math.floor(number / divisor);
-
-    // Calculate the rounded up number based on the first digit
-    const roundedNumber = (firstDigit + 1) * divisor;
-
-    return roundedNumber;
-  }
-  */
-
-  // Round to nearest upper 10^n and then the nearest next lowest 10^n
-  //const maxY = roundToNextBigNumber(maxLiquidity);
   function calculateMaxY(maxLiquidity: number) {
     if (maxLiquidity < 10) return 10; // If less than 10, round up to 10
 
@@ -445,47 +398,6 @@ const DepthChart = ({
         max: maxY,
       },
     },
-    // ! This line works but its not perfect
-    /*
-    onHover: (event: ChartEvent, chartElement: any, chart: any) => {
-      if (!event.native) return;
-
-      const nativeEvent = event.native as MouseEvent;
-      // Convert the mouse's pixel position to the corresponding value on the chart's x-axis.
-      const mouseXValue = chart.scales.x.getValueForPixel(nativeEvent.offsetX);
-
-      // Hide the hover line if the mouse is not over the chart
-      if (!isMouseOverChart) {
-        updateHoverLine(chart, null);
-        return;
-      }
-
-      // Find the nearest data point to the cursor.
-      let nearestXValue: number | null = null; // Initialize as null to later check if found any point.
-      let minDistance = Infinity;
-
-      chart.data.datasets.forEach(
-        (dataset: { data: { x: number; y: number }[] }) => {
-          dataset.data.forEach((dataPoint) => {
-            const pointXValue =
-              typeof dataPoint === "object" ? dataPoint.x : dataPoint;
-            // Calculate the distance between the cursor and the data point.
-            const distance = Math.abs(mouseXValue - pointXValue);
-            // Check if this data point is closer than the previous closest one.
-            if (distance < minDistance) {
-              nearestXValue = pointXValue;
-              minDistance = distance;
-            }
-          });
-        }
-      );
-
-      if (nearestXValue !== null) {
-        // Update the hover line position.
-        updateHoverLine(chart, nearestXValue);
-      }
-    },
-    */
     plugins: {
       tooltip: {
         enabled: true,
@@ -562,21 +474,23 @@ const DepthChart = ({
         </div>
         <HStack spacing={2} paddingRight="6" paddingTop="1">
           <Button
-            onClick={zoomOut}
+            onClick={handleZoomOut}
             colorScheme="purple"
             backgroundColor="var(--complimentary-background)"
             size={"sm"}
-            isDisabled={zoomLevel == 100 || disableMinusButton == true}
+            isDisabled={zoomIndex == 0 || disableMinusButton == true}
           >
             -
           </Button>
-          <Text fontSize="sm">{50 - zoomLevel}%</Text>
+          <Text fontSize="sm">{zoomLevels[zoomIndex]}x</Text>
           <Button
-            onClick={zoomIn}
+            onClick={handleZoomIn}
             colorScheme="purple"
             backgroundColor="var(--complimentary-background)"
             size={"sm"}
-            isDisabled={zoomLevel == 0 || disablePlusButton == true}
+            isDisabled={
+              zoomIndex == zoomLevels.length - 1 || disablePlusButton == true
+            }
           >
             +
           </Button>
