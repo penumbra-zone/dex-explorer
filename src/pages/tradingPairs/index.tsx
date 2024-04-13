@@ -223,10 +223,10 @@ export default function TradingPairs() {
       const asset2Token = tokenConfigMapOnSymbol[token2Symbol];
 
       const lpsBuySidePromise = fetch(
-        `/api/lp/positionsByPrice/${asset1Token.symbol}/${asset2Token.symbol}/${LPS_TO_RENDER}`
+        `/api/lp/positionsByPrice/${asset2Token.symbol}/${asset1Token.symbol}/${LPS_TO_RENDER}`
       ).then((res) => res.json());
       const lpsSellSidePromise = fetch(
-        `/api/lp/positionsByPrice/${asset2Token.symbol}/${asset1Token.symbol}/${LPS_TO_RENDER}`
+        `/api/lp/positionsByPrice/${asset1Token.symbol}/${asset2Token.symbol}/${LPS_TO_RENDER}`
       ).then((res) => res.json());
 
       Promise.all([lpsBuySidePromise, lpsSellSidePromise])
@@ -295,7 +295,7 @@ export default function TradingPairs() {
           joinLoHi(BigInt(output!.amount!.lo), BigInt(output!.amount!.hi))
         ) / Number(BigInt(10 ** asset2Token.decimals));
 
-      const price: number = outputValue / inputValue;
+      const price: number = inputValue / outputValue;
 
       // First trace will have best price, so set only on first iteration
       if (trace === simulatedMultiHopAsset1SellData!.traces[0]) {
@@ -341,7 +341,7 @@ export default function TradingPairs() {
           joinLoHi(BigInt(output!.amount!.lo), BigInt(output!.amount!.hi))
         ) / Number(BigInt(10 ** asset2Token.decimals));
 
-      const price: number = outputValue / inputValue;
+      const price: number = inputValue / outputValue;
 
       // First trace will have best price, so set only on first iteration
       if (trace === simulatedSingleHopAsset1SellData!.traces[0]) {
@@ -396,7 +396,7 @@ export default function TradingPairs() {
         ) / Number(BigInt(10 ** asset1Token.decimals));
 
       // ! Important to note that the price is inverted here, so we do input/output instead of output/input
-      const price: number = inputValue / outputValue;
+      const price: number = outputValue / inputValue;
 
       // First trace will have best price, so set only on first iteration
       if (trace === simulatedMultiHopAsset1BuyData!.traces[0]) {
@@ -443,7 +443,7 @@ export default function TradingPairs() {
         ) / Number(BigInt(10 ** asset1Token.decimals));
 
       // ! Important to note that the price is inverted here, so we do input/output instead of output/input
-      const price: number = inputValue / outputValue;
+      const price: number = outputValue / inputValue;
 
       // First trace will have best price, so set only on first iteration
       if (trace === simulatedSingleHopAsset1BuyData!.traces[0]) {
@@ -553,20 +553,21 @@ export default function TradingPairs() {
                       fontSize={"md"}
                     >{`${asset1Token!.symbol} / ${asset2Token!.symbol}`}</Text>
                     {/*
-                    <Text
-                      fontSize={"sm"}
-                      fontFamily="monospace"
-                      paddingBottom={"1em"}
-                    >
-                      Liquidity
-                    </Text>
-                  */}
-                    {/* Note the reversal of names here since buy and sell side is inverted at this stage (i.e. sell side == buy demand side) */}
+                      <Text
+                        fontSize={"sm"}
+                        fontFamily="monospace"
+                        paddingBottom={"1em"}
+                      >
+                        Liquidity
+                      </Text>
+                    */}
                     <DepthChart
-                      buySideData={depthChartMultiHopAsset1SellPoints}
-                      sellSideData={depthChartMultiHopAsset1BuyPoints}
-                      buySideSingleHopData={depthChartSingleHopAsset1SellPoints}
-                      sellSideSingleHopData={depthChartSingleHopAsset1BuyPoints}
+                      buySideData={depthChartMultiHopAsset1BuyPoints}
+                      sellSideData={depthChartMultiHopAsset1SellPoints}
+                      buySideSingleHopData={depthChartSingleHopAsset1BuyPoints}
+                      sellSideSingleHopData={
+                        depthChartSingleHopAsset1SellPoints
+                      }
                       asset1Token={asset1Token!}
                       asset2Token={asset2Token!}
                     />
