@@ -143,27 +143,45 @@ const BuySellChart = ({
     amount: number;
     lpId: string;
     type: string;
-  }> = ({ price, amount, lpId, type }) => (
-    <HStack
-      width="100%"
-      justifyContent="space-between"
-      fontFamily="monospace"
-      fontSize="10px"
-      _hover={{ backgroundColor: "#4A5568", borderRadius: "2px", cursor: "pointer"}}
-      onClick={() => {
-        // Redirect to the LP page
-        window.open(`/lp/${lpId}`, "_blank", "noopener");
-      }}
-    >
-      <Text color={type == "buy" ? "green.500" : "red.500"}>
-        {price.toFixed(6)}
-      </Text>
-      <Spacer />
-      <Text paddingRight="70px" textAlign={"right"}>
-        {amount.toFixed(2)}
-      </Text>
-      <Text>{lpId}</Text>
-    </HStack>
+    maxAmount: number;
+  }> = ({ price, amount, lpId, type, maxAmount }) => (
+    <Box position="relative" width="100%">
+      <Box
+        position="absolute"
+        width={`${(amount / maxAmount) * 100}%`} // Calculate width as a percentage of the maxAmount
+        height="100%"
+        backgroundColor={
+          type === "buy" ? "rgba(0, 255, 0, 0.3)" : "rgba(255, 0, 0, 0.3)"
+        }
+        right="0"
+      />
+      <HStack
+        width="100%"
+        justifyContent="space-between"
+        fontFamily="monospace"
+        fontSize="10px"
+        zIndex="1"
+        position="relative"
+        _hover={{
+          backgroundColor: "#4A5568",
+          borderRadius: "2px",
+          cursor: "pointer",
+        }}
+        onClick={() => {
+          // Redirect to the LP page
+          window.open(`/lp/${lpId}`, "_blank", "noopener");
+        }}
+      >
+        <Text color={type === "buy" ? "green.500" : "red.500"}>
+          {price.toFixed(6)}
+        </Text>
+        <Spacer />
+        <Text textAlign="right" paddingRight="70px">
+          {amount.toFixed(2)}
+        </Text>
+        <Text>{lpId}</Text>
+      </HStack>
+    </Box>
   );
 
   // Ref for scrolling the sell section
@@ -174,6 +192,15 @@ const BuySellChart = ({
       sellSectionRef.current.scrollTop = sellSectionRef.current.scrollHeight;
     }
   }, [sellSidePositions]); // Trigger on sell position changes
+
+  // Finding the maximum amount for scaling the background widths
+  const maxBuyAmount = Math.max(
+    ...cleaned_buy_side_positions.map((pos) => pos.willingToBuy)
+  );
+  const maxSellAmount = Math.max(
+    ...cleaned_sell_side_positions.map((pos) => pos.willingToSell)
+  );
+  const maxAmount = Math.max(maxBuyAmount, maxSellAmount);
 
   return (
     <VStack
@@ -222,6 +249,7 @@ const BuySellChart = ({
               amount={position.willingToSell}
               lpId={position.lp_id}
               type="sell"
+              maxAmount={maxAmount}
             />
           ))}
         </VStack>
@@ -243,6 +271,7 @@ const BuySellChart = ({
               amount={position.willingToBuy}
               lpId={position.lp_id}
               type="buy"
+              maxAmount={maxAmount}
             />
           ))}
         </VStack>
