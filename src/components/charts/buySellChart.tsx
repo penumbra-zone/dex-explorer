@@ -227,9 +227,9 @@ const BuySellChart = ({
         </VStack>
 
         {/* Divider between buy and sell sections */}
-        <Box width="100%" height="2px" backgroundColor="gray.10000" />
+        <Box width="100%" height="2.5px" backgroundColor="gray.10000" />
         <Box width="100%" height="1px" backgroundColor="gray.200" />
-        <Box width="100%" height="2px" backgroundColor="gray.10000" />
+        <Box width="100%" height="2.5px" backgroundColor="gray.10000" />
         <VStack
           flex={1} // Use flex=1 to ensure that this box also takes up half the space
           width="100%"
