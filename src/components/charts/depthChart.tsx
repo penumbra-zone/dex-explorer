@@ -63,6 +63,46 @@ const DepthChart = ({
     midMarketPrice = buySideSingleHopData[0].x;
   }
 
+  // Update all single hope data to have a point at the same x values as the non single hop data does so that we always can render both points on the tooltip
+  // Make the duplicate point have the same y value as the last point in the single hop data, or 0 if the point before DNE, or dont change if the point is already there
+  function synchronizeData(
+    mainData: { x: number; y: number }[],
+    singleHopData: { x: number; y: number }[]
+  ) {
+    // Create a map from singleHopData for quick lookup
+    const singleHopMap = new Map(
+      singleHopData.map((dataPoint) => [dataPoint.x, dataPoint.y])
+    );
+
+    // This will hold the modified single hop data
+    const newSingleHopData:{ x: number; y: number }[] = [];
+
+    // Track the last y-value seen; default to 0 if no points have been processed
+    let lastKnownY = 0;
+
+    mainData.forEach((dataPoint, index) => {
+      if (!singleHopMap.has(dataPoint.x)) {
+        // If the single hop data does not have the x value, add it with the last known y value
+        newSingleHopData.push({ x: dataPoint.x, y: lastKnownY });
+      } else {
+        // If the single hop data has the x value, add it with the y value
+        newSingleHopData.push({ x: dataPoint.x, y: singleHopMap.get(dataPoint.x)! });
+        lastKnownY = singleHopMap.get(dataPoint.x)!;
+      }
+    });
+
+    return newSingleHopData;
+  }
+
+  buySideSingleHopData = synchronizeData(
+    buySideData,
+    buySideSingleHopData
+  );
+  sellSideSingleHopData = synchronizeData(
+    sellSideData,
+    sellSideSingleHopData
+  );
+
   const chartRef = useRef<any>();
 
   // RenderedSellSide and RenderedBuySide are the data points that will be rendered on the chart
