@@ -348,6 +348,60 @@ const DepthChart = ({
     return roundedNumber;
   }
 
+  const [hoverAnnotation, setHoverAnnotation] = useState<AnnotationOptions>({
+    type: "line",
+    scaleID: "x-axis-0",
+    value: 0,
+    borderColor: "rgba(255, 255, 255, 0.8)",
+    borderWidth: 1,
+    yMin: 0,
+    yMax: 1,
+    xMin: midMarketPrice,
+    xMax: midMarketPrice,
+  });
+  const updateHoverLine = throttle(
+    (chart, xValue) => {
+      // Directly access and manipulate the chart instance
+      if (chart) {
+        // Check if the annotation needs an update to prevent unnecessary changes
+        const annotations = chart.options.plugins.annotation.annotations;
+        const currentXMin = annotations.hoverLine?.xMin;
+
+        if (currentXMin !== xValue) {
+          // Prevent update if the value hasn't changed
+          annotations.hoverLine = {
+            ...annotations.hoverLine,
+            xMin: xValue,
+            xMax: xValue,
+            yMin: 0,
+            yMax: Math.max(
+              ...sellSideData.map((p) => p.y),
+              ...buySideData.map((p) => p.y)
+            ),
+          };
+          chart.update("none"); // Update without animation
+        }
+      }
+    },
+    100,
+    { leading: true, trailing: false }
+  );
+  function roundToNextBigNumber(number: number) {
+    if (number <= 10) return 10; // For numbers less than or equal to 10, round up to 10
+
+    // Calculate the order of magnitude of the number
+    const orderOfMagnitude = Math.floor(Math.log10(number));
+    const divisor = Math.pow(10, orderOfMagnitude);
+
+    // Determine the first digit of the number
+    const firstDigit = Math.floor(number / divisor);
+
+    // Calculate the rounded up number based on the first digit
+    const roundedNumber = (firstDigit + 1) * divisor;
+
+    return roundedNumber;
+  }
+
   const options: ChartOptions<"line"> = {
     scales: {
       x: {
@@ -398,6 +452,44 @@ const DepthChart = ({
         max: maxY,
       },
     },
+    onHover: (event: ChartEvent, chartElement: any, chart: any) => {
+      if (!event.native) return;
+
+      const nativeEvent = event.native as MouseEvent;
+      // Convert the mouse's pixel position to the corresponding value on the chart's x-axis.
+      const mouseXValue = chart.scales.x.getValueForPixel(nativeEvent.offsetX);
+
+      // Hide the hover line if the mouse is not over the chart
+      if (!isMouseOverChart) {
+        updateHoverLine(chart, null);
+        return;
+      }
+
+      // Find the nearest data point to the cursor.
+      let nearestXValue: number | null = null; // Initialize as null to later check if found any point.
+      let minDistance = Infinity;
+
+      chart.data.datasets.forEach(
+        (dataset: { data: { x: number; y: number }[] }) => {
+          dataset.data.forEach((dataPoint) => {
+            const pointXValue =
+              typeof dataPoint === "object" ? dataPoint.x : dataPoint;
+            // Calculate the distance between the cursor and the data point.
+            const distance = Math.abs(mouseXValue - pointXValue);
+            // Check if this data point is closer than the previous closest one.
+            if (distance < minDistance) {
+              nearestXValue = pointXValue;
+              minDistance = distance;
+            }
+          });
+        }
+      );
+
+      if (nearestXValue !== null) {
+        // Update the hover line position.
+        updateHoverLine(chart, nearestXValue);
+      }
+    },
     plugins: {
       tooltip: {
         enabled: true,
@@ -447,7 +539,7 @@ const DepthChart = ({
               backgroundColor: "#6e6eb8",
             },
           },
-          //hoverLine: hoverAnnotation,
+          hoverLine: hoverAnnotation,
         },
       },
     },
