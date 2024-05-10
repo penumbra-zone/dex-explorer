@@ -14,6 +14,7 @@ import { Position } from "@buf/penumbra-zone_penumbra.bufbuild_es/penumbra/core/
 import { fromBaseUnit } from "@/utils/math/hiLo";
 import BigNumber from "bignumber.js";
 import { base64ToUint8Array, uint8ArrayToBase64 } from "@/utils/math/base64";
+import { computePositionId } from "@penumbra-zone/wasm";
 
 interface BuySellprops {
   buySidePositions: Position[];
@@ -74,12 +75,19 @@ const BuySellChart = ({
         direction === 1 ? reserves1.toFixed(6) : reserves2.toFixed(6)
       );
 
+      // TODO: need to remake the position object
+
+      const positionId = computePositionId(
+        position
+      );
+      console.log("positionId", positionId);
+
       return {
         price: price,
         reserves1: Number.parseFloat(reserves1.toFixed(6)),
         reserves2: Number.parseFloat(reserves2.toFixed(6)),
         willingToBuy: willingToBuy,
-        lp_id: "unknown",
+        lp_id: positionId,
         position: position,
       };
     })
@@ -119,17 +127,22 @@ const BuySellChart = ({
       const p: BigNumber = fromBaseUnit(
         BigInt(position!.phi!.component!.p!.lo || 0),
         BigInt(position!.phi!.component!.p!.hi || 0),
-        direction === 1 ? asset2Token.decimals : asset1Token.decimals
+        0//direction === 1 ? asset2Token.decimals : asset1Token.decimals
       );
       const q: BigNumber = fromBaseUnit(
         BigInt(position!.phi!.component!.q!.lo || 0),
         BigInt(position!.phi!.component!.q!.hi || 0),
-        direction === 1 ? asset1Token.decimals : asset2Token.decimals
+        0//direction === 1 ? asset1Token.decimals : asset2Token.decimals
       );
 
       let price = Number.parseFloat(
         direction === 1 ? q.div(p).toFixed(6) : p.div(q).toFixed(6)
       );
+
+      const positionId = computePositionId(
+        position
+      );
+      console.log("positionId", positionId);
 
       const willingToSell =
         Number.parseFloat(
@@ -140,7 +153,7 @@ const BuySellChart = ({
         reserves1: Number.parseFloat(reserves1.toFixed(6)),
         reserves2: Number.parseFloat(reserves2.toFixed(6)),
         willingToSell: willingToSell,
-        lp_id: "unknown",
+        lp_id: positionId,
         position: position,
       };
     })
@@ -220,7 +233,8 @@ const BuySellChart = ({
         <Text textAlign="right" paddingRight="70px">
           {amount.toFixed(2)}
         </Text>
-        <Text>{lpId}</Text>
+        {/* Display only the first 8 and last 4 characters of the LP ID */}
+        <Text>{`${lpId.slice(0, 8)}...${lpId.slice(lpId.length - 4)}`}</Text>
       </HStack>
     </Box>
   );
@@ -288,7 +302,7 @@ const BuySellChart = ({
               key={index}
               price={position.price}
               amount={position.willingToSell}
-              lpId={position.lp_id}
+              lpId={"xxxxxxxxxxxxxxxxxxx"}
               type="sell"
               maxAmount={maxAmount}
             />
@@ -319,7 +333,7 @@ const BuySellChart = ({
               key={index}
               price={position.price}
               amount={position.willingToBuy}
-              lpId={position.lp_id}
+              lpId={"xxxxxxxxxxxxxxxxxxx"}
               type="buy"
               maxAmount={maxAmount}
             />
