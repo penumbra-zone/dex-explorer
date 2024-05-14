@@ -4,7 +4,6 @@ import { AssetId, AssetImage, DenomUnit, Metadata } from "@buf/penumbra-zone_pen
 import { ChainRegistryClient, Registry } from '@penumbra-labs/registry';
 import { Token } from "./token";
 
-// TODO: getRegistry/fetchAllTokenAssets/fetchTokenAsset should be made async
 const getRegistry = (): Registry => {
   const chainId = testnetConstants.chainId
   const registryClient = new ChainRegistryClient()
@@ -16,7 +15,7 @@ export const fetchAllTokenAssets = (): Token[] => {
   const metadata = registry.getAllAssets();
   const tokens : Token[] = []
   metadata.forEach((x) => {
-    // Filter out assets with no assetId and "Delegation" assets
+    // Filter out assets with no assetId and "Delegation" assets -- need to check this
     if (x.penumbraAssetId && !x.display.startsWith("delegation_")) {
       const displayParts = x.display.split('/')
       tokens.push(
@@ -51,14 +50,16 @@ export const fetchTokenAsset = (tokenId: Uint8Array | string): Token | undefined
 
 export const imagePathFromAssetImages = (assetImages: AssetImage[]): string | undefined => {
   // Take first png/svg from first AssetImage
-  var imagePath: string = ""
+  var imagePath: string | undefined = undefined
   assetImages.forEach((x) => {
-    imagePath = x.png ? x.png : x.svg ? x.svg : imagePath;
-    if (imagePath.length !== 0) {
-      return imagePath
+    if (x.png.length > 0) {
+      imagePath = x.png
+    }
+    else if (x.svg.length > 0) {
+      imagePath = x.svg
     }
   })
-  return undefined
+  return imagePath
 }
 
 export const decimalsFromDenomUnits = (denomUnits: DenomUnit[]): number => {
@@ -70,8 +71,4 @@ export const decimalsFromDenomUnits = (denomUnits: DenomUnit[]): number => {
     }
   })
   return decimals
-}
-
-export const imagePathFromAssetImage = (assetImage: AssetImage): string | undefined => {
-  return assetImage.png ? assetImage.png : assetImage.svg ? assetImage.svg : undefined
 }
