@@ -1,6 +1,5 @@
 // pages/api/lp/positionsByPrice/[...params].ts
 import { testnetConstants } from "../../../../constants/configConstants";
-import { tokenConfigMapOnSymbol } from "@/constants/tokenConstants";
 import { NextApiRequest, NextApiResponse } from "next";
 import { LiquidityPositionQuerier } from "@/utils/protos/services/dex/liquidity-positions";
 import {
@@ -8,6 +7,7 @@ import {
   Position,
 } from "@buf/penumbra-zone_penumbra.bufbuild_es/penumbra/core/component/dex/v1/dex_pb";
 import { base64ToUint8Array } from "@/utils/math/base64";
+import { fetchAllTokenAssets } from "@/utils/token/tokenFetch";
 
 export default async function positionsByPriceHandler(
   req: NextApiRequest,
@@ -25,8 +25,13 @@ export default async function positionsByPriceHandler(
     }
 
     // Get token 1 & 2
-    const asset1Token = tokenConfigMapOnSymbol[token1];
-    const asset2Token = tokenConfigMapOnSymbol[token2];
+    const tokenAssets = fetchAllTokenAssets();
+    const asset1Token = tokenAssets.find((x) => x.display === token1);
+    const asset2Token = tokenAssets.find((x) => x.display === token2);
+
+    if (!asset1Token || !asset2Token) {
+      return res.status(400).json({ error: "Could not find requested token in registry" });
+    }
 
     const lp_querier = new LiquidityPositionQuerier({
       grpcEndpoint: testnetConstants.grpcEndpoint,

@@ -4,8 +4,6 @@ import { Avatar, HStack, VStack } from "@chakra-ui/react";
 import { testnetConstants } from "@/constants/configConstants";
 import { Text } from "@chakra-ui/react";
 import { LiquidityPositionEvent } from "@/utils/indexer/types/lps";
-import { Token } from "@/constants/tokenConstants";
-import { fetchToken } from "@/utils/token/tokenFetch";
 import { fromBaseUnit } from "@/utils/math/hiLo";
 import { base64ToUint8Array } from "@/utils/math/base64";
 

@@ -9,11 +9,11 @@ import {
   useBreakpoint,
   VStack,
 } from "@chakra-ui/react";
-import { Token } from "@/constants/tokenConstants";
 import { Position } from "@buf/penumbra-zone_penumbra.bufbuild_es/penumbra/core/component/dex/v1/dex_pb";
 import { fromBaseUnit } from "@/utils/math/hiLo";
 import BigNumber from "bignumber.js";
 import { base64ToUint8Array, uint8ArrayToBase64 } from "@/utils/math/base64";
+import { Token } from "@/utils/token/token";
 
 interface BuySellprops {
   buySidePositions: Position[];
