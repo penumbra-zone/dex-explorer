@@ -32,12 +32,12 @@ export default function Pairs() {
                 <HStack justifyContent={'space-evenly'} width={'100%'} paddingTop={'5%'}>
                     <Box>
                     <Select placeholder='Select First Asset' onChange={(e) => handleSelectEvent(e.target.value, 0)}>
-                        {TokenAssets.map((x) => (<option value={x.display}>{x.display}</option>))}
+                        {TokenAssets.map((x) => (<option key={x.display} value={x.display}>{x.display}</option>))}
                     </Select>
                     </Box>
                     <Box>
                     <Select placeholder='Select Second Asset' onChange={(e) => handleSelectEvent(e.target.value, 1)}>
-                        {TokenAssets.map((x) => (<option value={x.display}>{x.display}</option>))}
+                        {TokenAssets.map((x) => (<option key={x.display} value={x.display}>{x.display}</option>))}
                     </Select>
                     </Box>
                 </HStack>
