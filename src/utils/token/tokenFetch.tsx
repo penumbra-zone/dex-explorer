@@ -2,7 +2,7 @@ import { uint8ArrayToBase64, base64ToUint8Array } from "../../utils/math/base64"
 import { testnetConstants } from "../../constants/configConstants";
 import { AssetId, AssetImage, DenomUnit, Metadata } from "@buf/penumbra-zone_penumbra.bufbuild_es/penumbra/core/asset/v1/asset_pb";
 import { ChainRegistryClient, Registry } from '@penumbra-labs/registry';
-import { Token } from "./token";
+import { Token } from "../types/token";
 
 const getRegistry = (): Registry => {
   const chainId = testnetConstants.chainId

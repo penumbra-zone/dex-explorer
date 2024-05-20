@@ -9,7 +9,7 @@ import {
 import { fetchTokenAsset } from "@/utils/token/tokenFetch";
 import { fromBaseUnit } from "@/utils/math/hiLo";
 import { base64ToUint8Array } from "@/utils/math/base64";
-import { Token } from "@/utils/token/token";
+import { Token } from "@/utils/types/token";
 
 interface LPAssetViewProps {
   sectionTitle: string;

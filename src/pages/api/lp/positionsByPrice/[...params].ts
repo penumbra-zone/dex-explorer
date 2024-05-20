@@ -1,7 +1,7 @@
 // pages/api/lp/positionsByPrice/[...params].ts
 import { testnetConstants } from "../../../../constants/configConstants";
 import { NextApiRequest, NextApiResponse } from "next";
-import { LiquidityPositionQuerier } from "@/utils/protos/services/dex/liquidity-positions";
+import { DexQueryServiceClient } from "@/utils/protos/services/dex/dex-query-service-client";
 import {
   DirectedTradingPair,
   Position,
@@ -33,7 +33,7 @@ export default async function positionsByPriceHandler(
       return res.status(400).json({ error: "Could not find requested token in registry" });
     }
 
-    const lp_querier = new LiquidityPositionQuerier({
+    const lp_querier = new DexQueryServiceClient({
       grpcEndpoint: testnetConstants.grpcEndpoint,
     });
 

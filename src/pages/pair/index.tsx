@@ -1,15 +1,27 @@
 // pages/pairs.tsx
 
-import React, { useState, useEffect } from 'react';
-import { VStack, HStack, Box, Select, Button, FormControl, useBoolean } from '@chakra-ui/react';
+import { useState, useEffect } from 'react';
+import { VStack, HStack, Box, Select, Button, Avatar } from '@chakra-ui/react';
 import Layout from '@/components/layout';
 import { fetchAllTokenAssets } from '@/utils/token/tokenFetch';
-
-const TokenAssets = fetchAllTokenAssets().sort((a, b) => a.display > b.display ? 1 : b.display > a.display ? -1 : 0);
+import { LoadingSpinner } from '@/components/util/loadingSpinner';
+import { Token } from '@/utils/types/token';
 
 export default function Pairs() {
+    const [isLoading, setIsLoading] = useState(true);
+    const [tokenAssets, setTokenAssets] = useState<Token[]>([]);
+
     const [firstAsset, setFirstAsset] = useState('');
     const [secondAsset, setSecondAsset] = useState('');
+
+    useEffect(() => {
+        setIsLoading(true)
+        const tokens : Token[] = fetchAllTokenAssets().sort((a, b) => a.display > b.display ? 1 : b.display > a.display ? -1 : 0);
+        if (tokens.length > 0 && tokenAssets.length === 0) {
+            setTokenAssets(tokens)
+        }
+        setIsLoading(false)
+    }, [tokenAssets])
 
     const handleSelectEvent = (value : string, assetIndex: number) => {
         if (assetIndex == 0) {
@@ -28,27 +40,35 @@ export default function Pairs() {
 
     return (
         <Layout pageTitle='Pairs'>
-            <VStack height={'100%'} width={'100%'}>
-                <HStack justifyContent={'space-evenly'} width={'100%'} paddingTop={'5%'}>
-                    <Box>
-                    <Select placeholder='Select First Asset' onChange={(e) => handleSelectEvent(e.target.value, 0)}>
-                        {TokenAssets.map((x) => (<option key={x.display} value={x.display}>{x.display}</option>))}
-                    </Select>
+            {isLoading ? (
+              <LoadingSpinner />
+            ) : 
+            <>
+                <VStack height={'100%'} width={'100%'}>
+                    <HStack justifyContent={'space-evenly'} width={'100%'} paddingTop={'5%'}>
+                        <Box borderColor="gray.200">
+                            <VStack>
+                                <Select placeholder='Select First Asset' onChange={(e) => handleSelectEvent(e.target.value, 0)}>
+                                    {tokenAssets.map((x, index) => (<option key={index} value={x.display}>{x.display}</option>))}
+                                </Select>
+                            </VStack>
+                        </Box>
+                        <Box>
+                        <Select placeholder='Select Second Asset' onChange={(e) => handleSelectEvent(e.target.value, 1)}>
+                            {tokenAssets.map((x) => (<option key={x.display} value={x.display}>{x.display}</option>))}
+                        </Select>
+                        </Box>
+                    </HStack>
+                    <Box paddingTop = '10%'>
+                        <form onSubmit={handleSubmitEvent}>
+                            <Button type='submit' variant='outline' colorScheme={'whiteAlpha'} >
+                                See Graph
+                            </Button>
+                        </form>
                     </Box>
-                    <Box>
-                    <Select placeholder='Select Second Asset' onChange={(e) => handleSelectEvent(e.target.value, 1)}>
-                        {TokenAssets.map((x) => (<option key={x.display} value={x.display}>{x.display}</option>))}
-                    </Select>
-                    </Box>
-                </HStack>
-                <Box paddingTop = '10%'>
-                    <form onSubmit={handleSubmitEvent}>
-                        <Button type='submit' variant='outline' colorScheme={'whiteAlpha'} >
-                            See Graph
-                        </Button>
-                    </form>
-                </Box>
-            </VStack>
+                </VStack>
+            </>
+            }
         </Layout>
     )
 }

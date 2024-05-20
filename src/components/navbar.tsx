@@ -15,7 +15,7 @@ const Links = [{'name': 'Trades', 'link': '/trades'}, {'name': 'Pairs', 'link': 
   
 const NavLink = (props: NavLinkProps) => {
     return (
-        <Box as="a" px={2} py={1} href={props.link}>
+        <Box as="a" px={5} py={1} href={props.link}>
             {props.children}
         </Box>
     )
@@ -43,7 +43,7 @@ export const Navbar = () => {
                 </Box>
                 <HStack as={'nav'} spacing={4} display={{base: 'none', md: 'flex'}}>
                     {Links.map((x) => (<NavLink key={x.name} link={x.link}>{x.name}</NavLink>))}
-                    <Flex display={{base: 'none', md: 'flex'}}>
+                    <Flex paddingLeft={10} display={{base: 'none', md: 'flex'}}>
                         <LPSearchBar/>
                     </Flex>
                 </HStack>

@@ -23,7 +23,7 @@ import { base64ToUint8Array } from "@/utils/math/base64";
 import { joinLoHi, splitLoHi } from "@/utils/math/hiLo";
 import DepthChart from "@/components/charts/depthChart";
 import BuySellChart from "@/components/charts/buySellChart";
-import { Token } from "@/utils/token/token";
+import { Token } from "@/utils/types/token";
 import { fetchAllTokenAssets } from "@/utils/token/tokenFetch";
 
 // TODO: Better parameter check

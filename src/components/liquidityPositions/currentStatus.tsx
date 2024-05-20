@@ -6,7 +6,7 @@ import { uint8ArrayToBase64 } from "../../utils/math/base64";
 import { fetchTokenAsset } from "../../utils/token/tokenFetch";
 import BigNumber from "bignumber.js";
 import { CopyIcon } from "@radix-ui/react-icons";
-import { Token } from "@/utils/token/token";
+import { Token } from "@/utils/types/token";
 
 interface CurrentLPStatusProps {
   nftId: string;

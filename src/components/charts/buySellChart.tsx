@@ -3,7 +3,7 @@ import { Box, HStack, Spacer, Text, VStack } from "@chakra-ui/react";
 import { Position } from "@buf/penumbra-zone_penumbra.bufbuild_es/penumbra/core/component/dex/v1/dex_pb";
 import { fromBaseUnit } from "@/utils/math/hiLo";
 import BigNumber from "bignumber.js";
-import { Token } from "@/utils/token/token";
+import { Token } from "@/utils/types/token";
 import { computePositionId } from "@penumbra-zone/wasm/dex"
 
 interface BuySellprops {
@@ -66,7 +66,8 @@ const BuySellChart = ({
       );
 
       // TODO: Fix webpack issues to uncomment this line and use positionId
-      //const positionId = computePositionId(position);
+      // const positionId = computePositionId(position);
+      // console.log(positionId)
 
       return {
         price: price,
