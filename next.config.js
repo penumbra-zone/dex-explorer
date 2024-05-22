@@ -62,8 +62,8 @@ const nextConfig = {
     // Enable WebAssembly and top-level await
     config.experiments = {
       asyncWebAssembly: true,
-     //topLevelAwait: true,
-     // syncWebAssembly: true,
+      topLevelAwait: true,
+      syncWebAssembly: true,
     };
 
     return config;
