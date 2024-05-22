@@ -66,8 +66,8 @@ const BuySellChart = ({
       );
 
       // TODO: Fix webpack issues to uncomment this line and use positionId
-      // const positionId = computePositionId(position);
-      // console.log(positionId)
+      const positionId = computePositionId(position);
+      console.log(positionId)
 
       return {
         price: price,
