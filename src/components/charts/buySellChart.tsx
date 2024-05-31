@@ -5,6 +5,8 @@ import { fromBaseUnit } from "@/utils/math/hiLo";
 import BigNumber from "bignumber.js";
 import { Token } from "@/utils/types/token";
 import dynamic from "next/dynamic";
+import { innerToBech32Address } from "@/utils/math/bech32";
+import { uint8ArrayToBase64 } from "@/utils/math/base64";
 
 interface BuySellprops {
   buySidePositions: Position[];
@@ -70,50 +72,58 @@ export default dynamic(
             direction === 1 ? reserves1.toFixed(6) : reserves2.toFixed(6)
           );
 
-          // there was no actual position type here - it's been incorrectly cast
+          // Reconstruct a 'real' Position object from the JSON object as it is slightly different
           // somewhere up the stack. we need a real Position with toBinary to
-          // enter wasm. this is sufficient as demo.
-          position = Position.fromJson({
+          // enter wasm. this is sufficient for now.
+          console.log("position", position)
+          const protoPosition = Position.fromJson({
             phi: {
               component: {
                 p: {
-                  lo: "1000000",
+                  lo: String(position!.phi!.component!.p!.lo) || "0",
+                  hi: String(position!.phi!.component!.p!.hi) || "0",
                 },
                 q: {
-                  lo: "1000000000000000000",
+                  lo: String(position!.phi!.component!.q!.lo) || "0",
+                  hi: String(position!.phi!.component!.q!.hi) || "0",
                 },
               },
               pair: {
                 asset1: {
-                  inner: "reum7wQmk/owgvGMWMZn/6RFPV24zIKq3W6In/WwZgg=",
+                  inner: position.phi!.pair!.asset1!.inner as unknown as string,
                 },
                 asset2: {
-                  inner: "KeqcLzNx9qSH5+lcJHBB9KNW+YPrBk5dKzvPMiypahA=",
+                  inner: position.phi!.pair!.asset2!.inner as unknown as string,
                 },
               },
             },
-            nonce: "R9i8zYjc3ricK31rr5gIcvMMWynzzJHb5aGqefdeEfA=",
+            nonce: position.nonce as unknown as string,
             state: {
-              state: "POSITION_STATE_ENUM_OPENED",
+              state: position.state?.state.toLocaleString()!,
             },
             reserves: {
               r1: {
-                lo: "154899159324475392",
-                hi: "2",
+                lo: String(position.reserves!.r1!.lo) || 0,
+                hi: String(position.reserves!.r1!.hi) || 0,
               },
-              r2: {},
+              r2: {
+                lo: String(position.reserves!.r2!.lo) || 0,
+                hi: String(position.reserves!.r2!.hi) || 0,
+              },
             },
           });
-          console.log("position", position)
-          const positionId = computePositionId(position);
-          console.log("positionId", positionId);
+          console.log("protoPosition", protoPosition)
+          const positionId = computePositionId(protoPosition);
+          // Convert inner byte array to bech32
+          const innerStr = uint8ArrayToBase64(positionId.inner);
+          const bech32Id = innerToBech32Address(innerStr, "plpid");
 
           return {
             price: price,
             reserves1: Number.parseFloat(reserves1.toFixed(6)),
             reserves2: Number.parseFloat(reserves2.toFixed(6)),
             willingToBuy: willingToBuy,
-            lp_id: "unknown",
+            lp_id: bech32Id,
             position: position,
           };
         })
@@ -165,6 +175,52 @@ export default dynamic(
             direction === 1 ? q.div(p).toFixed(6) : p.div(q).toFixed(6)
           );
 
+          // Reconstruct a 'real' Position object from the JSON object as it is slightly different
+          // somewhere up the stack. we need a real Position with toBinary to
+          // enter wasm. this is sufficient for now.
+          console.log("position", position);
+          const protoPosition = Position.fromJson({
+            phi: {
+              component: {
+                p: {
+                  lo: String(position!.phi!.component!.p!.lo) || "0",
+                  hi: String(position!.phi!.component!.p!.hi) || "0",
+                },
+                q: {
+                  lo: String(position!.phi!.component!.q!.lo) || "0",
+                  hi: String(position!.phi!.component!.q!.hi) || "0",
+                },
+              },
+              pair: {
+                asset1: {
+                  inner: position.phi!.pair!.asset1!.inner as unknown as string,
+                },
+                asset2: {
+                  inner: position.phi!.pair!.asset2!.inner as unknown as string,
+                },
+              },
+            },
+            nonce: position.nonce as unknown as string,
+            state: {
+              state: position.state?.state.toLocaleString()!,
+            },
+            reserves: {
+              r1: {
+                lo: String(position.reserves!.r1!.lo) || 0,
+                hi: String(position.reserves!.r1!.hi) || 0,
+              },
+              r2: {
+                lo: String(position.reserves!.r2!.lo) || 0,
+                hi: String(position.reserves!.r2!.hi) || 0,
+              },
+            },
+          });
+          console.log("protoPosition", protoPosition);
+          const positionId = computePositionId(protoPosition);
+          // Convert inner byte array to bech32
+          const innerStr = uint8ArrayToBase64(positionId.inner);
+          const bech32Id = innerToBech32Address(innerStr, "plpid");
+
           const willingToSell =
             Number.parseFloat(
               direction === 1 ? reserves2.toFixed(6) : reserves1.toFixed(6)
@@ -174,7 +230,7 @@ export default dynamic(
             reserves1: Number.parseFloat(reserves1.toFixed(6)),
             reserves2: Number.parseFloat(reserves2.toFixed(6)),
             willingToSell: willingToSell,
-            lp_id: "unknown",
+            lp_id: bech32Id,
             position: position,
           };
         })
