@@ -310,7 +310,8 @@ export default dynamic(
             <Text textAlign="right" paddingRight="70px">
               {amount.toFixed(2)}
             </Text>
-            <Text>{lpId}</Text>
+            {/* show only first and last 6 chars */}
+            <Text>{`${lpId.slice(0, 6)}...${lpId.slice(-6)}`}</Text>
           </HStack>
         </Box>
       );
