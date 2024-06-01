@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import { Box, HStack, Spacer, Text, VStack } from "@chakra-ui/react";
 import { Position } from "@buf/penumbra-zone_penumbra.bufbuild_es/penumbra/core/component/dex/v1/dex_pb";
-import { fromBaseUnit } from "@/utils/math/hiLo";
+import { fromBaseUnit, splitLoHi } from "@/utils/math/hiLo";
 import BigNumber from "bignumber.js";
 import { Token } from "@/utils/types/token";
 import dynamic from "next/dynamic";
@@ -87,6 +87,7 @@ export default dynamic(
                   lo: String(position!.phi!.component!.q!.lo) || "0",
                   hi: String(position!.phi!.component!.q!.hi) || "0",
                 },
+                fee: position.phi!.component!.fee as unknown as string,
               },
               pair: {
                 asset1: {
@@ -190,6 +191,7 @@ export default dynamic(
                   lo: String(position!.phi!.component!.q!.lo) || "0",
                   hi: String(position!.phi!.component!.q!.hi) || "0",
                 },
+                fee: position.phi!.component!.fee as unknown as string,
               },
               pair: {
                 asset1: {
