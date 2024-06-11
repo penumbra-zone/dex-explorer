@@ -22,6 +22,7 @@ import { LoadingSpinner } from "../../components/util/loadingSpinner";
 import { base64ToUint8Array } from "@/utils/math/base64";
 import { joinLoHi, splitLoHi } from "@/utils/math/hiLo";
 import DepthChart from "@/components/charts/depthChart";
+import OHLCChart from "@/components/charts/ohlcChart";
 import BuySellChart from "@/components/charts/buySellChart";
 import { Token } from "@/utils/types/token";
 import { fetchAllTokenAssets } from "@/utils/token/tokenFetch";
@@ -616,8 +617,12 @@ export default function TradingPairs() {
                         {` / ${asset2Token!.display}`}
                       </Text>
                     </HStack>
-
+                    <OHLCChart
+                      asset1Token={asset1Token!}
+                      asset2Token={asset2Token!}
+                    />
                     {/* Note the reversal of names here since buy and sell side is inverted at this stage (i.e. sell side == buy demand side) */}
+      {/*
                     <DepthChart
                       buySideData={depthChartMultiHopAsset1SellPoints}
                       sellSideData={depthChartMultiHopAsset1BuyPoints}
@@ -626,6 +631,7 @@ export default function TradingPairs() {
                       asset1Token={asset1Token!}
                       asset2Token={asset2Token!}
                     />
+      */}
                   </>
                 </VStack>
                 <VStack width="60em" height="650px">

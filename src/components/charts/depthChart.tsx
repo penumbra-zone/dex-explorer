@@ -1,3 +1,5 @@
+// src/components/charts/depthChart.tsx
+
 import React, { useRef, useEffect, useState } from "react";
 import {
   ChartEvent,
@@ -632,6 +634,7 @@ const DepthChart = ({
 
   return (
     <>
+      // ! Width should be the same as that of the OHLCChart
       <VStack height="600px" width={"60em"}>
         <div
           style={{ height: "100%", width: "100%" }}
