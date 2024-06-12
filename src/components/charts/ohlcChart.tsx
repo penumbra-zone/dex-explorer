@@ -1,31 +1,12 @@
 // src/components/charts/ohlcChart.tsx
 
 import React, { useEffect, useState } from "react";
-import { VStack } from "@chakra-ui/react";
+import { VStack, Text } from "@chakra-ui/react";
 import { Token } from "@/utils/types/token";
 import { LoadingSpinner } from "../util/loadingSpinner";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  TimeScale,
-  Tooltip,
-  Legend,
-  ChartOptions,
-} from "chart.js";
-import { Chart } from "react-chartjs-2";
-import "chartjs-adapter-date-fns";
-import { CandlestickController, CandlestickElement } from "chartjs-chart-financial";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  TimeScale,
-  Tooltip,
-  Legend,
-  CandlestickController,
-  CandlestickElement
-);
+import ReactECharts from "echarts-for-react";
+import { format } from "date-fns";
+import { set } from "lodash";
 
 interface OHLCChartProps {
   asset1Token: Token;
@@ -38,6 +19,9 @@ const OHLCChart = ({ asset1Token, asset2Token }: OHLCChartProps) => {
   const [ohlcData, setOHLCData] = useState([]); // [{open, high, low, close, directVolume, swapVolume, height}]
   const [blockToTimestamp, setBlockToTimestamp] = useState({}); // {height: timestamp}
   const [error, setError] = useState<string | undefined>(undefined); // [error message]
+  const [chartData, setChartData] = useState<
+    [string, number, number, number, number][]
+  >([]); // [[date, open, close, low, high]]
 
   // TODO: Decide how to set the start block and limit
   const startBlock = 0;
@@ -61,6 +45,11 @@ const OHLCChart = ({ asset1Token, asset2Token }: OHLCChartProps) => {
           throw new Error("Error fetching data");
         }
         console.log("ohlcData", ohlcDataResponse);
+
+        if (ohlcDataResponse.length === 0) {
+          setError("No OHLC data found");
+        }
+
         setOHLCData(ohlcDataResponse);
         setIsOHLCDataLoading(false);
       })
@@ -83,13 +72,6 @@ const OHLCChart = ({ asset1Token, asset2Token }: OHLCChartProps) => {
     ) {
       return;
     }
-    //log all state
-    console.log("ohlcData", ohlcData);
-    console.log("blockToTimestamp", blockToTimestamp);
-    console.log("isLoading", isLoading);
-    console.log("isOHLCDataLoading", isOHLCDataLoading);
-    console.log("isTimestampsLoading", isTimestampsLoading);
-    console.log("error", error);
 
     // Process the data and make a list of OHLC heights
     // format needed is '/api/blockTimestamps/{height1}/{height2}/{height3}'
@@ -118,9 +100,18 @@ const OHLCChart = ({ asset1Token, asset2Token }: OHLCChartProps) => {
         }
 
         console.log("Timestamps: ", timestampsForHeightsResponse);
-        setBlockToTimestamp(timestampsForHeightsResponse);
+
+        // Convert to a dictionary with height as key and timestamp as value
+        const timestampMapping: { [key: string]: string } = {};
+        timestampsForHeightsResponse.forEach(
+          (item: { height: string; created_at: string }) => {
+            timestampMapping[item.height] = item.created_at;
+          }
+        );
+        console.log("Timestamp mapping: ", timestampMapping);
+
+        setBlockToTimestamp(timestampMapping);
         setIsTimestampsLoading(false);
-        setIsLoading(false);
       })
       .catch((error) => {
         console.error("Error fetching data", error);
@@ -130,54 +121,145 @@ const OHLCChart = ({ asset1Token, asset2Token }: OHLCChartProps) => {
       });
   }, [ohlcData, isOHLCDataLoading]);
 
-  // Prepare data for the chart
-  const chartData = {
-    datasets: [
+  useEffect(() => {
+    if (isOHLCDataLoading || isTimestampsLoading) {
+      return;
+    }
+
+    // Validate and format date
+    const formatTimestamp = (timestamp: string) => {
+      const date = new Date(timestamp);
+      return isNaN(date.getTime()) ? null : format(date, "yyyy-MM-dd HH:mm:ss");
+    };
+
+    // Prepare data for the chart
+    // blockToTimestamp is a dictionary with height as key and timestamp as value
+    const preparedData = ohlcData
+      .map((ohlc) => {
+        const formattedDate = formatTimestamp(blockToTimestamp[ohlc["height"]]);
+        if (!formattedDate) {
+          console.error(
+            `Invalid timestamp for height ${ohlc["height"]}: ${
+              blockToTimestamp[ohlc["height"]]
+            }`
+          );
+          return null;
+        }
+        return [
+          formattedDate,
+          (ohlc["open"] as number).toFixed(6),
+          (ohlc["close"] as number).toFixed(6),
+          (ohlc["low"] as number).toFixed(6),
+          (ohlc["high"] as number).toFixed(6),
+        ];
+      })
+      .filter((item) => item !== null) as [
+      string,
+      number,
+      number,
+      number,
+      number
+    ][];
+
+    console.log("Prepared data: ", preparedData);
+
+    setChartData(preparedData);
+
+    setIsLoading(false);
+  }, [ohlcData, blockToTimestamp, isOHLCDataLoading, isTimestampsLoading]);
+
+  const options = {
+    xAxis: {
+      type: "category",
+      data: chartData.map((item) => item[0]),
+      scale: true,
+      boundaryGap: true, // Add this to ensure the zoom works correctly
+    },
+    yAxis: {
+      scale: true,
+    },
+    series: [
       {
-        label: "OHLC",
-        data: ohlcData.map((ohlc) => ({
-          x: blockToTimestamp[ohlc["height"]],
-          o: ohlc["open"],
-          h: ohlc["high"],
-          l: ohlc["low"],
-          c: ohlc["close"],
-        })),
-        borderColor: "rgba(75, 192, 192, 1)",
-        backgroundColor: "rgba(75, 192, 192, 0.2)",
-        borderWidth: 1,
+        type: "candlestick",
+        data: chartData.map((item) => [item[1], item[2], item[3], item[4]]),
+        itemStyle: {
+          color: "rgba(51, 255, 87, 1)", // Neon Green
+          color0: "rgba(255, 73, 108, 1)", // Neon Red
+          borderColor: "rgba(51, 255, 87, 1)", // Neon Green
+          borderColor0: "rgba(255, 73, 108, 1)", // Neon Red
+        },
+      },
+    ],
+    tooltip: {
+      trigger: "axis",
+      axisPointer: {
+        type: "cross",
+      },
+      formatter: (params: any) => {
+        const [date, open, close, low, high] = params[0].data;
+        return `
+        <strong>Open:</strong> ${open}<br/>
+        <strong>Close:</strong> ${close}<br/>
+        <strong>Low:</strong> ${low}<br/>
+        <strong>High:</strong> ${high}<br/>
+      `;
+      },
+    },
+    dataZoom: [
+      {
+        type: "inside",
+        xAxisIndex: [0],
+        start: 0,
+        end: 100,
+      },
+      {
+        type: "slider",
+        xAxisIndex: [0],
+        start: 0,
+        end: 100,
+        backgroundColor: "rgba(0, 0, 0, 0)", // Transparent background
+        dataBackground: {
+          areaStyle: {
+            color: "rgba(255, 255, 255, 0.1)", // Light grey background
+          },
+          lineStyle: {
+            color: "rgba(255, 255, 255, 0.3)", // Light grey line
+          },
+        },
+        fillerColor: "rgba(255, 255, 255, 0.2)", // Slightly brighter fill color
+        borderColor: "rgba(255, 255, 255, 0.2)", // Light grey border
+        handleSize: "100%", // Size of the handle
+        handleStyle: {
+          color: "rgba(255, 255, 255, 0.6)", // Light grey handle
+          borderColor: "rgba(0, 0, 0, 0.5)", // Slightly darker border
+        },
+        textStyle: {
+          color: "rgba(255, 255, 255, 0.6)", // Light grey text
+        },
       },
     ],
   };
 
-  const chartOptions: ChartOptions<"candlestick"> = {
-    scales: {
-      x: {
-        type: "time",
-        time: {
-          unit: "day",
-        },
-      },
-      y: {
-        beginAtZero: false,
-      },
-    },
-  };
+  // ! Width should be the same as that of the DepthChart
 
   return (
-    // ! Width should be the same as that of the DepthChart isLoading ? (
-
     <VStack height="600px" width={"60em"}>
       {isLoading && error === undefined ? (
         <LoadingSpinner />
       ) : error !== undefined ? (
-        <div>
-          <h1>Error: {error}</h1>
-        </div>
+        <VStack
+          height="600px"
+          width={"60em"}
+          justifyContent="center"
+          alignItems="center"
+        >
+          <Text>{`${error}`}</Text>
+        </VStack>
       ) : (
-        <div>
-          <h1>OHLC Chart</h1>
-          <Chart type="candlestick" data={chartData} options={chartOptions} />
-        </div>
+        <ReactECharts
+          option={options}
+          style={{ height: "600px", width: "100%" }}
+        />
       )}
     </VStack>
   );
