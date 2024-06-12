@@ -33,6 +33,8 @@
     "bech32": "^2.0.0",
     "bignumber.js": "^9.1.2",
     "chart.js": "^4.4.2",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "chartjs-chart-financial": "^0.2.1",
     "chartjs-plugin-annotation": "^3.0.1",
     "chartjs-plugin-zoom": "^2.0.1",
     "framer-motion": "^11.0.5",

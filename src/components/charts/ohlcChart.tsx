@@ -4,13 +4,33 @@ import React, { useEffect, useState } from "react";
 import { VStack } from "@chakra-ui/react";
 import { Token } from "@/utils/types/token";
 import { LoadingSpinner } from "../util/loadingSpinner";
-import { set } from "lodash";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  TimeScale,
+  Tooltip,
+  Legend,
+  ChartOptions,
+} from "chart.js";
+import { Chart } from "react-chartjs-2";
+import "chartjs-adapter-date-fns";
+import { CandlestickController, CandlestickElement } from "chartjs-chart-financial";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  TimeScale,
+  Tooltip,
+  Legend,
+  CandlestickController,
+  CandlestickElement
+);
 
 interface OHLCChartProps {
   asset1Token: Token;
   asset2Token: Token;
 }
-
 const OHLCChart = ({ asset1Token, asset2Token }: OHLCChartProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isOHLCDataLoading, setIsOHLCDataLoading] = useState(true);
@@ -55,14 +75,26 @@ const OHLCChart = ({ asset1Token, asset2Token }: OHLCChartProps) => {
   }, [asset1Token, asset2Token]);
 
   useEffect(() => {
-    if (!ohlcData || ohlcData.length === 0 || isOHLCDataLoading) {
+    if (
+      !ohlcData ||
+      ohlcData.length === 0 ||
+      (isOHLCDataLoading && error === undefined) ||
+      !isTimestampsLoading
+    ) {
       return;
     }
+    //log all state
+    console.log("ohlcData", ohlcData);
+    console.log("blockToTimestamp", blockToTimestamp);
+    console.log("isLoading", isLoading);
+    console.log("isOHLCDataLoading", isOHLCDataLoading);
+    console.log("isTimestampsLoading", isTimestampsLoading);
+    console.log("error", error);
 
     // Process the data and make a list of OHLC heights
     // format needed is '/api/blockTimestamps/{height1}/{height2}/{height3}'
     const timestampsForHeights = fetch(
-      `/api/blockTimestamps/${ohlcData.map((ohlc) => ohlc['height']).join("/")}`
+      `/api/blockTimestamps/${ohlcData.map((ohlc) => ohlc["height"]).join("/")}`
     ).then((res) => res.json());
 
     Promise.all([timestampsForHeights])
@@ -75,23 +107,61 @@ const OHLCChart = ({ asset1Token, asset2Token }: OHLCChartProps) => {
             `Error fetching data: ${timestampsForHeightsResponse}`
           );
         }
+
+        // If we have less timestamps than heights, we need to throw an error
+        if (
+          Object.keys(timestampsForHeightsResponse).length < ohlcData.length
+        ) {
+          throw new Error(
+            `Error fetching data: ${timestampsForHeightsResponse}`
+          );
+        }
+
         console.log("Timestamps: ", timestampsForHeightsResponse);
         setBlockToTimestamp(timestampsForHeightsResponse);
-
         setIsTimestampsLoading(false);
+        setIsLoading(false);
       })
       .catch((error) => {
         console.error("Error fetching data", error);
-        setError("Error fetching timestamps for heights");
+        setError("Error fetching timestamps for heights: " + error);
         setIsLoading(false);
         setIsTimestampsLoading(false);
       });
   }, [ohlcData, isOHLCDataLoading]);
 
+  // Prepare data for the chart
+  const chartData = {
+    datasets: [
+      {
+        label: "OHLC",
+        data: ohlcData.map((ohlc) => ({
+          x: blockToTimestamp[ohlc["height"]],
+          o: ohlc["open"],
+          h: ohlc["high"],
+          l: ohlc["low"],
+          c: ohlc["close"],
+        })),
+        borderColor: "rgba(75, 192, 192, 1)",
+        backgroundColor: "rgba(75, 192, 192, 0.2)",
+        borderWidth: 1,
+      },
+    ],
+  };
 
-  // Create an ohlc chart using the data once it is loaded
-   
-
+  const chartOptions: ChartOptions<"candlestick"> = {
+    scales: {
+      x: {
+        type: "time",
+        time: {
+          unit: "day",
+        },
+      },
+      y: {
+        beginAtZero: false,
+      },
+    },
+  };
 
   return (
     // ! Width should be the same as that of the DepthChart isLoading ? (
@@ -106,6 +176,7 @@ const OHLCChart = ({ asset1Token, asset2Token }: OHLCChartProps) => {
       ) : (
         <div>
           <h1>OHLC Chart</h1>
+          <Chart type="candlestick" data={chartData} options={chartOptions} />
         </div>
       )}
     </VStack>
