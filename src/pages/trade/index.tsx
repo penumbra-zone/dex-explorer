@@ -1,5 +1,3 @@
-// pages/tradingPairs/index.tsx
-
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Layout from "../../components/layout";
@@ -9,6 +7,7 @@ import {
   Spinner,
   Center,
   Box,
+  Flex,
   HStack,
   Input,
   Button,
@@ -48,6 +47,8 @@ export default function TradingPairs() {
   useEffect(() => {
     const params = router.query as { params: string[] | string | undefined };
     if (!params.params) {
+      setToken1Symbol('penumbra');
+      setToken2Symbol('usdc');
       return;
     }
 
@@ -597,159 +598,53 @@ export default function TradingPairs() {
   ]);
 
   return (
-    <Layout pageTitle={`Trading View`}>
-      {isLoading || isChartLoading || isLPsLoading ? (
-        <Center height="100vh">
-          <LoadingSpinner />
-        </Center>
-      ) : !isChartLoading && !error ? (
-        <Center minHeight="100vh" paddingY={4}>
-          <VStack
-            width={["95vw", "95vw", "95vw", "95vw", "95vw", "85vw"]}
-            spacing={4}
-          >
-            <Box className="box-card" padding="1.5em" width="100%">
-              <Stack
-                direction={[
-                  "column",
-                  "column",
-                  "column",
-                  "column",
-                  "column",
-                  "row",
-                ]}
-                spacing={8}
-                width="100%"
-                alignItems="flex-start"
-              >
-                <VStack
-                  flex={1}
-                  width={[
-                    "100%",
-                    "100%",
-                    "100%",
-                    "100%",
-                    "100%",
-                    "calc(100% - 400px)",
-                  ]}
-                  position="relative"
-                  alignItems="center"
-                >
-                  <Box
-                    width="100%"
-                    position="relative"
-                    paddingTop={[0, 0, "1.5em"]}
-                  >
-                    <ButtonGroup
-                      size="xs"
-                      isAttached
-                      alignContent={"left"}
-                      position={["static", "static", "absolute"]}
-                      top={[0, 0, 0]}
-                      left={[0, 0, -1]}
-                      zIndex={1}
-                      borderRadius={10}
-                      outline={"2px solid var(--complimentary-background)"}
-                      marginBottom={[2, 2, 0]}
-                    >
-                      <Button
-                        borderRadius={10}
-                        onClick={() => setActiveChart("Depth")}
-                        colorScheme={
-                          activeChart === "Depth"
-                            ? "purple"
-                            : "var(--charcoal-tertiary-blended)"
-                        }
-                      >
-                        Depth
-                      </Button>
-                      <Button
-                        borderRadius={10}
-                        onClick={() => setActiveChart("OHLC")}
-                        colorScheme={
-                          activeChart === "OHLC"
-                            ? "purple"
-                            : "var(--charcoal-tertiary-blended)"
-                        }
-                      >
-                        Candlestick
-                      </Button>
-                    </ButtonGroup>
-                    <HStack
-                      justifyContent="center"
-                      width="100%"
-                      paddingBottom={"2px"}
-                    >
-                      <Text
-                        fontFamily="monospace"
-                        fontSize={"md"}
-                        fontWeight={"bold"}
-                      >
-                        {`${asset1Token!.display}`}
-                      </Text>
-                      <Text fontSize={"sm"} fontFamily="monospace">
-                        {` / ${asset2Token!.display}`}
-                      </Text>
-                    </HStack>
-                  </Box>
-                  <Box width="100%">
-                    {activeChart === "OHLC" ? (
-                      <OHLCChart
-                        asset1Token={asset1Token!}
-                        asset2Token={asset2Token!}
-                      />
-                    ) : (
-                      <DepthChart
-                        buySideData={depthChartMultiHopAsset1SellPoints}
-                        sellSideData={depthChartMultiHopAsset1BuyPoints}
-                        buySideSingleHopData={
-                          depthChartSingleHopAsset1SellPoints
-                        }
-                        sellSideSingleHopData={
-                          depthChartSingleHopAsset1BuyPoints
-                        }
-                        asset1Token={asset1Token!}
-                        asset2Token={asset2Token!}
-                      />
-                    )}
-                  </Box>
-                </VStack>
-                <VStack
-                  width={["100%", "100%", "100%", "100%", "100%", "400px"]}
-                  height="auto"
-                  alignItems="center"
-                >
-                  <Text
-                    fontFamily={"monospace"}
-                    fontSize="xs"
-                    textAlign="center"
-                    width="100%"
-                  >
-                    Direct Liq Order Book
-                  </Text>
-                  <Box
-                    width="100%"
-                    outline={"2px solid var(--complimentary-background)"}
-                    borderRadius={"10px"}
-                    height={["600px", "600px", "650px"]}
-                  >
-                    <BuySellChart
-                      buySidePositions={lpsSellSide}
-                      sellSidePositions={lpsBuySide}
-                      asset1Token={asset1Token!}
-                      asset2Token={asset2Token!}
-                    />
-                  </Box>
-                </VStack>
-              </Stack>
+    <Layout pageTitle={`Trade`}>
+      <Box p={8}>
+        <Flex gap={6}>
+          <Box flexGrow={1}>
+            <Box className="box-card" w="100%" p={6} mb={6}>
+              <Text fontWeight={600} fontSize={20} mb={4}>
+                {asset1Token?.display}/{asset2Token?.display}
+                {asset1Token?.symbol}/{asset2Token?.symbol}
+              </Text>
+              <OHLCChart
+                asset1Token={asset1Token!}
+                asset2Token={asset2Token!}
+              />
             </Box>
-          </VStack>
-        </Center>
-      ) : !isLoading ? (
-        <Center height="100vh">
-          <Text>{`${error}`}</Text>
-        </Center>
-      ) : null}
+            <Box className="box-card" w="100%" p={6}>
+              <Text fontWeight={600} fontSize={20} mb={4}>
+                Depth Chart
+              </Text>
+              {asset1Token && asset2Token && (
+                <DepthChart
+                  buySideData={depthChartMultiHopAsset1SellPoints}
+                  sellSideData={depthChartMultiHopAsset1BuyPoints}
+                  buySideSingleHopData={
+                    depthChartSingleHopAsset1SellPoints
+                  }
+                  sellSideSingleHopData={
+                    depthChartSingleHopAsset1BuyPoints
+                  }
+                  asset1Token={asset1Token!}
+                  asset2Token={asset2Token!}
+                />
+              )}
+            </Box>
+          </Box>
+          <Box className="box-card" w="540px" flexShrink={0} p={6}>
+            <Text fontWeight={600} fontSize={20} mb={4}>
+              Order Book
+            </Text>
+            <BuySellChart
+              buySidePositions={lpsSellSide}
+              sellSidePositions={lpsBuySide}
+              asset1Token={asset1Token!}
+              asset2Token={asset2Token!}
+            />
+          </Box>
+        </Flex>
+      </Box>
     </Layout>
   );
 }

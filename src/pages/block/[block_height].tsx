@@ -464,7 +464,7 @@ export default function Block() {
 
     return (
       <Box
-        className="neon-box"
+        className="box-card"
         position="relative"
         padding="2%"
         paddingTop="2%"

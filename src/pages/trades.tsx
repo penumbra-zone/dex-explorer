@@ -303,7 +303,7 @@ export default function Trades() {
             top={`${lineTop}`}
             height={`${lineHeight}`}
             width={".1em"}
-            className="neon-box"
+            className="box-card"
             backgroundColor="var(--complimentary-background)"
             id="vertical-line"
           />

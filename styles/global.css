@@ -79,17 +79,10 @@ img {
   height: auto;
 }
 
-.neon-box {
-  outline: 0.15em solid var(--complimentary-background);
+.box-card {
   border-radius: 0.5em;
   width: fit-content;
   background: var(--charcoal);
-  box-shadow: 0 0 5px var(--complimentary-background),
-    /* Smaller glow */ 0 0 10px var(--complimentary-background),
-    /* Smaller glow */ 0 0 15px var(--complimentary-background),
-    /* Subtle bright glow */ 0 0 20px var(--complimentary-background),
-    /* Subtle bright glow */ 0 0 25px var(--complimentary-background),
-    /* Subtle bright glow */ 0 0 30px var(--complimentary-background); 
 }
 
 .neon-spinner {

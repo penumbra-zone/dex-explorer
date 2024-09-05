@@ -23,7 +23,7 @@ export const BlockSummary = ({ blockHeight, blockSummary }: BlockSummaryProps) =
           />
         </VStack>
         <Box
-          className="neon-box"
+          className="box-card"
           width={{ base: "calc(100vw - 2em)", md: "35em" }}
           height="14em"
           padding="2em"
