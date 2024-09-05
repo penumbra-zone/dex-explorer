@@ -1,10 +1,8 @@
 // pages/trades.tsx
 
 import {
-  VStack,
   Text,
   Box,
-  HStack,
   FormLabel,
   NumberInput,
   FormControl,
@@ -17,7 +15,7 @@ import { BlockInfo, LiquidityPositionEvent } from "@/utils/indexer/types/lps";
 import { SwapExecutionWithBlockHeight } from "@/utils/protos/types/DexQueryServiceClientInterface";
 import { BlockInfoMap, BlockSummaryMap } from "@/utils/types/block";
 
-export default function Trades() {
+export default function Blocks() {
   // Go back hardcoded N blocks
   const NUMBER_BLOCKS_IN_TIMELINE = 50;
 
@@ -247,8 +245,8 @@ export default function Trades() {
                 placeholder="Enter block height"
                 value={userRequestedBlockEndHeight}
                 justifyContent={"center"}
-                // backgroundColor="rgba(0,0,0,.2)"
-                backgroundColor="var(--body-background)"
+                backgroundColor="rgba(0,0,0,1)"
+                // backgroundColor="var(--body-background)"
                 onChange={(e) =>
                   setUserRequestedBlockEndHeight(parseInt(e.target.value))
                 }

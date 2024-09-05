@@ -13,8 +13,10 @@ export const BlockSummary = ({ blockHeight, blockSummary }: BlockSummaryProps) =
     <Flex
       w="100%"
       className="box-card"
-      borderTop="1px solid rgba(255, 255, 255, .15)"
-      p={6}
+      backgroundColor="var(--charcoal-tertiary)"
+      borderRadius="10px"
+      padding={6}
+      mb={6}
     >
       <Box w="50%">
         <Text as="a" href={"/block/" + blockHeight} fontSize="large" fontWeight="bold" w="50%" py={2}>

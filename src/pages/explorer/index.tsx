@@ -1,7 +1,8 @@
 import { Box, Flex, Text } from "@chakra-ui/react";
 import Layout from "../../components/layout";
 import { LPSearchBar } from "../../components/lpSearchBar";
-import Trades from '../../components/trades'
+import Blocks from '../../components/blocks'
+import Swaps from '../../components/swaps'
 
 export default function Explorer() {
   return (
@@ -18,12 +19,13 @@ export default function Explorer() {
             <Text as="h2" fontWeight={600} fontSize={20} mb={4}>
               Recents Blocks
             </Text>
-            <Trades />
+            <Blocks />
           </Box>
           <Box className="box-card" w="50%" p={6} mb={6}>
             <Text as="h2" fontWeight={600} fontSize={20} mb={4}>
               Recents Swaps
             </Text>
+            <Swaps />
           </Box>
         </Flex>
       </Box>
