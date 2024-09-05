@@ -1,4 +1,5 @@
 :root {
+  --body-background: #272629;
   --background: 0, 0%, 0%;
   --foreground: 0, 4%, 73%;
   --muted: 0, 0%, 100%;
@@ -62,7 +63,7 @@ html,
 body {
   padding: 0;
   margin: 0;
-  background: #272629 !important;
+  background: var(--body-background) !important;
 }
 
 a {

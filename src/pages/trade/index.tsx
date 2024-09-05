@@ -603,7 +603,7 @@ export default function TradingPairs() {
         <Flex gap={6}>
           <Box flexGrow={1}>
             <Box className="box-card" w="100%" p={6} mb={6}>
-              <Text fontWeight={600} fontSize={20} mb={4}>
+              <Text as="h1" fontWeight={600} fontSize={20} mb={4}>
                 {asset1Token?.display}/{asset2Token?.display}
                 {asset1Token?.symbol}/{asset2Token?.symbol}
               </Text>
@@ -613,7 +613,7 @@ export default function TradingPairs() {
               />
             </Box>
             <Box className="box-card" w="100%" p={6}>
-              <Text fontWeight={600} fontSize={20} mb={4}>
+              <Text as="h2" fontWeight={600} fontSize={20} mb={4}>
                 Depth Chart
               </Text>
               {asset1Token && asset2Token && (
@@ -633,7 +633,7 @@ export default function TradingPairs() {
             </Box>
           </Box>
           <Box className="box-card" w="540px" flexShrink={0} p={6}>
-            <Text fontWeight={600} fontSize={20} mb={4}>
+            <Text as="h2" fontWeight={600} fontSize={20} mb={4}>
               Order Book
             </Text>
             <BuySellChart
