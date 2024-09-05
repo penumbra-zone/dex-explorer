@@ -13,7 +13,7 @@ export const routes = [
   { path: "/lp/utils" },
   { path: "/lp/<NFT_ID>" },
   {
-    path: "/pair/<BASE_TOKEN_NAME>:<QUOTE_TOKEN_NAME>",
+    path: "/trade/<BASE_TOKEN_NAME>:<QUOTE_TOKEN_NAME>",
   },
 ];
 

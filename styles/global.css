@@ -85,8 +85,3 @@ img {
   width: fit-content;
   background: var(--charcoal);
 }
-
-.neon-spinner {
-  filter: drop-shadow(0 0 8px white)
-    drop-shadow(0 0 12px white);
-}
