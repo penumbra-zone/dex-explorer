@@ -124,7 +124,7 @@ export default function Swaps() {
           metadataByAssetId[startAssetId]?.display;
         const endAssetDisplay =
           metadataByAssetId[endAssetId]?.display;
-        const poolLink = `/pair/${startAssetDisplay}:${endAssetDisplay}`;
+        const poolLink = `/trade/${startAssetDisplay}:${endAssetDisplay}`;
 
         return (
           <Box

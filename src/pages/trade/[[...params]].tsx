@@ -2,29 +2,21 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Layout from "../../components/layout";
 import {
-  VStack,
   Text,
-  Spinner,
-  Center,
   Box,
   Flex,
-  HStack,
-  Input,
-  Button,
-  ButtonGroup,
-  Stack,
 } from "@chakra-ui/react";
 import { useSearchParams } from "next/navigation";
 import {
   Position,
   SwapExecution,
 } from "@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb";
-import { LoadingSpinner } from "../../components/util/loadingSpinner";
-import { base64ToUint8Array } from "@/utils/math/base64";
+import { ChevronDown } from "@styled-icons/octicons/ChevronDown";
 import { joinLoHi, splitLoHi } from "@/utils/math/hiLo";
 import DepthChart from "@/components/charts/depthChart";
 import OHLCChart from "@/components/charts/ohlcChart";
 import BuySellChart from "@/components/charts/buySellChart";
+import PairSelector from "@/components/pairSelector";
 import { Token } from "@/utils/types/token";
 import { fetchAllTokenAssets } from "@/utils/token/tokenFetch";
 // TODO: Better parameter check
@@ -44,11 +36,13 @@ export default function TradingPairs() {
   const [token1Symbol, setToken1Symbol] = useState<string>("unknown");
   const [token2Symbol, setToken2Symbol] = useState<string>("unknown");
 
+  const [showPairSelector, setShowPairSelector] = useState(false);
+
   useEffect(() => {
     const params = router.query as { params: string[] | string | undefined };
     if (!params.params) {
-      setToken1Symbol('penumbra');
-      setToken2Symbol('usdc');
+      setToken1Symbol("penumbra");
+      setToken2Symbol("usdc");
       return;
     }
 
@@ -603,10 +597,28 @@ export default function TradingPairs() {
         <Flex gap={6}>
           <Box flexGrow={1}>
             <Box className="box-card" w="100%" p={6} mb={6}>
-              <Text as="h1" fontWeight={600} fontSize={20} mb={4}>
-                {asset1Token?.display}/{asset2Token?.display}
-                {asset1Token?.symbol}/{asset2Token?.symbol}
-              </Text>
+              <Box position="relative">
+                <Box as="button" onClick={() => setShowPairSelector(true)}>
+                  <Text as="h1" fontWeight={600} fontSize={20} mb={4}>
+                    {/* {asset1Token?.display}/{asset2Token?.display} */}
+                    {asset1Token?.symbol}/{asset2Token?.symbol}
+                    <Box
+                      as={ChevronDown}
+                      w="24px"
+                      h="24px"
+                      position="relative"
+                      top="-2px"
+                    />
+                  </Text>
+                </Box>
+                <PairSelector
+                  show={showPairSelector}
+                  setShow={setShowPairSelector}
+                  onSelect={(pair: [Token, Token]) => {
+                    router.push(`/trade/${pair[0].symbol}:${pair[1].symbol}`);
+                  }}
+                />
+              </Box>
               <OHLCChart
                 asset1Token={asset1Token!}
                 asset2Token={asset2Token!}
@@ -620,12 +632,8 @@ export default function TradingPairs() {
                 <DepthChart
                   buySideData={depthChartMultiHopAsset1SellPoints}
                   sellSideData={depthChartMultiHopAsset1BuyPoints}
-                  buySideSingleHopData={
-                    depthChartSingleHopAsset1SellPoints
-                  }
-                  sellSideSingleHopData={
-                    depthChartSingleHopAsset1BuyPoints
-                  }
+                  buySideSingleHopData={depthChartSingleHopAsset1SellPoints}
+                  sellSideSingleHopData={depthChartSingleHopAsset1BuyPoints}
                   asset1Token={asset1Token!}
                   asset2Token={asset2Token!}
                 />

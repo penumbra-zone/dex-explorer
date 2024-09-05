@@ -14,14 +14,14 @@ export default function Explorer() {
           </Text>
           <LPSearchBar />
         </Flex>
-        <Flex gap={6}>
-          <Box className="box-card" w="50%" p={6} mb={6}>
+        <Flex gap={6} wrap={{ base: 'wrap', lg: 'nowrap' }}>
+          <Box className="box-card" w={{ base: '100%', lg: '50%' }} p={6} mb={6}>
             <Text as="h2" fontWeight={600} fontSize={20} mb={4}>
               Recents Blocks
             </Text>
             <Blocks />
           </Box>
-          <Box className="box-card" w="50%" p={6} mb={6}>
+          <Box className="box-card" w={{ base: '100%', lg: '50%' }} p={6} mb={6}>
             <Text as="h2" fontWeight={600} fontSize={20} mb={4}>
               Recents Swaps
             </Text>
