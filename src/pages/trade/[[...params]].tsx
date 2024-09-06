@@ -28,8 +28,6 @@ export default function TradingPairs() {
   const [isLPsLoading, setIsLPsLoading] = useState(true);
   const [isChartLoading, setIsChartLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
-  const searchParams = useSearchParams();
-  const [activeChart, setActiveChart] = useState<"Depth" | "OHLC">("Depth");
 
   // Pairs are in the form of baseToken:quoteToken
   const router = useRouter();
@@ -39,10 +37,16 @@ export default function TradingPairs() {
   const [showPairSelector, setShowPairSelector] = useState(false);
 
   useEffect(() => {
+    // Check if there are no query params
+    if (!router.query.params) {
+      // Redirect to /trade/penumbra:usdc
+      router.push('/trade/penumbra:usdc');
+    }
+  }, [router.query])
+
+  useEffect(() => {
     const params = router.query as { params: string[] | string | undefined };
     if (!params.params) {
-      setToken1Symbol("penumbra");
-      setToken2Symbol("usdc");
       return;
     }
 
@@ -597,32 +601,38 @@ export default function TradingPairs() {
         <Flex gap={6}>
           <Box flexGrow={1}>
             <Box className="box-card" w="100%" p={6} mb={6}>
-              <Box position="relative">
-                <Box as="button" onClick={() => setShowPairSelector(true)}>
-                  <Text as="h1" fontWeight={600} fontSize={20} mb={4}>
-                    {/* {asset1Token?.display}/{asset2Token?.display} */}
-                    {asset1Token?.symbol}/{asset2Token?.symbol}
-                    <Box
-                      as={ChevronDown}
-                      w="24px"
-                      h="24px"
-                      position="relative"
-                      top="-2px"
-                    />
-                  </Text>
-                </Box>
+              <Box position="relative" mb={4}>
+                <Flex as="button" onClick={() => setShowPairSelector(true)}>
+                  <Box textAlign="left">
+                    <Text as="h1" fontWeight={600} fontSize={20} lineHeight="20px">
+                      {asset1Token?.symbol}/{asset2Token?.symbol}
+                    </Text>
+                    <Text opacity="0.75" fontSize={14}>
+                      {asset1Token?.display}/{asset2Token?.display}
+                    </Text>
+                  </Box>
+                  <Box
+                    as={ChevronDown}
+                    w="24px"
+                    h="24px"
+                    position="relative"
+                    top="-4px"
+                  />
+                </Flex>
                 <PairSelector
                   show={showPairSelector}
                   setShow={setShowPairSelector}
                   onSelect={(pair: [Token, Token]) => {
-                    router.push(`/trade/${pair[0].symbol}:${pair[1].symbol}`);
+                    router.push(`/trade/${pair[0].display}:${pair[1].display}`);
                   }}
                 />
               </Box>
-              <OHLCChart
-                asset1Token={asset1Token!}
-                asset2Token={asset2Token!}
-              />
+              {asset1Token && asset2Token && (
+                <OHLCChart
+                  asset1Token={asset1Token!}
+                  asset2Token={asset2Token!}
+                />
+              )}
             </Box>
             <Box className="box-card" w="100%" p={6}>
               <Text as="h2" fontWeight={600} fontSize={20} mb={4}>
@@ -644,12 +654,14 @@ export default function TradingPairs() {
             <Text as="h2" fontWeight={600} fontSize={20} mb={4}>
               Order Book
             </Text>
-            <BuySellChart
-              buySidePositions={lpsSellSide}
-              sellSidePositions={lpsBuySide}
-              asset1Token={asset1Token!}
-              asset2Token={asset2Token!}
-            />
+            {asset1Token && asset2Token && (
+              <BuySellChart
+                buySidePositions={lpsSellSide}
+                sellSidePositions={lpsBuySide}
+                asset1Token={asset1Token!}
+                asset2Token={asset2Token!}
+              />
+            )}
           </Box>
         </Flex>
       </Box>

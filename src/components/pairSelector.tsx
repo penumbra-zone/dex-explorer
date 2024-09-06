@@ -4,6 +4,8 @@ import { fetchAllTokenAssets } from "@/utils/token/tokenFetch";
 import OutsideClickHandler from "react-outside-click-handler";
 import { Token } from "@/utils/types/token";
 
+const orderedAssets = ["UM", "USDC"];
+
 export default function PairSelector({
   show,
   setShow,
@@ -13,12 +15,14 @@ export default function PairSelector({
   setShow: (show: boolean) => void;
   onSelect: (assets: [Token, Token]) => void;
 }) {
-  const [tokenAssets, setTokenAssets] = useState<Token[]>([]);
+  const [tokenAssets, setTokenAssets] = useState<Record<string, Token>>({});
   const [selectedAssets, setSelectedAssets] = useState<Token[]>([]);
 
   useEffect(() => {
     const tokenAssets = fetchAllTokenAssets();
-    setTokenAssets(tokenAssets);
+    setTokenAssets(
+      Object.fromEntries(tokenAssets.map((asset) => [asset.symbol, asset]))
+    );
   }, []);
 
   useEffect(() => {
@@ -52,8 +56,15 @@ export default function PairSelector({
         <Text fontSize={15} fontWeight={600} py={2} px={4} mb={2}>
           {!selectedAssets.length ? "Select Base Asset" : "Select Quote Asset"}
         </Text>
-        {tokenAssets
-          .filter((asset) => !selectedAssets.includes(asset))
+        {[
+          ...orderedAssets.map((symbol) => tokenAssets[symbol]),
+          ...Object.values(tokenAssets)
+            .filter((asset) => !orderedAssets.includes(asset.symbol))
+            .sort((a, b) => {
+              return a.symbol.localeCompare(b.symbol);
+            }),
+        ]
+          .filter((asset) => asset && !selectedAssets.includes(asset))
           .map((asset) => (
             <Flex
               key={asset.symbol}
