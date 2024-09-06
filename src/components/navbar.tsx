@@ -43,9 +43,6 @@ export const Navbar = () => {
                 </Box>
                 <HStack as={'nav'} spacing={4} display={{ base: 'none', md: 'flex' }}>
                     {Links.map((x) => (<NavLink key={x.name} link={x.link} >{x.name}</NavLink>))}
-                    {/* <Flex paddingLeft={10}>
-                        <LPSearchBar />
-                    </Flex> */}
                 </HStack>
                 <Box display={{ md: 'none' }} width={10} /> {/* Placeholder for symmetry */}
             </Flex>
@@ -55,9 +52,6 @@ export const Navbar = () => {
                     <Stack as={'nav'} spacing={4}>
                         {Links.map((x) => (<NavLink key={x.name} link={x.link}>{x.name}</NavLink>))}
                     </Stack>
-                    <Box pt={4}>
-                        <LPSearchBar />
-                    </Box>
                 </Box>
             )}
         </Box>

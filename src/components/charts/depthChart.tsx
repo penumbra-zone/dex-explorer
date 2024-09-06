@@ -332,6 +332,9 @@ const DepthChart = ({
     setZoomIndex(0);
   }, []);
 
+  console.log("multi", buySideData, sellSideData, midMarketPrice);
+  console.log("single", buySideSingleHopData, sellSideSingleHopData);
+
   const data: any = {
     datasets: [
       {
@@ -391,7 +394,7 @@ const DepthChart = ({
   };
 
   // Set step size for x-axis based on the range of the data
-  const totalTicks = 6;
+  const totalTicks = 10;
   const [tickStepSize, setTickStepSize] = useState<number>(
     +(
       (Math.max(

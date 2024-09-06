@@ -599,7 +599,7 @@ const OHLCChart = ({ asset1Token, asset2Token }: OHLCChartProps) => {
   // ! Width should be the same as that of the DepthChart
 
   return (
-    <VStack height={["400px", "400px", "400px"]} width={["100%", "100%", "100%", "100%", "100%", "100%"]}>
+    <VStack height="400px" width="100%">
       {isLoading && error === undefined ? (
         <LoadingSpinner />
       ) : error !== undefined ? (
