@@ -1,7 +1,7 @@
 import {
   uint8ArrayToBase64,
   base64ToUint8Array,
-} from "../../utils/math/base64";
+} from "../math/base64";
 import { Constants } from "../../constants/configConstants";
 import {
   AssetId,
@@ -31,7 +31,7 @@ export const fetchAllTokenAssets = (): Token[] => {
         decimals: decimalsFromDenomUnits(x.denomUnits),
         display: displayParts[displayParts.length - 1],
         symbol: x.symbol,
-        inner: uint8ArrayToBase64(x.penumbraAssetId?.inner),
+        inner: uint8ArrayToBase64(x.penumbraAssetId.inner),
         imagePath: imagePathFromAssetImages(x.images),
       });
     }
@@ -62,7 +62,7 @@ export const imagePathFromAssetImages = (
   assetImages: AssetImage[]
 ): string | undefined => {
   // Take first png/svg from first AssetImage
-  var imagePath: string | undefined = undefined;
+  let imagePath: string | undefined = undefined;
   assetImages.forEach((x) => {
     if (x.png.length > 0) {
       imagePath = x.png;
@@ -75,7 +75,7 @@ export const imagePathFromAssetImages = (
 
 export const decimalsFromDenomUnits = (denomUnits: DenomUnit[]): number => {
   // Search denomUnits for highest exponent
-  var decimals = 0;
+  let decimals = 0;
   denomUnits.forEach((x) => {
     if (x.exponent >= decimals) {
       decimals = x.exponent;

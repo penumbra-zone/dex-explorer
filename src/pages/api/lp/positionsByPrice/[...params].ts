@@ -25,7 +25,7 @@ export default async function positionsByPriceHandler(
 
   try {
     if (!token1 || !token2 || !limit) {
-      return res.status(400).json({ error: "Invalid query parameters" });
+      res.status(400).json({ error: "Invalid query parameters" }); return;
     }
 
     // Get token 1 & 2
@@ -38,9 +38,9 @@ export default async function positionsByPriceHandler(
     );
 
     if (!asset1Token || !asset2Token) {
-      return res
+      res
         .status(400)
-        .json({ error: "Could not find requested token in registry" });
+        .json({ error: "Could not find requested token in registry" }); return;
     }
 
     const lp_querier = new DexQueryServiceClient({

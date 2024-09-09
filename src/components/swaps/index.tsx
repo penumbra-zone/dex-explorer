@@ -27,11 +27,11 @@ export default function Swaps() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let fetchData = async () => {
+    const fetchData = async () => {
       const blockHeight = await fetch("/api/blocks/1")
         .then((res) => res.json())
         .then((data) => {
-          return data[0]["height"];
+          return data[0].height;
         })
         .catch((err) => {
           console.error(err);
@@ -42,7 +42,7 @@ export default function Swaps() {
 
       let swaps = [];
       let blockRange = 10;
-      let maxBlocks = 100000;
+      const maxBlocks = 100000;
 
       while (blockRange <= maxBlocks && swaps.length == 0) {
         console.log(

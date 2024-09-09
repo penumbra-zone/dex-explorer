@@ -17,7 +17,7 @@ export default async function arbsByBlockRange(req: NextApiRequest, res: NextApi
 
     try {
         if (!startHeight || !endHeight) {
-            return res.status(400).json({ error: "Invalid query parameters" });
+            res.status(400).json({ error: "Invalid query parameters" }); return;
         }
         // TODO: validate StartHeight/EndHeight are numbers
         const dex_querier = new DexQueryServiceClient({

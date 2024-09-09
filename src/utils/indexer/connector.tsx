@@ -49,7 +49,7 @@ export class IndexerQuerier {
       return value.map((item) => this.recursivelyParseJSON(item));
     } else if (typeof value === "object" && value !== null) {
       // If it's an object, apply recursively to each value
-      const parsedObject: { [key: string]: any } = {};
+      const parsedObject: Record<string, any> = {};
       Object.keys(value).forEach((key) => {
         parsedObject[key] = this.recursivelyParseJSON(value[key]);
       });
@@ -165,7 +165,7 @@ export class IndexerQuerier {
   `;
 
     // Use parameterized query to prevent SQL injection
-    //const res = await this.query(queryText);
+    // const res = await this.query(queryText);
     const res = await this.query(queryText, [`${startHeight}`, `${endHeight}`]);
     return res;
   }

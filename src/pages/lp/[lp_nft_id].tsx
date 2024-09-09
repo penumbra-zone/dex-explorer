@@ -126,7 +126,7 @@ export default function LP() {
     // if showAllTradeEvents, dont do anything, however if its false, remove all but the first and last n trade events
     if (!showAllTradeEvents) {
       // Find the first and last trade events
-      //! In theory they always have to be sandwiched between LP events
+      // ! In theory they always have to be sandwiched between LP events
       let firstTradeIndex = allEvents.findIndex(
         (event) => "lpevent_attributes" in event
       );

@@ -53,13 +53,13 @@ export const Price = ({
       const inputDisplayDenomExponent = firstValueMetadata.decimals ?? 0;
       const outputDisplayDenomExponent = lastValueMetadata.decimals ?? 0;
       const formattedInputAmount = fromBaseUnit(
-        BigInt(inputValue.amount?.lo ?? 0),
-        BigInt(inputValue.amount?.hi ?? 0),
+        BigInt(inputValue.amount.lo ?? 0),
+        BigInt(inputValue.amount.hi ?? 0),
         inputDisplayDenomExponent
       ).toFixed(6);
       const formattedOutputAmount = fromBaseUnit(
-        BigInt(outputValue.amount?.lo ?? 0),
-        BigInt(outputValue.amount?.hi ?? 0),
+        BigInt(outputValue.amount.lo ?? 0),
+        BigInt(outputValue.amount.hi ?? 0),
         outputDisplayDenomExponent
       ).toFixed(6);
       const outputToInputRatio = new BigNumber(formattedOutputAmount)
@@ -73,7 +73,7 @@ export const Price = ({
     }
   }
 
-  if (!price) return null;
+  if (!price) {return null;}
   return <span className="text-xs text-muted-foreground">{price}</span>;
 };
 
@@ -340,19 +340,19 @@ export default function Block() {
             arbsResponse,
             swapsResponse,
           ]) => {
-            const blockInfoList: BlockInfo[] = blockInfoResponse as BlockInfo[];
+            const blockInfoList: BlockInfo[] = blockInfoResponse;
             const positionData: LiquidityPositionEvent[] =
-              liquidityPositionOpenCloseResponse as LiquidityPositionEvent[];
+              liquidityPositionOpenCloseResponse;
             const otherPositionData: LiquidityPositionEvent[] =
-              liquidityPositionOtherResponse as LiquidityPositionEvent[];
+              liquidityPositionOtherResponse;
             const arbData: SwapExecutionWithBlockHeight[] =
-              arbsResponse as SwapExecutionWithBlockHeight[];
+              arbsResponse;
             const swapData: SwapExecutionWithBlockHeight[] =
-              swapsResponse as SwapExecutionWithBlockHeight[];
+              swapsResponse;
 
             if (blockInfoList.length === 0) {
-              //setError(`No data for block ${block_height} found`);
-              //setIsLoading(false);
+              // setError(`No data for block ${block_height} found`);
+              // setIsLoading(false);
               console.log(`No data for block ${block_height} found`);
               blockInfoList.push({
                 height: height,
@@ -368,24 +368,24 @@ export default function Block() {
               otherPositionEvents: [],
               swapExecutions: [],
               arbExecutions: [],
-              createdAt: blockInfoList[0]["created_at"],
+              createdAt: blockInfoList[0].created_at,
             };
             positionData.forEach(
               (positionOpenCloseEvent: LiquidityPositionEvent) => {
-                if (positionOpenCloseEvent["type"].includes("PositionOpen")) {
-                  detailedBlockSummaryData["openPositionEvents"].push(
+                if (positionOpenCloseEvent.type.includes("PositionOpen")) {
+                  detailedBlockSummaryData.openPositionEvents.push(
                     positionOpenCloseEvent
                   );
                 } else if (
-                  positionOpenCloseEvent["type"].includes("PositionClose")
+                  positionOpenCloseEvent.type.includes("PositionClose")
                 ) {
-                  detailedBlockSummaryData["closePositionEvents"].push(
+                  detailedBlockSummaryData.closePositionEvents.push(
                     positionOpenCloseEvent
                   );
                 } else if (
-                  positionOpenCloseEvent["type"].includes("PositionWithdraw")
+                  positionOpenCloseEvent.type.includes("PositionWithdraw")
                 ) {
-                  detailedBlockSummaryData["withdrawPositionEvents"].push(
+                  detailedBlockSummaryData.withdrawPositionEvents.push(
                     positionOpenCloseEvent
                   );
                 }
@@ -393,16 +393,16 @@ export default function Block() {
             );
             otherPositionData.forEach(
               (positionEvent: LiquidityPositionEvent) => {
-                detailedBlockSummaryData["otherPositionEvents"].push(
+                detailedBlockSummaryData.otherPositionEvents.push(
                   positionEvent
                 );
               }
             );
             arbData.forEach((arb: SwapExecutionWithBlockHeight) => {
-              detailedBlockSummaryData["arbExecutions"].push(arb.swapExecution);
+              detailedBlockSummaryData.arbExecutions.push(arb.swapExecution);
             });
             swapData.forEach((swap: SwapExecutionWithBlockHeight) => {
-              detailedBlockSummaryData["swapExecutions"].push(
+              detailedBlockSummaryData.swapExecutions.push(
                 swap.swapExecution
               );
             });
@@ -577,8 +577,7 @@ export default function Block() {
               >
                 {blockData!.swapExecutions.map(
                   (swapExecution: SwapExecution) => (
-                    <>
-                      <Box overflowX="auto" width="100%">
+                    <Box overflowX="auto" width="100%">
                         <VStack
                           spacing={2}
                           align="left"
@@ -601,7 +600,6 @@ export default function Block() {
                           )}
                         </VStack>
                       </Box>
-                    </>
                   )
                 )}
               </VStack>

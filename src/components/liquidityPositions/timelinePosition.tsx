@@ -16,10 +16,9 @@ export const POSITION_CLOSE_EVENT = "EventQueuePositionClose";
 export const POSITION_WITHDRAW_EVENT = "EventPositionWithdraw";
 
 const TimelinePosition = ({ nftId, lp_event }: TimelinePositionProps) => {
-  //console.log(lp_event);
+  // console.log(lp_event);
   return (
-    <>
-      <HStack
+    <HStack
         spacing={{ base: "1em", md: "2em" }}
         alignItems={{ base: "flex-start", md: "center" }}
         flexDirection={{ base: "column", md: "row" }}
@@ -42,7 +41,6 @@ const TimelinePosition = ({ nftId, lp_event }: TimelinePositionProps) => {
           <BlockTimestampView blockHeight={lp_event.block_height} timestamp={lp_event.created_at} />
         </VStack>
       </HStack>
-    </>
   );
 };
 

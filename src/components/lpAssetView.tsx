@@ -1,7 +1,6 @@
 import React, { FC, useEffect, useState } from "react";
 import { CopyIcon } from "@radix-ui/react-icons";
-import { Avatar, HStack, VStack } from "@chakra-ui/react";
-import { Text } from "@chakra-ui/react";
+import { Avatar, HStack, VStack , Text } from "@chakra-ui/react";
 import {
   LiquidityPositionEvent,
   PositionExecutionEvent,
@@ -72,7 +71,7 @@ const LPAssetView: FC<LPAssetViewProps> = ({ sectionTitle, lp_event }) => {
 
         if (asset2) {
           const fetchedAsset2Token = fetchTokenAsset(asset2)
-          //const fetchedAsset2Token = await fetchToken(asset2);
+          // const fetchedAsset2Token = await fetchToken(asset2);
           if (!fetchedAsset2Token) {
             setAssetError("Asset 2 token not found");
             throw new Error("Asset 2 token not found");
@@ -128,8 +127,7 @@ const LPAssetView: FC<LPAssetViewProps> = ({ sectionTitle, lp_event }) => {
   }, [lp_event, asset1Token, asset2Token]);
 
   return (
-    <>
-      <VStack align={"left"} spacing={2} paddingTop={".5em"}>
+    <VStack align={"left"} spacing={2} paddingTop={".5em"}>
         <Text fontSize={"medium"} fontStyle={"oblique"}>
           {sectionTitle}{" "}
         </Text>
@@ -163,7 +161,6 @@ const LPAssetView: FC<LPAssetViewProps> = ({ sectionTitle, lp_event }) => {
           </HStack>
         </HStack>
       </VStack>
-    </>
   );
 };
 

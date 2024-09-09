@@ -11,7 +11,7 @@ export default function PairSelector({
   setShow,
   onSelect,
 }: {
-  show: Boolean;
+  show: boolean;
   setShow: (show: boolean) => void;
   onSelect: (assets: [Token, Token]) => void;
 }) {

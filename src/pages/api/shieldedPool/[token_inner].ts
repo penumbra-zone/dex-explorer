@@ -27,7 +27,7 @@ export default async function assetMetadataHandler(req: any, res: any) {
 
     const data = await pool_querier.assetMetadata(positionId);
 
-    res.status(200).json(data as Metadata);
+    res.status(200).json(data!);
   } catch (error) {
     console.error("Error fetching asset metadata grpc data:", error);
     res

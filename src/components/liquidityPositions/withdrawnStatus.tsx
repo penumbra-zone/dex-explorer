@@ -18,8 +18,7 @@ const WithdrawnPositionStatus = ({
   lp_event,
 }: WithdrawnPositionStatusProps) => {
   return (
-    <>
-      <VStack align={"left"} spacing={2}>
+    <VStack align={"left"} spacing={2}>
         <Text fontSize={"large"} fontWeight={"bold"} paddingBottom=".2em">
           Position Withdrawn
         </Text>
@@ -35,7 +34,6 @@ const WithdrawnPositionStatus = ({
         </HStack>
         <LPAssetView sectionTitle={"Reserves Withdrawn"} lp_event={lp_event}/>
       </VStack>
-    </>
   );
 };
 

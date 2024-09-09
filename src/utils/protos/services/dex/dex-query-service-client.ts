@@ -24,7 +24,7 @@ export class DexQueryServiceClient implements DexQueryServiceClientInterface {
   async liquidityPositionById(
     positionId: PositionId
   ): Promise<Position | undefined> {
-    //console.log('liquidityPositionById', positionId)
+    // console.log('liquidityPositionById', positionId)
     const res = await this.client.liquidityPositionById({ positionId });
     return res.data;
   }
@@ -72,7 +72,7 @@ export class DexQueryServiceClient implements DexQueryServiceClientInterface {
     const arbs: SwapExecutionWithBlockHeight[] = [];
     for await (const arb of res as Readable) {
       const swapExecution: SwapExecution = arb.swapExecution;
-      const blockHeight: number = Number(arb.height);
+      const blockHeight = Number(arb.height);
       arbs.push({ swapExecution, blockHeight });
     }
     return arbs;
@@ -97,7 +97,7 @@ export class DexQueryServiceClient implements DexQueryServiceClientInterface {
     const swaps: SwapExecutionWithBlockHeight[] = [];
     for await (const swap of res as Readable) {
       const swapExecution: SwapExecution = swap.swapExecution;
-      const blockHeight: number = Number(swap.height);
+      const blockHeight = Number(swap.height);
       swaps.push({ swapExecution, blockHeight });
     }
     return swaps;

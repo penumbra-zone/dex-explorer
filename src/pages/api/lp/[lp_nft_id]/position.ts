@@ -24,7 +24,7 @@ export default async function liquidityPositionDataHandler(req: any, res: any) {
 
     const data = await lp_querier.liquidityPositionById(positionId);
 
-    res.status(200).json(data as Position);
+    res.status(200).json(data!);
   } catch (error) {
     console.error("Error fetching liquidity position grpc data:", error);
     res

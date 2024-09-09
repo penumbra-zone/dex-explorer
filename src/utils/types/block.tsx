@@ -20,10 +20,6 @@ export interface BlockDetailedSummaryData {
   createdAt: string;
 }
 
-export interface BlockInfoMap {
-  [key: number]: BlockInfo;
-}
+export type BlockInfoMap = Record<number, BlockInfo>;
 
-export interface BlockSummaryMap {
-  [key: number]: BlockSummaryData;
-}
+export type BlockSummaryMap = Record<number, BlockSummaryData>;
