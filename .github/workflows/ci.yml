@@ -24,12 +24,14 @@ jobs:
           key: $${{ hashFiles('pnpm-lock.yaml') }}-${{ github.ref }}-${{ github.sha }}-lint
           restore-keys: $${{ hashFiles('pnpm-lock.yaml') }}-${{ github.ref }}-${{ github.sha }}-compiled
       - uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - uses: buildjet/setup-node@v4
         with:
           node-version: "18"
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint:strict --cache-dir=.next
+      - run: pnpm lint:strict
 
   build:
     name: Build
@@ -48,7 +50,7 @@ jobs:
           node-version: "18"
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build --cache-dir=.next
+      - run: pnpm build
 
   # test:
   #   name: test
@@ -67,4 +69,4 @@ jobs:
   #         node-version: "22"
   #         cache: "pnpm"
   #     - run: pnpm install --frozen-lockfile
-  #     - run: pnpm test --cache-dir=.next
+  #     - run: pnpm test
