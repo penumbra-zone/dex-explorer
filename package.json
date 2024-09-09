@@ -12,10 +12,11 @@
     "build": "next build",
     "dev": "next dev",
     "start": "next start",
-    "lint": "next lint",
-    "lints": "eslint src",
+    "prelint": "node tsconfig.generator.js",
+    "lint": "eslint src",
     "lint:fix": "eslint src --fix",
-    "lint:strict": "tsc --noEmit && eslint src --max-warnings 0"
+    "lint:strict": "pnpm prelint && tsc --noEmit && eslint src --max-warnings 0",
+    "lint:strict2": "pnpm prelint && tsc --noEmit && eslint src --max-warnings 0"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^1.10.0",

@@ -34,7 +34,7 @@ export default function PairSelector({
       onSelect(selectedAssets as [Token, Token]);
       setShow(false);
     }
-  }, [selectedAssets]);
+  }, [selectedAssets, onSelect, setShow]);
 
   return (
     <OutsideClickHandler onOutsideClick={() => setShow(false)}>

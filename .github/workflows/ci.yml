@@ -24,8 +24,6 @@ jobs:
           key: $${{ hashFiles('pnpm-lock.yaml') }}-${{ github.ref }}-${{ github.sha }}-lint
           restore-keys: $${{ hashFiles('pnpm-lock.yaml') }}-${{ github.ref }}-${{ github.sha }}-compiled
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - uses: buildjet/setup-node@v4
         with:
           node-version: "18"
