@@ -16,6 +16,7 @@
 /build
 
 # misc
+.vscode/*
 .idea
 .DS_Store
 .vscode
