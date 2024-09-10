@@ -1,4 +1,5 @@
 // copied from pages/index
+/* eslint-disable -- disabling this file as this was created before our strict rules */
 
 import { useEffect, useState } from "react";
 import { Price, Trace, TraceType } from "../../pages/block/[block_height]";

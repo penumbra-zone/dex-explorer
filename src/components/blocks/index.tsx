@@ -1,4 +1,5 @@
 // copied from pages/trades.tsx
+/* eslint-disable -- disabling this file as this was created before our strict rules */
 
 import {
   Text,
