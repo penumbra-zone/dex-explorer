@@ -1,3 +1,5 @@
+// copied from pages/index
+
 import { useEffect, useState } from "react";
 import { Price, Trace, TraceType } from "../../pages/block/[block_height]";
 import { Box, Heading, HStack, Link, Stack, VStack } from "@chakra-ui/react";
@@ -62,7 +64,6 @@ export default function Swaps() {
             return [];
           });
 
-
         if (swaps.length != 0) {
           swaps = swaps.sort((a: any, b: any) => {
             return b.blockHeight - a.blockHeight;
@@ -123,17 +124,12 @@ export default function Swaps() {
         const startAssetId = firstTrace.value[0].assetId?.inner;
         const endAssetId =
           lastTrace.value[lastTrace.value.length - 1].assetId?.inner;
-        const startAssetDisplay =
-          metadataByAssetId[startAssetId]?.display;
-        const endAssetDisplay =
-          metadataByAssetId[endAssetId]?.display;
+        const startAssetDisplay = metadataByAssetId[startAssetId]?.display;
+        const endAssetDisplay = metadataByAssetId[endAssetId]?.display;
         const poolLink = `/trade/${startAssetDisplay}:${endAssetDisplay}`;
 
         return (
-          <Box
-            key={execIndex}
-            width="100%"
-          >
+          <Box key={execIndex} width="100%">
             <VStack spacing={8} align="stretch" width={"100%"}>
               <Stack
                 direction={["column", "row"]}
@@ -147,10 +143,7 @@ export default function Swaps() {
                 >
                   Block #{swapExecution.blockHeight}
                 </Link>
-                <Link
-                  href={poolLink}
-                  color="var(--complimentary-background)"
-                >
+                <Link href={poolLink} color="var(--complimentary-background)">
                   View {startAssetDisplay}:{endAssetDisplay} Pool
                 </Link>
               </Stack>

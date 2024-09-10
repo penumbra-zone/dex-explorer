@@ -1,4 +1,4 @@
-// pages/trades.tsx
+// copied from pages/trades.tsx
 
 import {
   Text,
@@ -239,7 +239,10 @@ export default function Blocks() {
       >
         <FormControl width="100%" mb={8}>
           <FormLabel></FormLabel>
-          <form onSubmit={onSearch} style={{ width: "100%", textAlign: "center" }}>
+          <form
+            onSubmit={onSearch}
+            style={{ width: "100%", textAlign: "center" }}
+          >
             <NumberInput>
               <NumberInputField
                 placeholder="Enter block height"
@@ -258,15 +261,15 @@ export default function Blocks() {
           </form>
         </FormControl>
 
-        {Array.from(
-          Array(endingBlockHeight - startingBlockHeight + 1)
-        ).map((_, index: number) => (
-          <BlockSummary
-            key={index}
-            blockHeight={endingBlockHeight - index}
-            blockSummary={blockData[endingBlockHeight - index]}
-          />
-        ))}
+        {Array.from(Array(endingBlockHeight - startingBlockHeight + 1)).map(
+          (_, index: number) => (
+            <BlockSummary
+              key={index}
+              blockHeight={endingBlockHeight - index}
+              blockSummary={blockData[endingBlockHeight - index]}
+            />
+          )
+        )}
       </Box>
     </>
   );
