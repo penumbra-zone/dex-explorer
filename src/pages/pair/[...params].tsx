@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* eslint-disable -- disabling this file as this was created before our strict rules */
 // pages/tradingPairs/index.tsx
 
 import React, { useEffect, useRef, useState } from "react";

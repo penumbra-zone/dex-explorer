@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* eslint-disable -- disabling this file as this was created before our strict rules */
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Layout from "../../components/layout";

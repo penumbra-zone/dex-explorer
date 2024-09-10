@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* eslint-disable -- disabling this file as this was created before our strict rules */
 import { Pool } from "pg";
 import { BlockInfo, LiquidityPositionEvent } from "./types/lps";
 import { bech32ToInner } from "../math/bech32";

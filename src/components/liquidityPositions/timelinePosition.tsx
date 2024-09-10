@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* eslint-disable -- disabling this file as this was created before our strict rules */
 import React from "react";
 import { Box, HStack, Text, VStack } from "@chakra-ui/react";
 import { LiquidityPositionEvent } from "@/utils/indexer/types/lps";

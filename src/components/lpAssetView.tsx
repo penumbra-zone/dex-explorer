@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* eslint-disable -- disabling this file as this was created before our strict rules */
 import React, { FC, useEffect, useState } from "react";
 import { CopyIcon } from "@radix-ui/react-icons";
 import { Avatar, HStack, VStack , Text } from "@chakra-ui/react";

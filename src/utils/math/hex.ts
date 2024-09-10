@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* eslint-disable -- disabling this file as this was created before our strict rules */
 import { Base64StringSchema } from "./base64";
 import { validateSchema } from "./validation";
 

@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* eslint-disable -- disabling this file as this was created before our strict rules */
 // pages/lp/[lp_nft_id].js
 
 import React, { useEffect, useRef, useState } from "react";

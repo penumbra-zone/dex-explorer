@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* eslint-disable -- disabling this file as this was created before our strict rules */
 // src/components/charts/ohlcChart.tsx
 
 import React, { useEffect, useState } from "react";

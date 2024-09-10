@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* eslint-disable -- disabling this file as this was created before our strict rules */
 // pages/api/lp/positionsByPrice/[...params].ts
 import { NextApiRequest, NextApiResponse } from "next";
 import { DexQueryServiceClient } from "@/utils/protos/services/dex/dex-query-service-client";

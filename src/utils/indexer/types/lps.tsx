@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* eslint-disable -- disabling this file as this was created before our strict rules */
 export interface LiquidityPositionEvent {
   block_height: number;
   event_id: number; // ! Needed for sorting

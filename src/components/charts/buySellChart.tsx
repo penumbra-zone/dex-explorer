@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* eslint-disable -- disabling this file as this was created before our strict rules */
 import React, { useRef, useEffect } from "react";
 import { Box, HStack, Spacer, Text, VStack } from "@chakra-ui/react";
 import { Position } from "@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb";

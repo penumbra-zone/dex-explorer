@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* eslint-disable -- disabling this file as this was created before our strict rules */
 // pages/api/shieldedPool/[token_inner].ts
 import { ShieldedPoolQuerier } from "../../../utils/protos/services/app/shielded-pool";
 import { base64ToUint8Array } from "../../../utils/math/base64";

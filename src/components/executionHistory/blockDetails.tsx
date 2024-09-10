@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* eslint-disable -- disabling this file as this was created before our strict rules */
 import { BlockSummaryData } from "@/utils/types/block";
 import { VStack, Text } from "@chakra-ui/react";
 

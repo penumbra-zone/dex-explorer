@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* eslint-disable -- disabling this file as this was created before our strict rules */
 // pages/api/lp/[lp_nft_id]/position.ts
 import { DexQueryServiceClient } from "../../../../utils/protos/services/dex/dex-query-service-client";
 import {
