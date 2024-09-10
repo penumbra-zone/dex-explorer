@@ -1,15 +1,11 @@
 import fs from 'fs';
-import path from 'path';
-import tmpExcludes from '../tmp-lint-excludes.js';
-
-// Array of file paths to process
-const filePaths = tmpExcludes.map(filepath => filepath);
+import tmpExcludes from './tmp-lint-excludes.js';
 
 // The ESLint comment to be added
 const eslintComment =
   '// @ts-nocheck\n/* eslint-disable -- disabling this file as this was created before our strict rules */\n';
 
-filePaths.forEach(filePath => {
+tmpExcludes.forEach(filePath => {
   // Read the file
   fs.readFile(filePath, 'utf8', (err, data) => {
     console.log('TCL: err', err);

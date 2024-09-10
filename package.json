@@ -12,12 +12,10 @@
     "build": "next build",
     "dev": "next dev",
     "start": "next start",
-    "pre:typecheck": "node tsconfig.generator.js",
-    "typecheck": "pnpm pre:typecheck && tsc --noEmit",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
-    "lint:strict": "pnpm typecheck && pnpm lint --max-warnings 0",
-    "lint:strict2": "pnpm typecheck && pnpm lint --max-warnings 0"
+    "lint:strict": "tsc --noEmit && pnpm lint --max-warnings 0",
+    "lint:strict2": "tsc --noEmit && pnpm lint --max-warnings 0"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^1.10.0",

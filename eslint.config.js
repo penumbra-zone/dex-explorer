@@ -2,8 +2,6 @@ import eslintConfig from 'configs/eslint';
 import { FlatCompat } from '@eslint/eslintrc';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import tmpExcludes from './tmp-lint-excludes.js';
-import tseslint from 'typescript-eslint';
 
 // mimic CommonJS variables -- not needed if using CommonJS
 const __filename = fileURLToPath(import.meta.url);
@@ -25,10 +23,9 @@ export default [
   ...eslintConfig.filter(config => config.name !== 'custom:turbo-config'),
 
   {
-    name: 'tmp-ignore-ts',
+    name: 'ignore-old-ts-files',
     rules: {
       '@typescript-eslint/ban-ts-comment': 'off',
     },
-    // ignores: tmpExcludes,
   },
 ];
