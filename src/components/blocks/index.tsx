@@ -14,7 +14,7 @@ import { useEffect, useRef, useState } from "react";
 import { BlockSummary } from "@/components/executionHistory/blockSummary";
 import { BlockInfo, LiquidityPositionEvent } from "@/utils/indexer/types/lps";
 import { SwapExecutionWithBlockHeight } from "@/utils/protos/types/DexQueryServiceClientInterface";
-import { BlockInfoMap, BlockSummaryMap } from "@/utils/types/block";
+import { BlockInfoMap, BlockSummaryData, BlockSummaryMap } from "@/utils/types/block";
 
 export default function Blocks() {
   // Go back hardcoded N blocks
@@ -71,9 +71,9 @@ export default function Blocks() {
             console.log("No blocks found");
             return;
           } else {
-            setEndingBlockHeight(blockInfoList[0].height);
+            setEndingBlockHeight((blockInfoList[0] as BlockInfo).height);
             setStartingBlockHeight(
-              blockInfoList[NUMBER_BLOCKS_IN_TIMELINE - 1].height,
+              (blockInfoList[NUMBER_BLOCKS_IN_TIMELINE - 1] as BlockInfo).height,
             );
             setBlockInfo(blockInfoMap);
             setError(undefined);
@@ -134,40 +134,37 @@ export default function Blocks() {
                 withdrawPositionEvents: [],
                 swapExecutions: [],
                 arbExecutions: [],
-                createdAt: blockInfo[i].created_at,
+                createdAt: (blockInfo[i] as BlockInfo).created_at,
               };
             }
 
             positionData.forEach(
               (positionOpenCloseEvent: LiquidityPositionEvent) => {
+                const blockSummary = blockSummaryMap[positionOpenCloseEvent.block_height] as BlockSummaryData;
                 if (positionOpenCloseEvent.type.includes("PositionOpen")) {
-                  blockSummaryMap[
-                    positionOpenCloseEvent.block_height
-                  ].openPositionEvents.push(positionOpenCloseEvent);
+                  blockSummary.openPositionEvents.push(positionOpenCloseEvent);
                 } else if (
                   positionOpenCloseEvent.type.includes("PositionClose")
                 ) {
-                  blockSummaryMap[
-                    positionOpenCloseEvent.block_height
-                  ].closePositionEvents.push(positionOpenCloseEvent);
+                  blockSummary.closePositionEvents.push(positionOpenCloseEvent);
                 } else if (
                   positionOpenCloseEvent.type.includes("PositionWithdraw")
                 ) {
-                  blockSummaryMap[
-                    positionOpenCloseEvent.block_height
-                  ].withdrawPositionEvents.push(positionOpenCloseEvent);
+                  blockSummary.withdrawPositionEvents.push(positionOpenCloseEvent);
                 }
               },
             );
 
             arbData.forEach((arb: SwapExecutionWithBlockHeight) => {
-              blockSummaryMap[arb.blockHeight].arbExecutions.push(
+              const blockSummary = blockSummaryMap[arb.blockHeight] as BlockSummaryData;
+              blockSummary.arbExecutions.push(
                 arb.swapExecution,
               );
             });
 
             swapData.forEach((swap: SwapExecutionWithBlockHeight) => {
-              blockSummaryMap[swap.blockHeight].swapExecutions.push(
+              const blockSummary = blockSummaryMap[swap.blockHeight] as BlockSummaryData;
+              blockSummary.swapExecutions.push(
                 swap.swapExecution,
               );
             });
@@ -265,7 +262,7 @@ export default function Blocks() {
             <BlockSummary
               key={index}
               blockHeight={endingBlockHeight - index}
-              blockSummary={blockData[endingBlockHeight - index]}
+              blockSummary={blockData[endingBlockHeight - index] as BlockSummaryData}
             />
           )
         )}

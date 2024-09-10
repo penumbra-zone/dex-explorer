@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { Price, Trace, TraceType } from "../../pages/block/[block_height]";
-import { Box, Heading, HStack, Link, Stack, VStack } from "@chakra-ui/react";
+import { Box, Link, Stack, VStack } from "@chakra-ui/react";
 import {
   SwapExecution,
   SwapExecution_Trace,
