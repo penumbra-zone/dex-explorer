@@ -29,8 +29,8 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED 1
 
 # Build the website as standalone output.
-RUN npm --version && node --version
-RUN npm run build
+RUN npm --version && pnpm --version && node --version
+RUN pnpm build
 
 # Production image, copy all the files and run next
 FROM base AS runner
