@@ -12,7 +12,7 @@ RUN apk add --no-cache libc6-compat
 RUN npm install -g pnpm
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
+# Copy dependency requirements
 COPY package.json pnpm-lock.yaml* ./
 
 # Install dependencies
