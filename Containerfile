@@ -9,15 +9,14 @@ FROM docker.io/node:${NODE_MAJOR_VERSION}-alpine AS base
 FROM base AS deps
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat
+RUN npm install -g pnpm
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+COPY package.json pnpm-lock.yaml* ./
 
-# Configure registry
-RUN npm config set @buf:registry  https://buf.build/gen/npm/v1/
 # Install dependencies
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
 # Rebuild the source code only when needed
 FROM base AS builder
