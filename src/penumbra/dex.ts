@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { base64tobech32, Bech32String, zBase64, zBech32 } from '@/utils/encoding';
+import { BlockInfo } from './block';
 
 type AssetID = Bech32String<'passet'>;
 
@@ -66,8 +67,8 @@ export class LPUpdate<B extends boolean = false> {
   private constructor(
     /** The unique identifier of this update, across all LPs. */
     public id: number,
-    /** The block height where this update happened. */
-    public height: number,
+    /** Information about the block where this update happened. */
+    public block: BlockInfo,
     /** The canonical identifier of the position being updated. */
     public positionId: Bech32String<'plpid'>,
     /** The new state of the position. */
@@ -85,7 +86,7 @@ export class LPUpdate<B extends boolean = false> {
     return z
       .tuple([
         z.number(),
-        z.number(),
+        BlockInfo.DB_SCHEMA,
         zBase64().transform(x => base64tobech32('plpid', x)),
         z.enum(LPState_ALL),
         z.coerce.bigint(),
@@ -107,6 +108,7 @@ export class LPUpdate<B extends boolean = false> {
   public static JSON_SCHEMA = z
     .object({
       id: z.number(),
+      block: BlockInfo.JSON_SCHEMA,
       height: z.number(),
       positionId: zBech32('plpid'),
       state: z.enum(LPState_ALL),
@@ -116,7 +118,7 @@ export class LPUpdate<B extends boolean = false> {
     })
     .transform(
       x =>
-        new LPUpdate(x.id, x.height, x.positionId, x.state, x.reserves1, x.reserves2, x.execution),
+        new LPUpdate(x.id, x.block, x.positionId, x.state, x.reserves1, x.reserves2, x.execution),
     );
 
   /** Convert this object into JSON, encoding the big integers as strings. */
@@ -124,7 +126,7 @@ export class LPUpdate<B extends boolean = false> {
     return {
       ...this,
       reserves1: this.reserves1.toString(),
-      reserves2: this.reserves1.toString(),
+      reserves2: this.reserves2.toString(),
     };
   }
 }

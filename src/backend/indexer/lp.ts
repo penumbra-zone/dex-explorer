@@ -35,7 +35,7 @@ export class LPQuerier {
       text: `
         SELECT
           id::INTEGER,
-          height::INTEGER,
+          (SELECT json_array(b.height, b.timestamp) FROM block_details b WHERE b.height = dex_lp_update.height LIMIT 1),
           encode(position_id, 'base64'),
           state,
           reserves1::TEXT,
@@ -48,7 +48,7 @@ export class LPQuerier {
             dex_lp_execution.id = execution_id
            LIMIT 1
           )
-        FROM dex_lp_update WHERE execution_id IS NOT NULL LIMIT 1
+        FROM dex_lp_update LIMIT 1
       `,
       rowMode: 'array',
     });
