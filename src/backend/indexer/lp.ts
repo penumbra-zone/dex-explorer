@@ -44,6 +44,6 @@ export class LPQuerier {
       `,
       rowMode: 'array',
     });
-    return LPUpdate.fromRow(rows[0]);
+    return LPUpdate.DB_SCHEMA.parse(rows[0]);
   }
 }

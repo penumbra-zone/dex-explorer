@@ -25,46 +25,28 @@ export class LPUpdate {
   ) {}
 
   /** How to parse this data from a database row. */
-  private static DB_SCHEMA = z.tuple([
-    z.number(),
-    z.number(),
-    zBase64().transform(x => base64tobech32('plpid', x)),
-    z.enum(LPState_ALL),
-    z.coerce.bigint(),
-    z.coerce.bigint(),
-  ]);
-
-  /** Parse this object from a database row. */
-  static fromRow(row: unknown): LPUpdate {
-    return new LPUpdate(...LPUpdate.DB_SCHEMA.parse(row));
-  }
+  public static DB_SCHEMA = z
+    .tuple([
+      z.number(),
+      z.number(),
+      zBase64().transform(x => base64tobech32('plpid', x)),
+      z.enum(LPState_ALL),
+      z.coerce.bigint(),
+      z.coerce.bigint(),
+    ])
+    .transform(x => new LPUpdate(...x));
 
   /** How to parse this data from json. */
-  private static JSON_SCHEMA = z.object({
-    id: z.number(),
-    height: z.number(),
-    positionId: zBech32('plpid'),
-    state: z.enum(LPState_ALL),
-    reserves1: z.coerce.bigint(),
-    reserves2: z.coerce.bigint(),
-  });
-
-  /**
-   * Parse this object from an unknown (JSON sourced) object
-   *
-   * This will round-trip with the {@link LPUpdate.toJSON} method.
-   */
-  static fromJson(data: unknown): LPUpdate {
-    const obj = LPUpdate.JSON_SCHEMA.parse(data);
-    return new LPUpdate(
-      obj.id,
-      obj.height,
-      obj.positionId,
-      obj.state,
-      obj.reserves1,
-      obj.reserves2,
-    );
-  }
+  public static JSON_SCHEMA = z
+    .object({
+      id: z.number(),
+      height: z.number(),
+      positionId: zBech32('plpid'),
+      state: z.enum(LPState_ALL),
+      reserves1: z.coerce.bigint(),
+      reserves2: z.coerce.bigint(),
+    })
+    .transform(x => new LPUpdate(x.id, x.height, x.positionId, x.state, x.reserves1, x.reserves2));
 
   /** Convert this object into JSON, encoding the big integers as strings. */
   toJSON(): string {
