@@ -76,18 +76,6 @@ export class LPQuerier {
   }
 
   /**
-   * A test function.
-   *
-   * TODO: delete me.
-   */
-  async test(): Promise<unknown[]> {
-    return await this.pool.query(
-      'SELECT * FROM dex_lp_update JOIN block_details ON dex_lp_update.height = block_details.height LIMIT 1',
-      [],
-    );
-  }
-
-  /**
    * Return the first LP update from the database.
    */
   async firstLPUpdate(): Promise<LPUpdate> {
