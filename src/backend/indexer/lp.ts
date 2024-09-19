@@ -1,7 +1,9 @@
 import { Pool, envPool } from './pool.ts';
+import { z } from 'zod';
 
+const LPState_ALL = ['opened', 'closed', 'withdrawn'] as const;
 /** Represents the current state of a Liquidity Position. */
-type LPState = 'opened' | 'closed' | 'withdrawn';
+export type LPState = (typeof LPState_ALL)[number];
 
 /**
  * Represents an update to a liquidity position.
@@ -21,6 +23,30 @@ export class LPUpdate {
     /** The new reserves of the second asset. */
     public reserves2: bigint,
   ) {}
+
+  /** How to parse this data from a database row. */
+  private static DB_SCHEMA = z.tuple([
+    z.number(),
+    z.number(),
+    z.string(),
+    z.enum(LPState_ALL),
+    z.coerce.bigint(),
+    z.coerce.bigint(),
+  ]);
+
+  /** Parse this object from a database row. */
+  static fromRow(row: unknown): LPUpdate {
+    return new LPUpdate(...LPUpdate.DB_SCHEMA.parse(row));
+  }
+
+  /** Convert this object into JSON, encoding the big integers as strings. */
+  toJSON(): string {
+    return JSON.stringify({
+      ...this,
+      reserves1: this.reserves1.toString(),
+      reserves2: this.reserves1.toString(),
+    });
+  }
 }
 
 /**
@@ -59,5 +85,25 @@ export class LPQuerier {
       'SELECT * FROM dex_lp_update JOIN block_details ON dex_lp_update.height = block_details.height LIMIT 1',
       [],
     );
+  }
+
+  /**
+   * Return the first LP update from the database.
+   */
+  async firstLPUpdate(): Promise<LPUpdate> {
+    const rows = await this.pool.query({
+      text: `
+        SELECT
+          id::INTEGER,
+          height::INTEGER,
+          encode(position_id, 'base64'),
+          state,
+          reserves1::TEXT,
+          reserves2::TEXT 
+        FROM dex_lp_update LIMIT 1
+      `,
+      rowMode: 'array',
+    });
+    return LPUpdate.fromRow(rows[0]);
   }
 }

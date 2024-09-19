@@ -1,4 +1,4 @@
-import { Pool as PgPool } from 'pg';
+import { Pool as PgPool, QueryArrayConfig } from 'pg';
 
 /**
  * Represents a connection pool to a postegres database.
@@ -10,7 +10,10 @@ export class Pool {
     this.pool = new PgPool({ connectionString });
   }
 
-  async query(text: string, values: unknown[]): Promise<unknown[]> {
+  async query(
+    text: string | QueryArrayConfig<unknown[]>,
+    values?: unknown[] | undefined,
+  ): Promise<unknown[]> {
     return (await this.pool.query(text, values)).rows as unknown[];
   }
 }
