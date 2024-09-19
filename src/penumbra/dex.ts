@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { base64tobech32, Bech32String, zBase64 } from '@/utils/encoding';
+import { base64tobech32, Bech32String, zBase64, zBech32 } from '@/utils/encoding';
 
 const LPState_ALL = ['opened', 'closed', 'withdrawn'] as const;
 /** Represents the current state of a Liquidity Position. */
@@ -37,6 +37,33 @@ export class LPUpdate {
   /** Parse this object from a database row. */
   static fromRow(row: unknown): LPUpdate {
     return new LPUpdate(...LPUpdate.DB_SCHEMA.parse(row));
+  }
+
+  /** How to parse this data from json. */
+  private static JSON_SCHEMA = z.object({
+    id: z.number(),
+    height: z.number(),
+    positionId: zBech32('plpid'),
+    state: z.enum(LPState_ALL),
+    reserves1: z.coerce.bigint(),
+    reserves2: z.coerce.bigint(),
+  });
+
+  /**
+   * Parse this object from an unknown (JSON sourced) object
+   *
+   * This will round-trip with the {@link LPUpdate.toJSON} method.
+   */
+  static fromJson(data: unknown): LPUpdate {
+    const obj = LPUpdate.JSON_SCHEMA.parse(data);
+    return new LPUpdate(
+      obj.id,
+      obj.height,
+      obj.positionId,
+      obj.state,
+      obj.reserves1,
+      obj.reserves2,
+    );
   }
 
   /** Convert this object into JSON, encoding the big integers as strings. */
