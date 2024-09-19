@@ -39,11 +39,19 @@ export class LPQuerier {
           encode(position_id, 'base64'),
           state,
           reserves1::TEXT,
-          reserves2::TEXT 
-        FROM dex_lp_update LIMIT 1
+          reserves2::TEXT,
+          (SELECT
+            json_array(inflow1, inflow2, encode(context_start, 'base64'), encode(context_end, 'base64'))
+           FROM
+            dex_lp_execution
+           WHERE
+            dex_lp_execution.id = execution_id
+           LIMIT 1
+          )
+        FROM dex_lp_update WHERE execution_id IS NOT NULL LIMIT 1
       `,
       rowMode: 'array',
     });
-    return LPUpdate.DB_SCHEMA.parse(rows[0]);
+    return LPUpdate.dbSchema(false).parse(rows[0]);
   }
 }
