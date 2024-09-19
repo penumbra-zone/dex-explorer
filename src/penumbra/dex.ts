@@ -2,7 +2,11 @@ import { z } from 'zod';
 import { base64tobech32, Bech32String, zBase64, zBech32 } from '@/utils/encoding';
 import { BlockInfo } from './block';
 
-type AssetID = Bech32String<'passet'>;
+/** The identifiers for generic assets */
+export type AssetID = Bech32String<'passet'>;
+
+/** The identifiers for liquidity positions */
+export type LPID = Bech32String<'plpid'>;
 
 const LPState_ALL = ['opened', 'closed', 'withdrawn'] as const;
 /** Represents the current state of a Liquidity Position. */
@@ -70,7 +74,7 @@ export class LPUpdate<B extends boolean = false> {
     /** Information about the block where this update happened. */
     public block: BlockInfo,
     /** The canonical identifier of the position being updated. */
-    public positionId: Bech32String<'plpid'>,
+    public positionId: LPID,
     /** The new state of the position. */
     public state: LPState,
     /** The new reserves of the first asset. */

@@ -1,5 +1,6 @@
-import { LPUpdate } from '@/penumbra/dex.ts';
+import { LPID, LPUpdate } from '@/penumbra/dex.ts';
 import { Pool, envPool } from './pool.ts';
+import { bech32Tobase64 } from '@/utils/encoding.ts';
 
 /**
  * A class to query for information about liquidity positions.
@@ -28,14 +29,16 @@ export class LPQuerier {
   }
 
   /**
-   * Return the first LP update from the database.
+   * Return all of the updates for a given position.
+   *
+   * These will be ordered from first to last.
    */
-  async firstLPUpdate(): Promise<LPUpdate> {
+  async updates(id: LPID): Promise<LPUpdate[]> {
     const rows = await this.pool.query({
       text: `
         SELECT
           id::INTEGER,
-          (SELECT json_array(b.height, b.timestamp) FROM block_details b WHERE b.height = dex_lp_update.height LIMIT 1),
+          (SELECT json_array(b.height, b.timestamp) FROM block_details b WHERE b.height = d.height LIMIT 1),
           encode(position_id, 'base64'),
           state,
           reserves1::TEXT,
@@ -48,10 +51,16 @@ export class LPQuerier {
             dex_lp_execution.id = execution_id
            LIMIT 1
           )
-        FROM dex_lp_update LIMIT 1
+        FROM
+          dex_lp_update d
+        WHERE
+          decode($1, 'base64') = position_id
+        ORDER BY
+          id ASC
       `,
       rowMode: 'array',
+      values: [bech32Tobase64(id)],
     });
-    return LPUpdate.dbSchema(false).parse(rows[0]);
+    return rows.map(x => LPUpdate.dbSchema(false).parse(x));
   }
 }
