@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { base64tobech32, Bech32String, zBase64 } from '@/utils/encoding';
 
 const LPState_ALL = ['opened', 'closed', 'withdrawn'] as const;
 /** Represents the current state of a Liquidity Position. */
@@ -14,7 +15,7 @@ export class LPUpdate {
     /** The block height where this update happened. */
     public height: number,
     /** The canonical identifier of the position being updated. */
-    public positionId: string,
+    public positionId: Bech32String<'plpid'>,
     /** The new state of the position. */
     public state: LPState,
     /** The new reserves of the first asset. */
@@ -27,7 +28,7 @@ export class LPUpdate {
   private static DB_SCHEMA = z.tuple([
     z.number(),
     z.number(),
-    z.string(),
+    zBase64().transform(x => base64tobech32('plpid', x)),
     z.enum(LPState_ALL),
     z.coerce.bigint(),
     z.coerce.bigint(),
