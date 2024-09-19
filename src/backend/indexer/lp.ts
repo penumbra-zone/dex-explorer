@@ -1,5 +1,28 @@
 import { Pool, envPool } from './pool.ts';
 
+/** Represents the current state of a Liquidity Position. */
+type LPState = 'opened' | 'closed' | 'withdrawn';
+
+/**
+ * Represents an update to a liquidity position.
+ */
+export class LPUpdate {
+  private constructor(
+    /** The unique identifier of this update, across all LPs. */
+    public id: number,
+    /** The block height where this update happened. */
+    public height: number,
+    /** The canonical identifier of the position being updated. */
+    public positionId: string,
+    /** The new state of the position. */
+    public state: LPState,
+    /** The new reserves of the first asset. */
+    public reserves1: bigint,
+    /** The new reserves of the second asset. */
+    public reserves2: bigint,
+  ) {}
+}
+
 /**
  * A class to query for information about liquidity positions.
  *
