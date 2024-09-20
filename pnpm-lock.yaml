@@ -36,8 +36,8 @@ importers:
         specifier: ^0.7.13
         version: 0.7.13
       '@penumbra-labs/registry':
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^11.3.0
+        version: 11.3.0
       '@penumbra-zone/protobuf':
         specifier: ^6.0.0
         version: 6.0.0(@bufbuild/protobuf@1.10.0)
@@ -1780,8 +1780,8 @@ packages:
     resolution: {integrity: sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==}
     engines: {node: '>=12.4.0'}
 
-  '@penumbra-labs/registry@11.1.0':
-    resolution: {integrity: sha512-g5FvBdWk7+bNU7PJ6q/+H67cAuMmBNIixMtJcQ74/x5S/OzWp0Kbm/Qe8DewBtSD3iOEfT1AnOZlLtEZ+2jy4A==}
+  '@penumbra-labs/registry@11.3.0':
+    resolution: {integrity: sha512-K6liYVYhMkZ3bR2AUspenCTg3I7s2u0vBlv+xr5fHN22hptICg8N5VOKzHbqi05MDT53w6JNN2Mk0BPO5d79Zg==}
 
   '@penumbra-zone/bech32m@7.0.0':
     resolution: {integrity: sha512-OqSH4G8pQ/mjy/7EfS9KlxF8Pdr3h/Ib8ZDOjDyQJB4/L+ZYkK3bWFGrFpAI8XDoc0phoMXkL77fZEpR18JoAg==}
@@ -7614,7 +7614,7 @@ snapshots:
 
   '@nolyfill/is-core-module@1.0.39': {}
 
-  '@penumbra-labs/registry@11.1.0': {}
+  '@penumbra-labs/registry@11.3.0': {}
 
   '@penumbra-zone/bech32m@7.0.0(@penumbra-zone/protobuf@6.0.0(@bufbuild/protobuf@1.10.0))':
     dependencies:
@@ -8641,7 +8641,7 @@ snapshots:
 
   '@types/stylis@4.2.5': {}
 
-  '@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.6.2))(eslint@9.10.0(jiti@1.21.6))(typescript@5.6.2)':
+  '@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@9.10.0(jiti@1.21.6))(typescript@5.6.2))(eslint@9.10.0(jiti@1.21.6))(typescript@5.6.2)':
     dependencies:
       '@eslint-community/regexpp': 4.11.0
       '@typescript-eslint/parser': 7.18.0(eslint@9.10.0(jiti@1.21.6))(typescript@5.6.2)
@@ -11860,7 +11860,7 @@ snapshots:
 
   typescript-eslint@7.18.0(eslint@9.10.0(jiti@1.21.6))(typescript@5.6.2):
     dependencies:
-      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.6.2))(eslint@9.10.0(jiti@1.21.6))(typescript@5.6.2)
+      '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@7.18.0(eslint@9.10.0(jiti@1.21.6))(typescript@5.6.2))(eslint@9.10.0(jiti@1.21.6))(typescript@5.6.2)
       '@typescript-eslint/parser': 7.18.0(eslint@9.10.0(jiti@1.21.6))(typescript@5.6.2)
       '@typescript-eslint/utils': 7.18.0(eslint@9.10.0(jiti@1.21.6))(typescript@5.6.2)
       eslint: 9.10.0(jiti@1.21.6)
