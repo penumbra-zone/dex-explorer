@@ -1,13 +1,17 @@
 'use client';
 
-import { Text } from '@penumbra-zone/ui/Text';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { PagePath } from '@/utils/routes/pages.ts';
 
-const HomePage = () => {
-  return (
-    <section>
-      <Text h2>Hi!</Text>
-    </section>
-  )
-}
+const RedirectPage = () => {
+  const router = useRouter();
 
-export default HomePage;
+  useEffect(() => {
+    router.push(PagePath.Trade);
+  }, [router]);
+
+  return null;
+};
+
+export default RedirectPage;
