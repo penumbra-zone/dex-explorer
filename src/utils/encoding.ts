@@ -14,6 +14,11 @@ export function bech32Tobase64(data: string): string {
   return Buffer.from(bech32m.fromWords(bech32m.decode(data).words)).toString('base64');
 }
 
+/** Convert a byte array to a bech32 string with a given prefix. */
+export function uint8ArrayToBech32<P extends string>(prefix: P, data: Uint8Array): Bech32String<P> {
+  return bech32m.encode(prefix, bech32m.toWords(data)) as Bech32String<P>;
+}
+
 /**
  * A zod validator for bech32 strings with a given prefix.
  *

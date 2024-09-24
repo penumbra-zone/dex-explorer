@@ -113,7 +113,6 @@ export class LPUpdate<B extends boolean = false> {
     .object({
       id: z.number(),
       block: BlockInfo.JSON_SCHEMA,
-      height: z.number(),
       positionId: zBech32('plpid'),
       state: z.enum(LPState_ALL),
       reserves1: z.coerce.bigint(),

@@ -40,7 +40,7 @@ export class LPQuerier {
           id::INTEGER,
           (SELECT json_array(b.height, b.timestamp) FROM block_details b WHERE b.height = d.height LIMIT 1),
           encode(position_id, 'base64'),
-          state,
+          split_part(state, '_', 1),
           reserves1::TEXT,
           reserves2::TEXT,
           (SELECT
