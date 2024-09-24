@@ -12,12 +12,12 @@ const TradePage = () => {
             <div className='h-[512px]'>-</div>
           </Card>
         </div>
-        <div className='w-full sm:w-1/2 sm:pr-1 lg:w-[332px] lg:pr-0 mb-2'>
+        <div className='w-full sm:w-1/2 sm:pr-1 lg:w-[336px] lg:pr-0 mb-2'>
           <Card title='Route Book'>
             <div className='h-[512px]'>-</div>
           </Card>
         </div>
-        <div className='w-full sm:w-1/2 sm:pl-1 lg:w-[332px] lg:pl-0 mb-2'>
+        <div className='w-full sm:w-1/2 sm:pl-1 lg:w-[304px] lg:pl-0 mb-2'>
           <Card title='Order Form'>
             <div className='h-[512px]'>-</div>
           </Card>
@@ -29,12 +29,12 @@ const TradePage = () => {
             <div className='h-[256px]'>-</div>
           </Card>
         </div>
-        <div className='w-full sm:w-1/2 sm:pr-1 lg:w-[332px] lg:pr-0 mb-2'>
+        <div className='w-full sm:w-1/2 sm:pr-1 lg:w-[336px] lg:pr-0 mb-2'>
           <Card title='Market Trades'>
             <div className='h-[256px]'>-</div>
           </Card>
         </div>
-        <div className='w-full sm:w-1/2 sm:pl-1 lg:w-[332px] lg:pl-0 mb-2'>
+        <div className='w-full sm:w-1/2 sm:pl-1 lg:w-[304px] lg:pl-0 mb-2'>
           <Card title='Assets'>
             <div className='h-[256px]'>-</div>
           </Card>
