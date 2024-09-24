@@ -41,7 +41,7 @@ const OHLCChart = ({ asset1Token, asset2Token }: OHLCChartProps) => {
     }
     // Get current block height from `/api/blocks/1`
     const getData = async () => {
-      const startBlock = await fetch('/api/blocks/1')
+      const startBlock = await fetch('/api/blocks?last=1')
         .then(res => res.json())
         .then(data => {
           const currentBlock = data[0].height;

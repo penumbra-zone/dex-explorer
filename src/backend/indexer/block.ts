@@ -1,7 +1,7 @@
 import { BlockInfo } from '@/penumbra/block';
 import { envPool, Pool } from './pool';
 
-type BlockQuery = { start?: number; end?: number } | { last: number } | undefined;
+export type BlockQuery = { start?: number; end?: number } | { last: number } | undefined;
 
 /**
  * A way to query information about blocks.
@@ -33,8 +33,11 @@ export class BlockQuerier {
    * Query for block information.
    *
    * This either returns all blocks, the last N blocks, or a particular range.
+   *
+   * This will return at most 10000 blocks.
    */
   async blocks(query: BlockQuery): Promise<BlockInfo[]> {
+    const MAX_BLOCKS = 10_000;
     const values =
       query && 'last' in query ? [null, null, query.last] : [query?.start, query?.end, null];
     const rows = await this.pool.query({
@@ -50,10 +53,10 @@ export class BlockQuerier {
         ORDER BY
           height DESC
         LIMIT
-          $3
+          LEAST($3::BIGINT, $4::BIGINT)
     `,
       rowMode: 'array',
-      values,
+      values: [...values, MAX_BLOCKS],
     });
     return rows.map(x => BlockInfo.DB_SCHEMA.parse(x));
   }

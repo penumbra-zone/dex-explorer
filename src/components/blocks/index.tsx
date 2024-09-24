@@ -12,9 +12,10 @@ import {
 import { LoadingSpinner } from "@/components/util/loadingSpinner";
 import { useEffect, useRef, useState } from "react";
 import { BlockSummary } from "@/components/executionHistory/blockSummary";
-import { BlockInfo, LiquidityPositionEvent } from "@/utils/indexer/types/lps";
+import { BlockInfo as OldBlockInfo, LiquidityPositionEvent } from "@/utils/indexer/types/lps";
 import { SwapExecutionWithBlockHeight } from "@/utils/protos/types/DexQueryServiceClientInterface";
 import { BlockInfoMap, BlockSummaryData, BlockSummaryMap } from "@/utils/types/block";
+import { BlockInfo } from "@/penumbra/block";
 
 export default function Blocks() {
   // Go back hardcoded N blocks
@@ -40,27 +41,32 @@ export default function Blocks() {
   useEffect(() => {
     setIsBlockRangeLoading(true);
     if (endingBlockHeight <= 0 || startingBlockHeight <= 0) {
-      let blockInfoPromise: Promise<BlockInfo[]>;
+      let blockInfoUrl: string;
       if (userRequestedBlockEndHeight >= 1) {
         const startHeight = Math.max(
-          userRequestedBlockEndHeight - NUMBER_BLOCKS_IN_TIMELINE + 1,
+          userRequestedBlockEndHeight - NUMBER_BLOCKS_IN_TIMELINE,
           1,
         ); // Lowest block_height is 1
-        blockInfoPromise = fetch(
-          `/api/blocks/${startHeight}/${userRequestedBlockEndHeight + 1}`,
-        ).then((res) => res.json()) as Promise<BlockInfo[]>;
+        blockInfoUrl = `/api/blocks?start=${startHeight}&end=${userRequestedBlockEndHeight}`;
       } else {
-        blockInfoPromise = fetch(
-          `/api/blocks/${NUMBER_BLOCKS_IN_TIMELINE}`,
-        ).then((res) => res.json()) as Promise<BlockInfo[]>;
+        blockInfoUrl = `/api/blocks?last=${NUMBER_BLOCKS_IN_TIMELINE}`;
       }
+      const blockInfoPromise = fetch(blockInfoUrl).then(async (res) => {
+        if (res.status !== 200) {
+          throw new Error((await res.json()).toString());
+        }
+        return BlockInfo.JSON_SCHEMA.array().parse(await res.json());
+      });
       Promise.all([blockInfoPromise])
         .then(([blockInfoResponse]) => {
           const blockInfoList: BlockInfo[] = blockInfoResponse;
           const blockInfoMap: BlockInfoMap = {};
           blockInfoList.forEach((blockInfo: BlockInfo) => {
             // console.log(blockInfo)
-            blockInfoMap[blockInfo.height] = blockInfo;
+            blockInfoMap[blockInfo.height] = {
+              height: blockInfo.height,
+              created_at: blockInfo.created.toString()
+            };
           });
 
           if (blockInfoList.length === 0) {
@@ -134,7 +140,7 @@ export default function Blocks() {
                 withdrawPositionEvents: [],
                 swapExecutions: [],
                 arbExecutions: [],
-                createdAt: (blockInfo[i] as BlockInfo).created_at,
+                createdAt: (blockInfo[i] as OldBlockInfo).created_at,
               };
             }
 
@@ -228,44 +234,44 @@ export default function Blocks() {
     </Box>
   ) : (
     <Box
-        display="flex"
-        flexDirection="column"
-        alignItems="center"
-        width="100%"
-      >
-        <FormControl width="100%" mb={8}>
-          <FormLabel></FormLabel>
-          <form
-            onSubmit={onSearch}
-            style={{ width: "100%", textAlign: "center" }}
-          >
-            <NumberInput>
-              <NumberInputField
-                placeholder="Enter block height"
-                value={userRequestedBlockEndHeight}
-                justifyContent={"center"}
-                backgroundColor="rgba(0,0,0,1)"
-                // backgroundColor="var(--body-background)"
-                onChange={(e) =>
-                  setUserRequestedBlockEndHeight(parseInt(e.target.value))
-                }
-                width="100%"
-                p={5}
-                border="none"
-              />
-            </NumberInput>
-          </form>
-        </FormControl>
-
-        {Array.from(Array(endingBlockHeight - startingBlockHeight + 1)).map(
-          (_, index: number) => (
-            <BlockSummary
-              key={index}
-              blockHeight={endingBlockHeight - index}
-              blockSummary={blockData[endingBlockHeight - index] as BlockSummaryData}
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      width="100%"
+    >
+      <FormControl width="100%" mb={8}>
+        <FormLabel></FormLabel>
+        <form
+          onSubmit={onSearch}
+          style={{ width: "100%", textAlign: "center" }}
+        >
+          <NumberInput>
+            <NumberInputField
+              placeholder="Enter block height"
+              value={userRequestedBlockEndHeight}
+              justifyContent={"center"}
+              backgroundColor="rgba(0,0,0,1)"
+              // backgroundColor="var(--body-background)"
+              onChange={(e) =>
+                setUserRequestedBlockEndHeight(parseInt(e.target.value))
+              }
+              width="100%"
+              p={5}
+              border="none"
             />
-          )
-        )}
-      </Box>
+          </NumberInput>
+        </form>
+      </FormControl>
+
+      {Array.from(Array(endingBlockHeight - startingBlockHeight + 1)).map(
+        (_, index: number) => (
+          <BlockSummary
+            key={index}
+            blockHeight={endingBlockHeight - index}
+            blockSummary={blockData[endingBlockHeight - index] as BlockSummaryData}
+          />
+        )
+      )}
+    </Box>
   );
 }

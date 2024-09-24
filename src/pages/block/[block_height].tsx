@@ -13,7 +13,8 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { BlockDetailedSummaryData } from "@/utils/types/block";
-import { BlockInfo, LiquidityPositionEvent } from "@/utils/indexer/types/lps";
+import { LiquidityPositionEvent } from "@/utils/indexer/types/lps";
+import { BlockInfo } from "@/penumbra/block";
 import { SwapExecutionWithBlockHeight } from "@/utils/protos/types/DexQueryServiceClientInterface";
 import { LoadingSpinner } from "@/components/util/loadingSpinner";
 import { Constants } from "@/utils/configConstants.ts";
@@ -28,6 +29,7 @@ import BigNumber from "bignumber.js";
 import { fetchAllTokenAssets } from "@/utils/token/tokenFetch";
 import { Token } from "@/utils/types/token";
 import { fromBaseUnit } from "@/utils/math/hiLo";
+import { z } from "zod";
 
 export const Price = ({
   trace,
@@ -75,7 +77,7 @@ export const Price = ({
     }
   }
 
-  if (!price) {return null;}
+  if (!price) { return null; }
   return <span className="text-xs text-muted-foreground">{price}</span>;
 };
 
@@ -310,8 +312,13 @@ export default function Block() {
       console.log("Fetching data for block...", block_height);
       const height: number = parseInt(block_height);
       const blockInfoPromise: Promise<BlockInfo[]> = fetch(
-        `/api/blocks/${height}/${height + 1}`
-      ).then((res) => res.json());
+        `/api/blocks?start=${height}&end=${height}`
+      ).then(async (res) => {
+        if (res.status !== 200) {
+          throw new Error((await res.json()).toString());
+        }
+        return BlockInfo.JSON_SCHEMA.array().parse(await res.json());
+      });
       const liquidityPositionOpenClosePromise: Promise<
         LiquidityPositionEvent[]
       > = fetch(`/api/lp/block/${height}/${height + 1}`).then((res) =>
@@ -353,15 +360,11 @@ export default function Block() {
               swapsResponse;
 
             if (blockInfoList.length === 0) {
-              // setError(`No data for block ${block_height} found`);
-              // setIsLoading(false);
-              console.log(`No data for block ${block_height} found`);
-              blockInfoList.push({
-                height: height,
-                created_at: "",
-              });
+              setError(`No data for block ${block_height} found`);
+              setIsLoading(false);
             }
             console.log("Fetching data for block...");
+            const blockInfo = blockInfoList[0]!;
 
             const detailedBlockSummaryData: BlockDetailedSummaryData = {
               openPositionEvents: [],
@@ -370,7 +373,7 @@ export default function Block() {
               otherPositionEvents: [],
               swapExecutions: [],
               arbExecutions: [],
-              createdAt: blockInfoList[0].created_at,
+              createdAt: blockInfo.created.toString(),
             };
             positionData.forEach(
               (positionOpenCloseEvent: LiquidityPositionEvent) => {
@@ -580,28 +583,28 @@ export default function Block() {
                 {blockData!.swapExecutions.map(
                   (swapExecution: SwapExecution) => (
                     <Box overflowX="auto" width="100%">
-                        <VStack
-                          spacing={2}
-                          align="left"
-                          justifyContent="left"
-                          paddingTop="10px"
-                          width={"100%"}
-                        >
-                          {swapExecution.traces.map(
-                            (trace: SwapExecution_Trace, index: number) => (
-                              <>
-                                <Trace
-                                  key={index}
-                                  trace={trace}
-                                  metadataByAssetId={metadataByAssetId}
-                                  type={TraceType.SWAP}
-                                />
-                                <Box paddingTop="3px" />
-                              </>
-                            )
-                          )}
-                        </VStack>
-                      </Box>
+                      <VStack
+                        spacing={2}
+                        align="left"
+                        justifyContent="left"
+                        paddingTop="10px"
+                        width={"100%"}
+                      >
+                        {swapExecution.traces.map(
+                          (trace: SwapExecution_Trace, index: number) => (
+                            <>
+                              <Trace
+                                key={index}
+                                trace={trace}
+                                metadataByAssetId={metadataByAssetId}
+                                type={TraceType.SWAP}
+                              />
+                              <Box paddingTop="3px" />
+                            </>
+                          )
+                        )}
+                      </VStack>
+                    </Box>
                   )
                 )}
               </VStack>

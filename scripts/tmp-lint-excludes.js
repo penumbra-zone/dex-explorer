@@ -28,7 +28,6 @@ export default [
   'src/pages/_app.tsx',
   // 'src/pages/api/arbs/[...params].ts',
   'src/pages/api/blockTimestamps/[...params].js',
-  'src/pages/api/blocks/[...params].js',
   'src/pages/api/lp/[lp_nft_id]/position.ts',
   'src/pages/api/lp/[lp_nft_id]/trades.js',
   'src/pages/api/lp/[lp_nft_id].js',

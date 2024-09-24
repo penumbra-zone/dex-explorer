@@ -16,9 +16,10 @@ import Layout from "../components/layout";
 import { LoadingSpinner } from "@/components/util/loadingSpinner";
 import { useEffect, useRef, useState } from "react";
 import { BlockSummary } from "@/components/executionHistory/blockSummary";
-import { BlockInfo, LiquidityPositionEvent } from "@/utils/indexer/types/lps";
+import { BlockInfo as OldBlockInfo, LiquidityPositionEvent } from "@/utils/indexer/types/lps";
 import { SwapExecutionWithBlockHeight } from "@/utils/protos/types/DexQueryServiceClientInterface";
 import { BlockInfoMap, BlockSummaryMap } from "@/utils/types/block";
+import { BlockInfo } from "@/penumbra/block";
 
 export default function Trades() {
   // Go back hardcoded N blocks
@@ -45,27 +46,32 @@ export default function Trades() {
   useEffect(() => {
     setIsBlockRangeLoading(true);
     if (endingBlockHeight <= 0 || startingBlockHeight <= 0) {
-      let blockInfoPromise: Promise<BlockInfo[]>;
+      let blockInfoUrl: string;
       if (userRequestedBlockEndHeight >= 1) {
         const startHeight = Math.max(
-          userRequestedBlockEndHeight - NUMBER_BLOCKS_IN_TIMELINE + 1,
-          1
+          userRequestedBlockEndHeight - NUMBER_BLOCKS_IN_TIMELINE,
+          1,
         ); // Lowest block_height is 1
-        blockInfoPromise = fetch(
-          `/api/blocks/${startHeight}/${userRequestedBlockEndHeight + 1}`
-        ).then((res) => res.json());
+        blockInfoUrl = `/api/blocks?start=${startHeight}&end=${userRequestedBlockEndHeight}`;
       } else {
-        blockInfoPromise = fetch(
-          `/api/blocks/${NUMBER_BLOCKS_IN_TIMELINE}`
-        ).then((res) => res.json());
+        blockInfoUrl = `/api/blocks?last=${NUMBER_BLOCKS_IN_TIMELINE}`;
       }
+      const blockInfoPromise = fetch(blockInfoUrl).then(async (res) => {
+        if (res.status !== 200) {
+          throw new Error((await res.json()).toString());
+        }
+        return BlockInfo.JSON_SCHEMA.array().parse(await res.json());
+      });
       Promise.all([blockInfoPromise])
         .then(([blockInfoResponse]) => {
           const blockInfoList: BlockInfo[] = blockInfoResponse;
           const blockInfoMap: BlockInfoMap = {};
           blockInfoList.forEach((blockInfo: BlockInfo, i: number) => {
             // console.log(blockInfo)
-            blockInfoMap[blockInfo.height] = blockInfo;
+            blockInfoMap[blockInfo.height] = {
+              height: blockInfo.height,
+              created_at: blockInfo.created.toString()
+            };
           });
 
           if (blockInfoList.length === 0) {
