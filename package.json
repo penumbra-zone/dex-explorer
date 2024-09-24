@@ -54,6 +54,7 @@
     "framer-motion": "^11.3.31",
     "grpc-tools": "^1.12.4",
     "grpc_tools_node_protoc_ts": "^5.3.3",
+    "lightweight-charts": "^4.2.0",
     "lodash": "^4.17.21",
     "lucide-react": "^0.445.0",
     "next": "^14.2.7",

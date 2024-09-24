@@ -2,6 +2,7 @@
 
 // import { Text } from '@penumbra-zone/ui/Text';
 import { Card } from '@penumbra-zone/ui/Card';
+import { Chart } from './chart';
 
 const TradePage = () => {
   return (
@@ -9,7 +10,7 @@ const TradePage = () => {
       <div className='flex flex-wrap lg:gap-2'>
         <div className='w-full lg:w-auto lg:flex-grow mb-2'>
           <Card title='Chart'>
-            <div className='h-[512px]'>-</div>
+            <Chart height={512} />
           </Card>
         </div>
         <div className='w-full sm:w-1/2 sm:pr-1 lg:w-[336px] lg:pr-0 mb-2'>
