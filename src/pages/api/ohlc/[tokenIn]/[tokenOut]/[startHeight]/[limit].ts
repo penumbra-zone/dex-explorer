@@ -12,13 +12,15 @@ if (!grpcEndpoint) {
 
 const { fromEntries } = Object;
 
+interface QueryParams {
+  tokenIn?: string;
+  tokenOut?: string;
+  startHeight?: string;
+  limit?: string;
+}
+
 export default async function candleStickData(req: NextApiRequest, res: NextApiResponse) {
-  const { tokenIn, tokenOut, startHeight, limit } = req.query as {
-    tokenIn?: string;
-    tokenOut?: string;
-    startHeight?: string;
-    limit?: string;
-  };
+  const { tokenIn, tokenOut, startHeight, limit } = req.query as QueryParams;
 
   if (!startHeight || !tokenIn || !tokenOut || !limit) {
     res.status(400).json({ error: 'Invalid query parameters' });
