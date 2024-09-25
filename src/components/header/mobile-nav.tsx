@@ -5,10 +5,10 @@ import { Button } from '@penumbra-zone/ui/Button';
 import { Dialog } from '@penumbra-zone/ui/Dialog';
 import { Display } from '@penumbra-zone/ui/Display';
 import { MenuItem } from '@penumbra-zone/ui/MenuItem';
-import { StatusPopover } from './status-popover.tsx';
-import { HeaderLogo } from './logo.tsx';
-import { HEADER_LINKS } from './links.ts';
-import { Connection } from './connection.tsx';
+import { StatusPopover } from './status-popover';
+import { HeaderLogo } from './logo';
+import { HEADER_LINKS } from './links';
+import { Connection } from './connection';
 
 export const MobileNav = () => {
   const router = useRouter();

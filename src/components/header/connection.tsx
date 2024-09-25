@@ -1,13 +1,11 @@
 import { Button } from '@penumbra-zone/ui/Button';
-import { useConnect } from '@/utils/penumbra/useConnect.ts';
-import { ProviderPopover } from './provider-popover.tsx';
+import { providerConnected, connectProvider } from '@/state/connection';
+import { ProviderPopover } from './provider-popover';
 
 export const Connection = () => {
-  const { connected, connect } = useConnect();
-
-  if (!connected) {
+  if (!providerConnected.value) {
     return (
-      <Button actionType='accent' onClick={() => void connect()}>Connect</Button>
+      <Button actionType='accent' onClick={() => void connectProvider()}>Connect</Button>
     );
   }
 
