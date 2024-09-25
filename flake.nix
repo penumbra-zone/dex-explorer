@@ -16,8 +16,10 @@
             file
             jq
             just
+            nodejs_20
             pnpm
             postgresql
+            rsync
           ];
         };
       });

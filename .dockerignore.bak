@@ -1,0 +1,16 @@
+# ignore everything by default
+**
+
+# allow JS files
+!*.ts
+!*.js
+!*.mjs
+!*.json
+!pnpm-*.yaml
+
+# nextjs files
+!public/
+!src/
+!styles/
+!.next/
+!scripts/

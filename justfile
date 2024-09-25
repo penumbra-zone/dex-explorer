@@ -8,7 +8,7 @@ dev:
 
 # build container image
 container:
-  podman build -t penumbra-dex-explorer -f Containerfile .
+  podman build --pull=always -t penumbra-dex-explorer -f Containerfile-simple .
 
 # run container image
 run-container: container
@@ -19,3 +19,12 @@ run-container: container
   -e PENUMBRA_INDEXER_CA_CERT \
   -p 3000:3000 \
   penumbra-dex-explorer
+
+# build standalone output and run locally
+manual-build:
+  rm -rf .next/ output/
+  pnpm run build
+  # rsync -a .next/standalone/ output/
+  rsync -a .next/static/ .next/standalone/.next/static/
+  rsync -a public/ .next/standalone/public/
+  cd .next/standalone && HOSTNAME=0.0.0.0 node server.js

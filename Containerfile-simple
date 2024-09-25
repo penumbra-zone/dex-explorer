@@ -1,44 +1,37 @@
 # Mostly boilerplate image spec, taken from nextjs docs:
 # https://nextjs.org/docs/pages/building-your-application/deploying#docker-image
 
-FROM docker.io/node:20-bookworm AS base
+FROM docker.io/node:18-slim AS builder
+LABEL maintainer="team@penumbralabs.xyz"
 # Enable `pnpm` so we can use it instead of `npm` in builds.
 RUN corepack enable pnpm
 # Disable nextjs telemetry in base layer, so the env var carries over to other layers.
 ENV NEXT_TELEMETRY_DISABLED 1
-LABEL maintainer="team@penumbralabs.xyz"
+
+# Create normal user for app
+RUN addgroup --system --gid 1001 nodejs
+# Set the correct permission for prerender cache
+RUN adduser --system --uid 1001 nextjs
 
 # Install node dependencies only when needed
-FROM base AS deps
 WORKDIR /app
 COPY package.json pnpm-lock.yaml* ./
-# RUN pnpm install --frozen-lockfile
-RUN pnpm install
+RUN pnpm install --frozen-lockfile
 
 # Rebuild the source code only when needed
-FROM deps AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules /app/node_modules
 COPY . .
 # Build the website as standalone output.
 RUN pnpm --version && node --version && pnpm run build
 
-# Production image, copy all the files and run nextjs via node
-FROM base AS runner
-WORKDIR /app
-
-# Create normal user for app
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-# Set the correct permission for prerender cache
-RUN mkdir /app/.next && chown nextjs:nodejs /app/.next
 
 # Copy standalone directories for serving.
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone /app
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static /app/.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public /app/public
+RUN mv /app/.next/standalone /app/docroot \
+  && mv /app/.next/static /app/docroot/.next/ \
+  && mv /app/public /app/docroot/
+
 RUN chown -R nextjs:nodejs /app
-RUN apt-get update && apt-get install tree && tree -a -L 3 /app
+WORKDIR /app/docroot
+# RUN apt-get update && apt-get install tree && tree -a -L 3 
 
 USER nextjs
 EXPOSE 3000
