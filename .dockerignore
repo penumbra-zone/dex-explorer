@@ -1,7 +1,18 @@
-Containerfile
-.dockerignore
-node_modules
-npm-debug.log
-README.md
-.next
-.git
+# ignore everything by default
+**
+
+# allow JS files
+!*.ts
+!*.js
+!*.mjs
+!*.json
+!pnpm-*.yaml
+
+# nextjs files
+!public/
+!src/
+!styles/
+!scripts/
+
+# custom build dir for standalone output
+!out/
