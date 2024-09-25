@@ -1,6 +1,6 @@
 import { signal } from '@preact-signals/safe-react';
 import { ViewService } from '@penumbra-zone/protobuf';
-import { penumbra } from '@/utils/penumbra/penumbra';
+import { penumbra } from '@/utils/penumbra';
 import { getSyncPercent } from '@/state/status/getSyncPercent';
 
 interface StatusState {

@@ -56,9 +56,6 @@ importers:
       '@preact-signals/safe-react':
         specifier: ^0.7.0
         version: 0.7.0(@babel/core@7.25.2)(@swc/helpers@0.5.5)(react@18.3.1)
-      '@preact/signals-react':
-        specifier: ^2.2.0
-        version: 2.2.0(react@18.3.1)
       '@radix-ui/react-icons':
         specifier: ^1.3.0
         version: 1.3.0(react@18.3.1)
@@ -1908,11 +1905,6 @@ packages:
 
   '@preact/signals-core@1.8.0':
     resolution: {integrity: sha512-OBvUsRZqNmjzCZXWLxkZfhcgT+Fk8DDcT/8vD6a1xhDemodyy87UJRJfASMuSD8FaAIeGgGm85ydXhm7lr4fyA==}
-
-  '@preact/signals-react@2.2.0':
-    resolution: {integrity: sha512-EPYlhXqqcOUxz2gTQGt4rtK6X7Jr04517DcJVZ4I5a7Gxy39haK24uFeVWtiU/tnEReRFcxpQN6poYra1jf68A==}
-    peerDependencies:
-      react: ^16.14.0 || 17.x || 18.x
 
   '@protobufjs/aspromise@1.1.2':
     resolution: {integrity: sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==}
@@ -8100,12 +8092,6 @@ snapshots:
       - supports-color
 
   '@preact/signals-core@1.8.0': {}
-
-  '@preact/signals-react@2.2.0(react@18.3.1)':
-    dependencies:
-      '@preact/signals-core': 1.8.0
-      react: 18.3.1
-      use-sync-external-store: 1.2.2(react@18.3.1)
 
   '@protobufjs/aspromise@1.1.2': {}
 
