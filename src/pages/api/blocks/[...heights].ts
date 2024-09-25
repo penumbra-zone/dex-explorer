@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { IndexerQuerier } from '../../../../utils/indexer/connector';
+import { IndexerQuerier } from '../../../utils/indexer/connector';
 
 const indexerEndpoint = process.env['PENUMBRA_INDEXER_ENDPOINT'] ?? '';
 if (!indexerEndpoint) {
@@ -7,12 +7,13 @@ if (!indexerEndpoint) {
 }
 
 interface QueryParams {
-  startHeight?: string;
-  endHeight?: string;
+  heights?: string[];
 }
 
 export default async function blockInfoFetchHandler(req: NextApiRequest, res: NextApiResponse) {
-  const { startHeight, endHeight } = req.query as QueryParams;
+  const [startHeight, endHeight] = (req.query as QueryParams).heights ?? [];
+  console.log('TCL: blockInfoFetchHandler -> endHeight', endHeight);
+  console.log('TCL: blockInfoFetchHandler -> startHeight', startHeight);
 
   const indexerQuerier = new IndexerQuerier(indexerEndpoint);
 

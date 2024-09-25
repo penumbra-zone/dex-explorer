@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { createChart, IChartApi } from 'lightweight-charts';
 import { tailwindConfig } from '@penumbra-zone/ui/tailwind';
+import { useBlockInfo } from '../../../../fetchers/block';
 
 const { colors } = tailwindConfig.theme.extend;
 

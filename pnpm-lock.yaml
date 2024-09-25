@@ -128,6 +128,9 @@ importers:
       lucide-react:
         specifier: ^0.445.0
         version: 0.445.0(react@18.3.1)
+      milliseconds:
+        specifier: ^1.0.3
+        version: 1.0.3
       next:
         specifier: ^14.2.7
         version: 14.2.9(@babel/core@7.25.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -183,6 +186,9 @@ importers:
       '@types/lodash':
         specifier: ^4.17.7
         version: 4.17.7
+      '@types/milliseconds':
+        specifier: ^0.0.33
+        version: 0.0.33
       '@types/node':
         specifier: ^22.5.4
         version: 22.5.4
@@ -2824,6 +2830,9 @@ packages:
   '@types/lodash@4.17.7':
     resolution: {integrity: sha512-8wTvZawATi/lsmNu10/j2hk1KEP0IvjubqPE3cu1Xz7xfXXt5oCq3SNUz4fMIP4XGF9Ky+Ue2tBA3hcS7LSBlA==}
 
+  '@types/milliseconds@0.0.33':
+    resolution: {integrity: sha512-RMJhntbMMTZ5VHJYuMiMjF6zM9lkpq+SCHwLaiCdBq38wkp9L+iEFRAmQuHi+aTsO62VBu5HRPodr1pWFiQpqA==}
+
   '@types/node@22.5.4':
     resolution: {integrity: sha512-FDuKUJQm/ju9fT/SeX/6+gBzoPzlVCzfzmGkwKvRHQVxi4BntVbyIwf6a4Xn62mrvndLiml6z/UBXIdEVjQLXg==}
 
@@ -4639,6 +4648,9 @@ packages:
   micromatch@4.0.8:
     resolution: {integrity: sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==}
     engines: {node: '>=8.6'}
+
+  milliseconds@1.0.3:
+    resolution: {integrity: sha512-O8fANvJPdQULWgsLW+jyyPMAw4qiiPHGQDF7lXQmOXLXbmjphetpOYBk5Tut/74Q3EZ66g7TbvXw5RRi1wnJPQ==}
 
   mime-db@1.52.0:
     resolution: {integrity: sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==}
@@ -8970,6 +8982,8 @@ snapshots:
 
   '@types/lodash@4.17.7': {}
 
+  '@types/milliseconds@0.0.33': {}
+
   '@types/node@22.5.4':
     dependencies:
       undici-types: 6.19.8
@@ -11233,6 +11247,8 @@ snapshots:
     dependencies:
       braces: 3.0.3
       picomatch: 2.3.1
+
+  milliseconds@1.0.3: {}
 
   mime-db@1.52.0: {}
 
