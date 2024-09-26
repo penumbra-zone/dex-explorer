@@ -14,7 +14,7 @@ export const Header = () => {
 
       <Density compact>
         <div className='hidden gap-2 lg:flex'>
-           <StatusPopover />
+          <StatusPopover />
           <Connection />
         </div>
         <div className='block lg:hidden'>
