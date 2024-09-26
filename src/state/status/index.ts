@@ -1,9 +1,13 @@
-import { signal } from '@preact-signals/safe-react';
 import { ViewService } from '@penumbra-zone/protobuf';
 import { penumbra } from '@/utils/penumbra';
 import { getSyncPercent } from '@/state/status/getSyncPercent';
+import { create } from 'zustand/index';
 
-interface StatusState {
+export interface StatusState {
+  /** If true, ignore all other state values */
+  loading: boolean;
+  /** The error is set in case of a request failure */
+  error?: string;
   /** Indicates that the account needs syncing with the blockchain */
   syncing: boolean;
   /** Indicates that the account is almost in sync with the blockchain (amount of unsynced blocks is less than 10) */
@@ -16,18 +20,26 @@ interface StatusState {
   syncPercent: number;
   /** A stringified sync percentage, e.g. '100%' or '17%' */
   syncPercentStringified: string;
-}
 
-export const penumbraStatus = signal<StatusState>();
-export const penumbraStatusError = signal<string>();
+  /**
+   * Receives the status stream from the view service
+   * and stores it in the `penumbraStatus` signal.
+   *
+   * Call this function in the global `useEffect` hook to subscribe to provider connection change
+   */
+  setup: () => Promise<void>;
+}
 
 /**
  * Initial status request doesn't return `latestKnownBlockHeight`.
  * Instead, it returns `catchingUp` to know if the sync is in progress
  */
-const getPenumbraStatus = async (): Promise<StatusState> => {
+const getPenumbraStatus = async (): Promise<Omit<StatusState, 'setup'>> => {
   const status = await penumbra.service(ViewService).status({});
+
   return {
+    loading: false,
+    error: undefined,
     syncing: status.catchingUp,
     fullSyncHeight: status.fullSyncHeight,
     latestKnownBlockHeight: status.catchingUp ? undefined : status.fullSyncHeight,
@@ -36,30 +48,35 @@ const getPenumbraStatus = async (): Promise<StatusState> => {
   };
 };
 
-/**
- * Receives the status stream from the view service
- * and stores it in the `penumbraStatus` signal.
- */
-export const streamPenumbraStatus = async () => {
-  try {
-    penumbraStatus.value = await getPenumbraStatus();
-    penumbraStatusError.value = undefined;
+export const useStatusState = create<StatusState>()((set, get) => ({
+  loading: true,
+  syncing: false,
+  updating: false,
+  fullSyncHeight: 0n,
+  latestKnownBlockHeight: undefined,
+  syncPercent: 0,
+  syncPercentStringified: '0%',
 
-    const stream = penumbra.service(ViewService).statusStream({});
-    for await (const status of stream) {
-      const syncPercents = getSyncPercent(status.fullSyncHeight, status.latestKnownBlockHeight);
+  setup: async () => {
+    try {
+      set(await getPenumbraStatus());
 
-      penumbraStatusError.value = undefined;
-      penumbraStatus.value = {
-        syncing: status.fullSyncHeight !== status.latestKnownBlockHeight,
-        fullSyncHeight: status.fullSyncHeight,
-        latestKnownBlockHeight: status.latestKnownBlockHeight,
-        ...syncPercents,
-      };
+      const stream = penumbra.service(ViewService).statusStream({});
+      for await (const status of stream) {
+        const syncPercents = getSyncPercent(status.fullSyncHeight, status.latestKnownBlockHeight);
+
+        set({
+          loading: false,
+          error: undefined,
+          syncing: status.fullSyncHeight !== status.latestKnownBlockHeight,
+          fullSyncHeight: status.fullSyncHeight,
+          latestKnownBlockHeight: status.latestKnownBlockHeight,
+          ...syncPercents,
+        });
+      }
+    } catch (error) {
+      set({ error: error instanceof Error ? `${error.name}: ${error.message}` : 'Streaming error' });
+      setTimeout(() => void get().setup(), 1000);
     }
-  } catch (error) {
-    penumbraStatus.value = undefined;
-    penumbraStatusError.value = error instanceof Error ? `${error.name}: ${error.message}` : 'Streaming error';
-    setTimeout(() => void streamPenumbraStatus(), 1000);
-  }
-};
+  },
+}));

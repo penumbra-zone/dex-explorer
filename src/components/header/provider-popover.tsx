@@ -1,34 +1,42 @@
-import { useComputed } from '@preact-signals/safe-react';
+import { useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { Link2Off } from 'lucide-react';
 import Image from 'next/image';
 import { Popover } from '@penumbra-zone/ui/Popover';
 import { Button } from '@penumbra-zone/ui/Button';
 import { Text } from '@penumbra-zone/ui/Text';
-import { providerManifest, disconnectProvider } from '@/state/connection';
+import { useConnectionState, ConnectionState } from '@/state/connection';
+
+const connectionSelector = (state: ConnectionState) => ({
+  manifest: state.manifest,
+  disconnect: state.disconnect,
+});
 
 export const ProviderPopover = () => {
-  const name = providerManifest.value?.['name'] as string;
-  const version = providerManifest.value?.['version'] as string;
-  const description = providerManifest.value?.['description'] as string;
+  const { manifest, disconnect } = useConnectionState(useShallow(connectionSelector));
 
-  const icon = useComputed(() => {
-    const icons = (providerManifest.value?.['icons'] ?? {}) as Record<string, Blob>;
+  const name = manifest?.['name'] as string;
+  const version = manifest?.['version'] as string;
+  const description = manifest?.['description'] as string;
+
+  const icon = useMemo(() => {
+    const icons = (manifest?.['icons'] ?? {}) as Record<string, Blob>;
     const blob = icons['32'] ?? icons['128'];
     const element = !blob ? null : (
       <Image width={16} height={16} src={URL.createObjectURL(blob)} alt={name} className='size-4' />
     );
     return () => element;
-  });
+  }, [manifest, name]);
 
   return (
     <Popover>
       <Popover.Trigger>
-        <Button icon={icon.value} iconOnly>
+        <Button icon={icon} iconOnly>
           {name}
         </Button>
       </Popover.Trigger>
       <Popover.Content align='end' side='bottom'>
-        {providerManifest.value ? (
+        {manifest ? (
           <div className='flex flex-col gap-2'>
             <Text body>
               {name} v{version}
@@ -39,7 +47,7 @@ export const ProviderPopover = () => {
           <Text body>Loading provider manifest...</Text>
         )}
         <div className='mt-4'>
-          <Button icon={Link2Off} onClick={() => void disconnectProvider()}>
+          <Button icon={Link2Off} onClick={() => void disconnect()}>
             Disconnect
           </Button>
         </div>

@@ -1,11 +1,19 @@
+import { useShallow } from 'zustand/react/shallow';
 import { Button } from '@penumbra-zone/ui/Button';
-import { providerConnected, connectProvider } from '@/state/connection';
+import { ConnectionState, useConnectionState } from '@/state/connection';
 import { ProviderPopover } from './provider-popover';
 
+const connectionSelector = (state: ConnectionState) => ({
+  connected: state.connected,
+  connect: state.connect,
+});
+
 export const Connection = () => {
-  if (!providerConnected.value) {
+  const { connected, connect } = useConnectionState(useShallow(connectionSelector));
+
+  if (!connected) {
     return (
-      <Button actionType='accent' onClick={() => void connectProvider()}>Connect</Button>
+      <Button actionType='accent' onClick={() => void connect()}>Connect</Button>
     );
   }
 

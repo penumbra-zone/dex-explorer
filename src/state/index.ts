@@ -1,22 +1,34 @@
 import { useEffect } from 'react';
-import { effect } from '@preact-signals/safe-react';
-import { streamPenumbraStatus } from './status';
-import { providerConnected, setupConnectionState } from './connection';
+import { useShallow } from 'zustand/react/shallow';
+import { StatusState, useStatusState } from './status';
+import { ConnectionState, useConnectionState } from './connection';
+
+const connectionSelector = (state: ConnectionState) => ({
+  connected: state.connected,
+  setupConnection: state.setup,
+});
+
+const statusSelector = (state: StatusState) => ({
+  setupStatus: state.setup,
+});
 
 /**
  * Initiates the global state and subscribes to any constant state updates.
  * Call it in the root `useEffect` hook.
  */
 export const useGlobalState = () => {
+  const { connected, setupConnection } = useConnectionState(useShallow(connectionSelector));
+  const { setupStatus } = useStatusState(useShallow(statusSelector));
+
   // Subscribe to the connection change
   useEffect(() => {
-    setupConnectionState();
-  }, []);
+    setupConnection();
+  }, [setupConnection]);
 
-  effect(() => {
-    if (providerConnected.value) {
-      // Subscribe to the status stream
-      void streamPenumbraStatus();
+  // Subscribe to the sync status
+  useEffect(() => {
+    if (connected) {
+      void setupStatus();
     }
-  });
+  }, [connected, setupStatus]);
 };
