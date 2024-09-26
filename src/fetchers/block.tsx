@@ -3,9 +3,24 @@ import { BlockInfo } from '@/utils/indexer/types/lps';
 
 export const useBlockInfo = (startHeight: number | string, endHeight?: number | string) => {
   return useQuery({
-    queryKey: ['blockInfo'],
+    queryKey: ['blockInfo', startHeight, endHeight],
     queryFn: async (): Promise<BlockInfo[]> => {
       return (await fetch(`/api/blocks/${startHeight}/${endHeight ?? ''}`).then(res =>
+        res.json(),
+      )) as BlockInfo[];
+    },
+  });
+};
+
+export const useBlockTimestamps = (startHeight?: number | string, endHeight?: number | string) => {
+  return useQuery({
+    queryKey: ['blockTimestamps', startHeight, endHeight],
+    queryFn: async (): Promise<BlockInfo[]> => {
+      if (!startHeight || !endHeight) {
+        return [];
+      }
+
+      return (await fetch(`/api/blockTimestamps/range/${startHeight}/${endHeight}`).then(res =>
         res.json(),
       )) as BlockInfo[];
     },

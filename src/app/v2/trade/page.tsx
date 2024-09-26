@@ -1,6 +1,5 @@
 'use client';
 
-// import { Text } from '@penumbra-zone/ui/Text';
 import { Card } from '@penumbra-zone/ui/Card';
 import { Chart } from './chart';
 

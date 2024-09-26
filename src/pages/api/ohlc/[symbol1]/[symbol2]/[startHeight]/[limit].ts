@@ -13,16 +13,16 @@ if (!grpcEndpoint) {
 const { fromEntries } = Object;
 
 interface QueryParams {
-  tokenIn?: string;
-  tokenOut?: string;
+  symbol1?: string;
+  symbol2?: string;
   startHeight?: string;
   limit?: string;
 }
 
 export default async function candleStickData(req: NextApiRequest, res: NextApiResponse) {
-  const { tokenIn, tokenOut, startHeight, limit } = req.query as QueryParams;
+  const { symbol1, symbol2, startHeight, limit } = req.query as QueryParams;
 
-  if (!startHeight || !tokenIn || !tokenOut || !limit) {
+  if (!startHeight || !symbol1 || !symbol2 || !limit) {
     res.status(400).json({ error: 'Invalid query parameters' });
     return;
   }
@@ -34,25 +34,25 @@ export default async function candleStickData(req: NextApiRequest, res: NextApiR
   }
 
   const tokenAssets = fetchAllTokenAssets();
-  const tokenAssetsByDisplay = fromEntries(
-    tokenAssets.map(asset => [asset.display.toLowerCase(), asset]),
+  const tokenAssetsBySymbol = fromEntries(
+    tokenAssets.map(asset => [asset.symbol.toLowerCase(), asset]),
   );
 
-  const tokenInInner = tokenAssetsByDisplay[tokenIn.toLowerCase()]?.inner;
-  const tokenOutInner = tokenAssetsByDisplay[tokenOut.toLowerCase()]?.inner;
+  const asset1Inner = tokenAssetsBySymbol[symbol1.toLowerCase()]?.inner;
+  const asset2Inner = tokenAssetsBySymbol[symbol2.toLowerCase()]?.inner;
 
-  if (!tokenInInner || !tokenOutInner) {
+  if (!asset1Inner || !asset2Inner) {
     res.status(400).json({
-      error: `Invalid token pair, a token was not found: ${tokenIn} ${tokenOut}`,
+      error: `Invalid token pair ${symbol1}:${symbol2}`,
     });
     return;
   }
 
   const tradingPair = new DirectedTradingPair();
   tradingPair.start = new AssetId();
-  tradingPair.start.inner = base64ToUint8Array(tokenInInner);
+  tradingPair.start.inner = base64ToUint8Array(asset1Inner);
   tradingPair.end = new AssetId();
-  tradingPair.end.inner = base64ToUint8Array(tokenOutInner);
+  tradingPair.end.inner = base64ToUint8Array(asset2Inner);
 
   const dexQuerier = new DexQueryServiceClient({ grpcEndpoint });
   const data = await dexQuerier.candlestickData(tradingPair, Number(startHeight), Number(limit));

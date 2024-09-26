@@ -1,11 +1,18 @@
 import ms from 'milliseconds';
-import { useBlockInfo } from '../../../../fetchers/block';
+import last from 'lodash/last';
+import { useBlockInfo, useBlockTimestamps } from '../../../../fetchers/block';
 import { useOHLC } from '../../../../fetchers/ohlc';
 import { CandlestickData } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 
-function getStartBlockHeight(currentBlockHeight: number, msTime: number): number {
-  const blockTimeSeconds = 5;
-  return currentBlockHeight - Math.trunc(msTime / blockTimeSeconds);
+const { fromEntries } = Object;
+
+function getStartBlockHeight(currentBlockHeight: number | null, msTime: number): number | null {
+  if (currentBlockHeight === null) {
+    return null;
+  }
+
+  const blockTime = ms.seconds(4);
+  return Math.max(1, currentBlockHeight - Math.trunc(msTime / blockTime));
 }
 
 // Merge the two arrays, forward will be left alone, however backward will need to
@@ -80,25 +87,54 @@ function createMergeCandles(asset1Token, asset2Token) {
   };
 }
 
-export function useCandles(): CandlestickData[] {
+interface CandlesResult {
+  loading: boolean;
+  data: CandlestickData[];
+}
+
+export function useCandles(): CandlesResult {
+  // const timestampsByHeight = useRef<Record<string, string>>({});
+
   const asset1 = {
-    display: 'UM',
+    display: 'Penumbra',
+    symbol: 'um',
     decimals: 5,
   };
   const asset2 = {
-    display: 'USDC',
+    display: 'GM Wagmi',
+    symbol: 'gm',
     decimals: 5,
   };
 
   // get current block info
   const { data: blockInfo } = useBlockInfo(1);
-  const startBlockHeight = getStartBlockHeight(blockInfo?.[0]?.height ?? 1, ms.days(7) as number);
-  const limit = 100;
+  const startBlockHeight = getStartBlockHeight(
+    blockInfo?.[0]?.height ?? null,
+    ms.days(7) as number,
+  );
 
-  const { data: candles1 } = useOHLC(asset1.display, asset2.display, startBlockHeight, limit);
-  const { data: candles2 } = useOHLC(asset2.display, asset1.display, startBlockHeight, limit);
+  const limit = 10000;
+
+  const { data: candles1 } = useOHLC(asset1.symbol, asset2.symbol, startBlockHeight, limit);
+  const { data: candles2 } = useOHLC(asset2.symbol, asset1.symbol, startBlockHeight, limit);
   const mergeCandles = createMergeCandles(asset1, asset2);
   const candles = mergeCandles(candles1 ?? [], candles2 ?? []);
 
-  return candles ?? [];
+  const { data: blockTimestamps } = useBlockTimestamps(candles?.[0]?.height, last(candles)?.height);
+
+  const timestampsByHeight = fromEntries(
+    blockTimestamps?.map(block => [block.height, block.created_at]) || [],
+  );
+
+  const candlesWithTime = candles
+    .filter(candle => timestampsByHeight[candle.height])
+    .map(candle => ({
+      ...candle,
+      time: new Date(timestampsByHeight[candle.height]).getTime(),
+    }));
+
+  return {
+    loading: !candlesWithTime?.length,
+    data: candlesWithTime ?? [],
+  };
 }
