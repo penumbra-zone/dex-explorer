@@ -12,11 +12,7 @@ import {
 import { joinLoHi, splitLoHi } from "@/utils/math/hiLo";
 import { NextApiRequest, NextApiResponse } from "next";
 import { fetchAllTokenAssets } from "@/utils/token/tokenFetch";
-
-const grpcEndpoint = process.env.PENUMBRA_GRPC_ENDPOINT!;
-if (!grpcEndpoint) {
-  throw new Error("PENUMBRA_GRPC_ENDPOINT is not set");
-}
+import { Constants } from "../../../constants/configConstants";
 
 export default async function simulationHandler(
   req: NextApiRequest,
@@ -55,7 +51,7 @@ export default async function simulationHandler(
         .json({ error: "Could not find requested token in registry" }); return;
     }
     const sim_querier = new SimulationQuerier({
-      grpcEndpoint: grpcEndpoint,
+      grpcEndpoint: Constants.grpcEndpoint,
     });
 
     const amtIn = splitLoHi(

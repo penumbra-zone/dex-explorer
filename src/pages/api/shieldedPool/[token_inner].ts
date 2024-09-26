@@ -7,11 +7,7 @@ import {
   AssetId,
   Metadata,
 } from "@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb";
-
-const grpcEndpoint = process.env.PENUMBRA_GRPC_ENDPOINT!;
-if (!grpcEndpoint) {
-  throw new Error("PENUMBRA_GRPC_ENDPOINT is not set");
-}
+import { Constants } from "../../../constants/configConstants";
 
 export default async function assetMetadataHandler(req: any, res: any) {
   const { token_inner } = req.query;
@@ -19,7 +15,7 @@ export default async function assetMetadataHandler(req: any, res: any) {
   const decodedTokenInner = decodeURIComponent(token_inner);
 
   const pool_querier = new ShieldedPoolQuerier({
-    grpcEndpoint: grpcEndpoint,
+    grpcEndpoint: Constants.grpcEndpoint,
   });
 
   try {

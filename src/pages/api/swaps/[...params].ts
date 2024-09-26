@@ -5,11 +5,8 @@
 import { DexQueryServiceClient } from "@/utils/protos/services/dex/dex-query-service-client";
 import { SwapExecutionWithBlockHeight } from "@/utils/protos/types/DexQueryServiceClientInterface";
 import { NextApiRequest, NextApiResponse } from "next";
+import { Constants } from "../../../constants/configConstants";
 
-const grpcEndpoint = process.env.PENUMBRA_GRPC_ENDPOINT!
-if (!grpcEndpoint) {
-    throw new Error("PENUMBRA_GRPC_ENDPOINT is not set")
-}
 
 export default async function swapsByBlockRange(req: NextApiRequest, res: NextApiResponse) {
 
@@ -24,7 +21,7 @@ export default async function swapsByBlockRange(req: NextApiRequest, res: NextAp
         }
         // TODO: validate StartHeight/EndHeight are numbers
         const dex_querier = new DexQueryServiceClient({
-            grpcEndpoint: grpcEndpoint,
+            grpcEndpoint: Constants.grpcEndpoint,
         });
         const data = await dex_querier.swapExecutions(
             parseInt(startHeight),

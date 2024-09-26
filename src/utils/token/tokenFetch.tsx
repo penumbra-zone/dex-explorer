@@ -11,6 +11,7 @@ import { Token } from "../types/token";
 const getRegistry = (): Registry => {
   const chainId = Constants.chainId;
   const registryClient = new ChainRegistryClient();
+  console.log("fetching asset registry for chain id", chainId);
   return registryClient.bundled.get(chainId);
 };
 

@@ -11,11 +11,8 @@ import {
 import { AssetId } from "@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb";
 import { base64ToUint8Array } from "@/utils/math/base64";
 import { fetchAllTokenAssets } from "@/utils/token/tokenFetch";
+import { Constants } from "../../../constants/configConstants";
 
-const grpcEndpoint = process.env.PENUMBRA_GRPC_ENDPOINT!;
-if (!grpcEndpoint) {
-  throw new Error("PENUMBRA_GRPC_ENDPOINT is not set");
-}
 
 export default async function candleStickData(
   req: NextApiRequest,
@@ -40,7 +37,7 @@ export default async function candleStickData(
     }
 
     const dex_querier = new DexQueryServiceClient({
-      grpcEndpoint: grpcEndpoint,
+      grpcEndpoint: Constants.grpcEndpoint,
     });
 
     const tokenInInner = tokenAssets.find(

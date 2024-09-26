@@ -9,11 +9,7 @@ import {
 } from "@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb";
 import { base64ToUint8Array } from "@/utils/math/base64";
 import { fetchAllTokenAssets } from "@/utils/token/tokenFetch";
-
-const grpcEndpoint = process.env.PENUMBRA_GRPC_ENDPOINT!;
-if (!grpcEndpoint) {
-  throw new Error("PENUMBRA_GRPC_ENDPOINT is not set");
-}
+import { Constants } from "../../../../constants/configConstants";
 
 export default async function positionsByPriceHandler(
   req: NextApiRequest,
@@ -46,7 +42,7 @@ export default async function positionsByPriceHandler(
     }
 
     const lp_querier = new DexQueryServiceClient({
-      grpcEndpoint: grpcEndpoint,
+      grpcEndpoint: Constants.grpcEndpoint,
     });
 
     const tradingPair = new DirectedTradingPair({

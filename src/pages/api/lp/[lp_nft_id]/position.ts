@@ -6,17 +6,13 @@ import {
   PositionId,
   Position,
 } from "@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb";
-
-const grpcEndpoint = process.env.PENUMBRA_GRPC_ENDPOINT!;
-if (!grpcEndpoint) {
-  throw new Error("PENUMBRA_GRPC_ENDPOINT is not set");
-}
+import { Constants } from "../../../../constants/configConstants";
 
 export default async function liquidityPositionDataHandler(req: any, res: any) {
   const { lp_nft_id } = req.query;
 
   const lp_querier = new DexQueryServiceClient({
-    grpcEndpoint: grpcEndpoint,
+    grpcEndpoint: Constants.grpcEndpoint,
   });
 
   try {

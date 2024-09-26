@@ -3,14 +3,11 @@
 // pages/api/blockTimestamps/[...params].js
 
 import { IndexerQuerier } from "../../../utils/indexer/connector";
+import { Constants } from "../../../constants/configConstants";
 
-const indexerEndpoint = process.env.PENUMBRA_INDEXER_ENDPOINT;
-if (!indexerEndpoint) {
-  throw new Error("PENUMBRA_INDEXER_ENDPOINT is not set");
-}
 
 export default async function blockTimestampsFetchHandler(req, res) {
-  const indexerQuerier = new IndexerQuerier(indexerEndpoint);
+  const indexerQuerier = new IndexerQuerier(Constants.indexerEndpoint);
 
   // if the first param is 'range' then we are fetching a range of blocks
 
