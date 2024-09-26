@@ -2,14 +2,6 @@
 
 const nextConfig = {
   transpilePackages: ["@penumbra-zone/protobuf"],
-  experimental: {
-    swcPlugins: [
-      [
-        "@preact-signals/safe-react/swc",
-        { mode: "auto" }
-      ],
-    ],
-  },
   webpack: (config) => {
     config.module.rules.push({
       test: /\.svg$/i,
