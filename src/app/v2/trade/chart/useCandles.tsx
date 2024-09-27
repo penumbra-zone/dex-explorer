@@ -11,7 +11,7 @@ function getStartBlockHeight(currentBlockHeight: number | null, msTime: number):
     return null;
   }
 
-  const blockTime = ms.seconds(4);
+  const blockTime = ms.seconds(5);
   return Math.max(1, currentBlockHeight - Math.trunc(msTime / blockTime));
 }
 
@@ -108,6 +108,7 @@ export function useCandles(): CandlesResult {
 
   // get current block info
   const { data: blockInfo } = useBlockInfo(1);
+  const currentBlockHeight = blockInfo?.[0]?.height;
   const startBlockHeight = getStartBlockHeight(
     blockInfo?.[0]?.height ?? null,
     ms.days(7) as number,
@@ -120,7 +121,7 @@ export function useCandles(): CandlesResult {
   const mergeCandles = createMergeCandles(asset1, asset2);
   const candles = mergeCandles(candles1 ?? [], candles2 ?? []);
 
-  const { data: blockTimestamps } = useBlockTimestamps(candles?.[0]?.height, last(candles)?.height);
+  const { data: blockTimestamps } = useBlockTimestamps(startBlockHeight, currentBlockHeight);
 
   const timestampsByHeight = fromEntries(
     blockTimestamps?.map(block => [block.height, block.created_at]) || [],
