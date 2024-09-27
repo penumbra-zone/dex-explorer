@@ -12,7 +12,6 @@ import {
   Flex,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
-import { LiquidityPositionEvent } from "@/utils/indexer/types/lps";
 import { BlockInfo } from "@/penumbra/block";
 import { SwapExecutionWithBlockHeight } from "@/utils/protos/types/DexQueryServiceClientInterface";
 import { LoadingSpinner } from "@/components/util/loadingSpinner";

@@ -25,7 +25,7 @@ or plug in credentials for an already running database via environment variables
 ```
 # add these to e.g. `.envrc`:
 export PENUMBRA_GRPC_ENDPOINT="https://testnet.plinfra.net"
-export PENUMBRA_INDEXER_ENDPOINT="postgresql://<PGUSER>:<PGPASS>@<PGHOST>:<PGPORT>/<PGDATABASE>?sslmode=require""
+export PENUMBRA_INDEXER="postgresql://<PGUSER>:<PGPASS>@<PGHOST>:<PGPORT>/<PGDATABASE>?sslmode=require""
 export NEXT_PUBLIC_CHAIN_ID="penumbra-testnet-phobos-2"
 # optional: if you see "self-signed certificate in certificate chain" errors,
 # you'll likely need to export a `ca-cert.pem` file for the DB TLS.
@@ -35,7 +35,7 @@ export NEXT_PUBLIC_CHAIN_ID="penumbra-testnet-phobos-2"
 If you see an error `self-signed certificate in certificate chain`, then you'll need to:
 
   1. obtain the CA certificate file for the backend database you're connecting to, and export it as `PENUMBRA_INDEXER_CA_CERT`.
-  2. _remove_ the `sslmode=require` string on the `PENUMBRA_INDEXER_ENDPOINT` var.
+  2. _remove_ the `sslmode=require` string on the `PENUMBRA_INDEXER` var.
 
 See context in #55. After configuring that information, run `just dev` again in the nix shell, and you should have events visible.
 
@@ -47,7 +47,7 @@ with [ABCI event indexing enabled](https://guide.penumbra.zone/node/pd/indexing-
 you'll want to set are:
 
   * `PENUMBRA_GRPC_ENDPOINT`: the URL to a remote node's `pd` gRPC service
-  * `PENUMBRA_INDEXER_ENDPOINT`: the URL to a Postgre database containing ABCI events
+  * `PENUMBRA_INDEXER`: the URL to a Postgre database containing derived events from pindexer
   * `PENUMBRA_INDEXER_CA_CERT`: optional; if set, the database connection will use the provided certificate authority when validating TLS
   * `NEXT_PUBLIC_CHAIN_ID`: the chain id for the network being indexed, controls asset-registry lookups
   * `NEXT_PUBLIC_CUILOA_URL`: the URL for a block-explorer application, for generating URLs for more block/transaction info

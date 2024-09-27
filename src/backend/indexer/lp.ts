@@ -34,6 +34,7 @@ export class LPQuerier {
    * These will be ordered from first to last.
    */
   async updates(id: LPID): Promise<LPUpdate[]> {
+    // TODO: remove is null after pindexer update.
     const rows = await this.pool.query({
       text: `
         SELECT
@@ -41,8 +42,8 @@ export class LPQuerier {
           (SELECT json_array(b.height, b.timestamp) FROM block_details b WHERE b.height = d.height LIMIT 1),
           encode(position_id, 'base64'),
           split_part(state, '_', 1),
-          reserves1::TEXT,
-          reserves2::TEXT,
+          COALESCE(reserves1::TEXT, '0'),
+          COALESCE(reserves2::TEXT, '0'),
           (SELECT
             json_array(inflow1, inflow2, encode(context_start, 'base64'), encode(context_end, 'base64'))
            FROM
@@ -66,6 +67,7 @@ export class LPQuerier {
 
   private async stateEvent(state: LPState, start?: number, end?: number): Promise<LPUpdate[]> {
     const MAX_EVENTS = 10_000;
+    // TODO: remove is null after pindexer update.
     const rows = await this.pool.query({
       text: `
         SELECT
@@ -73,8 +75,8 @@ export class LPQuerier {
           (SELECT json_array(b.height, b.timestamp) FROM block_details b WHERE b.height = d.height LIMIT 1),
           encode(position_id, 'base64'),
           split_part(state, '_', 1),
-          reserves1::TEXT,
-          reserves2::TEXT,
+          COALESCE(reserves1::TEXT, '0'),
+          COALESCE(reserves2::TEXT, '0'),
           NULL
         FROM
           dex_lp_update d

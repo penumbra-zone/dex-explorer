@@ -4,7 +4,7 @@ import { LPUpdate } from '@/penumbra/dex';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 
-const zQuery = z.object({ start: z.number().optional(), end: z.number().optional() });
+const zQuery = z.object({ start: z.coerce.number().optional(), end: z.coerce.number().optional() });
 
 async function lpUpdatesHandler(req: NextApiRequest, res: NextApiResponse<LPUpdate[]>) {
   const querier = LPQuerier.fromEnv();
@@ -13,4 +13,4 @@ async function lpUpdatesHandler(req: NextApiRequest, res: NextApiResponse<LPUpda
   res.status(200).json(updates);
 }
 
-export default withCaughtErrors('lp/[lp_nft_id]/close', lpUpdatesHandler);
+export default withCaughtErrors('lp/withdraw', lpUpdatesHandler);

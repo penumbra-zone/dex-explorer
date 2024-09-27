@@ -16,9 +16,8 @@ import Layout from "../components/layout";
 import { LoadingSpinner } from "@/components/util/loadingSpinner";
 import { useEffect, useRef, useState } from "react";
 import { BlockSummary } from "@/components/executionHistory/blockSummary";
-import { BlockInfo as OldBlockInfo, LiquidityPositionEvent } from "@/utils/indexer/types/lps";
 import { SwapExecutionWithBlockHeight } from "@/utils/protos/types/DexQueryServiceClientInterface";
-import { BlockInfoMap } from "@/utils/types/block";
+import { BlockInfo as OldBlockInfo, BlockInfoMap } from "@/utils/types/block";
 import { BlockInfo } from "@/penumbra/block";
 import { LPUpdate } from "@/penumbra/dex";
 import { BlockDetailsSummary } from "@/components/executionHistory/blockDetails";
@@ -273,7 +272,7 @@ export default function Trades() {
                 </HStack>
 
                 {Array.from(
-                  Array(endingBlockHeight - startingBlockHeight + 1)
+                  Array(endingBlockHeight - startingBlockHeight)
                 ).map((_, index: number) => (
                   <VStack
                       key={index}

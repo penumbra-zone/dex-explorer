@@ -20,7 +20,7 @@ export const BlockSummary = ({ blockHeight, blockSummary }: BlockSummaryProps) =
       <Box w='50%'>
         <Text
           as='a'
-          href={'/block/' + blockHeight}
+          href={`/block/${blockHeight}`}
           fontSize='large'
           fontWeight='bold'
           w='50%'

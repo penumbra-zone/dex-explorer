@@ -12,7 +12,7 @@ import {
 import { LoadingSpinner } from "@/components/util/loadingSpinner";
 import { useEffect, useRef, useState } from "react";
 import { BlockSummary } from "@/components/executionHistory/blockSummary";
-import { BlockInfo as OldBlockInfo } from "@/utils/indexer/types/lps";
+import { BlockInfo as OldBlockInfo } from "@/utils/types/block";
 import { SwapExecutionWithBlockHeight } from "@/utils/protos/types/DexQueryServiceClientInterface";
 import { BlockInfoMap } from "@/utils/types/block";
 import { BlockInfo } from "@/penumbra/block";
