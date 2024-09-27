@@ -1,4 +1,4 @@
-import { LPID, LPUpdate } from '@/penumbra/dex.ts';
+import { LPID, LPState, LPUpdate } from '@/penumbra/dex.ts';
 import { Pool, envPool } from './pool.ts';
 import { bech32Tobase64 } from '@/utils/encoding.ts';
 
@@ -62,5 +62,51 @@ export class LPQuerier {
       values: [bech32Tobase64(id)],
     });
     return rows.map(x => LPUpdate.dbSchema(false).parse(x));
+  }
+
+  private async stateEvent(state: LPState, start?: number, end?: number): Promise<LPUpdate[]> {
+    const MAX_EVENTS = 10_000;
+    const rows = await this.pool.query({
+      text: `
+        SELECT
+          id::INTEGER,
+          (SELECT json_array(b.height, b.timestamp) FROM block_details b WHERE b.height = d.height LIMIT 1),
+          encode(position_id, 'base64'),
+          split_part(state, '_', 1),
+          reserves1::TEXT,
+          reserves2::TEXT,
+          NULL
+        FROM
+          dex_lp_update d
+        WHERE
+          execution_id IS NULL
+        AND
+          state = $3 
+        AND
+          ($1::BIGINT IS NULL OR height >= $1)
+        AND
+          ($2::BIGINT IS NULL or height <= $2)
+        ORDER BY
+          id ASC
+        LIMIT $4
+      `,
+      rowMode: 'array',
+      values: [start ?? null, end ?? null, state, MAX_EVENTS],
+    });
+    return rows.map(x => LPUpdate.dbSchema(false).parse(x));
+  }
+
+  /**
+   * Return the events where a position was opened, in a given block range.
+   */
+  async openEvents(start?: number, end?: number): Promise<LPUpdate[]> {
+    return await this.stateEvent('opened', start, end);
+  }
+
+  /**
+   * Return the events where a position was closed, in a given block range.
+   */
+  async closeEvents(start?: number, end?: number): Promise<LPUpdate[]> {
+    return await this.stateEvent('closed', start, end);
   }
 }
