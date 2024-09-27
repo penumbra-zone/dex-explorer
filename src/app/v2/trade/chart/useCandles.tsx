@@ -38,16 +38,17 @@ export function useCandles(): CandlesResult {
   const { data: blockInfo } = useBlockInfo(1);
   const currentBlockHeight = blockInfo?.[0]?.height;
   const startBlockHeight = getStartBlockHeight(
-    blockInfo?.[0]?.height ?? null,
+    currentBlockHeight ?? null,
     ms.days(7) as number,
   );
 
   const limit = 10000;
+  console.log("TCL: currentBlockHeight", currentBlockHeight);
 
   const { data: candles } = useCandlesFetcher(
     asset1.symbol,
     asset2.symbol,
-    startBlockHeight,
+    0,
     limit,
   );
 

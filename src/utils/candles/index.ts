@@ -63,11 +63,12 @@ export function createMergeCandles(asset1Token: Token, asset2Token: Token) {
       }
     });
 
-    // Sort the data by height
-    // Put it back into an array
-    const sortedCandles = Array.from(combinedDataMap.values()).sort(
-      (a: CandlestickData, b: CandlestickData) => a.height - b.height,
-    );
+    const sortedCandles = Array.from(combinedDataMap.values())
+      .map((candle: CandlestickData) => ({
+        ...candle,
+        height: Number(candle.height),
+      }))
+      .sort((a: CandlestickData, b: CandlestickData) => a.height - b.height);
 
     return sortedCandles;
   };

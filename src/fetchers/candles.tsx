@@ -4,13 +4,13 @@ import { CandlestickData } from '@penumbra-zone/protobuf/penumbra/core/component
 export const useCandles = (
   symbol1: string,
   symbol2: string,
-  startBlock: number | null,
+  startBlock: number | undefined,
   limit: number,
 ) => {
   return useQuery({
     queryKey: ['candles', startBlock],
     queryFn: async (): Promise<CandlestickData[]> => {
-      if (startBlock === null) {
+      if (startBlock === undefined) {
         return [];
       }
 
