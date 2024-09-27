@@ -4,19 +4,33 @@ import { DirectedTradingPair } from '@penumbra-zone/protobuf/penumbra/core/compo
 import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { base64ToUint8Array } from '@/utils/math/base64';
 import { fetchAllTokenAssets } from '@/utils/token/tokenFetch';
+import { createMergeCandles } from '@/utils/candles';
+import { Token } from '@/utils/types/token';
 
 const grpcEndpoint = process.env['PENUMBRA_GRPC_ENDPOINT'] ?? '';
 if (!grpcEndpoint) {
   throw new Error('PENUMBRA_GRPC_ENDPOINT is not set');
 }
 
-const { fromEntries } = Object;
-
 interface QueryParams {
   symbol1?: string;
   symbol2?: string;
   startHeight?: string;
   limit?: string;
+}
+
+function getTokenAssetBySymbol(tokenAssets: Token[], symbol: string): Token | undefined {
+  const regex = new RegExp(`^${symbol}$`, 'i');
+  return tokenAssets.find(asset => regex.test(asset.symbol));
+}
+
+function getDirectedTradingPair(assetIn: Token, assetOut: Token) {
+  const tradingPair = new DirectedTradingPair();
+  tradingPair.start = new AssetId();
+  tradingPair.start.inner = base64ToUint8Array(assetIn.inner);
+  tradingPair.end = new AssetId();
+  tradingPair.end.inner = base64ToUint8Array(assetOut.inner);
+  return tradingPair;
 }
 
 export default async function candleStickData(req: NextApiRequest, res: NextApiResponse) {
@@ -34,28 +48,27 @@ export default async function candleStickData(req: NextApiRequest, res: NextApiR
   }
 
   const tokenAssets = fetchAllTokenAssets();
-  const tokenAssetsBySymbol = fromEntries(
-    tokenAssets.map(asset => [asset.symbol.toLowerCase(), asset]),
-  );
+  const asset1 = getTokenAssetBySymbol(tokenAssets, symbol1);
+  const asset2 = getTokenAssetBySymbol(tokenAssets, symbol2);
 
-  const asset1Inner = tokenAssetsBySymbol[symbol1.toLowerCase()]?.inner;
-  const asset2Inner = tokenAssetsBySymbol[symbol2.toLowerCase()]?.inner;
-
-  if (!asset1Inner || !asset2Inner) {
+  if (!asset1 || !asset2) {
     res.status(400).json({
       error: `Invalid token pair ${symbol1}:${symbol2}`,
     });
     return;
   }
 
-  const tradingPair = new DirectedTradingPair();
-  tradingPair.start = new AssetId();
-  tradingPair.start.inner = base64ToUint8Array(asset1Inner);
-  tradingPair.end = new AssetId();
-  tradingPair.end.inner = base64ToUint8Array(asset2Inner);
-
   const dexQuerier = new DexQueryServiceClient({ grpcEndpoint });
-  const data = await dexQuerier.candlestickData(tradingPair, Number(startHeight), Number(limit));
+  const tradingPair = getDirectedTradingPair(asset1, asset2);
+  const reversePair = getDirectedTradingPair(asset2, asset1);
 
-  res.status(200).json(data ?? []);
+  const [candlesFwd, candlesRev] = await Promise.all([
+    dexQuerier.candlestickData(tradingPair, Number(startHeight), Number(limit)),
+    dexQuerier.candlestickData(reversePair, Number(startHeight), Number(limit)),
+  ]);
+
+  const mergeCandles = createMergeCandles(asset1, asset2);
+  const mergedCandles = mergeCandles(candlesFwd, candlesRev);
+
+  res.status(200).json(mergedCandles ?? []);
 }
