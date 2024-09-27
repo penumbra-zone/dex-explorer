@@ -9,6 +9,7 @@ import { Token } from '@/utils/types/token';
 import { LoadingSpinner } from '../util/loadingSpinner';
 import ReactECharts from 'echarts-for-react';
 import { format } from 'date-fns';
+import { BlockInfo } from '@/penumbra/block';
 
 interface OHLCChartProps {
   asset1Token: Token;
@@ -187,30 +188,25 @@ const OHLCChart = ({ asset1Token, asset2Token }: OHLCChartProps) => {
     }
 
     // Process the data and make a list of OHLC heights
-    // format needed is '/api/blockTimestamps/range/{startHeight}/{endHeight}'
     const timestampsForHeights = fetch(
-      `/api/blockTimestamps/range/${originalOHLCData[0].height}/${originalOHLCData[originalOHLCData.length - 1].height}`,
-    ).then(res => res.json());
+      `/api/blocks/?start=${originalOHLCData[0].height}&end=${originalOHLCData[originalOHLCData.length - 1].height}`,
+    ).then(async res => {
+      const data = await res.json();
+      return BlockInfo.JSON_SCHEMA.array().parse(data);
+    });
 
     Promise.all([timestampsForHeights])
       .then(([timestampsForHeightsResponse]) => {
-        if (!timestampsForHeightsResponse || timestampsForHeightsResponse.error) {
-          throw new Error(`Error fetching data: ${timestampsForHeightsResponse}`);
-        }
-
         // If we have less timestamps than heights, we need to throw an error
-        if (Object.keys(timestampsForHeightsResponse).length < originalOHLCData.length) {
+        if (timestampsForHeightsResponse.length < originalOHLCData.length) {
           throw new Error(`Error fetching data: ${timestampsForHeightsResponse}`);
         }
-
-        console.log('Timestamps: ', timestampsForHeightsResponse);
 
         // Convert to a dictionary with height as key and timestamp as value
         const timestampMapping: Record<string, string> = {};
-        timestampsForHeightsResponse.forEach((item: { height: string; created_at: string }) => {
-          timestampMapping[item.height] = item.created_at;
+        timestampsForHeightsResponse.forEach((item) => {
+          timestampMapping[item.height] = item.created.toString();
         });
-        console.log('Timestamp mapping: ', timestampMapping);
 
         setBlockToTimestamp(timestampMapping);
         setIsTimestampsLoading(false);
