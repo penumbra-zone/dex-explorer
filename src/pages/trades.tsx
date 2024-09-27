@@ -18,8 +18,12 @@ import { useEffect, useRef, useState } from "react";
 import { BlockSummary } from "@/components/executionHistory/blockSummary";
 import { BlockInfo as OldBlockInfo, LiquidityPositionEvent } from "@/utils/indexer/types/lps";
 import { SwapExecutionWithBlockHeight } from "@/utils/protos/types/DexQueryServiceClientInterface";
-import { BlockInfoMap, BlockSummaryMap } from "@/utils/types/block";
+import { BlockInfoMap } from "@/utils/types/block";
 import { BlockInfo } from "@/penumbra/block";
+import { LPUpdate } from "@/penumbra/dex";
+import { BlockDetailsSummary } from "@/components/executionHistory/blockDetails";
+
+type BlockSummaryMap = Record<number, BlockDetailsSummary>;
 
 export default function Trades() {
   // Go back hardcoded N blocks
@@ -105,29 +109,37 @@ export default function Trades() {
     console.log("Loading block data");
     setIsLoading(true);
     if (blockInfo && endingBlockHeight >= 1 && startingBlockHeight >= 1) {
-      const liquidityPositionOpenClosePromise = fetch(
-        `/api/lp/block/${startingBlockHeight}/${endingBlockHeight + 1}`
-      ).then((res) => res.json());
+      const openPromise = fetch(
+        `/api/lp/open/?start=${startingBlockHeight}&end=${endingBlockHeight + 1}`,
+      ).then(async (res) => LPUpdate.JSON_SCHEMA.array().parse(await res.json() as unknown[]));
+      const closePromise = fetch(
+        `/api/lp/close/?start=${startingBlockHeight}&end=${endingBlockHeight + 1}`,
+      ).then(async (res) => LPUpdate.JSON_SCHEMA.array().parse(await res.json() as unknown[]));
+      const withdrawPromise = fetch(
+        `/api/lp/withdraw/?start=${startingBlockHeight}&end=${endingBlockHeight + 1}`,
+      ).then(async (res) => LPUpdate.JSON_SCHEMA.array().parse(await res.json() as unknown[]));
       const arbsPromise = fetch(
-        `/api/arbs/${startingBlockHeight}/${endingBlockHeight + 1}`
+        `/api/arbs/${startingBlockHeight}/${endingBlockHeight + 1}`,
       ).then((res) => res.json());
       const swapsPromise = fetch(
-        `/api/swaps/${startingBlockHeight}/${endingBlockHeight + 1}`
+        `/api/swaps/${startingBlockHeight}/${endingBlockHeight + 1}`,
       ).then((res) => res.json());
 
       Promise.all([
-        liquidityPositionOpenClosePromise,
+        openPromise,
+        closePromise,
+        withdrawPromise,
         arbsPromise,
         swapsPromise,
       ])
         .then(
           ([
-            liquidityPositionOpenCloseResponse,
+            openResponse,
+            closeResponse,
+            withdrawResponse,
             arbsResponse,
             swapsResponse,
           ]) => {
-            const positionData: LiquidityPositionEvent[] =
-              liquidityPositionOpenCloseResponse as LiquidityPositionEvent[];
             const arbData: SwapExecutionWithBlockHeight[] =
               arbsResponse as SwapExecutionWithBlockHeight[];
             const swapData: SwapExecutionWithBlockHeight[] =
@@ -138,45 +150,33 @@ export default function Trades() {
             let i: number;
             for (i = startingBlockHeight; i <= endingBlockHeight; i++) {
               blockSummaryMap[i] = {
-                openPositionEvents: [],
-                closePositionEvents: [],
-                withdrawPositionEvents: [],
-                swapExecutions: [],
-                arbExecutions: [],
-                createdAt: blockInfo[i].created_at,
+                opened: 0,
+                closed: 0,
+                withdrawn: 0,
+                arbs: 0,
+                swaps: 0,
+                created: new Date((blockInfo[i] as OldBlockInfo).created_at),
               };
             }
 
-            positionData.forEach(
-              (positionOpenCloseEvent: LiquidityPositionEvent) => {
-                if (positionOpenCloseEvent.type.includes("PositionOpen")) {
-                  blockSummaryMap[positionOpenCloseEvent.block_height].openPositionEvents.push(positionOpenCloseEvent);
-                } else if (
-                  positionOpenCloseEvent.type.includes("PositionClose")
-                ) {
-                  blockSummaryMap[positionOpenCloseEvent.block_height].closePositionEvents.push(positionOpenCloseEvent);
-                } else if (
-                  positionOpenCloseEvent.type.includes("PositionWithdraw")
-                ) {
-                  blockSummaryMap[positionOpenCloseEvent.block_height].withdrawPositionEvents.push(positionOpenCloseEvent);
-                }
-              }
-            );
-
-            arbData.forEach((arb: SwapExecutionWithBlockHeight) => {
-              blockSummaryMap[arb.blockHeight].arbExecutions.push(
-                arb.swapExecution
-              );
+            openResponse.forEach(update => {
+              blockSummaryMap[update.block.height]!.opened += 1;
             });
-
-            swapData.forEach((swap: SwapExecutionWithBlockHeight) => {
-              blockSummaryMap[swap.blockHeight].swapExecutions.push(
-                swap.swapExecution
-              );
+            closeResponse.forEach(update => {
+              blockSummaryMap[update.block.height]!.closed += 1;
+            });
+            withdrawResponse.forEach(update => {
+              blockSummaryMap[update.block.height]!.withdrawn += 1;
+            });
+            arbData.forEach(update => {
+              blockSummaryMap[update.blockHeight]!.arbs += 1;
+            });
+            swapData.forEach(update => {
+              blockSummaryMap[update.blockHeight]!.swaps += 1;
             });
 
             setBlockData(blockSummaryMap);
-          }
+          },
         )
         .catch((error) => {
           console.error("Error fetching block summary data:", error);

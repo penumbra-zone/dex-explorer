@@ -109,4 +109,11 @@ export class LPQuerier {
   async closeEvents(start?: number, end?: number): Promise<LPUpdate[]> {
     return await this.stateEvent('closed', start, end);
   }
+
+  /**
+   * Return the events where a position was withdrawn, in a given block range.
+   */
+  async withdrawEvents(start?: number, end?: number): Promise<LPUpdate[]> {
+    return await this.stateEvent('withdrawn', start, end);
+  }
 }

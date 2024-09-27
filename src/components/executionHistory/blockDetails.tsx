@@ -1,35 +1,42 @@
-// @ts-nocheck
-/* eslint-disable -- disabling this file as this was created before our strict rules */
-import { BlockSummaryData } from "@/utils/types/block";
-import { VStack, Text } from "@chakra-ui/react";
+import { VStack, Text } from '@chakra-ui/react';
 
+export interface BlockDetailsSummary {
+  opened: number;
+  closed: number;
+  withdrawn: number;
+  swaps: number;
+  arbs: number;
+  created: Date;
+}
 export interface BlockDetailsProps {
-  blockSummary: BlockSummaryData
+  blockSummary: BlockDetailsSummary;
 }
 
-export const BlockDetails = ({ blockSummary }: BlockDetailsProps) => {
+export const BlockDetails = ({
+  blockSummary: { opened, closed, withdrawn, swaps, arbs },
+}: BlockDetailsProps) => {
   return (
-    <VStack align="flex-start" spacing={2}>
-        <Text fontSize="medium" fontStyle="monospace">
-          {"Positions Opened: "}
-          {blockSummary.openPositionEvents.length}
-        </Text>
-        <Text fontSize="medium" fontStyle="monospace">
-          {"Positions Closed: "}
-          {blockSummary.closePositionEvents.length}
-        </Text>
-        <Text fontSize="medium" fontStyle="monospace">
-          {"Positions Withdrawn: "}
-          {blockSummary.withdrawPositionEvents.length}
-        </Text>
-        <Text fontSize="medium" fontStyle="monospace">
-          {"Swaps: "}
-          {blockSummary.swapExecutions.length}
-        </Text>
-        <Text fontSize="medium" fontStyle="monospace">
-          {"Arbs: "}
-          {blockSummary.arbExecutions.length}
-        </Text>
-      </VStack>
+    <VStack align='flex-start' spacing={2}>
+      <Text fontSize='medium' fontStyle='monospace'>
+        {'Positions Opened: '}
+        {opened}
+      </Text>
+      <Text fontSize='medium' fontStyle='monospace'>
+        {'Positions Closed: '}
+        {closed}
+      </Text>
+      <Text fontSize='medium' fontStyle='monospace'>
+        {'Positions Withdrawn: '}
+        {withdrawn}
+      </Text>
+      <Text fontSize='medium' fontStyle='monospace'>
+        {'Swaps: '}
+        {swaps}
+      </Text>
+      <Text fontSize='medium' fontStyle='monospace'>
+        {'Arbs: '}
+        {arbs}
+      </Text>
+    </VStack>
   );
-}
+};
