@@ -1,19 +1,13 @@
 import { useMemo } from 'react';
-import { useShallow } from 'zustand/react/shallow';
 import { Link2Off } from 'lucide-react';
 import Image from 'next/image';
 import { Popover } from '@penumbra-zone/ui/Popover';
 import { Button } from '@penumbra-zone/ui/Button';
 import { Text } from '@penumbra-zone/ui/Text';
-import { useConnectionState, ConnectionState } from '@/state/connection';
-
-const connectionSelector = (state: ConnectionState) => ({
-  manifest: state.manifest,
-  disconnect: state.disconnect,
-});
+import { connectionStore } from '@/state/connection';
 
 export const ProviderPopover = () => {
-  const { manifest, disconnect } = useConnectionState(useShallow(connectionSelector));
+  const { manifest, disconnect } = connectionStore;
 
   const name = manifest?.['name'] as string;
   const version = manifest?.['version'] as string;

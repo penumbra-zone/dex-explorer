@@ -56,6 +56,8 @@
     "grpc_tools_node_protoc_ts": "^5.3.3",
     "lodash": "^4.17.21",
     "lucide-react": "^0.445.0",
+    "mobx": "^6.13.3",
+    "mobx-react-lite": "^4.0.7",
     "next": "^14.2.7",
     "pg": "^8.12.0",
     "react": "^18.3.1",

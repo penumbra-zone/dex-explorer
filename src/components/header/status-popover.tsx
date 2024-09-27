@@ -1,25 +1,16 @@
 import { useMemo } from 'react';
 import { Blocks } from 'lucide-react';
-import { useShallow } from 'zustand/react/shallow';
 import { Popover } from '@penumbra-zone/ui/Popover';
 import { Button } from '@penumbra-zone/ui/Button';
 import { Density } from '@penumbra-zone/ui/Density';
 import { Pill } from '@penumbra-zone/ui/Pill';
 import { Text } from '@penumbra-zone/ui/Text';
-import { useStatusState, StatusState } from '@/state/status';
-import { useConnected } from '@/state/connection';
+import { statusStore } from '@/state/status';
+import { connectionStore } from '@/state/connection';
+import { observer } from 'mobx-react-lite';
 
-const statusSelector = (state: StatusState) => ({
-  loading: state.loading,
-  error: state.error,
-  syncing: state.syncing,
-  latestKnownBlockHeight: state.latestKnownBlockHeight,
-  fullSyncHeight: state.fullSyncHeight,
-});
-
-export const StatusPopover = () => {
-  const { loading, error, syncing, fullSyncHeight, latestKnownBlockHeight } = useStatusState(useShallow(statusSelector));
-  const connected = useConnected();
+export const StatusPopover = observer(() => {
+  const { loading, error, syncing, fullSyncHeight, latestKnownBlockHeight } = statusStore;
 
   // a ReactNode displaying the sync status in form of a pill
   const pill = useMemo(() => {
@@ -38,7 +29,7 @@ export const StatusPopover = () => {
     return <Pill context='technical-caution'>Block Syncing</Pill>;
   }, [error, loading, syncing]);
 
-  if (!connected) {
+  if (!connectionStore.connected) {
     return null;
   }
 
@@ -72,4 +63,4 @@ export const StatusPopover = () => {
       </Popover.Content>
     </Popover>
   );
-};
+});

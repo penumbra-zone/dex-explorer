@@ -1,82 +1,78 @@
 import { ViewService } from '@penumbra-zone/protobuf';
 import { penumbra } from '@/utils/penumbra';
 import { getSyncPercent } from '@/state/status/getSyncPercent';
-import { create } from 'zustand/index';
+import { makeAutoObservable, when } from 'mobx';
+import {
+  StatusResponse,
+  StatusStreamResponse,
+} from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
+import { connectionStore } from '@/state/connection';
 
-export interface StatusState {
+class StatusState {
   /** If true, ignore all other state values */
-  loading: boolean;
+  loading = true;
   /** The error is set in case of a request failure */
   error?: string;
   /** Indicates that the account needs syncing with the blockchain */
-  syncing: boolean;
+  syncing = false;
   /** Indicates that the account is almost in sync with the blockchain (amount of unsynced blocks is less than 10) */
-  updating?: boolean;
+  updating?: boolean = false;
   /** The amount of synced blocks */
-  fullSyncHeight: bigint;
+  fullSyncHeight = 0n;
   /** The total amount of blocks in the blockchain */
   latestKnownBlockHeight?: bigint;
   /** A number between 0 and 1 indicating the sync progress */
-  syncPercent: number;
+  syncPercent = 0;
   /** A stringified sync percentage, e.g. '100%' or '17%' */
-  syncPercentStringified: string;
+  syncPercentStringified = '0%';
 
-  /**
-   * Receives the status stream from the view service
-   * and stores it in the `penumbraStatus` signal.
-   *
-   * Call this function in the global `useEffect` hook to subscribe to provider connection change
-   */
-  setup: () => Promise<void>;
-}
+  constructor() {
+    makeAutoObservable(this);
 
-/**
- * Initial status request doesn't return `latestKnownBlockHeight`.
- * Instead, it returns `catchingUp` to know if the sync is in progress
- */
-const getPenumbraStatus = async (): Promise<Omit<StatusState, 'setup'>> => {
-  const status = await penumbra.service(ViewService).status({});
+    when(
+      () => connectionStore.connected,
+      () => void this.setup(),
+    );
+  }
 
-  return {
-    loading: false,
-    error: undefined,
-    syncing: status.catchingUp,
-    fullSyncHeight: status.fullSyncHeight,
-    latestKnownBlockHeight: status.catchingUp ? undefined : status.fullSyncHeight,
-    syncPercent: status.catchingUp ? 0 : 1,
-    syncPercentStringified: status.catchingUp ? '0%' : '100%',
-  };
-};
-
-export const useStatusState = create<StatusState>()((set, get) => ({
-  loading: true,
-  syncing: false,
-  updating: false,
-  fullSyncHeight: 0n,
-  latestKnownBlockHeight: undefined,
-  syncPercent: 0,
-  syncPercentStringified: '0%',
-
-  setup: async () => {
+  async setup() {
     try {
-      set(await getPenumbraStatus());
+      const status = await penumbra.service(ViewService).status({});
+      this.setUnaryStatus(status);
 
       const stream = penumbra.service(ViewService).statusStream({});
       for await (const status of stream) {
-        const syncPercents = getSyncPercent(status.fullSyncHeight, status.latestKnownBlockHeight);
-
-        set({
-          loading: false,
-          error: undefined,
-          syncing: status.fullSyncHeight !== status.latestKnownBlockHeight,
-          fullSyncHeight: status.fullSyncHeight,
-          latestKnownBlockHeight: status.latestKnownBlockHeight,
-          ...syncPercents,
-        });
+        this.setStreamedStatus(status);
       }
     } catch (error) {
-      set({ error: error instanceof Error ? `${error.name}: ${error.message}` : 'Streaming error' });
-      setTimeout(() => void get().setup(), 1000);
+      this.error = error instanceof Error ? `${error.name}: ${error.message}` : 'Streaming error';
+      setTimeout(() => void this.setup(), 1000);
     }
-  },
-}));
+  }
+
+  private setUnaryStatus(status: StatusResponse) {
+    this.loading = false;
+    this.error = undefined;
+    this.syncing = status.catchingUp;
+    this.fullSyncHeight = status.fullSyncHeight;
+    this.latestKnownBlockHeight = status.catchingUp ? undefined : status.fullSyncHeight;
+    this.syncPercent = status.catchingUp ? 0 : 1;
+    this.syncPercentStringified = status.catchingUp ? '0%' : '100%';
+  }
+
+  private setStreamedStatus(status: StatusStreamResponse) {
+    this.loading = false;
+    this.error = undefined;
+    this.syncing = status.fullSyncHeight !== status.latestKnownBlockHeight;
+    this.fullSyncHeight = status.fullSyncHeight;
+    this.latestKnownBlockHeight = status.latestKnownBlockHeight;
+    const { syncPercent, syncPercentStringified } = getSyncPercent(
+      status.fullSyncHeight,
+      status.latestKnownBlockHeight,
+    );
+    this.syncPercent = syncPercent;
+    this.syncPercentStringified = syncPercentStringified;
+  }
+}
+
+export const statusStore = new StatusState();

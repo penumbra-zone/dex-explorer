@@ -1,21 +1,16 @@
-import { useShallow } from 'zustand/react/shallow';
 import { Button } from '@penumbra-zone/ui/Button';
-import { ConnectionState, useConnectionState } from '@/state/connection';
 import { ProviderPopover } from './provider-popover';
+import { connectionStore } from '@/state/connection';
+import { observer } from 'mobx-react-lite';
 
-const connectionSelector = (state: ConnectionState) => ({
-  connected: state.connected,
-  connect: state.connect,
-});
-
-export const Connection = () => {
-  const { connected, connect } = useConnectionState(useShallow(connectionSelector));
-
-  if (!connected) {
+export const Connection = observer(() => {
+  if (!connectionStore.connected) {
     return (
-      <Button actionType='accent' onClick={() => void connect()}>Connect</Button>
+      <Button actionType='accent' onClick={() => void connectionStore.connect()}>
+        Connect
+      </Button>
     );
   }
 
-  return <ProviderPopover />
-};
+  return <ProviderPopover />;
+});

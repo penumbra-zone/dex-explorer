@@ -1,22 +1,28 @@
-import { create } from 'zustand';
 import { PenumbraRequestFailure, PenumbraState, PenumbraManifest } from '@penumbra-zone/client';
 import { penumbra, PRAX_ORIGIN } from '@/utils/penumbra';
+import { makeAutoObservable } from 'mobx';
 
-export interface ConnectionState {
-  connected: boolean;
+class ConnectionStateStore {
+  connected = false;
   manifest: PenumbraManifest | undefined;
-  reconnect: () => Promise<void>;
-  connect: () => Promise<void>;
-  disconnect: () => Promise<void>;
-  /** Call this function in the global `useEffect` hook to subscribe to provider connection change */
-  setup: () => void;
-}
 
-export const useConnectionState = create<ConnectionState>()((set, get) => ({
-  connected: false,
-  manifest: undefined,
+  constructor() {
+    makeAutoObservable(this);
 
-  reconnect: async () => {
+    if (typeof window !== 'undefined') {
+      this.setup();
+    }
+  }
+
+  private setManifest(manifest: PenumbraManifest | undefined) {
+    this.manifest = manifest;
+  }
+
+  private setConnected(connected: boolean) {
+    this.connected = connected;
+  }
+
+  async reconnect() {
     await penumbra.attach(PRAX_ORIGIN);
     if (!penumbra.connected) {
       return;
@@ -24,29 +30,31 @@ export const useConnectionState = create<ConnectionState>()((set, get) => ({
 
     try {
       await penumbra.connect();
-      set({ connected: true });
+      this.setConnected(true);
     } catch (error) {
       /* no-op */
     }
-  },
+  }
 
-  connect: async () => {
+  async connect() {
     try {
       await penumbra.connect();
     } catch (error) {
       if (error instanceof Error && error.cause) {
         if (error.cause === PenumbraRequestFailure.Denied) {
           // TODO: replace these alerts with toasts
-          alert('Connection denied: you may need to un-ignore this site in your extension settings.');
+          alert(
+            'Connection denied: you may need to un-ignore this site in your extension settings.',
+          );
         }
         if (error.cause === PenumbraRequestFailure.NeedsLogin) {
           alert('Not logged in: please login into the extension and try again');
         }
       }
     }
-  },
+  }
 
-  disconnect: async () => {
+  async disconnect() {
     if (!penumbra.connected) {
       return;
     }
@@ -56,21 +64,19 @@ export const useConnectionState = create<ConnectionState>()((set, get) => ({
     } catch (error) {
       console.error(error);
     }
-  },
+  }
 
-  setup: () => {
-    set({ manifest: penumbra.manifest });
+  setup() {
+    this.setManifest(penumbra.manifest);
 
     // If Prax is connected on page load, reconnect to ensure the connection is still active
-    void get().reconnect();
+    void this.reconnect();
 
-    penumbra.onConnectionStateChange((event) => {
-      set({
-        manifest: penumbra.manifest,
-        connected: event.state === PenumbraState.Connected,
-      });
+    penumbra.onConnectionStateChange(event => {
+      this.setManifest(penumbra.manifest);
+      this.setConnected(event.state === PenumbraState.Connected);
     });
-  },
-}));
+  }
+}
 
-export const useConnected = () => useConnectionState((state) => state.connected);
+export const connectionStore = new ConnectionStateStore();

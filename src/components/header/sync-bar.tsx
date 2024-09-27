@@ -1,28 +1,17 @@
-import { useShallow } from 'zustand/react/shallow';
 import { Progress } from '@penumbra-zone/ui/Progress';
-import { useStatusState, StatusState } from '@/state/status';
+import { statusStore } from '@/state/status';
+import { observer } from 'mobx-react-lite';
 
-const statusSelector = (state: StatusState) => ({
-  loading: state.loading,
-  error: state.error,
-  syncPercent: state.syncPercent,
-  updating: state.updating,
-});
-
-export const SyncBar = () => {
-  const { loading, error, syncPercent, updating } = useStatusState(useShallow(statusSelector));
+export const SyncBar = observer(() => {
+  const { loading, error, syncPercent, updating } = statusStore;
 
   return (
     <div className='fixed left-0 top-0 h-1 w-full'>
       {loading ? (
         <Progress value={0} loading error={Boolean(error)} />
       ) : (
-        <Progress
-          value={syncPercent}
-          loading={updating}
-          error={Boolean(error)}
-        />
+        <Progress value={syncPercent} loading={updating} error={Boolean(error)} />
       )}
     </div>
   );
-};
+});
