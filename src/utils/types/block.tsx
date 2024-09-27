@@ -12,16 +12,6 @@ export interface BlockSummaryData {
   createdAt: string;
 }
 
-export interface BlockDetailedSummaryData {
-  openPositionEvents: LiquidityPositionEvent[];
-  closePositionEvents: LiquidityPositionEvent[];
-  withdrawPositionEvents: LiquidityPositionEvent[];
-  otherPositionEvents: LiquidityPositionEvent[];
-  swapExecutions: SwapExecution[];
-  arbExecutions: SwapExecution[];
-  createdAt: string;
-}
-
 export type BlockInfoMap = Record<number, BlockInfo>;
 
 export type BlockSummaryMap = Record<number, BlockSummaryData>;

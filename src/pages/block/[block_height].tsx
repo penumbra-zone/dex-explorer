@@ -31,6 +31,15 @@ import { Token } from "@/utils/types/token";
 import { fromBaseUnit } from "@/utils/math/hiLo";
 import { z } from "zod";
 
+export interface BlockDetailedSummaryData {
+  openPositionEvents: LiquidityPositionEvent[];
+  closePositionEvents: LiquidityPositionEvent[];
+  withdrawPositionEvents: LiquidityPositionEvent[];
+  swapExecutions: SwapExecution[];
+  arbExecutions: SwapExecution[];
+  createdAt: string;
+}
+
 export const Price = ({
   trace,
   metadataByAssetId,
@@ -324,9 +333,6 @@ export default function Block() {
       > = fetch(`/api/lp/block/${height}/${height + 1}`).then((res) =>
         res.json()
       );
-      const liquidityPositionOtherExecutions: Promise<
-        LiquidityPositionEvent[]
-      > = fetch(`/api/lp/block/${height}`).then((res) => res.json());
       const arbsPromise: Promise<SwapExecutionWithBlockHeight[]> = fetch(
         `/api/arbs/${height}/${height + 1}`
       ).then((res) => res.json());
@@ -337,7 +343,6 @@ export default function Block() {
       Promise.all([
         blockInfoPromise,
         liquidityPositionOpenClosePromise,
-        liquidityPositionOtherExecutions,
         arbsPromise,
         swapsPromise,
       ])
@@ -345,15 +350,12 @@ export default function Block() {
           ([
             blockInfoResponse,
             liquidityPositionOpenCloseResponse,
-            liquidityPositionOtherResponse,
             arbsResponse,
             swapsResponse,
           ]) => {
             const blockInfoList: BlockInfo[] = blockInfoResponse;
             const positionData: LiquidityPositionEvent[] =
               liquidityPositionOpenCloseResponse;
-            const otherPositionData: LiquidityPositionEvent[] =
-              liquidityPositionOtherResponse;
             const arbData: SwapExecutionWithBlockHeight[] =
               arbsResponse;
             const swapData: SwapExecutionWithBlockHeight[] =
@@ -370,7 +372,6 @@ export default function Block() {
               openPositionEvents: [],
               closePositionEvents: [],
               withdrawPositionEvents: [],
-              otherPositionEvents: [],
               swapExecutions: [],
               arbExecutions: [],
               createdAt: blockInfo.created.toString(),
@@ -394,13 +395,6 @@ export default function Block() {
                     positionOpenCloseEvent
                   );
                 }
-              }
-            );
-            otherPositionData.forEach(
-              (positionEvent: LiquidityPositionEvent) => {
-                detailedBlockSummaryData.otherPositionEvents.push(
-                  positionEvent
-                );
               }
             );
             arbData.forEach((arb: SwapExecutionWithBlockHeight) => {
