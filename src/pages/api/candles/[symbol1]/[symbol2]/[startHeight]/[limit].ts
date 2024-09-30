@@ -1,7 +1,7 @@
 import { DexQueryServiceClient } from '@/utils/protos/services/dex/dex-query-service-client';
 import { IndexerQuerier } from '@/utils/indexer/connector';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { DirectedTradingPair } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
+import { CandlestickData, DirectedTradingPair } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { base64ToUint8Array } from '@/utils/math/base64';
 import { fetchAllTokenAssets } from '@/utils/token/tokenFetch';
@@ -39,17 +39,52 @@ function getDirectedTradingPair(assetIn: Token, assetOut: Token) {
   return tradingPair;
 }
 
-export default async function candleStickData(req: NextApiRequest, res: NextApiResponse) {
-  const { symbol1, symbol2, startHeight, limit } = req.query as QueryParams;
-  console.log('TCL: candleStickData -> startHeight', startHeight);
+function fillBlocks(startHeight: number, endHeight: number) {
+  return Array.from({ length: endHeight - startHeight + 1 }, (_, i) => startHeight + i);
+}
 
-  if ((!startHeight && startHeight !== '0') || !symbol1 || !symbol2 || !limit) {
+async function getTimestampsByBlockheight(startHeight: number, limit: number): Promise<Record<number, number>> {
+  const indexerQuerier = new IndexerQuerier(indexerEndpoint);
+
+  if (startHeight === 0) {
+    const endHeight = await indexerQuerier
+      .fetchMostRecentNBlocks(1)
+      .then(resp => resp?.[0]?.height);
+    console.log("TCL: getTimestampsByBlockheight -> endHeight", endHeight);
+
+    if (!endHeight) {
+      return {};
+    }
+
+    const startHeight = endHeight - limit;
+    const data = await indexerQuerier.fetchBlocksByHeight(fillBlocks(startHeight, endHeight));
+    const timestampsByHeight = Object.fromEntries(
+      data?.map(block => [block.height, block.created_at]) || [],
+    );
+
+    return timestampsByHeight;
+  } else {
+    const endHeight = startHeight + limit;
+    const data = await indexerQuerier.fetchBlocksByHeight(fillBlocks(startHeight, endHeight));
+    const timestampsByHeight = Object.fromEntries(
+      data?.map(block => [block.height, block.created_at]) || [],
+    );
+    return timestampsByHeight;
+  }
+}
+
+export default async function candleStickData(req: NextApiRequest, res: NextApiResponse) {
+  const { symbol1, symbol2, startHeight: startHeightQuery, limit: limitQuery } = req.query as QueryParams;
+  const startHeight = Number(startHeightQuery);
+  const limit = Number(limitQuery);
+
+  if ((!startHeight && startHeight !== 0) || !symbol1 || !symbol2 || !limit) {
     res.status(400).json({ error: 'Invalid query parameters' });
     return;
   }
 
   // Set a HARD limit to prevent abuse
-  if (Number(limit) > 10000) {
+  if (limit > 10000) {
     res.status(400).json({ error: 'Limit exceeded' });
     return;
   }
@@ -66,33 +101,24 @@ export default async function candleStickData(req: NextApiRequest, res: NextApiR
   }
 
   const dexQuerier = new DexQueryServiceClient({ grpcEndpoint });
-  const indexerQuerier = new IndexerQuerier(indexerEndpoint);
   const tradingPair = getDirectedTradingPair(asset1, asset2);
   const reversePair = getDirectedTradingPair(asset2, asset1);
 
-  const [candlesFwd, candlesRev] = await Promise.all([
-    dexQuerier.candlestickData(tradingPair, Number(startHeight), Number(limit)),
-    dexQuerier.candlestickData(reversePair, Number(startHeight), Number(limit)),
+  const [candlesFwd, candlesRev, timestampsByHeight] = await Promise.all([
+    dexQuerier.candlestickData(tradingPair, startHeight, limit),
+    dexQuerier.candlestickData(reversePair, startHeight, limit),
+    getTimestampsByBlockheight(startHeight, limit),
   ]);
 
   const mergeCandles = createMergeCandles(asset1, asset2);
   const mergedCandles = mergeCandles(candlesFwd, candlesRev);
-  console.log('TCL: candleStickData -> mergedCandles', mergedCandles);
 
-  if (Number(startHeight) === 0) {
-    const endHeight = await indexerQuerier
-      .fetchMostRecentNBlocks(1)
-      .then(resp => resp?.[0]?.height);
-    const startHeight = endHeight - limit;
-    const blocks = Array.from({ length: endHeight - startHeight + 1 }, (_, i) => startHeight + i);
-    const data = await indexerQuerier.fetchBlocksByHeight(blocks);
-    console.log('TCL: candleStickData -> data', data);
-  }
-  // const resp = await indexerQuerier.fetchMostRecentNBlocks(1);
-  // const startingBlock = Number(startHeight) === 0 ?
-  // console.log('TCL: candleStickData -> resp', resp);
+  const candlesWithTime = mergedCandles?
+    .filter((candle: CandlestickData) => timestampsByHeight[Number(candle.height)])
+    .map((candle: CandlestickData) => ({
+      ...candle,
+      time: new Date(timestampsByHeight[Number(candle.height)]).getTime(),
+    }));
 
-  // const blocks = Array.from({ length: end - start + 1 }, (_, i) => start + i);
-
-  res.status(200).json(mergedCandles ?? []);
+  res.status(200).json(candlesWithTime ?? []);
 }
