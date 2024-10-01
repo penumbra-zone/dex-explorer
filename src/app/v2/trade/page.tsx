@@ -1,10 +1,15 @@
 'use client';
 
 import { Card } from '@penumbra-zone/ui/Card';
+import { PairSelector } from '@/components/PairSelector/index';
 
 const TradePage = () => {
   return (
     <div>
+      <div className="flex gap-2">
+        <PairSelector />
+      </div>
+
       <div className='flex flex-wrap lg:gap-2'>
         <div className='w-full lg:w-auto lg:flex-grow mb-2'>
           <Card title='Chart'>
