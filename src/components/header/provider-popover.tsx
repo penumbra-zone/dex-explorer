@@ -5,9 +5,10 @@ import { Popover } from '@penumbra-zone/ui/Popover';
 import { Button } from '@penumbra-zone/ui/Button';
 import { Text } from '@penumbra-zone/ui/Text';
 import { connectionStore } from '@/state/connection';
+import { observer } from 'mobx-react-lite';
 
-export const ProviderPopover = () => {
-  const { manifest, disconnect } = connectionStore;
+export const ProviderPopover = observer(() => {
+  const { manifest } = connectionStore;
 
   const name = manifest?.['name'] as string;
   const version = manifest?.['version'] as string;
@@ -41,11 +42,11 @@ export const ProviderPopover = () => {
           <Text body>Loading provider manifest...</Text>
         )}
         <div className='mt-4'>
-          <Button icon={Link2Off} onClick={() => void disconnect()}>
+          <Button icon={Link2Off} onClick={() => void connectionStore.disconnect()}>
             Disconnect
           </Button>
         </div>
       </Popover.Content>
     </Popover>
   );
-};
+});

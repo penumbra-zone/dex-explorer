@@ -1,7 +1,7 @@
 import { ViewService } from '@penumbra-zone/protobuf';
 import { penumbra } from '@/utils/penumbra';
 import { getSyncPercent } from '@/state/status/getSyncPercent';
-import { makeAutoObservable, when } from 'mobx';
+import { makeAutoObservable, runInAction, when } from 'mobx';
 import {
   StatusResponse,
   StatusStreamResponse,
@@ -45,12 +45,14 @@ class StatusState {
         this.setStreamedStatus(status);
       }
     } catch (error) {
-      this.error = error instanceof Error ? `${error.name}: ${error.message}` : 'Streaming error';
+      runInAction(() => {
+        this.error = error instanceof Error ? `${error.name}: ${error.message}` : 'Streaming error';
+      });
       setTimeout(() => void this.setup(), 1000);
     }
   }
 
-  private setUnaryStatus(status: StatusResponse) {
+  setUnaryStatus(status: StatusResponse) {
     this.loading = false;
     this.error = undefined;
     this.syncing = status.catchingUp;
@@ -60,7 +62,7 @@ class StatusState {
     this.syncPercentStringified = status.catchingUp ? '0%' : '100%';
   }
 
-  private setStreamedStatus(status: StatusStreamResponse) {
+  setStreamedStatus(status: StatusStreamResponse) {
     this.loading = false;
     this.error = undefined;
     this.syncing = status.fullSyncHeight !== status.latestKnownBlockHeight;
