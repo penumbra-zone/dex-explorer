@@ -11,15 +11,15 @@ import { Token } from '@/utils/types/token';
 
 export default function Pairs() {
   const [isLoading, setIsLoading] = useState(true);
+  const tokenAssetsList = useTokenAssets();
   const [tokenAssets, setTokenAssets] = useState<Token[]>([]);
 
   const [firstAsset, setFirstAsset] = useState('');
   const [secondAsset, setSecondAsset] = useState('');
-  const tokenAssets = useTokenAssets();
 
   useEffect(() => {
     setIsLoading(true);
-    const tokens: Token[] = tokenAssets.sort((a, b) =>
+    const tokens: Token[] = tokenAssetsList.sort((a, b) =>
       a.display > b.display ? 1 : b.display > a.display ? -1 : 0,
     );
     if (tokens.length > 0 && tokenAssets.length === 0) {
@@ -88,4 +88,14 @@ export default function Pairs() {
       )}
     </Layout>
   );
+}
+
+export async function getServerSideProps() {
+  const envs = getClientSideEnvs();
+
+  return {
+    props: {
+      envs,
+    },
+  };
 }
