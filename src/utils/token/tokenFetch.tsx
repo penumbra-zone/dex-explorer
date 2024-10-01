@@ -1,31 +1,30 @@
-import { uint8ArrayToBase64, base64ToUint8Array } from "../math/base64";
-import { Constants } from "../configConstants.ts";
+import { uint8ArrayToBase64, base64ToUint8Array } from '../math/base64';
 import {
   AssetId,
   AssetImage,
   DenomUnit,
-} from "@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb";
-import { ChainRegistryClient, Registry } from "@penumbra-labs/registry";
-import { Token } from "../types/token";
+} from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { ChainRegistryClient, Registry } from '@penumbra-labs/registry';
+import { Token } from '../types/token';
+import { useEnvContext } from '../env/context';
 
-const getRegistry = (): Registry => {
-  const chainId = Constants.chainId;
+const getRegistry = (chainId: string): Registry => {
   const registryClient = new ChainRegistryClient();
   return registryClient.bundled.get(chainId);
 };
 
-export const fetchAllTokenAssets = (): Token[] => {
-  const registry = getRegistry();
+export const fetchAllTokenAssets = (chainId: string): Token[] => {
+  const registry = getRegistry(chainId);
   const metadata = registry.getAllAssets();
   const tokens: Token[] = [];
-  metadata.forEach((x) => {
+  metadata.forEach(x => {
     // Filter out assets with no assetId and "Delegation" assets -- need to check this
     // Standardize case
-    if (x.penumbraAssetId && !x.display.startsWith("delegation_")) {
-      const displayParts = x.display.split("/");
+    if (x.penumbraAssetId && !x.display.startsWith('delegation_')) {
+      const displayParts = x.display.split('/');
       tokens.push({
         decimals: decimalsFromDenomUnits(x.denomUnits),
-        display: displayParts[displayParts.length - 1] ?? "",
+        display: displayParts[displayParts.length - 1] ?? '',
         symbol: x.symbol,
         inner: uint8ArrayToBase64(x.penumbraAssetId.inner),
         imagePath: imagePathFromAssetImages(x.images),
@@ -35,31 +34,40 @@ export const fetchAllTokenAssets = (): Token[] => {
   return tokens;
 };
 
+export function useTokenAssets() {
+  const envs = useEnvContext();
+  return fetchAllTokenAssets(envs['PENUMBRA_CHAIN_ID'] ?? '');
+}
+
 export const fetchTokenAsset = (
+  chainId: string,
   tokenId: Uint8Array | string,
 ): Token | undefined => {
   const assetId: AssetId = new AssetId();
-  assetId.inner =
-    typeof tokenId !== "string" ? tokenId : base64ToUint8Array(tokenId);
+  assetId.inner = typeof tokenId !== 'string' ? tokenId : base64ToUint8Array(tokenId);
 
-  const registry = getRegistry();
+  const registry = getRegistry(chainId);
   const tokenMetadata = registry.getMetadata(assetId);
-  const displayParts = tokenMetadata.display.split("/");
+  const displayParts = tokenMetadata.display.split('/');
   return {
     decimals: decimalsFromDenomUnits(tokenMetadata.denomUnits),
-    display: displayParts[displayParts.length - 1] ?? "",
+    display: displayParts[displayParts.length - 1] ?? '',
     symbol: tokenMetadata.symbol,
-    inner: typeof tokenId !== "string" ? uint8ArrayToBase64(tokenId) : tokenId,
+    inner: typeof tokenId !== 'string' ? uint8ArrayToBase64(tokenId) : tokenId,
     imagePath: imagePathFromAssetImages(tokenMetadata.images),
   };
 };
 
-export const imagePathFromAssetImages = (
-  assetImages: AssetImage[],
-): string | undefined => {
+export const useFetchTokenAsset = () => {
+  const envs = useEnvContext();
+  return (tokenId: Uint8Array | string) =>
+    fetchTokenAsset(envs['PENUMBRA_CHAIN_ID'] ?? '', tokenId);
+};
+
+export const imagePathFromAssetImages = (assetImages: AssetImage[]): string | undefined => {
   // Take first png/svg from first AssetImage
   let imagePath: string | undefined = undefined;
-  assetImages.forEach((x) => {
+  assetImages.forEach(x => {
     if (x.png.length > 0) {
       imagePath = x.png;
     } else if (x.svg.length > 0) {
@@ -72,7 +80,7 @@ export const imagePathFromAssetImages = (
 export const decimalsFromDenomUnits = (denomUnits: DenomUnit[]): number => {
   // Search denomUnits for highest exponent
   let decimals = 0;
-  denomUnits.forEach((x) => {
+  denomUnits.forEach(x => {
     if (x.exponent >= decimals) {
       decimals = x.exponent;
     }

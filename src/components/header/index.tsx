@@ -1,3 +1,5 @@
+'use client';
+
 import { Density } from '@penumbra-zone/ui/Density';
 import { HeaderLogo } from './logo';
 import { StatusPopover } from './status-popover';
