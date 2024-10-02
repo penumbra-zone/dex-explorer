@@ -32,12 +32,12 @@ export function Chart({ height }: ChartProps) {
             color: colors.other.tonalStroke,
           },
         },
-      }) as IChartApi;
+      });
     }
 
     return () => {
       if (chartRef.current) {
-        (chartRef.current as IChartApi).remove();
+        chartRef.current.remove();
         chartRef.current = null;
       }
     };
