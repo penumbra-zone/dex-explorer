@@ -14,11 +14,13 @@ const asset1: Token = {
   display: 'Penumbra',
   symbol: 'um',
   decimals: 5,
+  inner: '',
 };
 const asset2: Token = {
   display: 'GM Wagmi',
   symbol: 'gm',
   decimals: 5,
+  inner: '',
 };
 
 export function Chart({ height }: ChartProps) {

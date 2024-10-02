@@ -55,14 +55,11 @@ export function createMergeCandles(asset1Token: Token, asset2Token: Token) {
       return candle;
     }) as CandlestickData[];
 
-    console.log('this');
     // If theres any data at the same height, combine them
     const combinedDataMap = new Map<bigint, CandlestickData | VolumeCandle>();
-    console.log('that');
     candles1.forEach((candle: CandlestickData) => {
       combinedDataMap.set(candle.height, candle);
     });
-    console.log("TCL: createMergeCandles -> combinedDataMap", combinedDataMap.entries());
 
     normalizedCandles2.forEach((candle: CandlestickData) => {
       if (combinedDataMap.has(candle.height)) {
