@@ -11,7 +11,7 @@ interface ChartProps {
 
 export function Chart({ height }: ChartProps) {
   const chartElRef = useRef<HTMLInputElement>(null);
-  const chartRef = useRef<IChartApi>(null);
+  const chartRef = useRef<IChartApi | null>(null);
   const candles = useCandles();
 
   useEffect(() => {
@@ -32,12 +32,12 @@ export function Chart({ height }: ChartProps) {
             color: colors.other.tonalStroke,
           },
         },
-      });
+      }) as IChartApi;
     }
 
     return () => {
       if (chartRef.current) {
-        chartRef.current.remove();
+        (chartRef.current as IChartApi).remove();
         chartRef.current = null;
       }
     };

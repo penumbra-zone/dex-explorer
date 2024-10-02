@@ -1,11 +1,15 @@
 import { CandlestickData } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { Token } from '@/utils/types/token';
 
+export interface VolumeCandle extends CandlestickData {
+  volume: number;
+}
+
 // Merge the two arrays, forward will be left alone, however backward will need to
 // have 1/price and volumes will have to account for the pricing and decimal difference
 export function createMergeCandles(asset1Token: Token, asset2Token: Token) {
-  function mergeCandle(candle1: CandlestickData, candle2: CandlestickData): CandlestickData {
-    const mergedCandle = { ...candle1 };
+  function mergeCandle(candle1: CandlestickData, candle2: CandlestickData): VolumeCandle {
+    const mergedCandle = { ...candle1 } as VolumeCandle;
 
     // OHLC should be weighted average
     const candle1TotalVolume = candle1.swapVolume + candle1.directVolume;
@@ -28,7 +32,11 @@ export function createMergeCandles(asset1Token: Token, asset2Token: Token) {
     return mergedCandle;
   }
 
-  return function mergeCandles(candles1: CandlestickData[], candles2: CandlestickData[]) {
+  return function mergeCandles(candles1: CandlestickData[] | undefined, candles2: CandlestickData[] | undefined): VolumeCandle[] {
+    if (!candles1?.length || !candles2?.length) {
+      return [];
+    }
+
     const normalizedCandles2 = candles2.map((prevCandle: CandlestickData) => {
       const candle = { ...prevCandle };
       candle.open = 1 / candle.open;
@@ -45,13 +53,16 @@ export function createMergeCandles(asset1Token: Token, asset2Token: Token) {
         10 ** Math.abs(asset1Token.decimals - asset2Token.decimals);
 
       return candle;
-    });
+    }) as CandlestickData[];
 
+    console.log('this');
     // If theres any data at the same height, combine them
-    const combinedDataMap = new Map();
+    const combinedDataMap = new Map<bigint, CandlestickData | VolumeCandle>();
+    console.log('that');
     candles1.forEach((candle: CandlestickData) => {
       combinedDataMap.set(candle.height, candle);
     });
+    console.log("TCL: createMergeCandles -> combinedDataMap", combinedDataMap.entries());
 
     normalizedCandles2.forEach((candle: CandlestickData) => {
       if (combinedDataMap.has(candle.height)) {
@@ -63,12 +74,8 @@ export function createMergeCandles(asset1Token: Token, asset2Token: Token) {
       }
     });
 
-    const sortedCandles = Array.from(combinedDataMap.values())
-      .map((candle: CandlestickData) => ({
-        ...candle,
-        height: Number(candle.height),
-      }))
-      .sort((a: CandlestickData, b: CandlestickData) => a.height - b.height);
+    const sortedCandles = (Array.from(combinedDataMap.values()) as VolumeCandle[])
+      .sort((a, b) => (a.height > b.height ? 1 : -1));
 
     return sortedCandles;
   };

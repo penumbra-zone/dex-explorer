@@ -8,21 +8,16 @@ import { fetchAllTokenAssets } from '@/utils/token/tokenFetch';
 import { createMergeCandles } from '@/utils/candles';
 import { Token } from '@/utils/types/token';
 
-const grpcEndpoint = process.env['PENUMBRA_GRPC_ENDPOINT'] ?? '';
-if (!grpcEndpoint) {
-  throw new Error('PENUMBRA_GRPC_ENDPOINT is not set');
-}
-
-const indexerEndpoint = process.env['PENUMBRA_INDEXER_ENDPOINT'] ?? '';
-if (!indexerEndpoint) {
-  throw new Error('PENUMBRA_INDEXER_ENDPOINT is not set');
-}
-
 interface QueryParams {
   symbol1?: string;
   symbol2?: string;
   startHeight?: string;
   limit?: string;
+}
+
+interface Candle extends Omit<CandlestickData, 'height'> {
+  height: string;
+  time: number;
 }
 
 function getTokenAssetBySymbol(tokenAssets: Token[], symbol: string): Token | undefined {
@@ -43,14 +38,13 @@ function fillBlocks(startHeight: number, endHeight: number) {
   return Array.from({ length: endHeight - startHeight + 1 }, (_, i) => startHeight + i);
 }
 
-async function getTimestampsByBlockheight(startHeight: number, limit: number): Promise<Record<number, number>> {
-  const indexerQuerier = new IndexerQuerier(indexerEndpoint);
+async function getTimestampsByBlockheight(startHeight: number, limit: number): Promise<Record<string, string>> {
+  const indexerQuerier = new IndexerQuerier(process.env['PENUMBRA_INDEXER_ENDPOINT'] ?? '');
 
   if (startHeight === 0) {
     const endHeight = await indexerQuerier
       .fetchMostRecentNBlocks(1)
-      .then(resp => resp?.[0]?.height);
-    console.log("TCL: getTimestampsByBlockheight -> endHeight", endHeight);
+      .then(resp => Number(resp[0]?.height));
 
     if (!endHeight) {
       return {};
@@ -59,18 +53,18 @@ async function getTimestampsByBlockheight(startHeight: number, limit: number): P
     const startHeight = endHeight - limit;
     const data = await indexerQuerier.fetchBlocksByHeight(fillBlocks(startHeight, endHeight));
     const timestampsByHeight = Object.fromEntries(
-      data?.map(block => [block.height, block.created_at]) || [],
+      data.map(block => [block.height.toString(), block.created_at]),
     );
 
     return timestampsByHeight;
-  } else {
-    const endHeight = startHeight + limit;
-    const data = await indexerQuerier.fetchBlocksByHeight(fillBlocks(startHeight, endHeight));
-    const timestampsByHeight = Object.fromEntries(
-      data?.map(block => [block.height, block.created_at]) || [],
-    );
-    return timestampsByHeight;
   }
+
+  const endHeight = startHeight + limit;
+  const data = await indexerQuerier.fetchBlocksByHeight(fillBlocks(startHeight, endHeight));
+  const timestampsByHeight = Object.fromEntries(
+    data.map(block => [block.height.toString(), block.created_at]),
+  );
+  return timestampsByHeight;
 }
 
 export default async function candleStickData(req: NextApiRequest, res: NextApiResponse) {
@@ -100,7 +94,7 @@ export default async function candleStickData(req: NextApiRequest, res: NextApiR
     return;
   }
 
-  const dexQuerier = new DexQueryServiceClient({ grpcEndpoint });
+  const dexQuerier = new DexQueryServiceClient({ grpcEndpoint: process.env['PENUMBRA_GRPC_ENDPOINT'] ?? '' });
   const tradingPair = getDirectedTradingPair(asset1, asset2);
   const reversePair = getDirectedTradingPair(asset2, asset1);
 
@@ -113,12 +107,13 @@ export default async function candleStickData(req: NextApiRequest, res: NextApiR
   const mergeCandles = createMergeCandles(asset1, asset2);
   const mergedCandles = mergeCandles(candlesFwd, candlesRev);
 
-  const candlesWithTime = mergedCandles?
-    .filter((candle: CandlestickData) => timestampsByHeight[Number(candle.height)])
-    .map((candle: CandlestickData) => ({
+  const candlesWithTime = mergedCandles
+    .map((candle: CandlestickData) => (({
       ...candle,
-      time: new Date(timestampsByHeight[Number(candle.height)]).getTime(),
-    }));
+      height: candle.height.toString(),
+      time: new Date(timestampsByHeight[candle.height.toString()] ?? '').getTime(),
+    }) as Candle))
+    .filter((candle) => !Number.isNaN(candle.time))
 
-  res.status(200).json(candlesWithTime ?? []);
+  res.status(200).json(candlesWithTime);
 }

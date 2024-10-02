@@ -12,8 +12,6 @@ interface QueryParams {
 
 export default async function blockInfoFetchHandler(req: NextApiRequest, res: NextApiResponse) {
   const [startHeight, endHeight] = (req.query as QueryParams).heights ?? [];
-  console.log('TCL: blockInfoFetchHandler -> endHeight', endHeight);
-  console.log('TCL: blockInfoFetchHandler -> startHeight', startHeight);
 
   const indexerQuerier = new IndexerQuerier(indexerEndpoint);
 
