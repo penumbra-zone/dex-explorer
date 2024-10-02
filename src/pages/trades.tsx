@@ -19,6 +19,7 @@ import { BlockSummary } from "@/components/executionHistory/blockSummary";
 import { BlockInfo, LiquidityPositionEvent } from "@/utils/indexer/types/lps";
 import { SwapExecutionWithBlockHeight } from "@/utils/protos/types/DexQueryServiceClientInterface";
 import { BlockInfoMap, BlockSummaryMap } from "@/utils/types/block";
+import { getClientSideEnvs } from "@/utils/env/getClientSideEnvs";
 
 export default function Trades() {
   // Go back hardcoded N blocks
@@ -306,4 +307,14 @@ export default function Trades() {
       )}
     </Layout>
   );
+}
+
+export async function getServerSideProps() {
+  const envs = getClientSideEnvs();
+
+  return {
+    props: {
+      envs,
+    },
+  };
 }

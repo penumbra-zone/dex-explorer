@@ -8,7 +8,7 @@ import {
 } from "@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb";
 import { fromBaseUnit } from "../../utils/math/hiLo";
 import { uint8ArrayToBase64 } from "../../utils/math/base64";
-import { fetchTokenAsset } from "../../utils/token/tokenFetch";
+import { useFetchTokenAsset } from "../../utils/token/tokenFetch";
 import BigNumber from "bignumber.js";
 import { CopyIcon } from "@radix-ui/react-icons";
 import { Token } from "@/utils/types/token";
@@ -21,6 +21,7 @@ interface CurrentLPStatusProps {
 const CurrentLPStatus = ({ nftId, position }: CurrentLPStatusProps) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isCopied, setIsCopied] = useState<boolean>(false);
+  const fetchTokenAsset = useFetchTokenAsset();
 
   const handleCopy = () => {
     navigator.clipboard.writeText(nftId).then(() => {

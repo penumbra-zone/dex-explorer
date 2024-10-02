@@ -17,6 +17,7 @@ import {
 import TimelinePosition from "@/components/liquidityPositions/timelinePosition";
 import ExecutionEvent from "@/components/liquidityPositions/executionEvent";
 import { ChevronDownIcon } from "@chakra-ui/icons";
+import { getClientSideEnvs } from "@/utils/env/getClientSideEnvs";
 
 export default function LP() {
   const [isLoading, setIsLoading] = useState(true);
@@ -358,4 +359,14 @@ export default function LP() {
       </main>
     </Layout>
   );
+}
+
+export async function getServerSideProps() {
+  const envs = getClientSideEnvs();
+
+  return {
+    props: {
+      envs,
+    },
+  };
 }

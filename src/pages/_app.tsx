@@ -8,6 +8,7 @@ import { Analytics } from "@vercel/analytics/react"
 import { inject } from '@vercel/analytics';
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { injectSpeedInsights } from '@vercel/speed-insights';
+import { EnvContext } from '@/utils/env/context';
 
 function app({ Component, pageProps }: AppProps) {
   // Inject the analytics script
@@ -31,9 +32,11 @@ function app({ Component, pageProps }: AppProps) {
   });
   return (
     <ChakraProvider theme={theme}>
-      <Analytics />
-      <SpeedInsights />
-      <Component {...pageProps} />
+      <EnvContext.Provider value={pageProps.envs}>
+        <Analytics />
+        <SpeedInsights />
+        <Component {...pageProps} />
+      </EnvContext.Provider>
     </ChakraProvider>
   );
 }

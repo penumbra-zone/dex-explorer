@@ -25,9 +25,10 @@ import {
   SwapExecution_Trace,
 } from "@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb";
 import BigNumber from "bignumber.js";
-import { fetchAllTokenAssets } from "@/utils/token/tokenFetch";
+import { useTokenAssets } from "@/utils/token/tokenFetch";
 import { Token } from "@/utils/types/token";
 import { fromBaseUnit } from "@/utils/math/hiLo";
+import { getClientSideEnvs } from "@/utils/env/getClientSideEnvs";
 
 export const Price = ({
   trace,
@@ -438,7 +439,7 @@ export default function Block() {
   }) => {
     // ! Expand default
     const [isExpanded, setIsExpanded] = useState(false); // EXPAND
-    const tokenAssets = fetchAllTokenAssets();
+    const tokenAssets = useTokenAssets();
     const metadataByAssetId: Record<string, Token> = {};
     tokenAssets.forEach((asset) => {
       metadataByAssetId[asset.inner] = {
@@ -703,4 +704,14 @@ export default function Block() {
       )}
     </Layout>
   );
+}
+
+export async function getServerSideProps() {
+  const envs = getClientSideEnvs();
+
+  return {
+    props: {
+      envs,
+    },
+  };
 }

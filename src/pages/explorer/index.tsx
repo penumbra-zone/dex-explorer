@@ -5,6 +5,7 @@ import Layout from "../../components/layout";
 import { LPSearchBar } from "../../components/lpSearchBar";
 import Blocks from '../../components/blocks'
 import Swaps from '../../components/swaps'
+import { getClientSideEnvs } from "@/utils/env/getClientSideEnvs";
 
 export default function Explorer() {
   return (
@@ -33,4 +34,14 @@ export default function Explorer() {
       </Box>
     </Layout>
   );
+}
+
+export async function getServerSideProps() {
+  const envs = getClientSideEnvs();
+
+  return {
+    props: {
+      envs,
+    },
+  };
 }

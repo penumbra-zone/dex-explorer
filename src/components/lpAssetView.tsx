@@ -7,7 +7,7 @@ import {
   LiquidityPositionEvent,
   PositionExecutionEvent,
 } from "@/utils/indexer/types/lps";
-import { fetchTokenAsset } from "@/utils/token/tokenFetch";
+import { useFetchTokenAsset } from "@/utils/token/tokenFetch";
 import { fromBaseUnit } from "@/utils/math/hiLo";
 import { base64ToUint8Array } from "@/utils/math/base64";
 import { Token } from "@/utils/types/token";
@@ -37,6 +37,7 @@ const LPAssetView: FC<LPAssetViewProps> = ({ sectionTitle, lp_event }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [reserves1, setReserves1] = useState<number>(0);
   const [reserves2, setReserves2] = useState<number>(0);
+  const fetchTokenAsset = useFetchTokenAsset();
 
   useEffect(() => {
     // Function to fetch tokens asynchronously

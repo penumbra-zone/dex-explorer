@@ -8,7 +8,7 @@ import {
   SwapExecution,
   SwapExecution_Trace,
 } from "@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb";
-import { fetchAllTokenAssets } from "@/utils/token/tokenFetch";
+import { useTokenAssets } from "@/utils/token/tokenFetch";
 import { Token } from "@/utils/types/token";
 import { LoadingSpinner } from "@/components/util/loadingSpinner";
 
@@ -26,6 +26,7 @@ export default function Swaps() {
     Record<string, Token>
   >({});
   const [isLoading, setIsLoading] = useState(true);
+  const tokenAssets = useTokenAssets();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,7 +73,6 @@ export default function Swaps() {
 
           setSwapExecutions(swaps as SwapExecution[]);
 
-          const tokenAssets = fetchAllTokenAssets();
           const metadataByAssetId: Record<string, Token> = {};
           tokenAssets.forEach((asset) => {
             metadataByAssetId[asset.inner] = {

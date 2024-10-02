@@ -5,20 +5,22 @@
 import { useState, useEffect } from 'react';
 import { VStack, HStack, Box, Select, Button, Avatar } from '@chakra-ui/react';
 import Layout from '@/components/layout';
-import { fetchAllTokenAssets } from '@/utils/token/tokenFetch';
+import { useTokenAssets } from '@/utils/token/tokenFetch';
 import { LoadingSpinner } from '@/components/util/loadingSpinner';
 import { Token } from '@/utils/types/token';
+import { getClientSideEnvs } from '@/utils/env/getClientSideEnvs';
 
 export default function Pairs() {
     const [isLoading, setIsLoading] = useState(true);
     const [tokenAssets, setTokenAssets] = useState<Token[]>([]);
+    const tokenAssetsList = useTokenAssets();
 
     const [firstAsset, setFirstAsset] = useState('');
     const [secondAsset, setSecondAsset] = useState('');
 
     useEffect(() => {
         setIsLoading(true)
-        const tokens : Token[] = fetchAllTokenAssets().sort((a, b) => a.display > b.display ? 1 : b.display > a.display ? -1 : 0);
+        const tokens : Token[] = tokenAssetsList.sort((a, b) => a.display > b.display ? 1 : b.display > a.display ? -1 : 0);
         if (tokens.length > 0 && tokenAssets.length === 0) {
             setTokenAssets(tokens)
         }
@@ -71,4 +73,14 @@ export default function Pairs() {
             }
         </Layout>
     )
+}
+
+export async function getServerSideProps() {
+  const envs = getClientSideEnvs();
+
+  return {
+    props: {
+      envs,
+    },
+  };
 }

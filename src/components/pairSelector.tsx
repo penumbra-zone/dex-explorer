@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Box, Text, Flex } from '@chakra-ui/react';
-import { fetchAllTokenAssets } from '@/utils/token/tokenFetch';
+import { useTokenAssets } from '@/utils/token/tokenFetch';
 import OutsideClickHandler from 'react-outside-click-handler';
 import { Token } from '@/utils/types/token';
 
@@ -15,12 +15,12 @@ export default function PairSelector({
   setShow: (show: boolean) => void;
   onSelect: (assets: [Token, Token]) => void;
 }) {
+  const tokenAssetsList = useTokenAssets();
   const [tokenAssets, setTokenAssets] = useState<Record<string, Token>>({});
   const [selectedAssets, setSelectedAssets] = useState<Token[]>([]);
 
   useEffect(() => {
-    const tokenAssets = fetchAllTokenAssets();
-    setTokenAssets(Object.fromEntries(tokenAssets.map(asset => [asset.symbol, asset])));
+    setTokenAssets(Object.fromEntries(tokenAssetsList.map(asset => [asset.symbol, asset])));
   }, []);
 
   useEffect(() => {

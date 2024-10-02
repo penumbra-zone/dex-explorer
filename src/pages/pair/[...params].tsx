@@ -29,7 +29,8 @@ import DepthChart from "@/components/charts/depthChart";
 import OHLCChart from "@/components/charts/ohlcChart";
 import BuySellChart from "@/components/charts/buySellChart";
 import { Token } from "@/utils/types/token";
-import { fetchAllTokenAssets } from "@/utils/token/tokenFetch";
+import { useTokenAssets } from "@/utils/token/tokenFetch";
+import { getClientSideEnvs } from "@/utils/env/getClientSideEnvs";
 // TODO: Better parameter check
 
 // ! Important note: 'sell' side here refers to selling asset1 for asset2, so its really DEMAND for buying asset 1, anc vice versa for 'buy' side
@@ -41,6 +42,7 @@ export default function TradingPairs() {
   const [error, setError] = useState<string | undefined>();
   const searchParams = useSearchParams();
   const [activeChart, setActiveChart] = useState<"Depth" | "OHLC">("Depth");
+  const tokenAssets = useTokenAssets();
 
   // Pairs are in the form of baseToken:quoteToken
   const router = useRouter();
@@ -140,7 +142,6 @@ export default function TradingPairs() {
     setIsLoading(true);
 
     // Get token 1 & 2
-    const tokenAssets = fetchAllTokenAssets();
     const asset1Token = tokenAssets.find(
       (x) => x.display.toLocaleLowerCase() === token1Symbol.toLocaleLowerCase()
     );
@@ -248,7 +249,6 @@ export default function TradingPairs() {
 
     try {
       // Get token 1 & 2
-      const tokenAssets = fetchAllTokenAssets();
       const asset1Token = tokenAssets.find(
         (x) =>
           x.display.toLocaleLowerCase() === token1Symbol.toLocaleLowerCase()
@@ -754,4 +754,14 @@ export default function TradingPairs() {
       ) : null}
     </Layout>
   );
+}
+
+export async function getServerSideProps() {
+  const envs = getClientSideEnvs();
+
+  return {
+    props: {
+      envs,
+    },
+  };
 }
