@@ -1,8 +1,8 @@
 import { useRef, useEffect } from 'react';
 import { createChart, IChartApi, CandlestickData } from 'lightweight-charts';
 import { tailwindConfig } from '@penumbra-zone/ui/tailwind';
-import { Token } from "@/utils/types/token";
-import { useCandles } from './useCandles';
+import { Token } from '@/utils/types/token';
+import { useCandles } from '@/fetchers/candles';
 
 const { colors } = tailwindConfig.theme.extend;
 
@@ -26,7 +26,7 @@ const asset2: Token = {
 export function Chart({ height }: ChartProps) {
   const chartElRef = useRef<HTMLInputElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const candles = useCandles(asset1, asset2);
+  const { data: candles, isLoading } = useCandles(asset1.symbol, asset2.symbol, 0, 10000);
 
   useEffect(() => {
     if (chartElRef.current && !chartRef.current) {
@@ -58,7 +58,7 @@ export function Chart({ height }: ChartProps) {
   }, [chartElRef]);
 
   useEffect(() => {
-    if (chartRef.current && !candles.loading) {
+    if (chartRef.current && !isLoading) {
       chartRef.current
         .addCandlestickSeries({
           upColor: colors.success.light,
@@ -67,11 +67,19 @@ export function Chart({ height }: ChartProps) {
           wickUpColor: colors.success.light,
           wickDownColor: colors.destructive.light,
         })
-        .setData(candles.data as unknown[] as CandlestickData[]);
+        .setData(candles as unknown[] as CandlestickData[]);
 
       chartRef.current.timeScale().fitContent();
     }
-  }, [chartRef, candles.loading, candles.data]);
+  }, [chartRef, isLoading, candles]);
 
-  return <div ref={chartElRef} style={{ height }} />;
+  return (
+    <div ref={chartElRef} style={{ height }}>
+      {isLoading && (
+        <div className="flex w-full items-center justify-center"  style={{ height }}>
+          <div className='text-gray-500'>Loading...</div>
+        </div>
+      )}
+    </div>
+  );
 }
