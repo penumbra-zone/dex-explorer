@@ -21,7 +21,7 @@ export default function PairSelector({
 
   useEffect(() => {
     setTokenAssets(Object.fromEntries(tokenAssetsList.map(asset => [asset.symbol, asset])));
-  }, []);
+  }, [tokenAssetsList]);
 
   useEffect(() => {
     setSelectedAssets([]);
