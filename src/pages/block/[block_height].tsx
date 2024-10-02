@@ -16,7 +16,6 @@ import { BlockDetailedSummaryData } from "@/utils/types/block";
 import { BlockInfo, LiquidityPositionEvent } from "@/utils/indexer/types/lps";
 import { SwapExecutionWithBlockHeight } from "@/utils/protos/types/DexQueryServiceClientInterface";
 import { LoadingSpinner } from "@/components/util/loadingSpinner";
-import { Constants } from "@/utils/configConstants.ts";
 import { formatTimestampShort } from "@/components/blockTimestamp";
 import { AddIcon, MinusIcon } from "@chakra-ui/icons";
 import { innerToBech32Address } from "@/utils/math/bech32";
@@ -29,6 +28,7 @@ import { useTokenAssets } from "@/utils/token/tokenFetch";
 import { Token } from "@/utils/types/token";
 import { fromBaseUnit } from "@/utils/math/hiLo";
 import { getClientSideEnvs } from "@/utils/env/getClientSideEnvs";
+import { useEnvContext } from "@/utils/env/context";
 
 export const Price = ({
   trace,
@@ -441,6 +441,7 @@ export default function Block() {
     const [isExpanded, setIsExpanded] = useState(false); // EXPAND
     const tokenAssets = useTokenAssets();
     const metadataByAssetId: Record<string, Token> = {};
+    const envs = useEnvContext();
     tokenAssets.forEach((asset) => {
       metadataByAssetId[asset.inner] = {
         symbol: asset.symbol,
@@ -654,7 +655,7 @@ export default function Block() {
             </Text>
             <Text>
               <a
-                href={Constants.cuiloaUrl + "/block/" + blockHeight}
+                href={envs.PENUMBRA_CUILOA_URL + "/block/" + blockHeight}
                 target="_blank"
                 rel="noreferrer"
                 style={{
