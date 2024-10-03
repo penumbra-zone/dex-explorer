@@ -12,9 +12,14 @@ import {
 import { LoadingSpinner } from "@/components/util/loadingSpinner";
 import { useEffect, useRef, useState } from "react";
 import { BlockSummary } from "@/components/executionHistory/blockSummary";
-import { BlockInfo, LiquidityPositionEvent } from "@/utils/indexer/types/lps";
+import { BlockInfo as OldBlockInfo } from "@/utils/types/block";
 import { SwapExecutionWithBlockHeight } from "@/utils/protos/types/DexQueryServiceClientInterface";
-import { BlockInfoMap, BlockSummaryData, BlockSummaryMap } from "@/utils/types/block";
+import { BlockInfoMap } from "@/utils/types/block";
+import { BlockInfo } from "@/penumbra/block";
+import { BlockDetailsSummary } from "../executionHistory/blockDetails";
+import { LPUpdate } from "@/penumbra/dex";
+
+type BlockSummaryMap = Record<number, BlockDetailsSummary>;
 
 export default function Blocks() {
   // Go back hardcoded N blocks
@@ -40,27 +45,32 @@ export default function Blocks() {
   useEffect(() => {
     setIsBlockRangeLoading(true);
     if (endingBlockHeight <= 0 || startingBlockHeight <= 0) {
-      let blockInfoPromise: Promise<BlockInfo[]>;
+      let blockInfoUrl: string;
       if (userRequestedBlockEndHeight >= 1) {
         const startHeight = Math.max(
-          userRequestedBlockEndHeight - NUMBER_BLOCKS_IN_TIMELINE + 1,
+          userRequestedBlockEndHeight - NUMBER_BLOCKS_IN_TIMELINE,
           1,
         ); // Lowest block_height is 1
-        blockInfoPromise = fetch(
-          `/api/blocks/${startHeight}/${userRequestedBlockEndHeight + 1}`,
-        ).then((res) => res.json()) as Promise<BlockInfo[]>;
+        blockInfoUrl = `/api/blocks?start=${startHeight}&end=${userRequestedBlockEndHeight}`;
       } else {
-        blockInfoPromise = fetch(
-          `/api/blocks/${NUMBER_BLOCKS_IN_TIMELINE}`,
-        ).then((res) => res.json()) as Promise<BlockInfo[]>;
+        blockInfoUrl = `/api/blocks?last=${NUMBER_BLOCKS_IN_TIMELINE}`;
       }
+      const blockInfoPromise = fetch(blockInfoUrl).then(async (res) => {
+        if (res.status !== 200) {
+          throw new Error((await res.json()).toString());
+        }
+        return BlockInfo.JSON_SCHEMA.array().parse(await res.json());
+      });
       Promise.all([blockInfoPromise])
         .then(([blockInfoResponse]) => {
           const blockInfoList: BlockInfo[] = blockInfoResponse;
           const blockInfoMap: BlockInfoMap = {};
           blockInfoList.forEach((blockInfo: BlockInfo) => {
             // console.log(blockInfo)
-            blockInfoMap[blockInfo.height] = blockInfo;
+            blockInfoMap[blockInfo.height] = {
+              height: blockInfo.height,
+              created_at: blockInfo.created.toString()
+            };
           });
 
           if (blockInfoList.length === 0) {
@@ -96,9 +106,15 @@ export default function Blocks() {
     console.log("Loading block data");
     setIsLoading(true);
     if (blockInfo && endingBlockHeight >= 1 && startingBlockHeight >= 1) {
-      const liquidityPositionOpenClosePromise = fetch(
-        `/api/lp/block/${startingBlockHeight}/${endingBlockHeight + 1}`,
-      ).then((res) => res.json());
+      const openPromise = fetch(
+        `/api/lp/open/?start=${startingBlockHeight}&end=${endingBlockHeight + 1}`,
+      ).then(async (res) => LPUpdate.JSON_SCHEMA.array().parse(await res.json() as unknown[]));
+      const closePromise = fetch(
+        `/api/lp/close/?start=${startingBlockHeight}&end=${endingBlockHeight + 1}`,
+      ).then(async (res) => LPUpdate.JSON_SCHEMA.array().parse(await res.json() as unknown[]));
+      const withdrawPromise = fetch(
+        `/api/lp/withdraw/?start=${startingBlockHeight}&end=${endingBlockHeight + 1}`,
+      ).then(async (res) => LPUpdate.JSON_SCHEMA.array().parse(await res.json() as unknown[]));
       const arbsPromise = fetch(
         `/api/arbs/${startingBlockHeight}/${endingBlockHeight + 1}`,
       ).then((res) => res.json());
@@ -107,18 +123,20 @@ export default function Blocks() {
       ).then((res) => res.json());
 
       Promise.all([
-        liquidityPositionOpenClosePromise,
+        openPromise,
+        closePromise,
+        withdrawPromise,
         arbsPromise,
         swapsPromise,
       ])
         .then(
           ([
-            liquidityPositionOpenCloseResponse,
+            openResponse,
+            closeResponse,
+            withdrawResponse,
             arbsResponse,
             swapsResponse,
           ]) => {
-            const positionData: LiquidityPositionEvent[] =
-              liquidityPositionOpenCloseResponse as LiquidityPositionEvent[];
             const arbData: SwapExecutionWithBlockHeight[] =
               arbsResponse as SwapExecutionWithBlockHeight[];
             const swapData: SwapExecutionWithBlockHeight[] =
@@ -129,44 +147,29 @@ export default function Blocks() {
             let i: number;
             for (i = startingBlockHeight; i <= endingBlockHeight; i++) {
               blockSummaryMap[i] = {
-                openPositionEvents: [],
-                closePositionEvents: [],
-                withdrawPositionEvents: [],
-                swapExecutions: [],
-                arbExecutions: [],
-                createdAt: (blockInfo[i] as BlockInfo).created_at,
+                opened: 0,
+                closed: 0,
+                withdrawn: 0,
+                arbs: 0,
+                swaps: 0,
+                created: new Date((blockInfo[i] as OldBlockInfo).created_at),
               };
             }
 
-            positionData.forEach(
-              (positionOpenCloseEvent: LiquidityPositionEvent) => {
-                const blockSummary = blockSummaryMap[positionOpenCloseEvent.block_height] as BlockSummaryData;
-                if (positionOpenCloseEvent.type.includes("PositionOpen")) {
-                  blockSummary.openPositionEvents.push(positionOpenCloseEvent);
-                } else if (
-                  positionOpenCloseEvent.type.includes("PositionClose")
-                ) {
-                  blockSummary.closePositionEvents.push(positionOpenCloseEvent);
-                } else if (
-                  positionOpenCloseEvent.type.includes("PositionWithdraw")
-                ) {
-                  blockSummary.withdrawPositionEvents.push(positionOpenCloseEvent);
-                }
-              },
-            );
-
-            arbData.forEach((arb: SwapExecutionWithBlockHeight) => {
-              const blockSummary = blockSummaryMap[arb.blockHeight] as BlockSummaryData;
-              blockSummary.arbExecutions.push(
-                arb.swapExecution,
-              );
+            openResponse.forEach(update => {
+              blockSummaryMap[update.block.height]!.opened += 1;
             });
-
-            swapData.forEach((swap: SwapExecutionWithBlockHeight) => {
-              const blockSummary = blockSummaryMap[swap.blockHeight] as BlockSummaryData;
-              blockSummary.swapExecutions.push(
-                swap.swapExecution,
-              );
+            closeResponse.forEach(update => {
+              blockSummaryMap[update.block.height]!.closed += 1;
+            });
+            withdrawResponse.forEach(update => {
+              blockSummaryMap[update.block.height]!.withdrawn += 1;
+            });
+            arbData.forEach(update => {
+              blockSummaryMap[update.blockHeight]!.arbs += 1;
+            });
+            swapData.forEach(update => {
+              blockSummaryMap[update.blockHeight]!.swaps += 1;
             });
 
             setBlockData(blockSummaryMap);
@@ -228,44 +231,44 @@ export default function Blocks() {
     </Box>
   ) : (
     <Box
-        display="flex"
-        flexDirection="column"
-        alignItems="center"
-        width="100%"
-      >
-        <FormControl width="100%" mb={8}>
-          <FormLabel></FormLabel>
-          <form
-            onSubmit={onSearch}
-            style={{ width: "100%", textAlign: "center" }}
-          >
-            <NumberInput>
-              <NumberInputField
-                placeholder="Enter block height"
-                value={userRequestedBlockEndHeight}
-                justifyContent={"center"}
-                backgroundColor="rgba(0,0,0,1)"
-                // backgroundColor="var(--body-background)"
-                onChange={(e) =>
-                  setUserRequestedBlockEndHeight(parseInt(e.target.value))
-                }
-                width="100%"
-                p={5}
-                border="none"
-              />
-            </NumberInput>
-          </form>
-        </FormControl>
-
-        {Array.from(Array(endingBlockHeight - startingBlockHeight + 1)).map(
-          (_, index: number) => (
-            <BlockSummary
-              key={index}
-              blockHeight={endingBlockHeight - index}
-              blockSummary={blockData[endingBlockHeight - index] as BlockSummaryData}
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      width="100%"
+    >
+      <FormControl width="100%" mb={8}>
+        <FormLabel></FormLabel>
+        <form
+          onSubmit={onSearch}
+          style={{ width: "100%", textAlign: "center" }}
+        >
+          <NumberInput>
+            <NumberInputField
+              placeholder="Enter block height"
+              value={userRequestedBlockEndHeight}
+              justifyContent={"center"}
+              backgroundColor="rgba(0,0,0,1)"
+              // backgroundColor="var(--body-background)"
+              onChange={(e) =>
+                setUserRequestedBlockEndHeight(parseInt(e.target.value))
+              }
+              width="100%"
+              p={5}
+              border="none"
             />
-          )
-        )}
-      </Box>
+          </NumberInput>
+        </form>
+      </FormControl>
+
+      {Array.from(Array(endingBlockHeight - startingBlockHeight + 1)).map(
+        (_, index: number) => (
+          <BlockSummary
+            key={index}
+            blockHeight={endingBlockHeight - index}
+            blockSummary={blockData[endingBlockHeight - index] as BlockDetailsSummary}
+          />
+        )
+      )}
+    </Box>
   );
 }

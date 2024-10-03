@@ -12,8 +12,7 @@ import {
   Flex,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
-import { BlockDetailedSummaryData } from "@/utils/types/block";
-import { BlockInfo, LiquidityPositionEvent } from "@/utils/indexer/types/lps";
+import { BlockInfo } from "@/penumbra/block";
 import { SwapExecutionWithBlockHeight } from "@/utils/protos/types/DexQueryServiceClientInterface";
 import { LoadingSpinner } from "@/components/util/loadingSpinner";
 import { Constants } from "@/utils/configConstants.ts";
@@ -28,6 +27,15 @@ import BigNumber from "bignumber.js";
 import { fetchAllTokenAssets } from "@/utils/token/tokenFetch";
 import { Token } from "@/utils/types/token";
 import { fromBaseUnit } from "@/utils/math/hiLo";
+import { LPUpdate } from "@/penumbra/dex";
+
+export interface BlockDetailedSummaryData {
+  openEvents: LPUpdate[];
+  closeEvents: LPUpdate[];
+  swapExecutions: SwapExecution[];
+  arbExecutions: SwapExecution[];
+  createdAt: string;
+}
 
 export const Price = ({
   trace,
@@ -75,7 +83,7 @@ export const Price = ({
     }
   }
 
-  if (!price) {return null;}
+  if (!price) { return null; }
   return <span className="text-xs text-muted-foreground">{price}</span>;
 };
 
@@ -310,16 +318,21 @@ export default function Block() {
       console.log("Fetching data for block...", block_height);
       const height: number = parseInt(block_height);
       const blockInfoPromise: Promise<BlockInfo[]> = fetch(
-        `/api/blocks/${height}/${height + 1}`
-      ).then((res) => res.json());
-      const liquidityPositionOpenClosePromise: Promise<
-        LiquidityPositionEvent[]
-      > = fetch(`/api/lp/block/${height}/${height + 1}`).then((res) =>
-        res.json()
-      );
-      const liquidityPositionOtherExecutions: Promise<
-        LiquidityPositionEvent[]
-      > = fetch(`/api/lp/block/${height}`).then((res) => res.json());
+        `/api/blocks?start=${height}&end=${height}`
+      ).then(async (res) => {
+        if (res.status !== 200) {
+          throw new Error((await res.json()).toString());
+        }
+        return BlockInfo.JSON_SCHEMA.array().parse(await res.json());
+      });
+      const lpOpenPromise: Promise<LPUpdate[]> =
+        fetch(`/api/lp/open?start=${height}&end=${height}`).then(async (res) =>
+          LPUpdate.JSON_SCHEMA.array().parse(await res.json())
+        );
+      const lpClosePromise: Promise<LPUpdate[]> =
+        fetch(`/api/lp/close?start=${height}&end=${height}`).then(async (res) =>
+          LPUpdate.JSON_SCHEMA.array().parse(await res.json())
+        );
       const arbsPromise: Promise<SwapExecutionWithBlockHeight[]> = fetch(
         `/api/arbs/${height}/${height + 1}`
       ).then((res) => res.json());
@@ -329,77 +342,39 @@ export default function Block() {
 
       Promise.all([
         blockInfoPromise,
-        liquidityPositionOpenClosePromise,
-        liquidityPositionOtherExecutions,
+        lpOpenPromise,
+        lpClosePromise,
         arbsPromise,
         swapsPromise,
       ])
         .then(
           ([
             blockInfoResponse,
-            liquidityPositionOpenCloseResponse,
-            liquidityPositionOtherResponse,
+            lpOpenResponse,
+            lpCloseResponse,
             arbsResponse,
             swapsResponse,
           ]) => {
             const blockInfoList: BlockInfo[] = blockInfoResponse;
-            const positionData: LiquidityPositionEvent[] =
-              liquidityPositionOpenCloseResponse;
-            const otherPositionData: LiquidityPositionEvent[] =
-              liquidityPositionOtherResponse;
             const arbData: SwapExecutionWithBlockHeight[] =
               arbsResponse;
             const swapData: SwapExecutionWithBlockHeight[] =
               swapsResponse;
 
             if (blockInfoList.length === 0) {
-              // setError(`No data for block ${block_height} found`);
-              // setIsLoading(false);
-              console.log(`No data for block ${block_height} found`);
-              blockInfoList.push({
-                height: height,
-                created_at: "",
-              });
+              setError(`No data for block ${block_height} found`);
+              setIsLoading(false);
             }
             console.log("Fetching data for block...");
+            const blockInfo = blockInfoList[0]!;
 
             const detailedBlockSummaryData: BlockDetailedSummaryData = {
-              openPositionEvents: [],
-              closePositionEvents: [],
-              withdrawPositionEvents: [],
-              otherPositionEvents: [],
+              openEvents: lpOpenResponse,
+              closeEvents: lpCloseResponse,
               swapExecutions: [],
               arbExecutions: [],
-              createdAt: blockInfoList[0].created_at,
+              createdAt: blockInfo.created.toString(),
             };
-            positionData.forEach(
-              (positionOpenCloseEvent: LiquidityPositionEvent) => {
-                if (positionOpenCloseEvent.type.includes("PositionOpen")) {
-                  detailedBlockSummaryData.openPositionEvents.push(
-                    positionOpenCloseEvent
-                  );
-                } else if (
-                  positionOpenCloseEvent.type.includes("PositionClose")
-                ) {
-                  detailedBlockSummaryData.closePositionEvents.push(
-                    positionOpenCloseEvent
-                  );
-                } else if (
-                  positionOpenCloseEvent.type.includes("PositionWithdraw")
-                ) {
-                  detailedBlockSummaryData.withdrawPositionEvents.push(
-                    positionOpenCloseEvent
-                  );
-                }
-              }
-            );
-            otherPositionData.forEach(
-              (positionEvent: LiquidityPositionEvent) => {
-                detailedBlockSummaryData.otherPositionEvents.push(
-                  positionEvent
-                );
-              }
-            );
             arbData.forEach((arb: SwapExecutionWithBlockHeight) => {
               detailedBlockSummaryData.arbExecutions.push(arb.swapExecution);
             });
@@ -502,21 +477,15 @@ export default function Block() {
                 spacing={"10px"}
                 paddingTop={"10px"}
               >
-                {blockData!.openPositionEvents.map((positionEvent) => (
+                {blockData!.openEvents.map((update) => (
                   <a
-                    key={positionEvent.lpevent_attributes.positionId.inner}
-                    href={`/lp/${innerToBech32Address(
-                      positionEvent.lpevent_attributes.positionId.inner,
-                      "plpid"
-                    )}`}
+                    key={update.id}
+                    href={`/lp/${update.positionId}`}
                     target="_blank"
                     rel="noreferrer"
                   >
                     <Text>
-                      {innerToBech32Address(
-                        positionEvent.lpevent_attributes.positionId.inner,
-                        "plpid"
-                      )}
+                      {update.positionId}
                     </Text>
                   </a>
                 ))}
@@ -529,21 +498,15 @@ export default function Block() {
                 paddingTop={"10px"}
                 width={"100%"}
               >
-                {blockData!.closePositionEvents.map((positionEvent) => (
+                {blockData!.closeEvents.map((update) => (
                   <a
-                    key={positionEvent.lpevent_attributes.positionId.inner}
-                    href={`/lp/${innerToBech32Address(
-                      positionEvent.lpevent_attributes.positionId.inner,
-                      "plpid"
-                    )}`}
+                    key={update.id}
+                    href={`/lp/${update.positionId}`}
                     target="_blank"
                     rel="noreferrer"
                   >
                     <Text>
-                      {innerToBech32Address(
-                        positionEvent.lpevent_attributes.positionId.inner,
-                        "plpid"
-                      )}
+                      {update.positionId}
                     </Text>
                   </a>
                 ))}
@@ -580,28 +543,28 @@ export default function Block() {
                 {blockData!.swapExecutions.map(
                   (swapExecution: SwapExecution) => (
                     <Box overflowX="auto" width="100%">
-                        <VStack
-                          spacing={2}
-                          align="left"
-                          justifyContent="left"
-                          paddingTop="10px"
-                          width={"100%"}
-                        >
-                          {swapExecution.traces.map(
-                            (trace: SwapExecution_Trace, index: number) => (
-                              <>
-                                <Trace
-                                  key={index}
-                                  trace={trace}
-                                  metadataByAssetId={metadataByAssetId}
-                                  type={TraceType.SWAP}
-                                />
-                                <Box paddingTop="3px" />
-                              </>
-                            )
-                          )}
-                        </VStack>
-                      </Box>
+                      <VStack
+                        spacing={2}
+                        align="left"
+                        justifyContent="left"
+                        paddingTop="10px"
+                        width={"100%"}
+                      >
+                        {swapExecution.traces.map(
+                          (trace: SwapExecution_Trace, index: number) => (
+                            <>
+                              <Trace
+                                key={index}
+                                trace={trace}
+                                metadataByAssetId={metadataByAssetId}
+                                type={TraceType.SWAP}
+                              />
+                              <Box paddingTop="3px" />
+                            </>
+                          )
+                        )}
+                      </VStack>
+                    </Box>
                   )
                 )}
               </VStack>
@@ -680,7 +643,7 @@ export default function Block() {
           >
             <DataBox
               title="Positions Opened"
-              dataLength={blockData!.openPositionEvents.length}
+              dataLength={blockData!.openEvents.length}
               type={DataBoxType.OPEN_POSITIONS}
             />
             <DataBox
@@ -695,7 +658,7 @@ export default function Block() {
             />
             <DataBox
               title="Positions Closed"
-              dataLength={blockData!.closePositionEvents.length}
+              dataLength={blockData!.closeEvents.length}
               type={DataBoxType.CLOSE_POSITIONS}
             />
           </VStack>

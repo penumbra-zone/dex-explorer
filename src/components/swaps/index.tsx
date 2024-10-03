@@ -29,7 +29,7 @@ export default function Swaps() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const blockHeight = await fetch("/api/blocks/1")
+      const blockHeight = await fetch("/api/blocks?last=1")
         .then((res) => res.json())
         .then((data) => {
           return data[0].height;
