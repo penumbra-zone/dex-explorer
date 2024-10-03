@@ -15,16 +15,16 @@ import {
   Position,
   PositionState,
 } from "@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb";
-import { fromBaseUnit } from "@/old/utils/math/hiLo.ts";
-import { uint8ArrayToBase64 } from "@/old/utils/math/base64.ts";
+import { fromBaseUnit } from "@/old/utils/math/hiLo";
+import { uint8ArrayToBase64 } from "@/old/utils/math/base64";
 import BigNumber from "bignumber.js";
 import {
   LiquidityPositionEvent,
   PositionExecutionEvent,
-} from "@/old/utils/indexer/types/lps.tsx";
-import CopiedTxToClipboard from "../copiedTx.tsx";
-import LPAssetView from "../lpAssetView.tsx";
-import BlockTimestampView from "../blockTimestamp.tsx";
+} from "@/old/utils/indexer/types/lps";
+import CopiedTxToClipboard from "../copiedTx";
+import LPAssetView from "../lpAssetView";
+import BlockTimestampView from "../blockTimestamp";
 
 interface ExecutionEventProps {
   nftId: string;

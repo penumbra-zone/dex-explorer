@@ -1,9 +1,9 @@
 // @ts-nocheck
 /* eslint-disable -- disabling this file as this was created before our strict rules */
 import { Box, HStack, Flex, Text } from "@chakra-ui/react";
-import BlockTimestampView from "../blockTimestamp.tsx";
-import { BlockDetails } from "./blockDetails.tsx";
-import { BlockSummaryData } from "@/old/utils/types/block.tsx";
+import BlockTimestampView from "../blockTimestamp";
+import { BlockDetails } from "./blockDetails";
+import { BlockSummaryData } from "@/old/utils/types/block";
 
 export interface BlockSummaryProps {
   blockHeight: number

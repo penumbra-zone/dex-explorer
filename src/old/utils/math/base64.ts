@@ -1,4 +1,4 @@
-import { validateSchema } from "./validation.ts";
+import { validateSchema } from "./validation";
 import { z } from "zod";
 
 export const Base64StringSchema = z.string().refine(

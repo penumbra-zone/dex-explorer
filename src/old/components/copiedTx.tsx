@@ -3,7 +3,7 @@
 import React, { FC, useState } from "react";
 import { CopyIcon } from "@radix-ui/react-icons";
 import { HStack } from "@chakra-ui/react";
-import { Constants } from "@/old/utils/configConstants.ts";
+import { Constants } from "@/old/utils/configConstants";
 
 interface CopyTxToClipboardProps {
   txHash: string;

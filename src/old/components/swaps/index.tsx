@@ -2,15 +2,15 @@
 /* eslint-disable -- disabling this file as this was created before our strict rules */
 
 import { useEffect, useState } from "react";
-import { Price, Trace, TraceType } from "../../../pages/block/[block_height].tsx";
+import { Price, Trace, TraceType } from "../../../pages/block/[block_height]";
 import { Box, Link, Stack, VStack } from "@chakra-ui/react";
 import {
   SwapExecution,
   SwapExecution_Trace,
 } from "@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb";
-import { fetchAllTokenAssets } from "@/old/utils/token/tokenFetch.tsx";
-import { Token } from "@/old/utils/types/token.tsx";
-import { LoadingSpinner } from "@/old/components/util/loadingSpinner.tsx";
+import { fetchAllTokenAssets } from "@/old/utils/token/tokenFetch";
+import { Token } from "@/old/utils/types/token";
+import { LoadingSpinner } from "@/old/components/util/loadingSpinner";
 
 export const routes = [
   { path: "/lp/utils" },

@@ -1,12 +1,12 @@
-import { uint8ArrayToBase64, base64ToUint8Array } from "../math/base64.ts";
-import { Constants } from "../configConstants.ts";
+import { uint8ArrayToBase64, base64ToUint8Array } from "../math/base64";
+import { Constants } from "../configConstants";
 import {
   AssetId,
   AssetImage,
   DenomUnit,
 } from "@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb";
 import { ChainRegistryClient, Registry } from "@penumbra-labs/registry";
-import { Token } from "../types/token.tsx";
+import { Token } from "../types/token";
 
 const getRegistry = (): Registry => {
   const chainId = Constants.chainId;

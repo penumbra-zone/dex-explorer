@@ -1,7 +1,7 @@
 // @ts-nocheck
 /* eslint-disable -- disabling this file as this was created before our strict rules */
 import { bech32m } from "bech32";
-import { uint8ArrayToBase64, base64ToUint8Array } from "./base64.ts";
+import { uint8ArrayToBase64, base64ToUint8Array } from "./base64";
 
 export const innerToBech32Address = (inner: string, prefix: string): string => {
   return bech32m.encode(prefix, bech32m.toWords(base64ToUint8Array(inner)));

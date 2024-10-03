@@ -6,7 +6,7 @@ import Image from "next/image";
 import React from "react";
 import { HamburgerIcon, CloseIcon } from '@chakra-ui/icons'
 import { Box, Flex, IconButton, useDisclosure, Stack, Text, HStack, Center } from '@chakra-ui/react'
-import { LPSearchBar } from "./lpSearchBar.tsx";
+import { LPSearchBar } from "./lpSearchBar";
 
 interface NavLinkProps {
     children: React.ReactNode

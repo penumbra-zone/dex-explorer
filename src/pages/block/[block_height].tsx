@@ -16,7 +16,7 @@ import { BlockDetailedSummaryData } from "@/old/utils/types/block";
 import { BlockInfo, LiquidityPositionEvent } from "@/old/utils/indexer/types/lps";
 import { SwapExecutionWithBlockHeight } from "@/old/utils/protos/types/DexQueryServiceClientInterface";
 import { LoadingSpinner } from "@/old/components/util/loadingSpinner";
-import { Constants } from "@/old/utils/configConstants.ts";
+import { Constants } from "@/old/utils/configConstants";
 import { formatTimestampShort } from "@/old/components/blockTimestamp";
 import { AddIcon, MinusIcon } from "@chakra-ui/icons";
 import { innerToBech32Address } from "@/old/utils/math/bech32";

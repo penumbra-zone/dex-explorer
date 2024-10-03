@@ -1,9 +1,9 @@
 // @ts-nocheck
 /* eslint-disable -- disabling this file as this was created before our strict rules */
 import { PromiseClient } from "@connectrpc/connect";
-import { createClient } from "../utils.ts";
+import { createClient } from "../utils";
 import { SimulationService } from "@penumbra-zone/protobuf";
-import { SimulationServiceInterface } from "../../types/SimulationQuerier.ts";
+import { SimulationServiceInterface } from "../../types/SimulationQuerier";
 import {
   SimulateTradeRequest,
   SimulateTradeResponse,

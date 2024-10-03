@@ -6,9 +6,9 @@ import {
   Text,
   HStack,
 } from "@chakra-ui/react";
-import { LiquidityPositionEvent } from "@/old/utils/indexer/types/lps.tsx";
-import CopiedTxToClipboard from "../copiedTx.tsx";
-import LPAssetView from "../lpAssetView.tsx";
+import { LiquidityPositionEvent } from "@/old/utils/indexer/types/lps";
+import CopiedTxToClipboard from "../copiedTx";
+import LPAssetView from "../lpAssetView";
 
 interface WithdrawnPositionStatusProps {
   nftId: string;

@@ -6,8 +6,8 @@ import {
   Text,
   HStack,
 } from "@chakra-ui/react";
-import { LiquidityPositionEvent } from "@/old/utils/indexer/types/lps.tsx";
-import CopiedTxToClipboard from "@/old/components/copiedTx.tsx";
+import { LiquidityPositionEvent } from "@/old/utils/indexer/types/lps";
+import CopiedTxToClipboard from "@/old/components/copiedTx";
 
 interface ClosedPositionStatusProps {
   nftId: string;

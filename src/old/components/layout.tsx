@@ -4,7 +4,7 @@
 
 import Head from "next/head";
 import styles from "@/Home.module.css";
-import { Navbar } from "./navbar.tsx";
+import { Navbar } from "./navbar";
 import React from "react";
 
 interface LayoutProps {
