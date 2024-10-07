@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction, when } from 'mobx';
+import { makeAutoObservable, when } from 'mobx';
 import { ViewService } from '@penumbra-zone/protobuf';
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { getDenomMetadata } from '@penumbra-zone/getters/assets-response';
@@ -19,8 +19,6 @@ const fetchAssets = () => {
 };
 
 class AssetsState {
-  /** If true, ignore all other state values */
-  loading = false;
   /** The error is set in case of a request failure */
   error?: string;
   assets: Metadata[] = [];
@@ -42,18 +40,23 @@ class AssetsState {
   getRegistryAssets () {
     const registryClient = new ChainRegistryClient();
     const registry = registryClient.bundled.get(Constants.chainId);
-
-    this.assets = registry.getAllAssets();
+    this.setAssets(registry.getAllAssets());
   }
 
   async fetchAccountAssets() {
     try {
-      runInAction(() => this.loading = true);
-      this.assets = await fetchAssets();
-      this.loading = false;
+      this.setAssets(await fetchAssets());
     } catch (error) {
-      this.error = error instanceof Error ? `${error.name}: ${error.message}` : 'Request error';
+      this.setError(error instanceof Error ? `${error.name}: ${error.message}` : 'Request error');
     }
+  }
+
+  setError = (value?: string) => {
+    this.error = value;
+  }
+
+  setAssets = (value: Metadata[]) => {
+    this.assets = value;
   }
 }
 
