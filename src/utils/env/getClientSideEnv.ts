@@ -1,4 +1,7 @@
-import { ClientEnv } from './types';
+export interface ClientEnv {
+  PENUMBRA_CHAIN_ID: string;
+  PENUMBRA_CUILOA_URL: string;
+}
 
 export function getClientSideEnv() {
   const whitelist: string[] = ['PENUMBRA_CHAIN_ID', 'PENUMBRA_CUILOA_URL'];

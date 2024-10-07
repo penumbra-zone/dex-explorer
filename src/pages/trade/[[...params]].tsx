@@ -27,7 +27,6 @@ export default function TradingPairs() {
   const [isChartLoading, setIsChartLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
   const tokenAssets = useTokenAssets();
-	console.log("TCL: TradingPairs -> tokenAssets", tokenAssets);
 
   // Pairs are in the form of baseToken:quoteToken
   const router = useRouter();
