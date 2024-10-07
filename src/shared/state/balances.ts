@@ -3,6 +3,14 @@ import { ViewService } from '@penumbra-zone/protobuf';
 import { BalancesResponse } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
 import { penumbra } from '@/shared/penumbra';
 import { connectionStore } from '@/shared/state/connection';
+import { queryClient } from '@/shared/queryClient';
+
+const fetchBalances = () => {
+  return queryClient.fetchQuery({
+    queryKey: ['balances'],
+    queryFn: async () => Array.fromAsync(penumbra.service(ViewService).balances({})),
+  });
+};
 
 class BalancesState {
   /** If true, ignore all other state values */
@@ -23,7 +31,7 @@ class BalancesState {
   async setup() {
     try {
       runInAction(() => this.loading = true);
-      this.balances = await Array.fromAsync(penumbra.service(ViewService).balances({}));
+      this.balances = await fetchBalances();
       this.loading = false;
     } catch (error) {
       this.error = error instanceof Error ? `${error.name}: ${error.message}` : 'Request error';

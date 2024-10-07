@@ -6,6 +6,17 @@ import { ChainRegistryClient } from '@penumbra-labs/registry';
 import { Constants } from '@/shared/configConstants';
 import { penumbra } from '@/shared/penumbra';
 import { connectionStore } from '@/shared/state/connection';
+import { queryClient } from '@/shared/queryClient';
+
+const fetchAssets = () => {
+  return queryClient.fetchQuery({
+    queryKey: ['assets'],
+    queryFn: async () => {
+      const responses = await Array.fromAsync(penumbra.service(ViewService).assets({}));
+      return responses.map(getDenomMetadata);
+    },
+  });
+};
 
 class AssetsState {
   /** If true, ignore all other state values */
@@ -38,8 +49,7 @@ class AssetsState {
   async fetchAccountAssets() {
     try {
       runInAction(() => this.loading = true);
-      const responses = await Array.fromAsync(penumbra.service(ViewService).assets({}));
-      this.assets = responses.map(getDenomMetadata);
+      this.assets = await fetchAssets();
       this.loading = false;
     } catch (error) {
       this.error = error instanceof Error ? `${error.name}: ${error.message}` : 'Request error';
