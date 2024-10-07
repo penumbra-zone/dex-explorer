@@ -8,7 +8,7 @@ import {
   SwapExecution,
   SwapExecution_Trace,
 } from "@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb";
-import { useTokenAssets } from "@/utils/token/tokenFetch";
+import { useTokenAssets } from "@/fetchers/tokenAssets";
 import { Token } from "@/utils/types/token";
 import { LoadingSpinner } from "@/components/util/loadingSpinner";
 

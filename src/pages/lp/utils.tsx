@@ -6,7 +6,6 @@ import React, { useState } from "react";
 import Layout from "../../components/layout";
 import { VStack, Text, Center, HStack, Input, Button } from "@chakra-ui/react";
 import { innerToBech32Address, bech32ToInner } from "../../utils/math/bech32";
-import { getClientSideEnvs } from "@/utils/env/getClientSideEnvs";
 
 export default function Utils() {
   const [innerAddress, setInnerAddress] = useState("");
@@ -65,14 +64,4 @@ export default function Utils() {
       </Center>
     </Layout>
   );
-}
-
-export async function getServerSideProps() {
-  const envs = getClientSideEnvs();
-
-  return {
-    props: {
-      envs,
-    },
-  };
 }

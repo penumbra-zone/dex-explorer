@@ -6,7 +6,6 @@ import {
 } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { ChainRegistryClient, Registry } from '@penumbra-labs/registry';
 import { Token } from '../types/token';
-import { useEnvContext } from '../env/context';
 
 const getRegistry = (chainId: string): Registry => {
   const registryClient = new ChainRegistryClient();
@@ -34,11 +33,6 @@ export const fetchAllTokenAssets = (chainId: string): Token[] => {
   return tokens;
 };
 
-export function useTokenAssets() {
-  const envs = useEnvContext();
-  return fetchAllTokenAssets(envs['PENUMBRA_CHAIN_ID'] ?? '');
-}
-
 export const fetchTokenAsset = (
   chainId: string,
   tokenId: Uint8Array | string,
@@ -56,12 +50,6 @@ export const fetchTokenAsset = (
     inner: typeof tokenId !== 'string' ? uint8ArrayToBase64(tokenId) : tokenId,
     imagePath: imagePathFromAssetImages(tokenMetadata.images),
   };
-};
-
-export const useFetchTokenAsset = () => {
-  const envs = useEnvContext();
-  return (tokenId: Uint8Array | string) =>
-    fetchTokenAsset(envs['PENUMBRA_CHAIN_ID'] ?? '', tokenId);
 };
 
 export const imagePathFromAssetImages = (assetImages: AssetImage[]): string | undefined => {

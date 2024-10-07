@@ -1,10 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getClientSideEnvs } from '@/utils/env/getClientSideEnvs';
+import { getClientSideEnv } from '@/utils/env/getClientSideEnv';
 
 export default function env(
   _req: NextApiRequest,
   res: NextApiResponse,
 ) {
-  const env = getClientSideEnvs();
+  const env = getClientSideEnv();
   res.status(200).json(env);
 }

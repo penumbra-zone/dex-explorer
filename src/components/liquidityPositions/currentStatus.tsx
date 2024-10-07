@@ -8,30 +8,17 @@ import {
 } from "@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb";
 import { fromBaseUnit } from "../../utils/math/hiLo";
 import { uint8ArrayToBase64 } from "../../utils/math/base64";
-import { useFetchTokenAsset } from "../../utils/token/tokenFetch";
 import BigNumber from "bignumber.js";
 import { CopyIcon } from "@radix-ui/react-icons";
 import { Token } from "@/utils/types/token";
+import { useTokenAsset } from "@/fetchers/tokenAssets";
 
 interface CurrentLPStatusProps {
   nftId: string;
   position: Position;
 }
 
-const CurrentLPStatus = ({ nftId, position }: CurrentLPStatusProps) => {
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isCopied, setIsCopied] = useState<boolean>(false);
-  const fetchTokenAsset = useFetchTokenAsset();
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(nftId).then(() => {
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 1500); // Hide popup after 1.5 seconds
-    });
-  };
-
-  // First process position to human readable pieces
-
+function getStatusText(position): string {
   // Get status
   const status = (position.state!).state.toString();
 
@@ -58,64 +45,29 @@ const CurrentLPStatus = ({ nftId, position }: CurrentLPStatusProps) => {
       statusText = "Unknown";
   }
 
+  return statusText;
+}
+
+const CurrentLPStatus = ({ nftId, position }: CurrentLPStatusProps) => {
+  const [isCopied, setIsCopied] = useState<boolean>(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(nftId).then(() => {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 1500); // Hide popup after 1.5 seconds
+    });
+  };
+
+  // First process position to human readable pieces
+  const statusText = getStatusText(position);
+
   // Get fee tier
   const feeTier = Number(position.phi!.component!.fee);
 
-  const asset1 = position.phi!.pair!.asset1;
-  const asset2 = position.phi!.pair!.asset2;
-
-  // States for tokens
-  const [asset1Token, setAsset1Token] = useState<Token>({
-    symbol: "UNKNOWN",
-    display: "UNKNOWN",
-    decimals: 0,
-    inner: "UNKNOWN",
-    imagePath: "UNKNOWN",
-  });
-  const [asset2Token, setAsset2Token] = useState<Token>({
-    symbol: "UNKNOWN",
-    display: "UNKNOWN",
-    decimals: 0,
-    inner: "UNKNOWN",
-    imagePath: "UNKNOWN",
-  });
+  const { asset1, asset2 }  = position.phi!.pair!;
+  const asset1Token = useTokenAsset(asset1.inner);
+  const asset2Token = useTokenAsset(asset2.inner);
   const [assetError, setAssetError] = useState<string | undefined>();
-
-  useEffect(() => {
-    // Function to fetch tokens asynchronously
-    const fetchTokens = async () => {
-      try {
-        const asset1 = position.phi!.pair!.asset1;
-        const asset2 = position.phi!.pair!.asset2;
-
-        if (asset1?.inner) {
-          const fetchedAsset1Token = fetchTokenAsset(asset1.inner);
-          if (!fetchedAsset1Token) {
-            setAssetError("Asset 1 token not found");
-            throw new Error("Asset 1 token not found");
-          }
-          setAsset1Token(fetchedAsset1Token);
-        }
-
-        if (asset2?.inner) {
-          const fetchedAsset2Token = fetchTokenAsset(asset2.inner);
-          if (!fetchedAsset2Token) {
-            setAssetError("Asset 2 token not found");
-            throw new Error("Asset 2 token not found");
-          }
-          setAsset2Token(fetchedAsset2Token);
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    fetchTokens();
-  }, [position]);
-
-  if (!isLoading && (!asset1Token || !asset2Token)) {
-    return <div>{`LP exists, but ${assetError}.`}</div>;
-  }
 
   const reserves1 = fromBaseUnit(
     BigInt(position.reserves!.r1?.lo || 0),

@@ -5,10 +5,9 @@
 import { useState, useEffect } from 'react';
 import { VStack, HStack, Box, Select, Button, Avatar } from '@chakra-ui/react';
 import Layout from '@/components/layout';
-import { useTokenAssets } from '@/utils/token/tokenFetch';
+import { useTokenAssets } from '@/fetchers/tokenAssets';
 import { LoadingSpinner } from '@/components/util/loadingSpinner';
 import { Token } from '@/utils/types/token';
-import { getClientSideEnvs } from '@/utils/env/getClientSideEnvs';
 
 export default function Pairs() {
     const [isLoading, setIsLoading] = useState(true);
@@ -73,14 +72,4 @@ export default function Pairs() {
             }
         </Layout>
     )
-}
-
-export async function getServerSideProps() {
-  const envs = getClientSideEnvs();
-
-  return {
-    props: {
-      envs,
-    },
-  };
 }

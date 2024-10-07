@@ -24,11 +24,10 @@ import {
   SwapExecution_Trace,
 } from "@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb";
 import BigNumber from "bignumber.js";
-import { useTokenAssets } from "@/utils/token/tokenFetch";
+import { useTokenAssets } from "@/fetchers/tokenAssets";
 import { Token } from "@/utils/types/token";
 import { fromBaseUnit } from "@/utils/math/hiLo";
-import { getClientSideEnvs } from "@/utils/env/getClientSideEnvs";
-import { useEnvContext } from "@/utils/env/context";
+import { useEnv } from "@/fetchers/env";
 
 export const Price = ({
   trace,
@@ -296,6 +295,7 @@ export const ArbSummary = ({
 export default function Block() {
   const router = useRouter();
   const { block_height } = router.query as { block_height: string };
+  const { data: env } = useEnv();
   console.log(router);
   console.log(router.query);
 
@@ -441,7 +441,6 @@ export default function Block() {
     const [isExpanded, setIsExpanded] = useState(false); // EXPAND
     const tokenAssets = useTokenAssets();
     const metadataByAssetId: Record<string, Token> = {};
-    const envs = useEnvContext();
     tokenAssets.forEach((asset) => {
       metadataByAssetId[asset.inner] = {
         symbol: asset.symbol,
@@ -655,7 +654,9 @@ export default function Block() {
             </Text>
             <Text>
               <a
-                href={envs.PENUMBRA_CUILOA_URL + "/block/" + blockHeight}
+                href={env?.PENUMBRA_CUILOA_URL
+                  ? env.PENUMBRA_CUILOA_URL + "/block/" + blockHeight
+                  : ''}
                 target="_blank"
                 rel="noreferrer"
                 style={{
@@ -705,14 +706,4 @@ export default function Block() {
       )}
     </Layout>
   );
-}
-
-export async function getServerSideProps() {
-  const envs = getClientSideEnvs();
-
-  return {
-    props: {
-      envs,
-    },
-  };
 }

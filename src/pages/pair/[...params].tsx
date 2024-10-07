@@ -29,8 +29,7 @@ import DepthChart from "@/components/charts/depthChart";
 import OHLCChart from "@/components/charts/ohlcChart";
 import BuySellChart from "@/components/charts/buySellChart";
 import { Token } from "@/utils/types/token";
-import { useTokenAssets } from "@/utils/token/tokenFetch";
-import { getClientSideEnvs } from "@/utils/env/getClientSideEnvs";
+import { useTokenAssets } from "@/fetchers/tokenAssets";
 // TODO: Better parameter check
 
 // ! Important note: 'sell' side here refers to selling asset1 for asset2, so its really DEMAND for buying asset 1, anc vice versa for 'buy' side
@@ -754,14 +753,4 @@ export default function TradingPairs() {
       ) : null}
     </Layout>
   );
-}
-
-export async function getServerSideProps() {
-  const envs = getClientSideEnvs();
-
-  return {
-    props: {
-      envs,
-    },
-  };
 }
