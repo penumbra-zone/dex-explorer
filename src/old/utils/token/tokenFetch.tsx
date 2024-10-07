@@ -1,5 +1,5 @@
 import { uint8ArrayToBase64, base64ToUint8Array } from "../math/base64";
-import { Constants } from "../configConstants";
+import { Constants } from "@/shared/configConstants";
 import {
   AssetId,
   AssetImage,

@@ -2,8 +2,8 @@ import { observer } from 'mobx-react-lite';
 import { ArrowLeftRight } from 'lucide-react';
 import { AssetSelector, AssetSelectorValue } from '@penumbra-zone/ui/AssetSelector';
 import { Button } from '@penumbra-zone/ui/Button';
-import { assetsStore } from '@/state/shared/assets';
-import { balancesStore } from '@/state/shared/balances';
+import { assetsStore } from '@/shared/state/assets';
+import { balancesStore } from '@/shared/state/balances';
 
 export interface PairSelectorProps {
   /** The `Metadata` or `BalancesResponse`, from which the swap should be initiated */

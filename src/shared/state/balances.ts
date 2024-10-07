@@ -1,8 +1,8 @@
 import { makeAutoObservable, runInAction, when } from 'mobx';
 import { ViewService } from '@penumbra-zone/protobuf';
 import { BalancesResponse } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
-import { penumbra } from '@/utils/penumbra';
-import { connectionStore } from '@/state/connection';
+import { penumbra } from '@/shared/penumbra';
+import { connectionStore } from '@/shared/state/connection';
 
 class BalancesState {
   /** If true, ignore all other state values */

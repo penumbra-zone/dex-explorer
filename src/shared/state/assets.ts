@@ -2,8 +2,10 @@ import { makeAutoObservable, runInAction, when } from 'mobx';
 import { ViewService } from '@penumbra-zone/protobuf';
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { getDenomMetadata } from '@penumbra-zone/getters/assets-response';
-import { penumbra } from '@/utils/penumbra';
-import { connectionStore } from '@/state/connection';
+import { ChainRegistryClient } from '@penumbra-labs/registry';
+import { Constants } from '@/shared/configConstants';
+import { penumbra } from '@/shared/penumbra';
+import { connectionStore } from '@/shared/state/connection';
 
 class AssetsState {
   /** If true, ignore all other state values */
@@ -16,12 +18,24 @@ class AssetsState {
     makeAutoObservable(this);
 
     when(
+      () => !connectionStore.connected,
+      () => this.getRegistryAssets(),
+    );
+
+    when(
       () => connectionStore.connected,
-      () => void this.setup(),
+      () => void this.fetchAccountAssets(),
     );
   }
 
-  async setup() {
+  getRegistryAssets () {
+    const registryClient = new ChainRegistryClient();
+    const registry = registryClient.bundled.get(Constants.chainId);
+
+    this.assets = registry.getAllAssets();
+  }
+
+  async fetchAccountAssets() {
     try {
       runInAction(() => this.loading = true);
       const responses = await Array.fromAsync(penumbra.service(ViewService).assets({}));
