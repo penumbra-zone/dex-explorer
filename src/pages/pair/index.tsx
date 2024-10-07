@@ -5,14 +5,14 @@
 import { useState, useEffect } from 'react';
 import { VStack, HStack, Box, Select, Button, Avatar } from '@chakra-ui/react';
 import Layout from '@/old/components/layout';
-import { useTokenAssets } from '@/fetchers/tokenAssets';
+import { useTokenAssetsDeprecated } from '@/fetchers/tokenAssets';
 import { LoadingSpinner } from '@/old/components/util/loadingSpinner';
 import { Token } from '@/old/utils/types/token';
 
 export default function Pairs() {
     const [isLoading, setIsLoading] = useState(true);
     const [tokenAssets, setTokenAssets] = useState<Token[]>([]);
-    const tokenAssetsList = useTokenAssets();
+    const { data: tokenAssetsList } = useTokenAssetsDeprecated();
 
     const [firstAsset, setFirstAsset] = useState('');
     const [secondAsset, setSecondAsset] = useState('');

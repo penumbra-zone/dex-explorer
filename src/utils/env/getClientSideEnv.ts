@@ -5,16 +5,14 @@ const defaults = {
   PENUMBRA_CUILOA_URL: 'https://cuiloa.testnet.penumbra.zone',
 };
 
-export function getClientSideEnv() {
+export function getClientSideEnv(): ClientEnv {
   const whitelist: string[] = ['PENUMBRA_CHAIN_ID', 'PENUMBRA_CUILOA_URL'];
 
-  const env = whitelist.reduce(
+  return whitelist.reduce(
     (env, key) => ({
       ...env,
       [key]: process.env[key] ?? '',
     }),
     defaults,
-  ) as ClientEnv;
-
-  return env;
+  );
 }

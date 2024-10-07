@@ -16,7 +16,7 @@ import OHLCChart from '@/old/components/charts/ohlcChart';
 import BuySellChart from '@/old/components/charts/buySellChart';
 import PairSelector from '@/old/components/pairSelector';
 import { Token } from '@/old/utils/types/token';
-import { useTokenAssets } from '@/fetchers/tokenAssets';
+import { useTokenAssetsDeprecated } from '@/fetchers/tokenAssets';
 // TODO: Better parameter check
 
 // ! Important note: 'sell' side here refers to selling asset1 for asset2, so its really DEMAND for buying asset 1, anc vice versa for 'buy' side
@@ -26,7 +26,7 @@ export default function TradingPairs() {
   const [isLPsLoading, setIsLPsLoading] = useState(true);
   const [isChartLoading, setIsChartLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
-  const tokenAssets = useTokenAssets();
+  const { data: tokenAssets } = useTokenAssetsDeprecated();
 
   // Pairs are in the form of baseToken:quoteToken
   const router = useRouter();

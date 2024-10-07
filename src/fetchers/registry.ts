@@ -5,17 +5,28 @@ import { useEnv } from './env';
 export const chainRegistryClient = new ChainRegistryClient();
 
 export const useRegistry = () => {
-  const { data: env } = useEnv();
-  const chainId = env?.PENUMBRA_CHAIN_ID;
+  const { data: env, isLoading: isEnvLoading, error: envError } = useEnv();
 
-  return useQuery({
-    queryKey: ['penumbraRegistry', chainId],
-    queryFn: async (): Promise<Registry | null> => {
+  const {
+    data: registry,
+    isLoading: isRegistryLoading,
+    error: registryError,
+  } = useQuery({
+    queryKey: ['penumbraRegistry', env],
+    queryFn: async (): Promise<Registry> => {
+      const chainId = env?.PENUMBRA_CHAIN_ID;
       if (!chainId) {
-        return null;
+        throw new Error('chain id not available to query registry');
       }
       return chainRegistryClient.remote.get(chainId);
     },
     staleTime: Infinity,
+    enabled: Boolean(env),
   });
+
+  return {
+    data: registry,
+    isLoading: isEnvLoading || isRegistryLoading,
+    error: envError ?? registryError,
+  };
 };

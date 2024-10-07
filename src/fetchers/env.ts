@@ -5,7 +5,8 @@ export const useEnv = () => {
   return useQuery({
     queryKey: ['clientEnv'],
     queryFn: async (): Promise<ClientEnv> => {
-      return fetch('/api/env').then(resp => resp.json() as unknown as ClientEnv);
+      const res = await fetch('/api/env');
+      return (await res.json()) as ClientEnv;
     },
     staleTime: Infinity,
   });

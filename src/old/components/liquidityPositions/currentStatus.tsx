@@ -12,7 +12,7 @@ import { fetchTokenAsset } from "@/old/utils/token/tokenFetch";
 import BigNumber from "bignumber.js";
 import { CopyIcon } from "@radix-ui/react-icons";
 import { Token } from "@/old/utils/types/token";
-import { useTokenAsset } from "@/fetchers/tokenAssets";
+import { useTokenAssetDeprecated } from "@/fetchers/tokenAssets";
 
 interface CurrentLPStatusProps {
   nftId: string;
@@ -66,8 +66,8 @@ const CurrentLPStatus = ({ nftId, position }: CurrentLPStatusProps) => {
   const feeTier = Number(position.phi!.component!.fee);
 
   const { asset1, asset2 }  = position.phi!.pair!;
-  const asset1Token = useTokenAsset(asset1.inner);
-  const asset2Token = useTokenAsset(asset2.inner);
+  const { data: asset1Token } = useTokenAssetDeprecated(asset1.inner);
+  const { data: asset2Token } = useTokenAssetDeprecated(asset2.inner);
   const [assetError, setAssetError] = useState<string | undefined>();
 
   const reserves1 = fromBaseUnit(
@@ -87,6 +87,7 @@ const CurrentLPStatus = ({ nftId, position }: CurrentLPStatusProps) => {
     BigInt(position.phi!.component!.p!.hi || 0),
     asset2Token.decimals
   );
+
   const q: BigNumber = fromBaseUnit(
     BigInt(position.phi!.component!.q!.lo || 0),
     BigInt(position.phi!.component!.q!.hi || 0),

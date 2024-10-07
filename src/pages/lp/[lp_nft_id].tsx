@@ -17,13 +17,13 @@ import {
 import TimelinePosition from "@/old/components/liquidityPositions/timelinePosition";
 import ExecutionEvent from "@/old/components/liquidityPositions/executionEvent";
 import { ChevronDownIcon } from "@chakra-ui/icons";
-import { useTokenAssets } from "@/fetchers/tokenAssets";
+import { useTokenAssetsDeprecated } from "@/fetchers/tokenAssets";
 
 export default function LP() {
   const [isLoading, setIsLoading] = useState(true);
   const [isTimelineLoading, setIsTimelineLoading] = useState(true);
   const [isLineLoading, setIsLineLoading] = useState(true);
-  const assetTokens = useTokenAssets();
+  const { data: assetTokens } = useTokenAssetsDeprecated();
 
   const EXPAND_BUTTON_TYPE_FLAG = "ExpandButton";
 
