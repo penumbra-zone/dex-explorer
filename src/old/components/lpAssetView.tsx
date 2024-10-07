@@ -6,11 +6,11 @@ import { Avatar, HStack, VStack , Text } from "@chakra-ui/react";
 import {
   LiquidityPositionEvent,
   PositionExecutionEvent,
-} from "@/utils/indexer/types/lps";
+} from "@/old/utils/indexer/types/lps";
 import { useTokenAsset } from "@/fetchers/tokenAssets";
-import { fromBaseUnit } from "@/utils/math/hiLo";
-import { base64ToUint8Array } from "@/utils/math/base64";
-import { Token } from "@/utils/types/token";
+import { fromBaseUnit } from "@/old/utils/math/hiLo";
+import { base64ToUint8Array } from "@/old/utils/math/base64";
+import { Token } from "@/old/utils/types/token";
 
 interface LPAssetViewProps {
   sectionTitle: string;

@@ -6,11 +6,12 @@ import {
   Position,
   PositionState,
 } from "@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb";
-import { fromBaseUnit } from "../../utils/math/hiLo";
-import { uint8ArrayToBase64 } from "../../utils/math/base64";
+import { fromBaseUnit } from "@/old/utils/math/hiLo";
+import { uint8ArrayToBase64 } from "@/old/utils/math/base64";
+import { fetchTokenAsset } from "@/old/utils/token/tokenFetch";
 import BigNumber from "bignumber.js";
 import { CopyIcon } from "@radix-ui/react-icons";
-import { Token } from "@/utils/types/token";
+import { Token } from "@/old/utils/types/token";
 import { useTokenAsset } from "@/fetchers/tokenAssets";
 
 interface CurrentLPStatusProps {

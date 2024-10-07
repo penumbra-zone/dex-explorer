@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Box, Text, Flex } from '@chakra-ui/react';
 import { useTokenAssets } from '@/fetchers/tokenAssets';
 import OutsideClickHandler from 'react-outside-click-handler';
-import { Token } from '@/utils/types/token';
+import { Token } from '@/old/utils/types/token';
 
 const orderedAssets = ['UM', 'USDC'];
 

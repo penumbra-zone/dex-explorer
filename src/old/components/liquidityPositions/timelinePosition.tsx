@@ -2,10 +2,10 @@
 /* eslint-disable -- disabling this file as this was created before our strict rules */
 import React from "react";
 import { Box, HStack, Text, VStack } from "@chakra-ui/react";
-import { LiquidityPositionEvent } from "@/utils/indexer/types/lps";
-import ClosedPositionStatus from "@/components/liquidityPositions/closedStatus";
-import OpenPositionStatus from "@/components/liquidityPositions/openStatus";
-import WithdrawnPositionStatus from "@/components/liquidityPositions/withdrawnStatus";
+import { LiquidityPositionEvent } from "@/old/utils/indexer/types/lps";
+import ClosedPositionStatus from "@/old/components/liquidityPositions/closedStatus";
+import OpenPositionStatus from "@/old/components/liquidityPositions/openStatus";
+import WithdrawnPositionStatus from "@/old/components/liquidityPositions/withdrawnStatus";
 import BlockTimestampView from "../blockTimestamp";
 
 interface TimelinePositionProps {

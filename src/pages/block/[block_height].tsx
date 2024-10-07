@@ -1,6 +1,6 @@
 // @ts-nocheck
 /* eslint-disable -- disabling this file as this was created before our strict rules */
-import Layout from "@/components/layout";
+import Layout from "@/old/components/layout";
 import { useRouter } from "next/router";
 import {
   Box,
@@ -12,21 +12,21 @@ import {
   Flex,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
-import { BlockDetailedSummaryData } from "@/utils/types/block";
-import { BlockInfo, LiquidityPositionEvent } from "@/utils/indexer/types/lps";
-import { SwapExecutionWithBlockHeight } from "@/utils/protos/types/DexQueryServiceClientInterface";
-import { LoadingSpinner } from "@/components/util/loadingSpinner";
-import { formatTimestampShort } from "@/components/blockTimestamp";
+import { BlockDetailedSummaryData } from "@/old/utils/types/block";
+import { BlockInfo, LiquidityPositionEvent } from "@/old/utils/indexer/types/lps";
+import { SwapExecutionWithBlockHeight } from "@/old/utils/protos/types/DexQueryServiceClientInterface";
+import { LoadingSpinner } from "@/old/components/util/loadingSpinner";
+import { formatTimestampShort } from "@/old/components/blockTimestamp";
 import { AddIcon, MinusIcon } from "@chakra-ui/icons";
-import { innerToBech32Address } from "@/utils/math/bech32";
+import { innerToBech32Address } from "@/old/utils/math/bech32";
 import {
   SwapExecution,
   SwapExecution_Trace,
 } from "@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb";
 import BigNumber from "bignumber.js";
 import { useTokenAssets } from "@/fetchers/tokenAssets";
-import { Token } from "@/utils/types/token";
-import { fromBaseUnit } from "@/utils/math/hiLo";
+import { Token } from "@/old/utils/types/token";
+import { fromBaseUnit } from "@/old/utils/math/hiLo";
 import { useEnv } from "@/fetchers/env";
 
 export const Price = ({

@@ -1,12 +1,12 @@
 import { ViewService } from '@penumbra-zone/protobuf';
-import { penumbra } from '@/utils/penumbra';
-import { getSyncPercent } from '@/state/status/getSyncPercent';
+import { penumbra } from '@/shared/penumbra';
+import { getSyncPercent } from '@/shared/state/status/getSyncPercent';
 import { makeAutoObservable, runInAction, when } from 'mobx';
 import {
   StatusResponse,
   StatusStreamResponse,
 } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
-import { connectionStore } from '@/state/connection';
+import { connectionStore } from '@/shared/state/connection';
 
 class StatusState {
   /** If true, ignore all other state values */

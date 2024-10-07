@@ -3,7 +3,7 @@
 import { Box, HStack, Flex, Text } from "@chakra-ui/react";
 import BlockTimestampView from "../blockTimestamp";
 import { BlockDetails } from "./blockDetails";
-import { BlockSummaryData } from "@/utils/types/block";
+import { BlockSummaryData } from "@/old/utils/types/block";
 
 export interface BlockSummaryProps {
   blockHeight: number

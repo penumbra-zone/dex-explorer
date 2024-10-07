@@ -9,12 +9,12 @@ import {
   FormControl,
   NumberInputField,
 } from "@chakra-ui/react";
-import { LoadingSpinner } from "@/components/util/loadingSpinner";
+import { LoadingSpinner } from "@/old/components/util/loadingSpinner";
 import { useEffect, useRef, useState } from "react";
-import { BlockSummary } from "@/components/executionHistory/blockSummary";
-import { BlockInfo, LiquidityPositionEvent } from "@/utils/indexer/types/lps";
-import { SwapExecutionWithBlockHeight } from "@/utils/protos/types/DexQueryServiceClientInterface";
-import { BlockInfoMap, BlockSummaryData, BlockSummaryMap } from "@/utils/types/block";
+import { BlockSummary } from "@/old/components/executionHistory/blockSummary";
+import { BlockInfo, LiquidityPositionEvent } from "@/old/utils/indexer/types/lps";
+import { SwapExecutionWithBlockHeight } from "@/old/utils/protos/types/DexQueryServiceClientInterface";
+import { BlockInfoMap, BlockSummaryData, BlockSummaryMap } from "@/old/utils/types/block";
 
 export default function Blocks() {
   // Go back hardcoded N blocks

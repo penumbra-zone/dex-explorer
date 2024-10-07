@@ -1,37 +1,28 @@
 // @ts-nocheck
 /* eslint-disable -- disabling this file as this was created before our strict rules */
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
-  Box,
   VStack,
   Text,
-  Divider,
-  Badge,
   HStack,
-  Image,
-  Avatar,
 } from "@chakra-ui/react";
-import {
-  Position,
-  PositionState,
-} from "@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb";
-import { fromBaseUnit } from "../../utils/math/hiLo";
-import { uint8ArrayToBase64 } from "../../utils/math/base64";
-import BigNumber from "bignumber.js";
-import { LiquidityPositionEvent } from "@/utils/indexer/types/lps";
+import { LiquidityPositionEvent } from "@/old/utils/indexer/types/lps";
 import CopiedTxToClipboard from "../copiedTx";
 import LPAssetView from "../lpAssetView";
 
-interface OpenPositionStatusProps {
+interface WithdrawnPositionStatusProps {
   nftId: string;
   lp_event: LiquidityPositionEvent;
 }
 
-const OpenPositionStatus = ({ nftId, lp_event }: OpenPositionStatusProps) => {
+const WithdrawnPositionStatus = ({
+  nftId,
+  lp_event,
+}: WithdrawnPositionStatusProps) => {
   return (
     <VStack align={"left"} spacing={2}>
         <Text fontSize={"large"} fontWeight={"bold"} paddingBottom=".2em">
-          Position Opened
+          Position Withdrawn
         </Text>
         <HStack align={"center"} spacing={2}>
           <Text fontSize={"small"} fontFamily={"monospace"}>
@@ -43,9 +34,9 @@ const OpenPositionStatus = ({ nftId, lp_event }: OpenPositionStatusProps) => {
             clipboardPopupText={"Tx hash copied"}
           />
         </HStack>
-        <LPAssetView sectionTitle={"Initial Reserves"} lp_event={lp_event} />
+        <LPAssetView sectionTitle={"Reserves Withdrawn"} lp_event={lp_event}/>
       </VStack>
   );
 };
 
-export default OpenPositionStatus;
+export default WithdrawnPositionStatus;

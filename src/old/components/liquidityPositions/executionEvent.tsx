@@ -15,13 +15,13 @@ import {
   Position,
   PositionState,
 } from "@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb";
-import { fromBaseUnit } from "../../utils/math/hiLo";
-import { uint8ArrayToBase64 } from "../../utils/math/base64";
+import { fromBaseUnit } from "@/old/utils/math/hiLo";
+import { uint8ArrayToBase64 } from "@/old/utils/math/base64";
 import BigNumber from "bignumber.js";
 import {
   LiquidityPositionEvent,
   PositionExecutionEvent,
-} from "@/utils/indexer/types/lps";
+} from "@/old/utils/indexer/types/lps";
 import CopiedTxToClipboard from "../copiedTx";
 import LPAssetView from "../lpAssetView";
 import BlockTimestampView from "../blockTimestamp";

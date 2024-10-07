@@ -1,5 +1,5 @@
 import { PenumbraRequestFailure, PenumbraState, PenumbraManifest } from '@penumbra-zone/client';
-import { penumbra, PRAX_ORIGIN } from '@/utils/penumbra';
+import { penumbra, PRAX_ORIGIN } from '@/shared/penumbra';
 import { makeAutoObservable } from 'mobx';
 
 class ConnectionStateStore {

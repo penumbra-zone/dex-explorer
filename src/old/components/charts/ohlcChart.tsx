@@ -5,7 +5,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { VStack, Text, Button, ButtonGroup, Flex } from '@chakra-ui/react';
 import useComponentSize from '@rehooks/component-size';
-import { Token } from '@/utils/types/token';
+import { Token } from '@/old/utils/types/token';
 import { LoadingSpinner } from '../util/loadingSpinner';
 import ReactECharts from 'echarts-for-react';
 import { format } from 'date-fns';

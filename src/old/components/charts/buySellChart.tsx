@@ -3,12 +3,12 @@
 import React, { useRef, useEffect } from "react";
 import { Box, HStack, Spacer, Text, VStack } from "@chakra-ui/react";
 import { Position } from "@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb";
-import { fromBaseUnit, splitLoHi } from "@/utils/math/hiLo";
+import { fromBaseUnit, splitLoHi } from "@/old/utils/math/hiLo";
 import BigNumber from "bignumber.js";
-import { Token } from "@/utils/types/token";
+import { Token } from "@/old/utils/types/token";
 import dynamic from "next/dynamic";
-import { innerToBech32Address } from "@/utils/math/bech32";
-import { uint8ArrayToBase64 } from "@/utils/math/base64";
+import { innerToBech32Address } from "@/old/utils/math/bech32";
+import { uint8ArrayToBase64 } from "@/old/utils/math/base64";
 
 interface BuySellprops {
   buySidePositions: Position[];
