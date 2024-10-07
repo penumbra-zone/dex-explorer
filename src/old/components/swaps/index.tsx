@@ -94,7 +94,7 @@ export default function Swaps() {
       setIsLoading(false); // Set loading to false after fetching is complete
     };
     fetchData();
-  }, []);
+  }, [tokenAssets.length]);
 
   return isLoading ? (
     <Box
@@ -144,9 +144,11 @@ export default function Swaps() {
                 >
                   Block #{swapExecution.blockHeight}
                 </Link>
-                <Link href={poolLink} color="var(--complimentary-background)">
-                  View {startAssetDisplay}:{endAssetDisplay} Pool
-                </Link>
+                {startAssetDisplay && endAssetDisplay && (
+                  <Link href={poolLink} color="var(--complimentary-background)">
+                    View {startAssetDisplay}:{endAssetDisplay} Pool
+                  </Link>
+                )}
               </Stack>
 
               {swapExecution.swapExecution.traces.map(

@@ -1,8 +1,8 @@
 import { useRegistry } from "./registry";
 import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
-import { decimalsFromDenomUnits, imagePathFromAssetImages } from '@/utils/token/tokenFetch'
-import { uint8ArrayToBase64, base64ToUint8Array } from '@/utils/math/base64';
-import { Token } from '@/utils/types/token';
+import { decimalsFromDenomUnits, imagePathFromAssetImages } from '@/old/utils/token/tokenFetch'
+import { uint8ArrayToBase64, base64ToUint8Array } from '@/old/utils/math/base64';
+import { Token } from '@/old/utils/types/token';
 
 export const useTokenAssets = (): Token[] => {
   const { data: registry } = useRegistry();
