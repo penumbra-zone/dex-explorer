@@ -1,6 +1,6 @@
-import { useRegistry } from "./registry";
+import { useRegistry } from './registry';
 import { AssetId, Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
-import { decimalsFromDenomUnits, imagePathFromAssetImages } from '@/old/utils/token/tokenFetch'
+import { decimalsFromDenomUnits, imagePathFromAssetImages } from '@/old/utils/token/tokenFetch';
 import { uint8ArrayToBase64, base64ToUint8Array } from '@/old/utils/math/base64';
 import { Token } from '@/old/utils/types/token';
 
@@ -12,7 +12,7 @@ export const useTokenAssets = () => {
     data,
     isLoading: isRegistryLoading,
     error: registryError,
-  }
+  };
 };
 
 export const useTokenAsset = (tokenId: Uint8Array | string) => {
@@ -26,8 +26,8 @@ export const useTokenAsset = (tokenId: Uint8Array | string) => {
     data: tokenMetadata,
     isLoading: isRegistryLoading,
     error: registryError,
-  }
-}
+  };
+};
 
 export const useTokenAssetsDeprecated = () => {
   const { data: registry, isLoading: isRegistryLoading, error: registryError } = useRegistry();
@@ -47,10 +47,10 @@ export const useTokenAssetsDeprecated = () => {
     }) as Token[];
 
   return {
-    data: tokenAssets || [],
+    data: tokenAssets,
     isLoading: isRegistryLoading,
     error: registryError,
-  }
+  };
 };
 
 export const useTokenAssetDeprecated = (tokenId: Uint8Array | string) => {
@@ -76,5 +76,5 @@ export const useTokenAssetDeprecated = (tokenId: Uint8Array | string) => {
     data: tokenAsset,
     isLoading: isRegistryLoading,
     error: registryError,
-  }
-}
+  };
+};
