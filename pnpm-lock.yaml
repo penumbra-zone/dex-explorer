@@ -128,9 +128,6 @@ importers:
       lucide-react:
         specifier: ^0.445.0
         version: 0.445.0(react@18.3.1)
-      milliseconds:
-        specifier: ^1.0.3
-        version: 1.0.3
       mobx:
         specifier: ^6.13.3
         version: 6.13.3
@@ -4657,9 +4654,6 @@ packages:
   micromatch@4.0.8:
     resolution: {integrity: sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==}
     engines: {node: '>=8.6'}
-
-  milliseconds@1.0.3:
-    resolution: {integrity: sha512-O8fANvJPdQULWgsLW+jyyPMAw4qiiPHGQDF7lXQmOXLXbmjphetpOYBk5Tut/74Q3EZ66g7TbvXw5RRi1wnJPQ==}
 
   mime-db@1.52.0:
     resolution: {integrity: sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==}
@@ -11272,8 +11266,6 @@ snapshots:
     dependencies:
       braces: 3.0.3
       picomatch: 2.3.1
-
-  milliseconds@1.0.3: {}
 
   mime-db@1.52.0: {}
 

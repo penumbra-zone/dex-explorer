@@ -8,7 +8,7 @@ export const useCandles = (
   limit: number,
 ) => {
   return useQuery({
-    queryKey: ['candles', startBlock],
+    queryKey: ['candles', symbol1, symbol2, startBlock, limit],
     queryFn: async (): Promise<CandlestickData[]> => {
       if (startBlock === undefined) {
         return [];

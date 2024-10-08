@@ -1,7 +1,7 @@
 'use client';
 
 import { Card } from '@penumbra-zone/ui/Card';
-import { Chart } from './chart';
+import { Chart } from '../../../components/chart';
 
 const TradePage = () => {
   return (
