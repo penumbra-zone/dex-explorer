@@ -38,8 +38,8 @@ export default function TradingPairs() {
   useEffect(() => {
     // Check if there are no query params
     if (!router.asPath.includes('[[...params]]') && !router.query.params) {
-      // Redirect to /trade/penumbra:usdc
-      router.push('/trade/penumbra:usdc');
+      // Redirect to /trade/penumbra:gm
+      router.push('/trade/penumbra:gm');
     }
   }, [router.query]);
 

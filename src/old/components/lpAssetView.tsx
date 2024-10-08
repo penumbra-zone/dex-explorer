@@ -18,8 +18,8 @@ interface LPAssetViewProps {
 }
 
 const LPAssetView: FC<LPAssetViewProps> = ({ sectionTitle, lp_event }) => {
-  const { asset1, asset2 } = lp_event.lpevent_attributes.tradingPair
-    ?? lp_event.execution_event_attributes.tradingPair;
+  const { asset1, asset2 } = lp_event.lpevent_attributes?.tradingPair
+    ?? lp_event.execution_event_attributes?.tradingPair;
 
   const { data: asset1Token } = useTokenAssetDeprecated(asset1 && base64ToUint8Array(asset1.inner));
   const { data: asset2Token } = useTokenAssetDeprecated(asset2 && base64ToUint8Array(asset2.inner));
