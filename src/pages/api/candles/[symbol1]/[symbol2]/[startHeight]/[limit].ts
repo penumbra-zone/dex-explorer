@@ -1,12 +1,12 @@
-import { DexQueryServiceClient } from '@/utils/protos/services/dex/dex-query-service-client';
-import { IndexerQuerier } from '@/utils/indexer/connector';
+import { DexQueryServiceClient } from '@/old/utils/protos/services/dex/dex-query-service-client';
+import { IndexerQuerier } from '@/old/utils/indexer/connector';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { CandlestickData, DirectedTradingPair } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
-import { base64ToUint8Array } from '@/utils/math/base64';
-import { fetchAllTokenAssets } from '@/utils/token/tokenFetch';
+import { base64ToUint8Array } from '@/old/utils/math/base64';
+import { fetchAllTokenAssets } from '@/old/utils/token/tokenFetch';
 import { createMergeCandles } from '@/utils/candles';
-import { Token } from '@/utils/types/token';
+import { Token } from '@/old/utils/types/token';
 
 interface QueryParams {
   symbol1?: string;

@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { createChart, IChartApi, CandlestickData } from 'lightweight-charts';
 import { tailwindConfig } from '@penumbra-zone/ui/tailwind';
-import { Token } from '@/utils/types/token';
+import { Token } from '@/old/utils/types/token';
 import { useCandles } from '@/fetchers/candles';
 
 const { colors } = tailwindConfig.theme.extend;

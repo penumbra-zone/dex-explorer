@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { IndexerQuerier } from '../../../utils/indexer/connector';
+import { IndexerQuerier } from '@/old/utils/indexer/connector';
 
 const indexerEndpoint = process.env['PENUMBRA_INDEXER_ENDPOINT'] ?? '';
 if (!indexerEndpoint) {
