@@ -34,8 +34,15 @@ export async function GET(_request: Request, context: { params: Params }) {
     start: metadata1?.penumbraAssetId,
     end: metadata2?.penumbraAssetId,
   });
+  const reversePair = new DirectedTradingPair({
+    start: metadata2?.penumbraAssetId,
+    end: metadata1?.penumbraAssetId,
+  });
 
-  const data = await querier.liquidityPositionsByPrice(tradingPair, limit);
+  const data = await Promise.all([
+    querier.liquidityPositionsByPrice(tradingPair, limit),
+    querier.liquidityPositionsByPrice(reversePair, limit),
+  ]).then(resps => resps.flat());
 
   return NextResponse.json(data);
 }
