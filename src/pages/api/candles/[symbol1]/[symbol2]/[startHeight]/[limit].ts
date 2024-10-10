@@ -83,7 +83,7 @@ export default async function candleStickData(req: NextApiRequest, res: NextApiR
     return;
   }
 
-  const tokenAssets = fetchAllTokenAssets();
+  const tokenAssets = fetchAllTokenAssets(process.env['PENUMBRA_CHAIN_ID'] ?? '');
   const asset1 = getTokenAssetBySymbol(tokenAssets, symbol1);
   const asset2 = getTokenAssetBySymbol(tokenAssets, symbol2);
 
