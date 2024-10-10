@@ -14,7 +14,7 @@ const fetchQuery = async (): Promise<BalancesResponse[]> => {
  */
 export const useBalances = () => {
   return useQuery({
-    queryKey: ['balances'],
+    queryKey: ['view-service-balances'],
     queryFn: fetchQuery,
     enabled: connectionStore.connected,
   });
