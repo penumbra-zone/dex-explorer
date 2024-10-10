@@ -4,7 +4,6 @@ import { ReactNode } from 'react';
 import { PenumbraUIProvider } from '@penumbra-zone/ui/PenumbraUIProvider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Display } from '@penumbra-zone/ui/Display';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Header } from '@/components/header';
 import { SyncBar } from '@/components/header/sync-bar';
 import { enableStaticRendering } from 'mobx-react-lite';
