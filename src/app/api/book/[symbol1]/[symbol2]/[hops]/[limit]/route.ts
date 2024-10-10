@@ -12,6 +12,7 @@ const querier = new DexQueryServiceClient({
 interface Params {
   symbol1: string;
   symbol2: string;
+  hops: string;
   limit: string;
 }
 
@@ -21,7 +22,8 @@ function getMetadataBySymbol(metadata: Metadata[], symbol: string): Metadata | u
 }
 
 export async function GET(_request: Request, context: { params: Params }) {
-  const { symbol1, symbol2, limit: limitParam } = context.params;
+  const { symbol1, symbol2, hops: hopsParam, limit: limitParam } = context.params;
+  const hops = Number(hopsParam);
   const limit = Number(limitParam);
 
   const registry = await chainRegistryClient.remote.get(process.env['PENUMBRA_CHAIN_ID'] ?? '');
@@ -30,19 +32,22 @@ export async function GET(_request: Request, context: { params: Params }) {
   const metadata1 = getMetadataBySymbol(metadata, symbol1);
   const metadata2 = getMetadataBySymbol(metadata, symbol2);
 
-  const tradingPair = new DirectedTradingPair({
-    start: metadata1?.penumbraAssetId,
-    end: metadata2?.penumbraAssetId,
-  });
-  const reversePair = new DirectedTradingPair({
+  const sellSidePair = new DirectedTradingPair({
     start: metadata2?.penumbraAssetId,
     end: metadata1?.penumbraAssetId,
   });
+  const buySidePair = new DirectedTradingPair({
+    start: metadata1?.penumbraAssetId,
+    end: metadata2?.penumbraAssetId,
+  });
 
   const data = await Promise.all([
-    querier.liquidityPositionsByPrice(tradingPair, limit),
-    querier.liquidityPositionsByPrice(reversePair, limit),
-  ]).then(resps => resps.flat());
+    querier.liquidityPositionsByPrice(sellSidePair, hops),
+    querier.liquidityPositionsByPrice(buySidePair, hops),
+  ]).then(([asks, bids]) => ({
+    asks: asks?.slice(0, limit),
+    bids: bids?.slice(0, limit),
+  }));
 
   return NextResponse.json(data);
 }
