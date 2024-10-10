@@ -26,7 +26,7 @@ export default async function candleStickData(req: NextApiRequest, res: NextApiR
   const limit = params[3] || null;
 
   try {
-    const tokenAssets = fetchAllTokenAssets();
+    const tokenAssets = fetchAllTokenAssets(process.env.PENUMBRA_CHAIN_ID);
     if (!startHeight || !tokenIn || !tokenOut || !limit) {
       res.status(400).json({ error: 'Invalid query parameters' });
       return;
