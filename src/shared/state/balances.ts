@@ -8,6 +8,10 @@ const fetchQuery = async (): Promise<BalancesResponse[]> => {
   return Array.fromAsync(penumbra.service(ViewService).balances({}));
 };
 
+/**
+ * Fetches the `BalancesResponse[]` based on the provider connection state.
+ * Must be used within the `observer` mobX HOC
+ */
 export const useBalances = () => {
   return useQuery({
     queryKey: ['balances'],

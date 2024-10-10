@@ -1,26 +1,33 @@
 import { ViewService } from '@penumbra-zone/protobuf';
 import { getDenomMetadata } from '@penumbra-zone/getters/assets-response';
-import { ChainRegistryClient } from '@penumbra-labs/registry';
 import { penumbra } from '@/shared/penumbra';
 import { connectionStore } from '@/shared/state/connection';
 import { useQuery } from '@tanstack/react-query';
-import { useEnv } from '@/fetchers/env';
+import { useRegistry } from '@/fetchers/registry';
 
+/**
+ * Returns the `Metadata[]` based on the provider connection state.
+ * If connected, it fetches the assets from the `ViewService`'s `assets` method.
+ * Otherwise, it fetches the assets from the remote registry.
+ *
+ * Must be used within `observer` mobX HOC
+ **/
 export const useAssets = () => {
-  const { data: env, isLoading } = useEnv();
-  const chainId = !isLoading ? env?.PENUMBRA_CHAIN_ID : process.env['PENUMBRA_CHAIN_ID'];
+  const { data: registry, error: registryErr } = useRegistry();
 
   const registryAssets = useQuery({
     queryKey: ['registry-assets'],
+    enabled: Boolean(registry),
     queryFn: () => {
-      const registryClient = new ChainRegistryClient();
-      const registry = registryClient.bundled.get(chainId ?? '');
+      if (!registry) {
+        throw new Error('Registry not available');
+      }
       return registry.getAllAssets();
     },
   });
 
   const accountAssets = useQuery({
-    queryKey: ['assets'],
+    queryKey: ['view-service-assets'],
     enabled: connectionStore.connected,
     queryFn: async () => {
       const responses = await Array.fromAsync(penumbra.service(ViewService).assets({}));
@@ -28,5 +35,7 @@ export const useAssets = () => {
     },
   });
 
-  return connectionStore.connected ? accountAssets : registryAssets;
+  return connectionStore.connected
+    ? accountAssets
+    : { ...registryAssets, error: registryAssets.error ?? registryErr };
 };
