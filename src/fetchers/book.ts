@@ -24,6 +24,5 @@ export const useBook = (
       const res = await fetch(`/api/book/${symbol1}/${symbol2}/${hops}/${limit}`);
       return (await res.json()) as BookResponse;
     },
-    staleTime: Infinity,
   });
 };
