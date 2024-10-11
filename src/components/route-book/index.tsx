@@ -53,7 +53,7 @@ function getDisplayData(
   asset2: Metadata | undefined,
   isBuySide: boolean,
   limit: number,
-): Route[] {
+): RouteWithTotal[] {
   if (!asset1 || !asset2) {
     return [];
   }
@@ -111,8 +111,8 @@ export function RouteBook() {
   const { data: assets } = useAssets();
   const asset1 = assets?.find(asset => asset.symbol === 'UM');
   const asset2 = assets?.find(asset => asset.symbol === 'GM');
-  const asset1Exponent = asset1 && getDisplayDenomExponent(asset1);
-  const asset2Exponent = asset2 && getDisplayDenomExponent(asset2);
+  const asset1Exponent = asset1 ? getDisplayDenomExponent(asset1) : 0;
+  const asset2Exponent = asset2 ? getDisplayDenomExponent(asset2) : 0;
 
   const { data } = useBook(asset1?.symbol, asset2?.symbol, 100, 50);
   const asks = getDisplayData(data?.asks ?? [], asset1, asset2, false, 8);
