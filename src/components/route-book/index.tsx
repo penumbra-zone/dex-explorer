@@ -15,36 +15,34 @@ interface Route {
   lpId: string;
   position: Position;
   price: number;
-  displayPrice: number | string;
   amount: number;
-  displayAmount: number | string;
-  total?: number;
-  displayTotal?: number | string;
 }
 
-function getTotals(data: Route[], isBuySide: boolean): Route[] {
-  const totals = Object.values(
-    data.reduce((displayData: Record<string, Route>, route: Route) => {
-      const key = route.displayPrice;
+interface RouteWithTotal extends Route {
+  total: number;
+}
+
+function getTotals(data: Route[], isBuySide: boolean, limit: number): RouteWithTotal[] {
+  const totals: RouteWithTotal[] = Object.values(
+    data.reduce((displayData: Record<string, RouteWithTotal>, route: Route) => {
+      const key = route.price;
       return {
         ...displayData,
         [key]: displayData[key]
           ? {
               ...route,
-              total: displayData[key].total ?? 0 + route.amount,
-              displayTotal: round(displayData[key].total ?? 0 + route.amount, 6),
+              total: displayData[key].total + route.amount,
               amount: Math.min(displayData[key].amount, route.amount),
             }
           : {
               ...route,
               total: route.amount,
-              displayTotal: round(route.amount, 6),
             },
       };
     }, {}),
   );
 
-  return (isBuySide ? totals.slice(0, 8) : totals.slice(-8)) as Route[];
+  return isBuySide ? totals.slice(0, limit) : totals.slice(-limit);
 }
 
 function getDisplayData(
@@ -52,6 +50,7 @@ function getDisplayData(
   asset1: Metadata | undefined,
   asset2: Metadata | undefined,
   isBuySide: boolean,
+  limit: number,
 ): Route[] {
   if (!asset1 || !asset2) {
     return [];
@@ -97,25 +96,25 @@ function getDisplayData(
         lpId: bech32Id,
         position,
         price,
-        displayPrice: round(price, asset2Exponent),
         amount,
-        displayAmount: round(amount, asset1Exponent),
       };
     })
     .filter(displayData => displayData.amount > 0)
     .sort((a, b) => b.price - a.price) as Route[];
 
-  return getTotals(routes, isBuySide);
+  return getTotals(routes, isBuySide, limit);
 }
 
 export function RouteBook() {
   const { data: assets } = useAssets();
   const asset1 = assets?.find(asset => asset.symbol === 'UM');
   const asset2 = assets?.find(asset => asset.symbol === 'GM');
+  const asset1Exponent = asset1 && getDisplayDenomExponent(asset1);
+  const asset2Exponent = asset2 && getDisplayDenomExponent(asset2);
 
   const { data } = useBook(asset1?.symbol, asset2?.symbol, 100, 50);
-  const asks = getDisplayData(data?.asks ?? [], asset1, asset2, false);
-  const bids = getDisplayData(data?.bids ?? [], asset1, asset2, true);
+  const asks = getDisplayData(data?.asks ?? [], asset1, asset2, false, 8);
+  const bids = getDisplayData(data?.bids ?? [], asset1, asset2, true, 8);
 
   return (
     <div className='h-[512px] text-white'>
@@ -130,16 +129,16 @@ export function RouteBook() {
         <tbody>
           {asks.map(route => (
             <tr key={route.price} style={{ color: 'red' }}>
-              <td className='text-left tabular-nums'>{route.displayPrice}</td>
-              <td className='text-right tabular-nums'>{route.displayAmount}</td>
-              <td className='text-right tabular-nums'>{route.displayTotal}</td>
+              <td className='text-left tabular-nums'>{round(route.price, asset2Exponent)}</td>
+              <td className='text-right tabular-nums'>{round(route.amount, asset1Exponent)}</td>
+              <td className='text-right tabular-nums'>{round(route.total, asset1Exponent)}</td>
             </tr>
           ))}
           {bids.map(route => (
             <tr key={route.price} style={{ color: 'green' }}>
-              <td className='text-left tabular-nums'>{route.displayPrice}</td>
-              <td className='text-right tabular-nums'>{route.displayAmount}</td>
-              <td className='text-right tabular-nums'>{route.displayTotal}</td>
+              <td className='text-left tabular-nums'>{round(route.price, asset2Exponent)}</td>
+              <td className='text-right tabular-nums'>{round(route.amount, asset1Exponent)}</td>
+              <td className='text-right tabular-nums'>{round(route.total, asset1Exponent)}</td>
             </tr>
           ))}
         </tbody>
