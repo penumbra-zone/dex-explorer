@@ -42,7 +42,9 @@ function getTotals(data: Route[], isBuySide: boolean, limit: number): RouteWithT
     }, {}),
   );
 
-  return isBuySide ? totals.slice(0, limit) : totals.slice(-limit);
+  return isBuySide
+    ? totals.slice(0, limit).sort((a, b) => b.price - a.price)
+    : totals.slice(-limit);
 }
 
 function getDisplayData(
