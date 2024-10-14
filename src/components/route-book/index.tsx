@@ -12,6 +12,7 @@ import { uint8ArrayToBase64 } from '@/old/utils/math/base64';
 import { JsonValue } from '@bufbuild/protobuf';
 import { useAssets } from '@/shared/state/assets';
 import { round } from '@/shared/round';
+import { useComputePositionId } from '@/shared/useComputePositionId';
 
 interface Route {
   lpId: string;
@@ -51,7 +52,7 @@ function getTotals(data: Route[], isBuySide: boolean, limit: number): RouteWithT
 
 function getDisplayData(
   data: Position[],
-  computePositionId: (position: Position) => PositionId,
+  computePositionId: ((position: Position) => PositionId) | undefined,
   asset1: Metadata | undefined,
   asset2: Metadata | undefined,
   isBuySide: boolean,
