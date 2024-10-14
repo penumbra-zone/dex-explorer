@@ -1,9 +1,11 @@
 import { useBook } from '@/fetchers/book';
 import { fromBaseUnit } from '@/old/utils/math/hiLo';
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
-import { Position } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
+import {
+  Position,
+  PositionId,
+} from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
-import { computePositionId } from '@penumbra-zone/wasm/dex';
 import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { innerToBech32Address } from '@/old/utils/math/bech32';
 import { uint8ArrayToBase64 } from '@/old/utils/math/base64';
@@ -49,12 +51,13 @@ function getTotals(data: Route[], isBuySide: boolean, limit: number): RouteWithT
 
 function getDisplayData(
   data: Position[],
+  computePositionId: (position: Position) => PositionId,
   asset1: Metadata | undefined,
   asset2: Metadata | undefined,
   isBuySide: boolean,
   limit: number,
 ): RouteWithTotal[] {
-  if (!asset1 || !asset2) {
+  if (!computePositionId || !asset1 || !asset2) {
     return [];
   }
 
@@ -113,10 +116,10 @@ export function RouteBook() {
   const asset2 = assets?.find(asset => asset.symbol === 'GM');
   const asset1Exponent = asset1 ? getDisplayDenomExponent(asset1) : 0;
   const asset2Exponent = asset2 ? getDisplayDenomExponent(asset2) : 0;
-
+  const computePositionId = useComputePositionId();
   const { data } = useBook(asset1?.symbol, asset2?.symbol, 100, 50);
-  const asks = getDisplayData(data?.asks ?? [], asset1, asset2, false, 8);
-  const bids = getDisplayData(data?.bids ?? [], asset1, asset2, true, 8);
+  const asks = getDisplayData(data?.asks ?? [], computePositionId, asset1, asset2, false, 8);
+  const bids = getDisplayData(data?.bids ?? [], computePositionId, asset1, asset2, true, 8);
 
   return (
     <div className='h-[512px] text-white'>
