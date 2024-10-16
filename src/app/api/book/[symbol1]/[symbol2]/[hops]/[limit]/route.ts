@@ -4,13 +4,6 @@ import { DirectedTradingPair } from '@penumbra-zone/protobuf/penumbra/core/compo
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { ChainRegistryClient } from '@penumbra-labs/registry';
 
-const grpcEndpoint = process.env['PENUMBRA_GRPC_ENDPOINT'] ?? '';
-if (!grpcEndpoint) {
-  throw new Error('No grpc endpoint in env vars');
-}
-const chainRegistryClient = new ChainRegistryClient();
-const querier = new DexQueryServiceClient({ grpcEndpoint });
-
 interface Params {
   symbol1: string;
   symbol2: string;
@@ -32,6 +25,13 @@ export async function GET(_request: Request, context: { params: Params }) {
   if (!chainId) {
     throw new Error('No chain id in env vars');
   }
+
+  const grpcEndpoint = process.env['PENUMBRA_GRPC_ENDPOINT'] ?? '';
+  if (!grpcEndpoint) {
+    throw new Error('No grpc endpoint in env vars');
+  }
+
+  const chainRegistryClient = new ChainRegistryClient();
   const registry = await chainRegistryClient.remote.get(chainId);
   const metadata: Metadata[] = registry.getAllAssets();
 
@@ -51,6 +51,7 @@ export async function GET(_request: Request, context: { params: Params }) {
     end: metadata2.penumbraAssetId,
   });
 
+  const querier = new DexQueryServiceClient({ grpcEndpoint });
   const [asks, bids] = await Promise.all([
     querier.liquidityPositionsByPrice(sellSidePair, hops),
     querier.liquidityPositionsByPrice(buySidePair, hops),
