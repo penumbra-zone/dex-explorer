@@ -4,12 +4,12 @@ import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_p
 import {
   Position,
   PositionId,
+  PositionState_PositionStateEnum,
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
 import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { innerToBech32Address } from '@/old/utils/math/bech32';
 import { uint8ArrayToBase64 } from '@/old/utils/math/base64';
-import { JsonValue } from '@bufbuild/protobuf';
 import { useAssets } from '@/shared/state/assets';
 import { round } from '@/shared/round';
 import { useComputePositionId } from '@/shared/useComputePositionId';
@@ -25,59 +25,66 @@ interface RouteWithTotal extends Route {
   total: number;
 }
 
+/**
+ * This function loops over the route data and combines the routes with the same price
+ * and counts the total from the route’s amount
+ */
 function getTotals(data: Route[], isBuySide: boolean, limit: number): RouteWithTotal[] {
-  const totals: RouteWithTotal[] = Object.values(
-    data.reduce((displayData: Record<string, RouteWithTotal>, route: Route) => {
-      const key = route.price;
-      return {
-        ...displayData,
-        [key]: displayData[key]
-          ? {
-              ...route,
-              total: displayData[key].total + route.amount,
-              amount: Math.min(displayData[key].amount, route.amount),
-            }
-          : {
-              ...route,
-              total: route.amount,
-            },
-      };
-    }, {}),
-  );
+  const totals = new Map<number, RouteWithTotal>();
+
+  data.forEach((route: Route) => {
+    const entry = totals.get(route.price);
+    if (entry) {
+      totals.set(route.price, {
+        ...route,
+        total: entry.total + route.amount,
+        amount: Math.min(entry.amount, route.amount),
+      });
+    } else {
+      totals.set(route.price, {
+        ...route,
+        total: route.amount,
+      });
+    }
+  });
 
   return isBuySide
-    ? totals.slice(0, limit).sort((a, b) => b.price - a.price)
-    : totals.slice(-limit);
+    ? Array.from(totals.values())
+        .slice(0, limit)
+        .toSorted((a, b) => b.price - a.price)
+    : Array.from(totals.values()).slice(-limit);
 }
 
-function getDisplayData(
-  data: Position[],
-  computePositionId: ((position: Position) => PositionId) | undefined,
-  asset1: Metadata | undefined,
-  asset2: Metadata | undefined,
-  isBuySide: boolean,
-  limit: number,
-): RouteWithTotal[] {
+function getDisplayData({
+  data,
+  computePositionId,
+  asset1,
+  asset2,
+  isBuySide,
+  limit,
+}: {
+  data: Position[];
+  computePositionId: ((position: Position) => PositionId) | undefined;
+  asset1: Metadata | undefined;
+  asset2: Metadata | undefined;
+  isBuySide: boolean;
+  limit: number;
+}): RouteWithTotal[] {
   if (!computePositionId || !asset1 || !asset2) {
     return [];
   }
 
+  const asset1Exponent = getDisplayDenomExponent(asset1);
+  const asset2Exponent = getDisplayDenomExponent(asset2);
+
+  const getValue = (property: Amount | undefined, exponent: number) =>
+    fromBaseUnit(BigInt(property?.lo ?? 0), BigInt(property?.hi ?? 0), exponent);
+
   const routes = data
-    .filter(position => position.state?.state.toLocaleString() === 'POSITION_STATE_ENUM_OPENED')
+    // .filter(position => position.state?.state.toLocaleString() === 'POSITION_STATE_ENUM_OPENED')
+    .filter(position => position.state?.state === PositionState_PositionStateEnum.OPENED)
     .map(position => {
-      const direction =
-        asset1.penumbraAssetId?.inner &&
-        position.phi?.pair?.asset2?.inner &&
-        (position.phi.pair.asset2.inner as unknown as string) ===
-          uint8ArrayToBase64(asset1.penumbraAssetId.inner)
-          ? -1
-          : 1;
-
-      const asset1Exponent = getDisplayDenomExponent(asset1);
-      const asset2Exponent = getDisplayDenomExponent(asset2);
-
-      const getValue = (property: Amount | undefined, exponent: number) =>
-        fromBaseUnit(BigInt(property?.lo ?? 0), BigInt(property?.hi ?? 0), exponent);
+      const direction = position.phi?.pair?.asset2?.equals(asset1.penumbraAssetId) ? -1 : 1;
 
       const r1 = getValue(position.reserves?.r1, direction === 1 ? asset1Exponent : asset2Exponent);
       const r2 = getValue(position.reserves?.r2, direction === 1 ? asset2Exponent : asset1Exponent);
@@ -94,7 +101,7 @@ function getDisplayData(
         ? Number(direction === 1 ? r2 : r1) / price
         : Number(direction === 1 ? r1 : r2);
 
-      const id = computePositionId(Position.fromJson(position as unknown as JsonValue));
+      const id = computePositionId(position);
       const innerStr = uint8ArrayToBase64(id.inner);
       const bech32Id = innerToBech32Address(innerStr, 'plpid');
 
@@ -106,7 +113,7 @@ function getDisplayData(
       };
     })
     .filter(displayData => displayData.amount > 0)
-    .sort((a, b) => b.price - a.price) as Route[];
+    .toSorted((a, b) => b.price - a.price) as Route[];
 
   return getTotals(routes, isBuySide, limit);
 }
@@ -117,10 +124,24 @@ export function RouteBook() {
   const asset2 = assets?.find(asset => asset.symbol === 'GM');
   const asset1Exponent = asset1 ? getDisplayDenomExponent(asset1) : 0;
   const asset2Exponent = asset2 ? getDisplayDenomExponent(asset2) : 0;
-  const computePositionId = useComputePositionId();
+  const { data: computePositionId } = useComputePositionId();
   const { data } = useBook(asset1?.symbol, asset2?.symbol, 100, 50);
-  const asks = getDisplayData(data?.asks ?? [], computePositionId, asset1, asset2, false, 8);
-  const bids = getDisplayData(data?.bids ?? [], computePositionId, asset1, asset2, true, 8);
+  const asks = getDisplayData({
+    data: data?.asks ?? [],
+    computePositionId,
+    asset1,
+    asset2,
+    isBuySide: false,
+    limit: 8,
+  });
+  const bids = getDisplayData({
+    data: data?.bids ?? [],
+    computePositionId,
+    asset1,
+    asset2,
+    isBuySide: true,
+    limit: 8,
+  });
 
   return (
     <div className='h-[512px] text-white'>
