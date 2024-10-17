@@ -14,7 +14,13 @@ export const ProviderPopover = observer(() => {
     const icons = (manifest?.icons ?? {}) as Record<string, Blob>;
     const blob = icons['32'] ?? icons['128'];
     const element = !blob ? null : (
-      <Image width={16} height={16} src={URL.createObjectURL(blob)} alt={manifest?.name ?? ''} className='size-4' />
+      <Image
+        width={16}
+        height={16}
+        src={URL.createObjectURL(blob)}
+        alt={manifest?.name ?? ''}
+        className='size-4'
+      />
     );
     return () => element;
   }, [manifest]);

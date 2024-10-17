@@ -1,4 +1,9 @@
-import { PenumbraRequestFailure, PenumbraState, PenumbraManifest, PenumbraClient } from '@penumbra-zone/client';
+import {
+  PenumbraRequestFailure,
+  PenumbraState,
+  PenumbraManifest,
+  PenumbraClient,
+} from '@penumbra-zone/client';
 import { penumbra } from '@/shared/penumbra';
 import { makeAutoObservable } from 'mobx';
 

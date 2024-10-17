@@ -5,11 +5,10 @@ import { useServerInsertedHTML } from 'next/navigation';
 import { ServerStyleSheet, StyleSheetManager } from 'styled-components';
 import { tailwindConfig } from '@penumbra-zone/ui/tailwind';
 
-
 /** Enables using the color functions in Text UI components */
 declare module 'styled-components' {
   export interface DefaultTheme {
-    color: typeof tailwindConfig['theme']['extend']['colors'];
+    color: (typeof tailwindConfig)['theme']['extend']['colors'];
   }
 }
 
