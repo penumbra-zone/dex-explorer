@@ -81,7 +81,6 @@ function getDisplayData({
     fromBaseUnit(BigInt(property?.lo ?? 0), BigInt(property?.hi ?? 0), exponent);
 
   const routes = data
-    // .filter(position => position.state?.state.toLocaleString() === 'POSITION_STATE_ENUM_OPENED')
     .filter(position => position.state?.state === PositionState_PositionStateEnum.OPENED)
     .map(position => {
       const direction = position.phi?.pair?.asset2?.equals(asset1.penumbraAssetId) ? -1 : 1;
