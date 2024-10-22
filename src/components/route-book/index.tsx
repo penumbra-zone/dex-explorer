@@ -10,7 +10,6 @@ import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
 import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { innerToBech32Address } from '@/old/utils/math/bech32';
 import { uint8ArrayToBase64 } from '@/old/utils/math/base64';
-import { useAssets } from '@/shared/state/assets';
 import { round } from '@/shared/round';
 import { useComputePositionId } from '@/shared/useComputePositionId';
 
@@ -117,27 +116,29 @@ function getDisplayData({
   return getTotals(routes, isBuySide, limit);
 }
 
-export function RouteBook() {
-  const { data: assets } = useAssets();
-  const asset1 = assets?.find(asset => asset.symbol === 'UM');
-  const asset2 = assets?.find(asset => asset.symbol === 'GM');
-  const asset1Exponent = asset1 ? getDisplayDenomExponent(asset1) : 0;
-  const asset2Exponent = asset2 ? getDisplayDenomExponent(asset2) : 0;
+export interface RouteBookProps {
+  primary: Metadata;
+  numeraire: Metadata;
+}
+
+export function RouteBook({ primary, numeraire }: RouteBookProps) {
+  const asset1Exponent = getDisplayDenomExponent(primary);
+  const asset2Exponent = getDisplayDenomExponent(numeraire);
   const { data: computePositionId } = useComputePositionId();
-  const { data } = useBook(asset1?.symbol, asset2?.symbol, 100, 50);
+  const { data } = useBook(primary.symbol, numeraire.symbol, 100, 50);
   const asks = getDisplayData({
     data: data?.asks ?? [],
     computePositionId,
-    asset1,
-    asset2,
+    asset1: primary,
+    asset2: numeraire,
     isBuySide: false,
     limit: 8,
   });
   const bids = getDisplayData({
     data: data?.bids ?? [],
     computePositionId,
-    asset1,
-    asset2,
+    asset1: primary,
+    asset2: numeraire,
     isBuySide: true,
     limit: 8,
   });

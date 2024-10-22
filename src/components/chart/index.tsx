@@ -1,32 +1,21 @@
 import { useRef, useEffect } from 'react';
 import { createChart, IChartApi, CandlestickData } from 'lightweight-charts';
 import { tailwindConfig } from '@penumbra-zone/ui/tailwind';
-import { Token } from '@/old/utils/types/token';
 import { useCandles } from '@/fetchers/candles';
+import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 
 const { colors } = tailwindConfig.theme.extend;
 
 interface ChartProps {
   height: number;
+  primary: Metadata;
+  numeraire: Metadata;
 }
 
-const asset1: Token = {
-  display: 'Penumbra',
-  symbol: 'um',
-  decimals: 5,
-  inner: '',
-};
-const asset2: Token = {
-  display: 'GM Wagmi',
-  symbol: 'gm',
-  decimals: 5,
-  inner: '',
-};
-
-export function Chart({ height }: ChartProps) {
+export function Chart({ height, primary, numeraire }: ChartProps) {
   const chartElRef = useRef<HTMLInputElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const { data: candles, isLoading } = useCandles(asset1.symbol, asset2.symbol, 0, 10000);
+  const { data: candles, isLoading } = useCandles(primary.symbol, numeraire.symbol, 0, 10000);
 
   useEffect(() => {
     if (chartElRef.current && !chartRef.current) {

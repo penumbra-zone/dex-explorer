@@ -8,13 +8,9 @@ import { useAssets } from '@/shared/state/assets';
 import { useBalances } from '@/shared/state/balances';
 import { useRouter } from 'next/navigation';
 import { PagePath } from '@/shared/pages.ts';
-import {
-  getDisplayFromBalancesResponse,
-  getMetadataFromBalancesResponse,
-} from '@penumbra-zone/getters/balances-response';
+import { getMetadataFromBalancesResponse } from '@penumbra-zone/getters/balances-response';
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { BalancesResponse } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
-import { getDisplay } from '@penumbra-zone/getters/metadata';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
 const isMetadata = (val: AssetSelectorValue): val is Metadata => {
@@ -58,7 +54,6 @@ const handleRouting = ({
     throw new Error('unrecognized metadata for numeraireSymbol asset');
   }
 
-  console.log(`${PagePath.Trade}/${primarySymbol}/${numeraireSymbol}`);
   router.push(`${PagePath.Trade}/${primarySymbol}/${numeraireSymbol}`);
 };
 
