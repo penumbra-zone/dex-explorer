@@ -1,42 +1,90 @@
+'use client';
+
 import { observer } from 'mobx-react-lite';
 import { ArrowLeftRight } from 'lucide-react';
 import { AssetSelector, AssetSelectorValue } from '@penumbra-zone/ui/AssetSelector';
 import { Button } from '@penumbra-zone/ui/Button';
 import { useAssets } from '@/shared/state/assets';
 import { useBalances } from '@/shared/state/balances';
+import { useRouter } from 'next/navigation';
+import { PagePath } from '@/shared/pages.ts';
+import {
+  getDisplayFromBalancesResponse,
+  getMetadataFromBalancesResponse,
+} from '@penumbra-zone/getters/balances-response';
+import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { BalancesResponse } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
+import { getDisplay } from '@penumbra-zone/getters/metadata';
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+
+const isMetadata = (val: AssetSelectorValue): val is Metadata => {
+  return val.getType().typeName === 'penumbra.core.asset.v1.Metadata';
+};
+
+const isBalResponse = (val: AssetSelectorValue): val is BalancesResponse => {
+  return val.getType().typeName === 'penumbra.view.v1.BalancesResponse';
+};
+
+const handleRouting = ({
+  router,
+  primary,
+  numeraire,
+}: {
+  router: AppRouterInstance;
+  primary: AssetSelectorValue | undefined;
+  numeraire: AssetSelectorValue | undefined;
+}) => {
+  if (!primary || !numeraire) {
+    throw new Error('Url malformed');
+  }
+
+  let primarySymbol: string;
+  let numeraireSymbol: string;
+
+  // TODO: Create new getter in /web repo
+  if (isMetadata(primary)) {
+    primarySymbol = primary.symbol;
+  } else if (isBalResponse(primary)) {
+    primarySymbol = getMetadataFromBalancesResponse(primary).symbol;
+  } else {
+    throw new Error('unrecognized metadata for primary asset');
+  }
+
+  if (isMetadata(numeraire)) {
+    numeraireSymbol = numeraire.symbol;
+  } else if (isBalResponse(numeraire)) {
+    numeraireSymbol = getMetadataFromBalancesResponse(numeraire).symbol;
+  } else {
+    throw new Error('unrecognized metadata for numeraireSymbol asset');
+  }
+
+  console.log(`${PagePath.Trade}/${primarySymbol}/${numeraireSymbol}`);
+  router.push(`${PagePath.Trade}/${primarySymbol}/${numeraireSymbol}`);
+};
 
 export interface PairSelectorProps {
-  /** The `Metadata` or `BalancesResponse`, from which the swap should be initiated */
-  from?: AssetSelectorValue;
-  onFromChange?: (value?: AssetSelectorValue) => void;
-
-  /** The `Metadata` or `BalancesResponse`, to which the swap should be made */
-  to?: AssetSelectorValue;
-  onToChange?: (value?: AssetSelectorValue) => void;
-
+  primary: AssetSelectorValue;
+  numeraire: AssetSelectorValue;
   dialogTitle?: string;
   disabled?: boolean;
 }
 
 export const PairSelector = observer(
-  ({ from, onFromChange, to, onToChange, disabled, dialogTitle }: PairSelectorProps) => {
+  ({ primary, numeraire, disabled, dialogTitle }: PairSelectorProps) => {
+    const router = useRouter();
+
     const { data: assets } = useAssets();
     const { data: balances } = useBalances();
-
-    const onSwap = () => {
-      onFromChange?.(to);
-      onToChange?.(from);
-    };
 
     return (
       <div className='flex gap-2'>
         <AssetSelector
-          value={from}
+          value={primary}
           assets={assets}
           balances={balances}
           disabled={disabled}
           dialogTitle={dialogTitle}
-          onChange={onFromChange}
+          onChange={val => handleRouting({ router, primary: val, numeraire })}
         />
 
         <Button
@@ -44,18 +92,18 @@ export const PairSelector = observer(
           iconOnly
           icon={ArrowLeftRight}
           disabled={disabled}
-          onClick={onSwap}
+          onClick={() => handleRouting({ router, primary: numeraire, numeraire: primary })}
         >
           Swap
         </Button>
 
         <AssetSelector
-          value={to}
+          value={numeraire}
           assets={assets}
           balances={balances}
           disabled={disabled}
           dialogTitle={dialogTitle}
-          onChange={onToChange}
+          onChange={val => handleRouting({ router, primary, numeraire: val })}
         />
       </div>
     );

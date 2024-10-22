@@ -1,24 +1,40 @@
 'use client';
 
-import { Card } from '@penumbra-zone/ui/Card';
+import { PairSelector } from '@/components/PairSelector';
 import { Chart } from '@/components/chart';
 import { RouteBook } from '@/components/route-book';
-import { PairSelector } from '@/components/PairSelector';
-import { observer } from 'mobx-react-lite';
-import { pairStore } from '@/shared/state/pair';
+import { Card } from '@penumbra-zone/ui/Card';
+import { useAssets } from '@/shared/state/assets.ts';
+import { useMemo } from 'react';
 
-const TradePage = observer(() => {
-  const { from, setFrom, to, setTo } = pairStore;
+interface QueryParams {
+  primary: string;
+  numeraire: string;
+}
+
+// Converts symbol to Metadata
+const usePathToMetadata = (params: QueryParams) => {
+  const { data, error, isLoading } = useAssets();
+  return useMemo(
+    () => ({
+      primary: data?.find(a => a.symbol === params.primary),
+      numeraire: data?.find(a => a.symbol === params.numeraire),
+      error,
+      isLoading,
+    }),
+    [data, error, isLoading, params.numeraire, params.primary],
+  );
+};
+
+export default function TradePage({ params }: { params: QueryParams }) {
+  const { primary, numeraire, error, isLoading } = usePathToMetadata(params);
 
   return (
     <div>
       <div className='flex gap-2'>
-        <PairSelector
-          numeraire={to}
-          onNumeraireChange={setTo}
-          primary={from}
-          onPrimaryChange={setFrom}
-        />
+        {!!error && `Error loading pair selector: ${String(error)}`}
+        {isLoading && 'Loading...'}
+        {primary && numeraire && <PairSelector primary={primary} numeraire={numeraire} />}
       </div>
 
       <div className='flex flex-wrap lg:gap-2'>
@@ -57,6 +73,4 @@ const TradePage = observer(() => {
       </div>
     </div>
   );
-});
-
-export default TradePage;
+}
