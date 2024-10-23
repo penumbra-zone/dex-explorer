@@ -12,6 +12,7 @@ import { innerToBech32Address } from '@/old/utils/math/bech32';
 import { uint8ArrayToBase64 } from '@/old/utils/math/base64';
 import { round } from '@/shared/round';
 import { useComputePositionId } from '@/shared/useComputePositionId';
+import { usePathToMetadata } from '@/shared/usePagePath.ts';
 
 interface Route {
   lpId: string;
@@ -116,29 +117,38 @@ function getDisplayData({
   return getTotals(routes, isBuySide, limit);
 }
 
-export interface RouteBookProps {
-  primary: Metadata;
-  numeraire: Metadata;
-}
+const RouteBookLoadingState = () => {
+  return (
+    <div>
+      <div className='text-gray-500'>Loading...</div>
+    </div>
+  );
+};
 
-export function RouteBook({ primary, numeraire }: RouteBookProps) {
-  const asset1Exponent = getDisplayDenomExponent(primary);
-  const asset2Exponent = getDisplayDenomExponent(numeraire);
+const RouteBookData = ({
+  baseAsset,
+  quoteAsset,
+}: {
+  baseAsset: Metadata;
+  quoteAsset: Metadata;
+}) => {
+  const asset1Exponent = getDisplayDenomExponent(baseAsset);
+  const asset2Exponent = getDisplayDenomExponent(quoteAsset);
   const { data: computePositionId } = useComputePositionId();
-  const { data } = useBook(primary.symbol, numeraire.symbol, 100, 50);
+  const { data } = useBook(baseAsset.symbol, quoteAsset.symbol, 100, 50);
   const asks = getDisplayData({
     data: data?.asks ?? [],
     computePositionId,
-    asset1: primary,
-    asset2: numeraire,
+    asset1: baseAsset,
+    asset2: quoteAsset,
     isBuySide: false,
     limit: 8,
   });
   const bids = getDisplayData({
     data: data?.bids ?? [],
     computePositionId,
-    asset1: primary,
-    asset2: numeraire,
+    asset1: baseAsset,
+    asset2: quoteAsset,
     isBuySide: true,
     limit: 8,
   });
@@ -172,4 +182,17 @@ export function RouteBook({ primary, numeraire }: RouteBookProps) {
       </table>
     </div>
   );
+};
+
+export function RouteBook() {
+  const { baseAsset, quoteAsset, error, isLoading: pairIsLoading } = usePathToMetadata();
+  if (pairIsLoading || !baseAsset || !quoteAsset) {
+    return <RouteBookLoadingState />;
+  }
+
+  if (error) {
+    return <div>Error loading route book: ${String(error)}</div>;
+  }
+
+  return <RouteBookData baseAsset={baseAsset} quoteAsset={quoteAsset} />;
 }

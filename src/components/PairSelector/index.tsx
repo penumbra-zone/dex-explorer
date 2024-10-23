@@ -2,35 +2,31 @@
 
 import { observer } from 'mobx-react-lite';
 import { ArrowLeftRight } from 'lucide-react';
-import { AssetSelector, AssetSelectorValue } from '@penumbra-zone/ui/AssetSelector';
+import {
+  AssetSelector,
+  AssetSelectorValue,
+  isBalancesResponse,
+  isMetadata,
+} from '@penumbra-zone/ui/AssetSelector';
 import { Button } from '@penumbra-zone/ui/Button';
 import { useAssets } from '@/shared/state/assets';
 import { useBalances } from '@/shared/state/balances';
 import { useRouter } from 'next/navigation';
 import { PagePath } from '@/shared/pages.ts';
 import { getMetadataFromBalancesResponse } from '@penumbra-zone/getters/balances-response';
-import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
-import { BalancesResponse } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
+import { usePathToMetadata } from '@/shared/usePagePath';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
-
-const isMetadata = (val: AssetSelectorValue): val is Metadata => {
-  return val.getType().typeName === 'penumbra.core.asset.v1.Metadata';
-};
-
-const isBalResponse = (val: AssetSelectorValue): val is BalancesResponse => {
-  return val.getType().typeName === 'penumbra.view.v1.BalancesResponse';
-};
 
 const handleRouting = ({
   router,
-  primary,
-  numeraire,
+  baseAsset,
+  quoteAsset,
 }: {
   router: AppRouterInstance;
-  primary: AssetSelectorValue | undefined;
-  numeraire: AssetSelectorValue | undefined;
+  baseAsset: AssetSelectorValue | undefined;
+  quoteAsset: AssetSelectorValue | undefined;
 }) => {
-  if (!primary || !numeraire) {
+  if (!baseAsset || !quoteAsset) {
     throw new Error('Url malformed');
   }
 
@@ -38,18 +34,18 @@ const handleRouting = ({
   let numeraireSymbol: string;
 
   // TODO: Create new getter in /web repo
-  if (isMetadata(primary)) {
-    primarySymbol = primary.symbol;
-  } else if (isBalResponse(primary)) {
-    primarySymbol = getMetadataFromBalancesResponse(primary).symbol;
+  if (isMetadata(baseAsset)) {
+    primarySymbol = baseAsset.symbol;
+  } else if (isBalancesResponse(baseAsset)) {
+    primarySymbol = getMetadataFromBalancesResponse(baseAsset).symbol;
   } else {
     throw new Error('unrecognized metadata for primary asset');
   }
 
-  if (isMetadata(numeraire)) {
-    numeraireSymbol = numeraire.symbol;
-  } else if (isBalResponse(numeraire)) {
-    numeraireSymbol = getMetadataFromBalancesResponse(numeraire).symbol;
+  if (isMetadata(quoteAsset)) {
+    numeraireSymbol = quoteAsset.symbol;
+  } else if (isBalancesResponse(quoteAsset)) {
+    numeraireSymbol = getMetadataFromBalancesResponse(quoteAsset).symbol;
   } else {
     throw new Error('unrecognized metadata for numeraireSymbol asset');
   }
@@ -58,49 +54,53 @@ const handleRouting = ({
 };
 
 export interface PairSelectorProps {
-  primary: AssetSelectorValue;
-  numeraire: AssetSelectorValue;
   dialogTitle?: string;
   disabled?: boolean;
 }
 
-export const PairSelector = observer(
-  ({ primary, numeraire, disabled, dialogTitle }: PairSelectorProps) => {
-    const router = useRouter();
+export const PairSelector = observer(({ disabled, dialogTitle }: PairSelectorProps) => {
+  const router = useRouter();
+  const { data: assets } = useAssets();
+  const { data: balances } = useBalances();
+  const { baseAsset, quoteAsset, error, isLoading } = usePathToMetadata();
 
-    const { data: assets } = useAssets();
-    const { data: balances } = useBalances();
+  if (error) {
+    return <div>Error loading pair selector: ${String(error)}</div>;
+  }
 
-    return (
-      <div className='flex gap-2'>
-        <AssetSelector
-          value={primary}
-          assets={assets}
-          balances={balances}
-          disabled={disabled}
-          dialogTitle={dialogTitle}
-          onChange={val => handleRouting({ router, primary: val, numeraire })}
-        />
+  if (isLoading || !baseAsset || !quoteAsset) {
+    return <div>Loading...</div>;
+  }
 
-        <Button
-          priority='primary'
-          iconOnly
-          icon={ArrowLeftRight}
-          disabled={disabled}
-          onClick={() => handleRouting({ router, primary: numeraire, numeraire: primary })}
-        >
-          Swap
-        </Button>
+  return (
+    <div className='flex gap-2'>
+      <AssetSelector
+        value={baseAsset}
+        assets={assets}
+        balances={balances}
+        disabled={disabled}
+        dialogTitle={dialogTitle}
+        onChange={val => handleRouting({ router, baseAsset: val, quoteAsset: quoteAsset })}
+      />
 
-        <AssetSelector
-          value={numeraire}
-          assets={assets}
-          balances={balances}
-          disabled={disabled}
-          dialogTitle={dialogTitle}
-          onChange={val => handleRouting({ router, primary, numeraire: val })}
-        />
-      </div>
-    );
-  },
-);
+      <Button
+        priority='primary'
+        iconOnly
+        icon={ArrowLeftRight}
+        disabled={disabled}
+        onClick={() => handleRouting({ router, baseAsset: quoteAsset, quoteAsset: baseAsset })}
+      >
+        Swap
+      </Button>
+
+      <AssetSelector
+        value={quoteAsset}
+        assets={assets}
+        balances={balances}
+        disabled={disabled}
+        dialogTitle={dialogTitle}
+        onChange={val => handleRouting({ router, baseAsset: baseAsset, quoteAsset: val })}
+      />
+    </div>
+  );
+});
