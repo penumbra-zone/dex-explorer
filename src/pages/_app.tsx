@@ -4,13 +4,12 @@ import type { AppProps } from 'next/app';
 import React from 'react';
 import '@/global.css';
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { Analytics } from '@vercel/analytics/react';
 import { inject } from '@vercel/analytics';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { injectSpeedInsights } from '@vercel/speed-insights';
-
-const queryClient = new QueryClient();
+import { queryClient } from '@/shared/queryClient.ts';
 
 function app({ Component, pageProps }: AppProps) {
   // Inject the analytics script
