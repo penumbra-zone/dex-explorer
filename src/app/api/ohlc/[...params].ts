@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DexQueryServiceClient } from '@/shared/old-utils/protos/services/dex/dex-query-service-client';
-import {
-  DirectedTradingPair,
-} from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
+import { DirectedTradingPair } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { base64ToUint8Array } from '@/shared/old-utils/math/base64';
 import { fetchAllTokenAssets } from '@/shared/old-utils/token/tokenFetch';
@@ -46,9 +44,12 @@ export async function GET(_req: NextRequest, context: { params: Promise<Params> 
       x => x.display.toLowerCase() === tokenOut.toLowerCase(),
     )?.inner;
     if (!tokenInInner || !tokenOutInner) {
-      return NextResponse.json({
-        error: `Invalid token pair, a token was not found: ${tokenIn} ${tokenOut}`,
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: `Invalid token pair, a token was not found: ${tokenIn} ${tokenOut}`,
+        },
+        { status: 400 },
+      );
     }
 
     const tradingPair = new DirectedTradingPair();
@@ -66,8 +67,11 @@ export async function GET(_req: NextRequest, context: { params: Promise<Params> 
     return NextResponse.json(data ?? []);
   } catch (error) {
     console.error('Error getting candlestick by grpc data:', error);
-    return NextResponse.json({
-      error: `Error getting candlestick by grpc data: ${error as string}`,
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: `Error getting candlestick by grpc data: ${error as string}`,
+      },
+      { status: 500 },
+    );
   }
 }

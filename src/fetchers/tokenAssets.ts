@@ -1,6 +1,9 @@
 import { useRegistry } from './registry';
 import { AssetId, Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
-import { decimalsFromDenomUnits, imagePathFromAssetImages } from '@/shared/old-utils/token/tokenFetch';
+import {
+  decimalsFromDenomUnits,
+  imagePathFromAssetImages,
+} from '@/shared/old-utils/token/tokenFetch';
 import { uint8ArrayToBase64, base64ToUint8Array } from '@/shared/old-utils/math/base64';
 import { Token } from '@/shared/old-utils/types/token';
 

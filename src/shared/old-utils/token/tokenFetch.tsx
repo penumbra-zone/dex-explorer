@@ -1,8 +1,5 @@
 import { uint8ArrayToBase64 } from '../math/base64';
-import {
-  AssetImage,
-  DenomUnit,
-} from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { AssetImage, DenomUnit } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { ChainRegistryClient, Registry } from '@penumbra-labs/registry';
 import { Token } from '../types/token';
 

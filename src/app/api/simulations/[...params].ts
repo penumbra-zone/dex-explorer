@@ -29,7 +29,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<Params> 
 
   try {
     if (!token1 || !token2 || !amountIn) {
-      return NextResponse.json({ error: 'Invalid query parameters' }, { status: 400});
+      return NextResponse.json({ error: 'Invalid query parameters' }, { status: 400 });
     }
 
     if (String(singleHop).toLocaleLowerCase() === 'singlehop') {
@@ -46,7 +46,10 @@ export async function GET(_req: NextRequest, context: { params: Promise<Params> 
     );
 
     if (!asset1Token || !asset2Token) {
-      return NextResponse.json({ error: 'Could not find requested token in registry' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Could not find requested token in registry' },
+        { status: 400 },
+      );
     }
     const sim_querier = new SimulationQuerier({
       grpcEndpoint: grpcEndpoint,
@@ -107,6 +110,9 @@ export async function GET(_req: NextRequest, context: { params: Promise<Params> 
       }
     }
 
-    return NextResponse.json({ error: `Error simualtion trade grpc data: ${error as string}` }, { status: 500 });
+    return NextResponse.json(
+      { error: `Error simualtion trade grpc data: ${error as string}` },
+      { status: 500 },
+    );
   }
 }

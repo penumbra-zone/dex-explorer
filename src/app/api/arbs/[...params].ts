@@ -27,8 +27,11 @@ export async function GET(_req: NextRequest, context: { params: Promise<Params> 
     return NextResponse.json(data ?? null);
   } catch (error) {
     console.error('Error getting liquidty positions by price grpc data:', error);
-    return NextResponse.json({
-      error: `Error getting liquidty positions by price grpc data: ${error as string}`,
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: `Error getting liquidty positions by price grpc data: ${error as string}`,
+      },
+      { status: 500 },
+    );
   }
 }

@@ -97,9 +97,12 @@ export async function GET(_req: NextRequest, context: { params: Promise<QueryPar
   const asset2 = getTokenAssetBySymbol(tokenAssets, symbol2);
 
   if (!asset1 || !asset2) {
-    return NextResponse.json({
-      error: `Invalid token pair ${symbol1}:${symbol2}`,
-    }, { status: 400 });
+    return NextResponse.json(
+      {
+        error: `Invalid token pair ${symbol1}:${symbol2}`,
+      },
+      { status: 400 },
+    );
   }
 
   const dexQuerier = new DexQueryServiceClient({

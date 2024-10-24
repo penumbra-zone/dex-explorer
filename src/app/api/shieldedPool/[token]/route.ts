@@ -6,7 +6,10 @@ import { NextRequest, NextResponse } from 'next/server';
 interface Params {
   token: string;
 }
-export default async function assetMetadataHandler(_req: NextRequest, context: { params: Promise<Params> }) {
+export default async function assetMetadataHandler(
+  _req: NextRequest,
+  context: { params: Promise<Params> },
+) {
   const grpcEndpoint = process.env['PENUMBRA_GRPC_ENDPOINT'];
   if (!grpcEndpoint) {
     throw new Error('PENUMBRA_GRPC_ENDPOINT is not set');
@@ -29,6 +32,9 @@ export default async function assetMetadataHandler(_req: NextRequest, context: {
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error fetching asset metadata grpc data:', error);
-    return NextResponse.json({ error: `Error fetching asset metadata grpc data: ${error as string}` }, { status: 500 });
+    return NextResponse.json(
+      { error: `Error fetching asset metadata grpc data: ${error as string}` },
+      { status: 500 },
+    );
   }
 }
