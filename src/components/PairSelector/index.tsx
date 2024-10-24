@@ -16,7 +16,6 @@ import { PagePath } from '@/shared/pages.ts';
 import { getMetadataFromBalancesResponse } from '@penumbra-zone/getters/balances-response';
 import { usePathToMetadata } from '@/shared/usePagePath';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
-import { useLatestBlockHeight } from '@/shared/state/compactBlock.ts';
 
 const handleRouting = ({
   router,

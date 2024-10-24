@@ -69,7 +69,6 @@ export const useGrpcTransport = () => {
     queryKey: ['grpcTransport', connectionStore.connected, rpcChoices],
     queryFn: (): { transport: Transport; type: TransportType } => {
       if (connectionStore.connected && penumbra.transport) {
-        console.log('transport from prax');
         return { transport: penumbra.transport, type: TransportType.PRAX };
       }
 

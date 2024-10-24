@@ -1,12 +1,12 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { useGrpcTransport } from '@/shared/state/transport.ts';
 import { CompactBlockService, TendermintProxyService } from '@penumbra-zone/protobuf';
 import { Code, ConnectError, createPromiseClient, Transport } from '@connectrpc/connect';
 import { queryClient } from '@/shared/queryClient.ts';
-import { connectionStore } from '@/shared/state/connection';
+import { useStream } from '@/shared/useStream.ts';
+import { useCallback, useEffect } from 'react';
 
 const fetchLatestBlockHeight = async (transport: Transport) => {
   const tendermintClient = createPromiseClient(TendermintProxyService, transport);
@@ -17,8 +17,7 @@ const fetchLatestBlockHeight = async (transport: Transport) => {
   return Number(syncInfo.latestBlockHeight);
 };
 
-const startBlockHeightStream = async (transport: Transport, ac: AbortController) => {
-  console.log('STARTING STREAM');
+const startBlockHeightStream = async (transport: Transport, signal: AbortSignal) => {
   try {
     const latestBlockHeight = await fetchLatestBlockHeight(transport);
     const blockClient = createPromiseClient(CompactBlockService, transport);
@@ -27,7 +26,7 @@ const startBlockHeightStream = async (transport: Transport, ac: AbortController)
         startHeight: BigInt(latestBlockHeight) + 1n,
         keepAlive: true,
       },
-      { signal: ac.signal },
+      { signal },
     )) {
       if (response.compactBlock?.height) {
         const newHeight = Number(response.compactBlock.height);
@@ -46,9 +45,15 @@ const startBlockHeightStream = async (transport: Transport, ac: AbortController)
   }
 };
 
-// Track stream state globally
-let activeStream: AbortController | undefined;
-let activeStreamCount = 0;
+export const useRefetchOnNewBlock = ({ refetch }: UseQueryResult) => {
+  const { data: blockHeight } = useLatestBlockHeight();
+
+  useEffect(() => {
+    if (blockHeight) {
+      void refetch();
+    }
+  }, [blockHeight, refetch]);
+};
 
 export const useLatestBlockHeight = () => {
   const { data, isLoading: transportIsLoading, error: transportError } = useGrpcTransport();
@@ -65,32 +70,22 @@ export const useLatestBlockHeight = () => {
     enabled: !!data?.transport,
   });
 
-  useEffect(() => {
-    if (!data?.transport) {
-      return;
-    }
-
-    // Increment active stream count
-    activeStreamCount++;
-
-    // Start stream if none exists
-    if (!activeStream) {
-      activeStream = new AbortController();
-      void startBlockHeightStream(data.transport, activeStream);
-    }
-
-    // On component unmount, cancel stream
-    return () => {
-      activeStreamCount--;
-
-      // Only abort stream if no components are using it
-      if (activeStreamCount === 0 && activeStream) {
-        activeStream.abort('Streaming compact block aborting');
-        activeStream = undefined;
+  // Memoized for use in useStream
+  const streamFn = useCallback(
+    (signal: AbortSignal) => {
+      if (!data?.transport) {
+        throw new Error('Transport not available');
       }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- can use mobx var as component using hook is wrapped in observer()
-  }, [data?.transport, connectionStore.connected]);
+      return startBlockHeightStream(data.transport, signal);
+    },
+    [data?.transport],
+  );
+
+  useStream({
+    id: 'compactBlockStream',
+    enabled: !!data?.transport,
+    streamFn,
+  });
 
   return {
     ...res,
