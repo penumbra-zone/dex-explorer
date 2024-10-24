@@ -4,6 +4,7 @@ import { PairSelector } from '@/components/PairSelector';
 import { Chart } from '@/components/chart';
 import { RouteBook } from '@/components/route-book';
 import { Card } from '@penumbra-zone/ui/Card';
+import { OrderForm } from '@/components/order-form';
 
 export default function TradePage() {
   return (
@@ -25,7 +26,7 @@ export default function TradePage() {
         </div>
         <div className='w-full sm:w-1/2 sm:pl-1 lg:w-[304px] lg:pl-0 mb-2'>
           <Card title='Order Form'>
-            <div className='h-[512px]'>-</div>
+            <OrderForm />
           </Card>
         </div>
       </div>
