@@ -1,35 +1,32 @@
-// @ts-nocheck
-/* eslint-disable -- disabling this file as this was created before our strict rules */
-// pages/api/lp/positionsByPrice/[...params].ts
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 import { DexQueryServiceClient } from '@/shared/old-utils/protos/services/dex/dex-query-service-client';
-import {
-  DirectedTradingPair,
-  Position,
-} from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
+import { DirectedTradingPair } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { base64ToUint8Array } from '@/shared/old-utils/math/base64';
 import { fetchAllTokenAssets } from '@/shared/old-utils/token/tokenFetch';
 
-const grpcEndpoint = process.env.PENUMBRA_GRPC_ENDPOINT!;
-if (!grpcEndpoint) {
-  throw new Error('PENUMBRA_GRPC_ENDPOINT is not set');
+interface Params {
+  params: string[];
 }
 
-export default async function positionsByPriceHandler(req: NextApiRequest, res: NextApiResponse) {
-  const params = req.query.params as string[];
+export async function GET(_req: NextRequest, context: { params: Promise<Params> }) {
+  const grpcEndpoint = process.env['PENUMBRA_GRPC_ENDPOINT'];
+  const chainId = process.env['PENUMBRA_CHAIN_ID'];
+  if (!grpcEndpoint || !chainId) {
+    throw new Error('PENUMBRA_GRPC_ENDPOINT or PENUMBRA_CHAIN_ID is not set');
+  }
 
-  const token1 = params[0] || null;
-  const token2 = params[1] || null;
-  const limit = params[2] || null;
+  const { params } = await context.params;
+  const token1 = params[0] ?? null;
+  const token2 = params[1] ?? null;
+  const limit = params[2] ?? null;
 
   try {
     if (!token1 || !token2 || !limit) {
-      res.status(400).json({ error: 'Invalid query parameters' });
-      return;
+      return NextResponse.json({ error: 'Invalid query parameters' }, { status: 400 });
     }
 
     // Get token 1 & 2
-    const tokenAssets = fetchAllTokenAssets(process.env.PENUMBRA_CHAIN_ID);
+    const tokenAssets = fetchAllTokenAssets(chainId);
     const asset1Token = tokenAssets.find(
       x => x.display.toLocaleLowerCase() === token1.toLocaleLowerCase(),
     );
@@ -38,8 +35,10 @@ export default async function positionsByPriceHandler(req: NextApiRequest, res: 
     );
 
     if (!asset1Token || !asset2Token) {
-      res.status(400).json({ error: 'Could not find requested token in registry' });
-      return;
+      return NextResponse.json(
+        { error: 'Could not find requested token in registry' },
+        { status: 400 },
+      );
     }
 
     const lp_querier = new DexQueryServiceClient({
@@ -57,11 +56,14 @@ export default async function positionsByPriceHandler(req: NextApiRequest, res: 
 
     const data = await lp_querier.liquidityPositionsByPrice(tradingPair, Number(limit));
 
-    res.status(200).json(data as Position[]);
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error getting liquidty positions by price grpc data:', error);
-    res.status(500).json({
-      error: `Error getting liquidty positions by price grpc data: ${error}`,
-    });
+    return NextResponse.json(
+      {
+        error: `Error getting liquidty positions by price grpc data: ${error as string}`,
+      },
+      { status: 500 },
+    );
   }
 }

@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-/* eslint-disable -- disabling this file as this was created before our strict rules */
-// pages/api/blockTimestamps/[...params].js
-
 import { IndexerQuerier } from '@/shared/old-utils/indexer/connector.js';
 
 interface Params {
-  params: (string | number)[];
+  params?: (string | number)[];
 }
 
 export async function GET(_req: NextRequest, context: { params: Promise<Params> }) {
@@ -20,11 +16,11 @@ export async function GET(_req: NextRequest, context: { params: Promise<Params> 
 
   // Params will be an arbitrarily long list of block heights
   // if the first param is 'range' then we are fetching a range of blocks
-  const params = (await context.params).params;
+  const params = (await context.params).params ?? [];
   let blocks = [];
 
   if (params[0] === 'range') {
-    if (params.length !== 3 || isNaN(params?.[1] as number) || isNaN(params?.[2] as number)) {
+    if (params.length !== 3 || isNaN(params[1] as number) || isNaN(params[2] as number)) {
       return NextResponse.json({ error: 'Invalid block height range' }, { status: 400 });
     }
 
