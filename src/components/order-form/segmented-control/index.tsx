@@ -32,7 +32,7 @@ const ToggleButton = styled.button<{ active: boolean; isBuy: boolean }>`
   }
 `;
 
-const SegmentedControl: React.FC = () => {
+export const SegmentedControl: React.FC = () => {
   const [active, setActive] = useState<'buy' | 'sell'>('buy');
 
   return (
@@ -46,5 +46,3 @@ const SegmentedControl: React.FC = () => {
     </Wrapper>
   );
 };
-
-export default SegmentedControl;

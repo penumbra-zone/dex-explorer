@@ -1,12 +1,17 @@
 import { useState } from 'react';
+import { observer } from 'mobx-react-lite';
 import { Button } from '@penumbra-zone/ui/Button';
-import { Slider } from '@penumbra-zone/ui/Slider';
 import { Text } from '@penumbra-zone/ui/Text';
 // import { theme } from '@penumbra-zone/ui/src/PenumbraUIProvider/theme';
 import { OrderInput } from './order-input';
-import SegmentedControl from './segmented-control';
+import { SegmentedControl } from './segmented-control';
+import { ConnectButton } from './connect-button';
+import { connectionStore } from '@/shared/state/connection';
+import { Slider } from './slider';
+import { InfoRow } from './info-row';
 
-export function OrderForm() {
+export const OrderForm = observer(() => {
+  const { connected } = connectionStore;
   const [buyAmount, setBuyAmount] = useState(300);
   const [sellAmount, setSellAmount] = useState(400);
   const [sliderValue, setSliderValue] = useState(500);
@@ -25,23 +30,23 @@ export function OrderForm() {
         denominator='UM'
       />
       <OrderInput label='Pay with' value={sellAmount} onChange={setSellAmount} denominator='USDC' />
-      <Slider
-        min={0}
-        max={1000}
-        step={100}
-        defaultValue={sliderValue}
-        showValue={false}
-        onChange={setSliderValue}
-        focusedOutlineColor='#BA4D14'
-        showTrackGaps={true}
-        trackGapBackground='#FAFAFA'
-        showFill={true}
-      />
-      <div className='flex flex-row items-center justify-between'>
-        <Text small>Available Balance</Text>
-        <Text small>{sliderValue}</Text>
+      <Slider />
+      <div className='mb-4'>
+        <InfoRow
+          label='Trading Fee'
+          value='Free'
+          valueColor='success'
+          toolTip='On Penumbra, trading fees are completely free.'
+        />
+        <InfoRow
+          label='Gas Fee'
+          isLoading={true}
+          value='Free'
+          valueColor='success'
+          toolTip='Gas fees tooltip here.'
+        />
       </div>
-      <Button>Submit</Button>
+      {connected ? <Button actionType='accent'>Submit</Button> : <ConnectButton />}
     </div>
   );
-}
+});
