@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import Image from 'next/image';
+import { WalletIcon } from 'lucide-react';
+import { Icon } from '@penumbra-zone/ui/Icon';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Button } from '@penumbra-zone/ui/Button';
 import { Dialog } from '@penumbra-zone/ui/Dialog';
@@ -31,6 +33,7 @@ export const ConnectButton = observer(() => {
   return (
     <>
       <Button actionType='accent' onClick={onClick}>
+        <Icon IconComponent={WalletIcon} size='md' />
         Connect
       </Button>
 

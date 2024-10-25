@@ -1,12 +1,7 @@
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Button } from '@penumbra-zone/ui/Button';
 import { Slider as PenumbraSlider } from '@penumbra-zone/ui/Slider';
 import { Text } from '@penumbra-zone/ui/Text';
-// import { theme } from '@penumbra-zone/ui/src/PenumbraUIProvider/theme';
-import { OrderInput } from './order-input';
-import { SegmentedControl } from './segmented-control';
-import { ConnectButton } from './connect-button';
 import { connectionStore } from '@/shared/state/connection';
 
 export const Slider = observer(() => {

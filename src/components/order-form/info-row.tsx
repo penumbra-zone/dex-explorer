@@ -25,7 +25,7 @@ export const InfoRow = observer(
               {value}
             </Text>
           </div>
-          <Tooltip title={toolTip}>
+          <Tooltip message={toolTip}>
             <Icon IconComponent={InfoIcon} size='sm' color={color => color.text.primary} />
           </Tooltip>
         </div>
