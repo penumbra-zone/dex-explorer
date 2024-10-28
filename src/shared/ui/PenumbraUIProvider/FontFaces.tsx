@@ -1,17 +1,17 @@
 import { createGlobalStyle } from 'styled-components';
 
-import iosevkaTerm from './fonts/IosevkaTerm-Regular.woff2';
-import poppinsItalic from './fonts/Poppins-Italic.woff2';
-import poppinsItalicLatinExt from './fonts/Poppins-Italic-LatinExt.woff2';
-import poppinsMedium from './fonts/Poppins-Medium.woff2';
-import poppinsMediumItalic from './fonts/Poppins-MediumItalic.woff2';
-import poppinsMediumItalicLatinExt from './fonts/Poppins-MediumItalic-LatinExt.woff2';
-import poppinsMediumLatinExt from './fonts/Poppins-Medium-LatinExt.woff2';
-import poppinsRegular from './fonts/Poppins-Regular.woff2';
-import poppinsRegularLatinExt from './fonts/Poppins-Regular-LatinExt.woff2';
-import workSansMedium from './fonts/WorkSans-Medium.woff2';
-import workSansMediumLatinExt from './fonts/WorkSans-Medium-LatinExt.woff2';
-import workSansMediumVietnamese from './fonts/WorkSans-Medium-Vietnamese.woff2';
+import iosevkaTerm from './fonts/IosevkaTerm-Regular.woff2?url';
+import poppinsItalic from './fonts/Poppins-Italic.woff2?url';
+import poppinsItalicLatinExt from './fonts/Poppins-Italic-LatinExt.woff2?url';
+import poppinsMedium from './fonts/Poppins-Medium.woff2?url';
+import poppinsMediumItalic from './fonts/Poppins-MediumItalic.woff2?url';
+import poppinsMediumItalicLatinExt from './fonts/Poppins-MediumItalic-LatinExt.woff2?url';
+import poppinsMediumLatinExt from './fonts/Poppins-Medium-LatinExt.woff2?url';
+import poppinsRegular from './fonts/Poppins-Regular.woff2?url';
+import poppinsRegularLatinExt from './fonts/Poppins-Regular-LatinExt.woff2?url';
+import workSansMedium from './fonts/WorkSans-Medium.woff2?url';
+import workSansMediumLatinExt from './fonts/WorkSans-Medium-LatinExt.woff2?url';
+import workSansMediumVietnamese from './fonts/WorkSans-Medium-Vietnamese.woff2?url';
 
 /** @see https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;1,400;1,500&family=Work+Sans:wght@500&display=swap */
 export const FontFaces = createGlobalStyle`

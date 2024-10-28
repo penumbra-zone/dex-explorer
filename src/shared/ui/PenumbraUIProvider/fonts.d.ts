@@ -1,4 +1,4 @@
-declare module '*woff2' {
+declare module '*?url' {
   const content: string;
   export default content;
 }

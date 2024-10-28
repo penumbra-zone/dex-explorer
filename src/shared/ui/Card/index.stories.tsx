@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from '@storybook/react';
 
 import { Card } from '.';
 
-import storiesBg from './storiesBg.jpg';
 import { styled } from 'styled-components';
 import { Text } from '../Text';
 import { FormField } from '../FormField';
@@ -18,7 +17,8 @@ const BgWrapper = styled.div`
 
   &::before {
     content: '';
-    background: url(${storiesBg}) center / cover;
+    background: url('https://images.unsplash.com/photo-1516900557549-41557d405adf?q=80&w=1024&h=1024&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')
+      center / cover;
     opacity: 0.6;
     filter: blur(4px);
     position: absolute;
