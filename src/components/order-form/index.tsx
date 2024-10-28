@@ -8,57 +8,56 @@ import { connectionStore } from '@/shared/state/connection';
 import { usePathToMetadata } from '@/shared/usePagePath';
 import { Slider } from './slider';
 import { InfoRow } from './info-row';
-import { orderFormStore } from './order-form-state';
+import { orderFormStore, Direction } from './order-form-state';
+import { useBalances } from '@/shared/state/balances';
 
 const useOrderFormStore = () => {
   const { baseAsset, quoteAsset } = usePathToMetadata();
-  const { setAssetIn, setAssetOut } = orderFormStore;
+  const { data: balances } = useBalances();
+  const { setAssets, setBalances } = orderFormStore;
 
   useEffect(() => {
     if (baseAsset && quoteAsset) {
-      setAssetIn(baseAsset);
-      setAssetOut(quoteAsset);
+      setAssets(baseAsset, quoteAsset);
     }
-  }, [baseAsset, quoteAsset, setAssetIn, setAssetOut]);
+  }, [baseAsset, quoteAsset, setAssets]);
+
+  useEffect(() => {
+    if (balances) {
+      setBalances(balances);
+    }
+  }, [balances, setBalances]);
 
   return orderFormStore;
 };
 
 export const OrderForm = observer(() => {
   const { connected } = connectionStore;
-  const {
-    assetIn,
-    assetOut,
-    assetInAmount,
-    assetOutAmount,
-    setAssetInAmount,
-    setAssetOutAmount,
-    direction,
-    setDirection,
-    submitOrder,
-    isLoading,
-  } = useOrderFormStore();
+  const { baseAsset, quoteAsset, direction, setDirection, submitOrder, isLoading } =
+    useOrderFormStore();
+  console.log('TCL: OrderForm -> baseAsset', baseAsset);
+  console.log('TCL: OrderForm -> quoteAsset', quoteAsset);
 
   return (
     <div>
       <SegmentedControl direction={direction} setDirection={setDirection} />
       <OrderInput
         label={direction}
-        value={assetOutAmount}
-        onChange={setAssetInAmount}
+        value={baseAsset.amount}
+        onChange={baseAsset.setAmount}
         min={0}
         max={1000}
         // isEstimating={true}
-        isApproximately={true}
-        denominator={assetOut?.symbol ?? ''}
+        // isApproximately={true}
+        denominator={baseAsset.symbol}
       />
       <OrderInput
-        label='Pay with'
-        value={assetInAmount}
-        onChange={setAssetOutAmount}
-        denominator={assetIn?.symbol ?? ''}
+        label={direction === Direction.Buy ? 'Pay with' : 'Receive'}
+        value={quoteAsset.amount}
+        onChange={quoteAsset.setAmount}
+        denominator={quoteAsset.symbol}
       />
-      <Slider />
+      {/* <Slider /> */}
       <div className='mb-4'>
         <InfoRow
           label='Trading Fee'
@@ -76,7 +75,7 @@ export const OrderForm = observer(() => {
       </div>
       {connected ? (
         <Button actionType='accent' disabled={isLoading} onClick={submitOrder}>
-          {direction} {assetOut?.symbol ?? ''}
+          {direction} {baseAsset.symbol}
         </Button>
       ) : (
         <ConnectButton />
