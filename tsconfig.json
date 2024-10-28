@@ -13,7 +13,7 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@penumbra-zone/ui/*": ["./src/shared/ui/*"],
+      "@penumbra-zone/ui/*": ["./src/shared/ui/*"]
     },
     "allowJs": true,
     "incremental": true,
