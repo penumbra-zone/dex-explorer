@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Button } from '@penumbra-zone/ui/Button';
 import { OrderInput } from './order-input';
@@ -8,33 +8,55 @@ import { connectionStore } from '@/shared/state/connection';
 import { usePathToMetadata } from '@/shared/usePagePath';
 import { Slider } from './slider';
 import { InfoRow } from './info-row';
+import { orderFormStore } from './order-form-state';
+
+const useOrderFormStore = () => {
+  const { baseAsset, quoteAsset } = usePathToMetadata();
+  const { setAssetIn, setAssetOut } = orderFormStore;
+
+  useEffect(() => {
+    if (baseAsset && quoteAsset) {
+      setAssetIn(baseAsset);
+      setAssetOut(quoteAsset);
+    }
+  }, [baseAsset, quoteAsset, setAssetIn, setAssetOut]);
+
+  return orderFormStore;
+};
 
 export const OrderForm = observer(() => {
-  const { baseAsset, quoteAsset } = usePathToMetadata();
-  console.log('TCL: OrderForm -> baseAsset', baseAsset);
   const { connected } = connectionStore;
-  const [buyAmount, setBuyAmount] = useState(300);
-  const [sellAmount, setSellAmount] = useState(400);
-  const [sliderValue, setSliderValue] = useState(500);
+  const {
+    assetIn,
+    assetOut,
+    assetInAmount,
+    assetOutAmount,
+    setAssetInAmount,
+    setAssetOutAmount,
+    direction,
+    setDirection,
+    submitOrder,
+    isLoading,
+  } = useOrderFormStore();
 
   return (
     <div>
-      <SegmentedControl />
+      <SegmentedControl direction={direction} setDirection={setDirection} />
       <OrderInput
-        label='Buy'
-        value={buyAmount}
-        onChange={setBuyAmount}
+        label={direction}
+        value={assetOutAmount}
+        onChange={setAssetInAmount}
         min={0}
         max={1000}
         // isEstimating={true}
         isApproximately={true}
-        denominator={baseAsset?.symbol ?? ''}
+        denominator={assetOut?.symbol ?? ''}
       />
       <OrderInput
         label='Pay with'
-        value={sellAmount}
-        onChange={setSellAmount}
-        denominator={quoteAsset?.symbol ?? ''}
+        value={assetInAmount}
+        onChange={setAssetOutAmount}
+        denominator={assetIn?.symbol ?? ''}
       />
       <Slider />
       <div className='mb-4'>
@@ -53,7 +75,9 @@ export const OrderForm = observer(() => {
         />
       </div>
       {connected ? (
-        <Button actionType='accent'>Buy {baseAsset?.symbol ?? ''}</Button>
+        <Button actionType='accent' disabled={isLoading} onClick={submitOrder}>
+          {direction} {assetOut?.symbol ?? ''}
+        </Button>
       ) : (
         <ConnectButton />
       )}

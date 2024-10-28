@@ -1,6 +1,7 @@
 /* eslint-disable no-nested-ternary */
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { Direction } from '../order-form-state';
 
 const getToggleColor = props =>
   props.isBuy ? props.theme.color.success.main : props.theme.color.destructive.main;
@@ -32,15 +33,24 @@ const ToggleButton = styled.button<{ active: boolean; isBuy: boolean }>`
   }
 `;
 
-export const SegmentedControl: React.FC = () => {
-  const [active, setActive] = useState<'buy' | 'sell'>('buy');
-
+export const SegmentedControl: React.FC<{
+  direction: Direction;
+  setDirection: (direction: Direction) => void;
+}> = ({ direction, setDirection }) => {
   return (
     <Wrapper>
-      <ToggleButton active={active === 'buy'} isBuy={true} onClick={() => setActive('buy')}>
+      <ToggleButton
+        active={direction === Direction.Buy}
+        isBuy={true}
+        onClick={() => setDirection(Direction.Buy)}
+      >
         Buy
       </ToggleButton>
-      <ToggleButton active={active === 'sell'} isBuy={false} onClick={() => setActive('sell')}>
+      <ToggleButton
+        active={direction === Direction.Sell}
+        isBuy={false}
+        onClick={() => setDirection(Direction.Sell)}
+      >
         Sell
       </ToggleButton>
     </Wrapper>
