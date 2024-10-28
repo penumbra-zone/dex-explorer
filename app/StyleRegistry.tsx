@@ -3,7 +3,7 @@
 import { useState, ReactNode } from 'react';
 import { useServerInsertedHTML } from 'next/navigation';
 import { ServerStyleSheet, StyleSheetManager } from 'styled-components';
-import { tailwindConfig } from '@penumbra-zone/ui/tailwind';
+import { tailwindConfig } from '@penumbra-zone/ui/tailwindConfig';
 
 /** Enables using the color functions in Text UI components */
 declare module 'styled-components' {

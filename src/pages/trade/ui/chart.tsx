@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { CandlestickData, createChart, IChartApi } from 'lightweight-charts';
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
-import { tailwindConfig } from '@penumbra-zone/ui/tailwind';
+import { tailwindConfig } from '@penumbra-zone/ui/tailwindConfig';
 import { usePathToMetadata } from '../model/use-path-to-metadata';
 import { useCandles } from '../api/candles';
 
