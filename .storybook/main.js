@@ -37,24 +37,24 @@ const config = {
       },
     },
     '@storybook/preview-api',
-    getAbsolutePath("@storybook/addon-webpack5-compiler-swc")
+    getAbsolutePath('@storybook/addon-webpack5-compiler-swc'),
   ],
   framework: {
     name: '@storybook/react-webpack5',
     options: {
       builder: {
-        useSWC: true
-      }
-    }
+        useSWC: true,
+      },
+    },
   },
   swc: () => ({
     jsc: {
       transform: {
         react: {
-          runtime: 'automatic'
-        }
-      }
-    }
+          runtime: 'automatic',
+        },
+      },
+    },
   }),
   docs: {
     autodocs: 'tag',
