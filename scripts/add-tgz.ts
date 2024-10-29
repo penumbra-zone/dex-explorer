@@ -9,7 +9,9 @@ import url, { URL } from 'node:url';
 // ----- utils
 const usage = (reason?: string) => {
   console.warn(reason);
-  console.warn(`Usage: ${basename(argv[1] as string)} <tarball0.tgz> [tarball1.tgz] [tarball2.tgz] ...`);
+  console.warn(
+    `Usage: ${basename(argv[1] as string)} <tarball0.tgz> [tarball1.tgz] [tarball2.tgz] ...`,
+  );
   console.warn("Each tarball should have an accompanying 'package.json' in the same directory.");
   return 1;
 };

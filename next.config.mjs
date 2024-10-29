@@ -18,11 +18,7 @@ const PnpmInstallPlugin = {
       { name: 'CustomPnpmInstallPlugin' },
       compiler =>
         new Promise((resolve, reject) => {
-          const pnpmInstall = spawn(
-            'pnpm',
-            ['install', '--ignore-scripts'],
-            { stdio: 'inherit' },
-          );
+          const pnpmInstall = spawn('pnpm', ['install', '--ignore-scripts'], { stdio: 'inherit' });
           pnpmInstall.on('exit', code => {
             if (code) {
               reject(new Error(`pnpm install failed ${code}`));
@@ -56,7 +52,7 @@ const nextConfig = {
       const localPackages = [
         ...Object.values(rootPackageJson.dependencies),
         ...Object.values(rootPackageJson.devDependencies),
-        ...Object.values(((rootPackageJson).pnpm?.overrides ?? {})),
+        ...Object.values(rootPackageJson.pnpm?.overrides ?? {}),
       ]
         .filter(specifier => specifier.endsWith('.tgz'))
         .map(tgzSpecifier =>
