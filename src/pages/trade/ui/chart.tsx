@@ -70,17 +70,17 @@ const ChartData = observer(
       };
     }, [chartElRef]);
 
-    useEffect(() => {
-      if (chartRef.current && !isLoading) {
-        chartRef.current
-          .addCandlestickSeries({
-            upColor: colors.success.light,
-            downColor: colors.destructive.light,
-            borderVisible: false,
-            wickUpColor: colors.success.light,
-            wickDownColor: colors.destructive.light,
-          })
-          .setData(candles as unknown[] as CandlestickData[]);
+  useEffect(() => {
+    if (chartRef.current && !isLoading) {
+      chartRef.current
+        .addCandlestickSeries({
+          upColor: colors.success.light,
+          downColor: colors.destructive.light,
+          borderVisible: false,
+          wickUpColor: colors.success.light,
+          wickDownColor: colors.destructive.light,
+        })
+        .setData(candles as unknown[] as CandlestickData[]);
 
         chartRef.current.timeScale().fitContent();
       }

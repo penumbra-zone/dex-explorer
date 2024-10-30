@@ -8,7 +8,8 @@ const getRegistry = (chainId: string): Registry => {
   return registryClient.bundled.get(chainId);
 };
 
-export const fetchAllTokenAssets = (chainId: string): Token[] => {
+// TODO: Deprecated. Use remote ChainRegistryClient directly.
+export const fetchAllTokenAssets_deprecated = (chainId: string): Token[] => {
   const registry = getRegistry(chainId);
   const metadata = registry.getAllAssets();
   const tokens: Token[] = [];
