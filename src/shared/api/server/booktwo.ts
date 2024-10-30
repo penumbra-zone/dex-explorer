@@ -1,41 +1,148 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ChainRegistryClient } from '@penumbra-labs/registry';
+import { ChainRegistryClient, Registry } from '@penumbra-labs/registry';
 import { SimulationQuerier } from '@/shared/utils/protos/services/dex/simulated-trades.ts';
 import {
   SimulateTradeRequest,
+  SimulateTradeResponse,
   SwapExecution_Trace,
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
-import {
-  Value,
-  ValueView,
-  Metadata,
-} from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { Value, ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
 import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { formatAmount, removeTrailingZeros } from '@penumbra-zone/types/amount';
 import BigNumber from 'bignumber.js';
-import { bech32mAssetId } from '@penumbra-zone/bech32m/passet';
+import { JsonValue } from '@bufbuild/protobuf';
 
 interface Trace {
-  price: number;
-  amount: Amount;
+  price: string;
+  amount: string;
+  total: string;
   hops: ValueView[];
 }
 
-export interface SimulationResponse {
-  singleHops: ValueView[];
-  multiHops: ValueView[];
+interface BuySellTraces {
+  buy: Trace[];
+  sell: Trace[];
 }
 
-const VERY_HIGH_AMOUNT = new Amount({ hi: 10000n });
+export interface RouteBookResponse {
+  singleHops: BuySellTraces;
+  multiHops: BuySellTraces;
+}
 
-export const getPriceForTrace = ({
-  trace,
-  metadataByAssetId,
+interface TraceJson {
+  price: string;
+  amount: string;
+  total: string;
+  hops: JsonValue[];
+}
+
+interface BuySellTracesJson {
+  buy: TraceJson[];
+  sell: TraceJson[];
+}
+
+export interface RouteBookResponseJson {
+  singleHops: BuySellTracesJson;
+  multiHops: BuySellTracesJson;
+}
+
+export const deserializeRouteBookResponseJson = ({
+  singleHops,
+  multiHops,
+}: RouteBookResponseJson): RouteBookResponse => {
+  return {
+    singleHops: deserializeBuySellTraces(singleHops),
+    multiHops: deserializeBuySellTraces(multiHops),
+  };
+};
+
+const serializeTrace = (trace: Trace): TraceJson => {
+  return {
+    price: trace.price,
+    amount: trace.amount,
+    total: trace.total,
+    hops: trace.hops.map(v => v.toJson()),
+  };
+};
+
+const deserializeTrace = (trace: TraceJson): Trace => {
+  return {
+    price: trace.price,
+    amount: trace.amount,
+    total: trace.total,
+    hops: trace.hops.map(v => ValueView.fromJson(v)),
+  };
+};
+
+const serializeBuySellTraces = (traces: BuySellTraces): BuySellTracesJson => {
+  return {
+    buy: traces.buy.map(serializeTrace),
+    sell: traces.sell.map(serializeTrace),
+  };
+};
+
+const deserializeBuySellTraces = (traces: BuySellTracesJson): BuySellTraces => {
+  return {
+    buy: traces.buy.map(deserializeTrace),
+    sell: traces.sell.map(deserializeTrace),
+  };
+};
+
+const serializeResponse = ({
+  singleHops,
+  multiHops,
 }: {
-  trace: SwapExecution_Trace;
-  metadataByAssetId: Record<string, Metadata>;
-}) => {
+  singleHops: BuySellTraces;
+  multiHops: BuySellTraces;
+}): RouteBookResponseJson => {
+  return {
+    singleHops: serializeBuySellTraces(singleHops),
+    multiHops: serializeBuySellTraces(multiHops),
+  };
+};
+
+const VERY_HIGH_AMOUNT = new Amount({ hi: 10000n });
+const TRACE_LIMIT_DEFAULT = 8;
+
+const getValueView = (registry: Registry, { amount, assetId }: Value) => {
+  const metadata = assetId ? registry.tryGetMetadata(assetId) : undefined;
+  return new ValueView({
+    valueView: metadata
+      ? {
+          case: 'knownAssetId',
+          value: { amount, metadata },
+        }
+      : {
+          case: 'unknownAssetId',
+          value: {
+            amount,
+            assetId,
+          },
+        },
+  });
+};
+
+const processSimulation = (
+  res: SimulateTradeResponse,
+  registry: Registry,
+  limit: number,
+): Trace[] => {
+  let cumulativeTotal = new BigNumber(0);
+  const traces: Trace[] = [];
+  for (const t of res.output?.traces.slice(0, limit) ?? []) {
+    const res = getPriceForTrace(t, registry, cumulativeTotal);
+    traces.push(res);
+    cumulativeTotal = new BigNumber(res.total);
+  }
+  return traces;
+};
+
+export const getPriceForTrace = (
+  trace: SwapExecution_Trace,
+  registry: Registry,
+  cumulativeTotal: BigNumber,
+): Trace => {
   const inputValue = trace.value[0];
   const outputValue = trace.value[trace.value.length - 1];
 
@@ -43,8 +150,8 @@ export const getPriceForTrace = ({
     throw new Error('');
   }
 
-  const firstValueMetadata = metadataByAssetId[bech32mAssetId(inputValue.assetId)];
-  const lastValueMetadata = metadataByAssetId[bech32mAssetId(outputValue.assetId)];
+  const firstValueMetadata = registry.getMetadata(inputValue.assetId);
+  const lastValueMetadata = registry.getMetadata(outputValue.assetId);
 
   const inputDisplayDenomExponent = getDisplayDenomExponent.optional(firstValueMetadata) ?? 0;
   const outputDisplayDenomExponent = getDisplayDenomExponent.optional(lastValueMetadata) ?? 0;
@@ -61,10 +168,19 @@ export const getPriceForTrace = ({
     .dividedBy(formattedInputAmount)
     .toFormat(outputDisplayDenomExponent);
 
-  return removeTrailingZeros(outputToInputRatio);
+  return {
+    price: removeTrailingZeros(outputToInputRatio),
+    amount: formattedInputAmount,
+    total: removeTrailingZeros(
+      cumulativeTotal.plus(formattedInputAmount).toFormat(outputDisplayDenomExponent),
+    ),
+    hops: trace.value.map(v => getValueView(registry, v)),
+  };
 };
 
-export async function GET(req: NextRequest) {
+type AllResponses = RouteBookResponseJson | { error: string };
+
+export async function GET(req: NextRequest): Promise<NextResponse<AllResponses>> {
   const grpcEndpoint = process.env['PENUMBRA_GRPC_ENDPOINT'];
   const chainId = process.env['PENUMBRA_CHAIN_ID'];
   if (!grpcEndpoint || !chainId) {
@@ -76,19 +192,12 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const baseAssetSymbol = searchParams.get('baseAsset');
-  const amount = searchParams.get('amount');
   const quoteAssetSymbol = searchParams.get('quoteAsset');
-  if (!baseAssetSymbol || !amount || !quoteAssetSymbol) {
+  const traceParam = searchParams.get('traceLimit');
+  const traceLimit = traceParam ? Number(traceParam) : TRACE_LIMIT_DEFAULT;
+  if (!baseAssetSymbol || !quoteAssetSymbol) {
     return NextResponse.json(
-      {
-        error: 'Missing required parameters',
-        required: ['baseAsset', 'amount', 'quoteAsset'],
-        received: {
-          baseAsset: baseAssetSymbol,
-          amount,
-          quoteAsset: quoteAssetSymbol,
-        },
-      },
+      { error: 'Missing required baseAsset or quoteAsset' },
       { status: 400 },
     );
   }
@@ -117,9 +226,6 @@ export async function GET(req: NextRequest) {
       amount: VERY_HIGH_AMOUNT,
     }),
     output: quoteAssetMetadata.penumbraAssetId,
-    routing: {
-      // setting: singleHop ? { case: 'singleHop', value: {} } : { case: 'default', value: {} },
-    },
   });
 
   const sellSideRequest = new SimulateTradeRequest({
@@ -128,35 +234,25 @@ export async function GET(req: NextRequest) {
       amount: VERY_HIGH_AMOUNT,
     }),
     output: baseAssetMetadata.penumbraAssetId,
-    routing: {
-      // setting: singleHop ? { case: 'singleHop', value: {} } : { case: 'default', value: {} },
-    },
   });
 
+  // TODO: Move try to only wrap simulate trade
   try {
     const simQuerier = new SimulationQuerier({ grpcEndpoint });
     const buyRes = await simQuerier.simulateTrade(buySideRequest);
-    const mapped = buyRes.output?.traces.map(trace => getPriceForTrace({ trace }));
-    const baseDisplayDenomExponent = getDisplayDenomExponent.optional(baseAssetMetadata) ?? 0;
-    const quoteDisplayDenomExponent = getDisplayDenomExponent.optional(quoteAssetMetadata) ?? 0;
-    const formattedInputAmount = formatAmount({
-      amount: inputValue.amount,
-      exponent: inputDisplayDenomExponent,
-    });
-    const formattedOutputAmount = formatAmount({
-      amount: quoteValue.amount,
-      exponent: quoteDisplayDenomExponent,
-    });
-
-    const quoteToInputRatio = new BigNumber(formattedOutputAmount)
-      .dividedBy(formattedInputAmount)
-      .toFormat(quoteDisplayDenomExponent);
-
-    const quoteToInputFormatted = removeTrailingZeros(quoteToInputRatio);
-
+    const buyMulti = processSimulation(buyRes, registry, traceLimit);
     const sellRes = await simQuerier.simulateTrade(sellSideRequest);
+    const sellMulti = processSimulation(sellRes, registry, traceLimit);
 
-    return NextResponse.json(res.toJson());
+    return NextResponse.json(
+      serializeResponse({
+        singleHops: {
+          buy: buyMulti.filter(t => t.hops.length === 2),
+          sell: sellMulti.filter(t => t.hops.length === 2),
+        },
+        multiHops: { buy: buyMulti, sell: sellMulti },
+      }),
+    );
   } catch (error) {
     // If the error contains 'there are no orders to fulfill this swap', there are no orders to fulfill the trade, so just return an empty array
     if (

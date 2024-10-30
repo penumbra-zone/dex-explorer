@@ -1,4 +1,3 @@
-import { fromBaseUnit } from '@/shared/utils/hiLo';
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import {
   Position,
@@ -7,13 +6,14 @@ import {
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
 import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
-import { innerToBech32Address } from '@/shared/utils/bech32';
-import { uint8ArrayToBase64 } from '@/shared/utils/base64';
 import { round } from '@/shared/utils/round';
 import { useComputePositionId } from '@/shared/utils/useComputePositionId';
 import { usePathToMetadata } from '../model/use-path-to-metadata';
 import { useBook } from '../api/book';
 import { observer } from 'mobx-react-lite';
+import { fromBaseUnit } from '@penumbra-zone/types/lo-hi';
+import { bech32mPositionId } from '@penumbra-zone/bech32m/plpid';
+import { RouteBookResponse } from '@/shared/api/server/booktwo.ts';
 
 interface Route {
   lpId: string;
@@ -102,8 +102,7 @@ function getDisplayData({
         : Number(direction === 1 ? r1 : r2);
 
       const id = computePositionId(position);
-      const innerStr = uint8ArrayToBase64(id.inner);
-      const bech32Id = innerToBech32Address(innerStr, 'plpid');
+      const bech32Id = bech32mPositionId(id);
 
       return {
         lpId: bech32Id,
@@ -126,70 +125,56 @@ const RouteBookLoadingState = () => {
   );
 };
 
-const RouteBookData = observer(
-  ({ baseAsset, quoteAsset }: { baseAsset: Metadata; quoteAsset: Metadata }) => {
-    const asset1Exponent = getDisplayDenomExponent(baseAsset);
-    const asset2Exponent = getDisplayDenomExponent(quoteAsset);
-    const { data: computePositionId } = useComputePositionId();
-    const { data } = useBook(baseAsset.symbol, quoteAsset.symbol, 100, 50);
-    const asks = getDisplayData({
-      data: data?.asks ?? [],
-      computePositionId,
-      asset1: baseAsset,
-      asset2: quoteAsset,
-      isBuySide: false,
-      limit: 8,
-    });
-    const bids = getDisplayData({
-      data: data?.bids ?? [],
-      computePositionId,
-      asset1: baseAsset,
-      asset2: quoteAsset,
-      isBuySide: true,
-      limit: 8,
-    });
-
-    return (
-      <div className='h-[512px] text-white'>
-        <table className='w-full'>
-          <thead>
-            <tr>
-              <th>Price</th>
-              <th className='text-right'>Amount</th>
-              <th className='text-right'>Total</th>
+const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBookResponse }) => {
+  return (
+    <div className='h-[512px] text-white'>
+      <table className='w-full'>
+        <thead>
+          <tr>
+            <th>Price</th>
+            <th className='text-right'>Amount</th>
+            <th className='text-right'>Total</th>
+            <th className='text-right'>Hops</th>
+          </tr>
+        </thead>
+        <tbody>
+          {multiHops.sell.map(trace => (
+            <tr key={trace.price + trace.total} style={{ color: 'red' }}>
+              <td className='text-left tabular-nums'>{trace.price}</td>
+              <td className='text-right tabular-nums'>{trace.amount}</td>
+              <td className='text-right tabular-nums'>{trace.total}</td>
+              <td className='text-right tabular-nums'>{trace.hops.length}</td>
             </tr>
-          </thead>
-          <tbody>
-            {asks.map(route => (
-              <tr key={route.price} style={{ color: 'red' }}>
-                <td className='text-left tabular-nums'>{round(route.price, asset2Exponent)}</td>
-                <td className='text-right tabular-nums'>{round(route.amount, asset1Exponent)}</td>
-                <td className='text-right tabular-nums'>{round(route.total, asset1Exponent)}</td>
-              </tr>
-            ))}
-            {bids.map(route => (
-              <tr key={route.price} style={{ color: 'green' }}>
-                <td className='text-left tabular-nums'>{round(route.price, asset2Exponent)}</td>
-                <td className='text-right tabular-nums'>{round(route.amount, asset1Exponent)}</td>
-                <td className='text-right tabular-nums'>{round(route.total, asset1Exponent)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  },
-);
+          ))}
+          {multiHops.buy.map(trace => (
+            <tr key={trace.price + trace.total} style={{ color: 'green' }}>
+              <td className='text-left tabular-nums'>{trace.price}</td>
+              <td className='text-right tabular-nums'>{trace.amount}</td>
+              <td className='text-right tabular-nums'>{trace.total}</td>
+              <td className='text-right tabular-nums'>{trace.hops.length}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+});
 
 export const RouteBook = observer(() => {
-  const { baseAsset, quoteAsset, error, isLoading: pairIsLoading } = usePathToMetadata();
-  if (pairIsLoading || !baseAsset || !quoteAsset) {
+  const { baseAsset, quoteAsset, error: pairError } = usePathToMetadata();
+  const {
+    data: bookData,
+    isLoading: bookIsLoading,
+    error: bookErr,
+  } = useBook(baseAsset?.symbol, quoteAsset?.symbol);
+
+  if (bookIsLoading || !bookData) {
     return <RouteBookLoadingState />;
   }
 
-  if (error) {
-    return <div>Error loading route book: ${String(error)}</div>;
+  if (bookErr ?? pairError) {
+    return <div>Error loading route book: ${String(bookErr ?? pairError)}</div>;
   }
 
-  return <RouteBookData baseAsset={baseAsset} quoteAsset={quoteAsset} />;
+  return <RouteBookData bookData={bookData} />;
 });
