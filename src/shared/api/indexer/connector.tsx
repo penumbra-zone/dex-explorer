@@ -81,7 +81,7 @@ export class IndexerQuerier {
       return parsedObject as JsonValue;
     }
     // If none of the above, return the value as is (e.g., numbers, null)
-    return value as JsonValue;
+    return value;
   }
 
   public async fetchLiquidityPositionEventsOnBech32(
