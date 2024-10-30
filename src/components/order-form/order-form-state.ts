@@ -17,6 +17,7 @@ import {
   ValueView,
 } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { BigNumber } from 'bignumber.js';
+import { round } from 'lodash';
 import { StateCommitment } from '@penumbra-zone/protobuf/penumbra/crypto/tct/v1/tct_pb';
 import { errorToast } from '@penumbra-zone/ui/lib/toast/presets';
 import {
@@ -39,7 +40,7 @@ import { getAddressIndex } from '@penumbra-zone/getters/address-view';
 import { toBaseUnit, joinLoHi } from '@penumbra-zone/types/lo-hi';
 import { getAmountFromValue, getAssetIdFromValue } from '@penumbra-zone/getters/value';
 import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
-import { divideAmounts } from '@penumbra-zone/types/amount';
+import { divideAmounts, formatAmount, removeTrailingZeros } from '@penumbra-zone/types/amount';
 import { bech32mAssetId } from '@penumbra-zone/bech32m/passet';
 import { AddressIndex } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
 import { penumbra } from '@/shared/penumbra';
@@ -142,86 +143,25 @@ export enum OrderType {
 //   }
 // : undefined;
 
-const getMetadataByAssetId = async (
-  traces: SwapExecution_Trace[] = [],
-): Promise<Record<string, Metadata>> => {
-  const map: Record<string, Metadata> = {};
-
-  const promises = traces.flatMap(trace =>
-    trace.value.map(async value => {
-      if (!value.assetId || map[bech32mAssetId(value.assetId)]) {
-        return;
-      }
-
-      const { denomMetadata } = await penumbra
-        .service(ViewService)
-        .assetMetadataById({ assetId: value.assetId });
-
-      if (denomMetadata) {
-        map[bech32mAssetId(value.assetId)] = denomMetadata;
-      }
-    }),
-  );
-
-  await Promise.all(promises);
-
-  return map;
-};
-
-const getMatchingAmount = (values: Value[], toMatch: AssetId): Amount => {
-  const match = values.find(v => toMatch.equals(v.assetId));
-  if (!match?.amount) {
-    throw new Error('No match in values array found');
-  }
-
-  return match.amount;
-};
-
-/*
-  Price impact is the change in price as a consequence of the trade's size. In SwapExecution, the \
-  first trace in the array is the best execution for the swap. To calculate price impact, take
-  the price of the trade and see the % diff off the best execution trace.
- */
-const calculatePriceImpact = (swapExec?: SwapExecution): number | undefined => {
-  if (!swapExec?.traces.length || !swapExec.output || !swapExec.input) {
-    return undefined;
-  }
-
-  // Get the price of the estimate for the swap total
-  const inputAmount = getAmountFromValue(swapExec.input);
-  const outputAmount = getAmountFromValue(swapExec.output);
-  const swapEstimatePrice = divideAmounts(outputAmount, inputAmount);
-
-  // Get the price in the best execution trace
-  const inputAssetId = getAssetIdFromValue(swapExec.input);
-  const outputAssetId = getAssetIdFromValue(swapExec.output);
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- TODO: justify non-null assertion
-  const bestTrace = swapExec.traces[0]!;
-  const bestInputAmount = getMatchingAmount(bestTrace.value, inputAssetId);
-  const bestOutputAmount = getMatchingAmount(bestTrace.value, outputAssetId);
-  const bestTraceEstimatedPrice = divideAmounts(bestOutputAmount, bestInputAmount);
-
-  // Difference = (priceB - priceA) / priceA
-  const percentDifference = swapEstimatePrice
-    .minus(bestTraceEstimatedPrice)
-    .div(bestTraceEstimatedPrice);
-
-  return percentDifference.toNumber();
-};
-
 export class OrderFormAsset {
   symbol: string;
   metadata?: Metadata;
+  exponent?: number;
+  assetId?: AssetId;
   balanceView?: ValueView;
   balance?: number;
   amount?: number;
   onAmountChangeCallback?: Function;
+  isEstimating = false;
+  isApproximately = false;
 
   constructor(metadata?: Metadata) {
     makeAutoObservable(this);
 
     this.metadata = metadata;
     this.symbol = metadata?.symbol ?? '';
+    this.assetId = metadata ? getAssetId(metadata) : undefined;
+    this.exponent = metadata ? getDisplayDenomExponent(metadata) : undefined;
   }
 
   setBalanceView = (balanceView: ValueView): void => {
@@ -234,16 +174,28 @@ export class OrderFormAsset {
     this.balance = Number(balance);
   };
 
-  setAmount = (amount: number): void => {
-    this.amount = Math.max(0, Math.min(amount, this.balance ?? 0));
+  setAmount = (amount: number, callOnAmountChange = true): void => {
+    const prevAmount = this.amount;
+    const nextAmount = round(amount, this.exponent);
 
-    if (this.onAmountChangeCallback) {
-      this.onAmountChangeCallback(this.amount);
+    if (prevAmount !== nextAmount) {
+      this.amount = nextAmount;
+
+      if (this.onAmountChangeCallback && callOnAmountChange) {
+        this.onAmountChangeCallback(this);
+      }
     }
   };
 
   onAmountChange = (callback: Function): void => {
     this.onAmountChangeCallback = callback;
+  };
+
+  toValue = (): Value => {
+    return new Value({
+      assetId: this.assetId,
+      amount: toBaseUnit(BigNumber(this.amount ?? 0), this.exponent),
+    });
   };
 }
 
@@ -253,9 +205,7 @@ class OrderFormStore {
   baseAsset = new OrderFormAsset();
   quoteAsset = new OrderFormAsset();
   balances: BalancesResponse[] | undefined;
-  isEstimating = false;
   isLoading = false;
-  simulateSwapResult: any;
 
   constructor() {
     makeAutoObservable(this);
@@ -300,30 +250,30 @@ class OrderFormStore {
     this.setBalancesOfAssets();
   };
 
-  simulateSwapTx = async (): Promise<void> => {
+  simulateSwapTx = async (asset: OrderFormAsset): Promise<void> => {
+    const assetIsBaseAsset = asset.assetId === this.baseAsset.assetId;
+    const assetIn = assetIsBaseAsset ? this.baseAsset : this.quoteAsset;
+    const assetOut = assetIsBaseAsset ? this.quoteAsset : this.baseAsset;
+
     try {
-      this.isEstimating = true;
+      assetOut.isEstimating = true;
+
+      // reset potentially previously set flag
+      assetIn.isApproximately = false;
 
       const req = new SimulateTradeRequest({
-        input: new Value({
-          assetId: getAssetId(this.quoteAsset.metadata),
-          amount: toBaseUnit(
-            BigNumber(this.quoteAsset.amount ?? 0),
-            getDisplayDenomExponent(this.quoteAsset.metadata),
-          ),
-        }),
-        output: getAssetId(this.baseAsset.metadata),
+        input: assetIn.toValue(),
+        output: assetOut.assetId,
       });
 
       const res = await penumbra.service(SimulationService).simulateTrade(req);
-      console.log('TCL: OrderFormStore -> res', res);
 
       const output = new ValueView({
         valueView: {
           case: 'knownAssetId',
           value: {
             amount: res.output?.output?.amount,
-            metadata: this.baseAsset.metadata,
+            metadata: assetOut.metadata,
           },
         },
       });
@@ -333,25 +283,19 @@ class OrderFormStore {
           case: 'knownAssetId',
           value: {
             amount: res.unfilled?.amount,
-            metadata: this.quoteAsset.metadata,
+            metadata: assetIn.metadata,
           },
         },
       });
 
-      const metadataByAssetId = await getMetadataByAssetId(res.output?.traces);
-
-      this.simulateSwapResult = {
-        output,
-        unfilled,
-        priceImpact: calculatePriceImpact(res.output),
-        traces: res.output?.traces,
-        metadataByAssetId,
-      };
+      const outputAmount = getFormattedAmtFromValueView(output, true);
+      assetOut.setAmount(Number(outputAmount), false);
+      assetOut.isApproximately = true;
     } catch (e) {
       // @TODO: handle error
-      // errorToast(e, 'Error estimating swap').render();
+      console.error(e);
     } finally {
-      this.isEstimating = false;
+      assetOut.isEstimating = false;
     }
   };
 

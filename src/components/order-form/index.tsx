@@ -33,16 +33,8 @@ const useOrderFormStore = () => {
 
 export const OrderForm = observer(() => {
   const { connected } = connectionStore;
-  const {
-    baseAsset,
-    quoteAsset,
-    direction,
-    setDirection,
-    submitOrder,
-    isLoading,
-    simulateSwapResult,
-  } = useOrderFormStore();
-  console.log('TCL: OrderForm -> simulateSwapResult', simulateSwapResult);
+  const { baseAsset, quoteAsset, direction, setDirection, submitOrder, isLoading } =
+    useOrderFormStore();
 
   return (
     <div>
@@ -53,14 +45,16 @@ export const OrderForm = observer(() => {
         onChange={baseAsset.setAmount}
         min={0}
         max={1000}
-        // isEstimating={true}
-        // isApproximately={true}
+        isEstimating={baseAsset.isEstimating}
+        isApproximately={baseAsset.isApproximately}
         denominator={baseAsset.symbol}
       />
       <OrderInput
         label={direction === Direction.Buy ? 'Pay with' : 'Receive'}
         value={quoteAsset.amount}
         onChange={quoteAsset.setAmount}
+        isEstimating={quoteAsset.isEstimating}
+        isApproximately={quoteAsset.isApproximately}
         denominator={quoteAsset.symbol}
       />
       <Slider steps={8} asset={quoteAsset} />
