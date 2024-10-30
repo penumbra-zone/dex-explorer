@@ -33,10 +33,16 @@ const useOrderFormStore = () => {
 
 export const OrderForm = observer(() => {
   const { connected } = connectionStore;
-  const { baseAsset, quoteAsset, direction, setDirection, submitOrder, isLoading } =
-    useOrderFormStore();
-  console.log('TCL: OrderForm -> baseAsset', baseAsset);
-  console.log('TCL: OrderForm -> quoteAsset', quoteAsset);
+  const {
+    baseAsset,
+    quoteAsset,
+    direction,
+    setDirection,
+    submitOrder,
+    isLoading,
+    simulateSwapResult,
+  } = useOrderFormStore();
+  console.log('TCL: OrderForm -> simulateSwapResult', simulateSwapResult);
 
   return (
     <div>
@@ -57,7 +63,7 @@ export const OrderForm = observer(() => {
         onChange={quoteAsset.setAmount}
         denominator={quoteAsset.symbol}
       />
-      {/* <Slider /> */}
+      <Slider steps={8} asset={quoteAsset} />
       <div className='mb-4'>
         <InfoRow
           label='Trading Fee'

@@ -1,26 +1,22 @@
-import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Slider as PenumbraSlider } from '@penumbra-zone/ui/Slider';
 import { Text } from '@penumbra-zone/ui/Text';
-import { connectionStore } from '@/shared/state/connection';
+import { OrderFormAsset } from './order-form-state';
 
-export const Slider = observer(() => {
-  const { connected } = connectionStore;
-  const [sliderValue, setSliderValue] = useState(0);
-
+export const Slider = observer(({ asset, steps }: { asset: OrderFormAsset; steps: number }) => {
   return (
     <div className='mb-4'>
       <div className='mb-4'>
         <PenumbraSlider
           min={0}
-          max={1000}
-          step={100}
-          defaultValue={sliderValue}
+          max={asset.balance}
+          step={asset.balance / steps}
+          defaultValue={asset.amount}
           showValue={false}
-          onChange={setSliderValue}
+          onChange={asset.setAmount}
           focusedOutlineColor='#BA4D14'
           showTrackGaps={true}
-          trackGapBackground='#FAFAFA'
+          trackGapBackground='#0D0D0D'
           showFill={true}
         />
       </div>
@@ -28,8 +24,8 @@ export const Slider = observer(() => {
         <Text small color={color => color.text.secondary}>
           Available Balance
         </Text>
-        <Text small color={color => color.text.secondary}>
-          {sliderValue}
+        <Text small color={color => color.text.primary}>
+          {asset.balance} {asset.symbol}
         </Text>
       </div>
     </div>
