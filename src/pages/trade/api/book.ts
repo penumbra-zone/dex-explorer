@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Position } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { JsonValue } from '@bufbuild/protobuf';
-import { useRefetchOnNewBlock } from '@/shared/state/compactBlock.ts';
+import { useRefetchOnNewBlock } from '@/shared/api/compact-block.ts';
 
 interface BookResponse {
   asks: Position[];

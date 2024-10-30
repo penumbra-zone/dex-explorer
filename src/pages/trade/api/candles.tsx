@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { CandlestickData } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
-import { useRefetchOnNewBlock } from '@/shared/state/compactBlock.ts';
+import { useRefetchOnNewBlock } from '@/shared/api/compact-block.ts';
 
 export const useCandles = (
   symbol1: string,

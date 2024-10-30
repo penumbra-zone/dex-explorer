@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { Code, ConnectError } from '@connectrpc/connect';
 
 type StreamId = string;
 
@@ -47,9 +48,18 @@ export const useStream = ({ id, enabled = true, streamFn }: StreamConfig) => {
 
       // Only abort stream if no components are using it
       if (streamState.activeStreamCount === 0) {
-        streamState.controller.abort('Stream aborting');
+        streamState.controller.abort(STREAM_ABORT_MSG);
         streamStates.delete(id);
       }
     };
   }, [enabled, streamFn, id]);
+};
+
+const STREAM_ABORT_MSG = 'useStream unmounting';
+
+export const errorIsStreamAbort = (error: unknown) => {
+  return (
+    (error instanceof ConnectError && error.code === Code.Canceled) ||
+    (error instanceof ConnectError && error.message.includes(STREAM_ABORT_MSG))
+  );
 };

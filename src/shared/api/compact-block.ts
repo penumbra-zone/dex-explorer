@@ -1,12 +1,12 @@
 'use client';
 
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
-import { useGrpcTransport } from '@/shared/state/transport.ts';
 import { CompactBlockService, TendermintProxyService } from '@penumbra-zone/protobuf';
-import { Code, ConnectError, createPromiseClient, Transport } from '@connectrpc/connect';
-import { useStream } from '@/shared/useStream.ts';
+import { createPromiseClient, Transport } from '@connectrpc/connect';
+import { errorIsStreamAbort, useStream } from '@/shared/use-stream.ts';
 import { useCallback, useEffect } from 'react';
 import { queryClient } from '@/shared/const/queryClient.ts';
+import { useGrpcTransport } from '@/shared/api/transport.ts';
 
 const fetchLatestBlockHeight = async (transport: Transport) => {
   const tendermintClient = createPromiseClient(TendermintProxyService, transport);
@@ -34,12 +34,7 @@ const startBlockHeightStream = async (transport: Transport, signal: AbortSignal)
       }
     }
   } catch (error) {
-    if (
-      (error instanceof ConnectError && error.code === Code.Canceled) ||
-      error === 'Streaming compact block aborting'
-    ) {
-      // Expected abort due to component unmounting, do nothing
-    } else {
+    if (!errorIsStreamAbort(error)) {
       console.error('Unexpected compact block streaming error:', error);
     }
   }
