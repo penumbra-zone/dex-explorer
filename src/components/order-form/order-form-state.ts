@@ -1,48 +1,31 @@
 import { makeAutoObservable } from 'mobx';
+import { BigNumber } from 'bignumber.js';
+import { round } from 'lodash';
+import { ViewService, SimulationService } from '@penumbra-zone/protobuf';
+import { PartialMessage } from '@bufbuild/protobuf';
 import {
-  AuthorizeAndBuildRequest,
-  AuthorizeAndBuildResponse,
   BalancesResponse,
-  BroadcastTransactionRequest,
-  BroadcastTransactionResponse,
   TransactionPlannerRequest,
-  WitnessAndBuildRequest,
-  WitnessAndBuildResponse,
 } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
-import { getFormattedAmtFromValueView } from '@penumbra-zone/types/value-view';
 import {
   AssetId,
   Metadata,
   Value,
   ValueView,
 } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
-import { BigNumber } from 'bignumber.js';
-import { round } from 'lodash';
-import { StateCommitment } from '@penumbra-zone/protobuf/penumbra/crypto/tct/v1/tct_pb';
-import { errorToast } from '@penumbra-zone/ui/lib/toast/presets';
-import {
-  SwapExecution,
-  SwapExecution_Trace,
-  SimulateTradeRequest,
-  SimulateTradeResponse,
-} from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
-import {
-  getAmount,
-  getAssetIdFromValueView,
-  getDisplayDenomExponentFromValueView,
-  getMetadata,
-} from '@penumbra-zone/getters/value-view';
-import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
-import { getAssetId } from '@penumbra-zone/getters/metadata';
-import { ViewService, DexService, SimulationService } from '@penumbra-zone/protobuf';
+import { SimulateTradeRequest } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
+import { getAssetId, getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { getSwapCommitmentFromTx } from '@penumbra-zone/getters/transaction';
-import { getAddressIndex } from '@penumbra-zone/getters/address-view';
-import { toBaseUnit, joinLoHi } from '@penumbra-zone/types/lo-hi';
-import { getAmountFromValue, getAssetIdFromValue } from '@penumbra-zone/getters/value';
+import { getAddressIndex, getAddress } from '@penumbra-zone/getters/address-view';
+import { getAssetIdFromValueView } from '@penumbra-zone/getters/value-view';
+import { getFormattedAmtFromValueView } from '@penumbra-zone/types/value-view';
+import { toBaseUnit } from '@penumbra-zone/types/lo-hi';
 import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
-import { divideAmounts, formatAmount, removeTrailingZeros } from '@penumbra-zone/types/amount';
-import { bech32mAssetId } from '@penumbra-zone/bech32m/passet';
-import { AddressIndex } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
+import { AddressIndex, AddressView } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
+import { Transaction } from '@penumbra-zone/protobuf/penumbra/core/transaction/v1/transaction_pb';
+// import { TransactionToast } from '@penumbra-zone/ui/lib/toast/transaction-toast';
+import { TransactionClassification } from '@penumbra-zone/perspective/transaction/classification';
+import { uint8ArrayToHex } from '@penumbra-zone/types/hex';
 import { penumbra } from '@/shared/penumbra';
 
 export enum Direction {
@@ -54,94 +37,73 @@ export enum OrderType {
   Swap = 'Swap',
 }
 
-// export const amountMoreThanBalance = (
-//   asset: BalancesResponse,
-//   /**
-//    * The amount that a user types into the interface will always be in the
-//    * display denomination -- e.g., in `penumbra`, not in `upenumbra`.
-//    */
-//   amountInDisplayDenom: string,
-// ): boolean => {
-//   if (!asset.balanceView) {
-//     throw new Error('Missing balanceView');
-//   }
+function TransactionToast() {
+  return {};
+}
 
-//   const balanceAmt = fromValueView(asset.balanceView);
-//   return Boolean(amountInDisplayDenom) && BigNumber(amountInDisplayDenom).gt(balanceAmt);
-// };
+export const userDeniedTransaction = (e: unknown): boolean =>
+  e instanceof Error && e.message.startsWith('[permission_denied]');
 
-// /**
-//  * Checks if the entered amount fraction part is longer than the asset's exponent
-//  */
-// export const isIncorrectDecimal = (
-//   asset: BalancesResponse,
-//   /**
-//    * The amount that a user types into the interface will always be in the
-//    * display denomination -- e.g., in `penumbra`, not in `upenumbra`.
-//    */
-//   amountInDisplayDenom: string,
-// ): boolean => {
-//   if (!asset.balanceView) {
-//     throw new Error('Missing balanceView');
-//   }
+export const unauthenticated = (e: unknown): boolean =>
+  e instanceof Error && e.message.startsWith('[unauthenticated]');
 
-//   const exponent = getDisplayDenomExponent.optional(
-//     getMetadataFromBalancesResponse.optional(asset),
-//   );
-//   const fraction = amountInDisplayDenom.split('.')[1]?.length;
-//   return typeof exponent !== 'undefined' && typeof fraction !== 'undefined' && fraction > exponent;
-// };
+/**
+ * Handles the common use case of planning, building, and broadcasting a
+ * transaction, along with the appropriate toasts. Throws if there is an
+ * unhandled error (i.e., any error other than the user denying authorization
+ * for the transaction) so that consuming code can take different actions based
+ * on whether the transaction succeeded or failed.
+ */
+export const planBuildBroadcast = async (
+  transactionClassification: TransactionClassification,
+  req: PartialMessage<TransactionPlannerRequest>,
+  options?: {
+    /**
+     * If set to `true`, the `ViewService#witnessAndBuild` method will be used,
+     * which does not prompt the user to authorize the transaction. If `false`,
+     * the `ViewService#authorizeAndBuild` method will be used, which _does_
+     * prompt the user to authorize the transaction. (This is required in the
+     * case of most transactions.) Default: `false`
+     */
+    skipAuth?: boolean;
+  },
+): Promise<Transaction | undefined> => {
+  const toast = new TransactionToast(transactionClassification);
+  toast.onStart();
 
-// const isValidAmount = (amount: string, assetIn?: BalancesResponse) =>
-//   Number(amount) >= 0 &&
-//   (!assetIn || !amountMoreThanBalance(assetIn, amount)) &&
-//   (!assetIn || !isIncorrectDecimal(assetIn, amount));
+  const rpcMethod = options?.skipAuth
+    ? penumbra.service(ViewService).witnessAndBuild
+    : penumbra.service(ViewService).authorizeAndBuild;
 
-// const assembleSwapRequest = async ({
-//   assetIn,
-//   amount,
-//   assetOut,
-// }: Pick<SwapSlice, 'assetIn' | 'assetOut' | 'amount'>) => {
-//   if (!assetIn) {
-//     throw new Error('`assetIn` is undefined');
-//   }
-//   if (!assetOut) {
-//     throw new Error('`assetOut` is undefined');
-//   }
-//   if (!isValidAmount(amount, assetIn)) {
-//     throw new Error('Invalid amount');
-//   }
+  try {
+    const transactionPlan = await plan(req);
 
-//   const addressIndex = getAddressIndex(assetIn.accountAddress);
+    const transaction = await build({ transactionPlan }, rpcMethod, status =>
+      toast.onBuildStatus(status),
+    );
 
-//   return new TransactionPlannerRequest({
-//     swaps: [
-//       {
-//         targetAsset: getAssetId(assetOut),
-//         value: {
-//           amount: toBaseUnit(
-//             BigNumber(amount),
-//             getDisplayDenomExponentFromValueView(assetIn.balanceView),
-//           ),
-//           assetId: getAssetIdFromValueView(assetIn.balanceView),
-//         },
-//         claimAddress: await getAddressByIndex(addressIndex.account),
-//       },
-//     ],
-//     source: getAddressIndex(assetIn.accountAddress),
-//   });
-// };
+    const txHash = uint8ArrayToHex((await txSha256(transaction)).inner);
+    toast.txHash(txHash);
 
-// const metadata = isBalancesResponse(value)
-// ? getMetadataFromBalancesResponse.optional(value)
-// : value;
+    const { detectionHeight } = await broadcast({ transaction, awaitDetection: true }, status =>
+      toast.onBroadcastStatus(status),
+    );
+    toast.onSuccess(detectionHeight);
 
-// const balance = isBalancesResponse(value)
-// ? {
-//     addressIndexAccount: getAddressIndex.optional(value)?.account,
-//     valueView: getBalanceView.optional(value),
-//   }
-// : undefined;
+    return transaction;
+  } catch (e) {
+    if (userDeniedTransaction(e)) {
+      toast.onDenied();
+    } else if (unauthenticated(e)) {
+      toast.onUnauthenticated();
+    } else {
+      toast.onFailure(e);
+      throw e;
+    }
+  }
+
+  return undefined;
+};
 
 export class OrderFormAsset {
   symbol: string;
@@ -149,12 +111,12 @@ export class OrderFormAsset {
   exponent?: number;
   assetId?: AssetId;
   balanceView?: ValueView;
+  accountAddress?: AddressView;
   balance?: number;
   amount?: number;
-  onAmountChangeCallback?: Function;
+  onAmountChangeCallback?: (asset: OrderFormAsset) => void;
   isEstimating = false;
   isApproximately = false;
-
   constructor(metadata?: Metadata) {
     makeAutoObservable(this);
 
@@ -167,6 +129,10 @@ export class OrderFormAsset {
   setBalanceView = (balanceView: ValueView): void => {
     this.balanceView = balanceView;
     this.setBalanceFromBalanceView(balanceView);
+  };
+
+  setAccountAddress = (accountAddress: AddressView): void => {
+    this.accountAddress = accountAddress;
   };
 
   setBalanceFromBalanceView = (balanceView: ValueView): void => {
@@ -195,14 +161,18 @@ export class OrderFormAsset {
     this.isApproximately = isApproximately;
   };
 
-  onAmountChange = (callback: Function): void => {
+  onAmountChange = (callback: (asset: OrderFormAsset) => void): void => {
     this.onAmountChangeCallback = callback;
+  };
+
+  toAmount = (): Amount => {
+    return toBaseUnit(BigNumber(this.amount ?? 0), this.exponent);
   };
 
   toValue = (): Value => {
     return new Value({
       assetId: this.assetId,
-      amount: toBaseUnit(BigNumber(this.amount ?? 0), this.exponent),
+      amount: this.toAmount(),
     });
   };
 }
@@ -234,12 +204,18 @@ class OrderFormStore {
     if (baseAssetBalance?.balanceView) {
       this.baseAsset.setBalanceView(baseAssetBalance.balanceView);
     }
+    if (baseAssetBalance?.accountAddress) {
+      this.baseAsset.setAccountAddress(baseAssetBalance.accountAddress);
+    }
 
     const quoteAssetBalance = this.balances?.find(resp =>
       getAssetIdFromValueView(resp.balanceView).equals(getAssetId(this.quoteAsset.metadata)),
     );
     if (quoteAssetBalance?.balanceView) {
       this.quoteAsset.setBalanceView(quoteAssetBalance.balanceView);
+    }
+    if (quoteAssetBalance?.accountAddress) {
+      this.quoteAsset.setAccountAddress(quoteAssetBalance.accountAddress);
     }
   };
 
@@ -286,16 +262,6 @@ class OrderFormStore {
         },
       });
 
-      // const unfilled = new ValueView({
-      //   valueView: {
-      //     case: 'knownAssetId',
-      //     value: {
-      //       amount: res.unfilled?.amount,
-      //       metadata: assetIn.metadata,
-      //     },
-      //   },
-      // });
-
       const outputAmount = getFormattedAmtFromValueView(output, true);
       assetOut.setAmount(Number(outputAmount), false);
       assetOut.setIsApproximately(true);
@@ -308,25 +274,41 @@ class OrderFormStore {
   };
 
   initiateSwapTx = async (): Promise<void> => {
-    this.isLoading = true;
+    try {
+      this.isLoading = true;
 
-    // try {
-    //   const swapReq = await assembleSwapRequest(get().swap);
-    //   const swapTx = await planBuildBroadcast('swap', swapReq);
-    //   const swapCommitment = getSwapCommitmentFromTx(swapTx);
-    //   await issueSwapClaim(swapCommitment, swapReq.source);
+      const isBuy = this.direction === Direction.Buy;
+      const assetIn = isBuy ? this.quoteAsset : this.baseAsset;
+      const assetOut = isBuy ? this.baseAsset : this.quoteAsset;
 
-    //   set(state => {
-    //     state.swap.amount = '';
-    //   });
-    //   get().shared.balancesResponses.revalidate();
-    // } finally {
-    //   set(state => {
-    //     state.swap.instantSwap.txInProgress = false;
-    //   });
-    // }
+      const source = getAddressIndex(assetIn.accountAddress);
 
-    this.isLoading = false;
+      const swapReq = new TransactionPlannerRequest({
+        swaps: [
+          {
+            targetAsset: assetOut.assetId,
+            value: {
+              amount: assetIn.toAmount(),
+              assetId: assetIn.assetId,
+            },
+            claimAddress: getAddress(assetIn.accountAddress),
+          },
+        ],
+        source,
+      });
+
+      const swapTx = await planBuildBroadcast('swap', swapReq);
+      const swapCommitment = getSwapCommitmentFromTx(swapTx);
+
+      // Issue swap claim
+      const req = new TransactionPlannerRequest({ swapClaims: [{ swapCommitment }], source });
+      await planBuildBroadcast('swapClaim', req, { skipAuth: true });
+
+      assetIn.setAmount(0);
+      assetOut.setAmount(0);
+    } finally {
+      this.isLoading = false;
+    }
   };
 
   submitOrder = (): void => {
