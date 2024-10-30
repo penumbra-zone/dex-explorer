@@ -187,6 +187,14 @@ export class OrderFormAsset {
     }
   };
 
+  setIsEstimating = (isEstimating: boolean): void => {
+    this.isEstimating = isEstimating;
+  };
+
+  setIsApproximately = (isApproximately: boolean): void => {
+    this.isApproximately = isApproximately;
+  };
+
   onAmountChange = (callback: Function): void => {
     this.onAmountChangeCallback = callback;
   };
@@ -256,10 +264,10 @@ class OrderFormStore {
     const assetOut = assetIsBaseAsset ? this.quoteAsset : this.baseAsset;
 
     try {
-      assetOut.isEstimating = true;
+      assetOut.setIsEstimating(true);
 
       // reset potentially previously set flag
-      assetIn.isApproximately = false;
+      assetIn.setIsApproximately(false);
 
       const req = new SimulateTradeRequest({
         input: assetIn.toValue(),
@@ -278,24 +286,24 @@ class OrderFormStore {
         },
       });
 
-      const unfilled = new ValueView({
-        valueView: {
-          case: 'knownAssetId',
-          value: {
-            amount: res.unfilled?.amount,
-            metadata: assetIn.metadata,
-          },
-        },
-      });
+      // const unfilled = new ValueView({
+      //   valueView: {
+      //     case: 'knownAssetId',
+      //     value: {
+      //       amount: res.unfilled?.amount,
+      //       metadata: assetIn.metadata,
+      //     },
+      //   },
+      // });
 
       const outputAmount = getFormattedAmtFromValueView(output, true);
       assetOut.setAmount(Number(outputAmount), false);
-      assetOut.isApproximately = true;
+      assetOut.setIsApproximately(true);
     } catch (e) {
       // @TODO: handle error
       console.error(e);
     } finally {
-      assetOut.isEstimating = false;
+      assetOut.setIsEstimating(false);
     }
   };
 
