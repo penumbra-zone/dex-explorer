@@ -1,7 +1,7 @@
 import { styled, keyframes, css } from 'styled-components';
-import { small, large } from './utils';
+import { small, large } from '@penumbra-zone/ui/utils/typography';
 import { forwardRef, useId } from 'react';
-import SpinnerIcon from './spinner-icon.svg';
+import SpinnerIcon from '@/shared/assets/spinner-icon.svg';
 
 const Wrapper = styled.div`
   position: relative;

@@ -4,13 +4,13 @@ import { Icon } from '@penumbra-zone/ui/Icon';
 import { Tooltip } from '@penumbra-zone/ui/Tooltip';
 import { InfoIcon } from 'lucide-react';
 
-type InfoRowProps = {
+interface InfoRowProps {
   label: string;
   isLoading?: boolean;
   value: string;
   valueColor?: 'success' | 'error';
   toolTip: string;
-};
+}
 
 export const InfoRow = observer(
   ({ label, isLoading, value, valueColor, toolTip }: InfoRowProps) => {

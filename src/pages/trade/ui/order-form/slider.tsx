@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import { Slider as PenumbraSlider } from '@penumbra-zone/ui/Slider';
 import { Text } from '@penumbra-zone/ui/Text';
-import { OrderFormAsset } from './order-form-state';
+import { OrderFormAsset } from './order-form-store';
 
 export const Slider = observer(({ asset, steps }: { asset: OrderFormAsset; steps: number }) => {
   return (

@@ -7,8 +7,8 @@ import { Text } from '@penumbra-zone/ui/Text';
 import { Button } from '@penumbra-zone/ui/Button';
 import { Dialog } from '@penumbra-zone/ui/Dialog';
 import { PenumbraClient } from '@penumbra-zone/client';
-import { connectionStore } from '@/shared/state/connection';
-import { useProviderManifests } from '@/shared/state/providerManifests';
+import { connectionStore } from '@/shared/model/connection';
+import { useProviderManifests } from '@/shared/api/providerManifests';
 
 export const ConnectButton = observer(() => {
   const [isOpen, setIsOpen] = useState(false);

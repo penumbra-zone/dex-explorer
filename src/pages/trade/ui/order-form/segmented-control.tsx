@@ -1,7 +1,6 @@
-/* eslint-disable no-nested-ternary */
-import React, { useState } from 'react';
+import React from 'react';
 import styled from 'styled-components';
-import { Direction } from '../order-form-state';
+import { Direction } from './order-form-store';
 
 const getToggleColor = props =>
   props.isBuy ? props.theme.color.success.main : props.theme.color.destructive.main;

@@ -1,7 +1,7 @@
 'use client';
 
 import { Card } from '@penumbra-zone/ui/Card';
-import { OrderForm } from '@/components/order-form';
+import { OrderForm } from './order-form';
 import { PairSelector } from './pair-selector';
 import { RouteBook } from './route-book';
 import { Chart } from './chart';

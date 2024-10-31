@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Button } from '@penumbra-zone/ui/Button';
+import { connectionStore } from '@/shared/model/connection';
+import { useBalances } from '@/shared/api/balances';
+import { usePathToMetadata } from '../../model/use-path-to-metadata';
 import { OrderInput } from './order-input';
 import { SegmentedControl } from './segmented-control';
 import { ConnectButton } from './connect-button';
-import { connectionStore } from '@/shared/state/connection';
-import { usePathToMetadata } from '@/shared/usePagePath';
 import { Slider } from './slider';
 import { InfoRow } from './info-row';
-import { orderFormStore, Direction } from './order-form-state';
-import { useBalances } from '@/shared/state/balances';
+import { orderFormStore, Direction } from './order-form-store';
 
 const useOrderFormStore = () => {
   const { baseAsset, quoteAsset } = usePathToMetadata();
