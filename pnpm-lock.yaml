@@ -54,8 +54,8 @@ importers:
         specifier: ^25.0.0
         version: 25.0.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/getters@19.0.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0))
       '@penumbra-zone/ui':
-        specifier: file:../web/packages/ui/penumbra-zone-ui-12.1.0.tgz
-        version: file:../web/packages/ui/penumbra-zone-ui-12.1.0.tgz(qt5t26z6gbqmxqu462mr7q4sv4)
+        specifier: ^12.1.1
+        version: 12.2.1(qt5t26z6gbqmxqu462mr7q4sv4)
       '@penumbra-zone/wasm':
         specifier: ^30.1.0
         version: 30.1.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0))(@penumbra-zone/types@25.0.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/getters@19.0.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))
@@ -2192,9 +2192,8 @@ packages:
       '@penumbra-zone/getters': 20.0.0
       '@penumbra-zone/protobuf': 6.3.0
 
-  '@penumbra-zone/ui@file:../web/packages/ui/penumbra-zone-ui-12.1.0.tgz':
-    resolution: {integrity: sha512-RNQA4WRHlVC89OcLTpQx74K0wrgK/LEMQtojJILxHpKfSevuoYnCz58DXRrIKJQwJ0f02aj3Cu2xy1RWEIbRWw==, tarball: file:../web/packages/ui/penumbra-zone-ui-12.1.0.tgz}
-    version: 12.1.0
+  '@penumbra-zone/ui@12.2.1':
+    resolution: {integrity: sha512-5bWomxhj14UY9T2SgYEpUQ278ljYBijHHAUFBS9NM2MHEKPaK9Q9Pr5u8jBFdwGIihDuAFLkUdGVM66xwzA1eg==}
     peerDependencies:
       '@bufbuild/protobuf': ^1.10.0
       '@penumbra-zone/protobuf': 6.3.0
@@ -8721,7 +8720,7 @@ snapshots:
       idb: 8.0.0
       zod: 3.23.8
 
-  '@penumbra-zone/ui@file:../web/packages/ui/penumbra-zone-ui-12.1.0.tgz(qt5t26z6gbqmxqu462mr7q4sv4)':
+  '@penumbra-zone/ui@12.2.1(qt5t26z6gbqmxqu462mr7q4sv4)':
     dependencies:
       '@bufbuild/protobuf': 1.10.0
       '@emotion/react': 11.13.3(@types/react@18.3.5)(react@18.3.1)
@@ -11436,7 +11435,7 @@ snapshots:
       safe-regex-test: 1.0.3
       string.prototype.includes: 2.0.0
 
-  eslint-plugin-prettier@5.2.1(eslint-config-prettier@9.1.0(eslint@9.10.0(jiti@1.21.6)))(eslint@9.10.0(jiti@1.21.6))(prettier@3.3.3):
+  eslint-plugin-prettier@5.2.1(eslint-config-prettier@9.1.0(eslint@8.57.0))(eslint@9.10.0(jiti@1.21.6))(prettier@3.3.3):
     dependencies:
       eslint: 9.10.0(jiti@1.21.6)
       prettier: 3.3.3
@@ -12626,7 +12625,7 @@ snapshots:
       eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.6.2))(eslint-plugin-import-x@0.5.3(eslint@8.57.0)(typescript@5.6.2))(eslint-plugin-import@2.30.0)(eslint@9.10.0(jiti@1.21.6))
       eslint-plugin-import: 2.30.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.6.2))(eslint@8.57.0)
       eslint-plugin-import-x: 0.5.3(eslint@9.10.0(jiti@1.21.6))(typescript@5.6.2)
-      eslint-plugin-prettier: 5.2.1(eslint-config-prettier@9.1.0(eslint@9.10.0(jiti@1.21.6)))(eslint@9.10.0(jiti@1.21.6))(prettier@3.3.3)
+      eslint-plugin-prettier: 5.2.1(eslint-config-prettier@9.1.0(eslint@8.57.0))(eslint@9.10.0(jiti@1.21.6))(prettier@3.3.3)
       eslint-plugin-react: 7.35.2(eslint@9.10.0(jiti@1.21.6))
       eslint-plugin-react-hooks: 5.1.0-rc-c3cdbec0a7-20240708(eslint@9.10.0(jiti@1.21.6))
       eslint-plugin-react-refresh: 0.4.11(eslint@9.10.0(jiti@1.21.6))
