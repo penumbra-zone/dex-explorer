@@ -231,9 +231,7 @@ class OrderFormStore {
       });
 
       const swapTx = await planBuildBroadcast('swap', swapReq);
-      console.log('TCL: OrderFormStore -> swapTx', swapTx);
       const swapCommitment = getSwapCommitmentFromTx(swapTx);
-      console.log('TCL: OrderFormStore -> swapCommitment', swapCommitment);
 
       // Issue swap claim
       const req = new TransactionPlannerRequest({

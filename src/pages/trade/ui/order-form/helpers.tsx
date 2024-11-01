@@ -90,7 +90,6 @@ export const planBuildBroadcast = async (
     type: 'loading',
     message: `Building ${label} transaction`,
   });
-  console.log('TCL: toast', toast);
 
   const rpcMethod = options?.skipAuth
     ? penumbra.service(ViewService).witnessAndBuild
@@ -116,9 +115,15 @@ export const planBuildBroadcast = async (
       }),
     );
 
+    toast.update({
+      type: 'success',
+      message: `${label} transaction succeeded! 🎉`,
+      description: `Transaction ${shortenedTxHash} appeared on chain${detectionHeight ? ` at height ${detectionHeight}` : ''}.`,
+      // action: <Link to={`/tx/${this._txHash}`}>See details</Link>
+    });
+
     return transaction;
   } catch (e) {
-    console.log('TCL: e', e);
     if (userDeniedTransaction(e)) {
       toast.update({
         type: 'error',
@@ -137,7 +142,6 @@ export const planBuildBroadcast = async (
         message: 'Transaction failed',
         description: String(e),
       });
-      throw e;
     }
   }
 
