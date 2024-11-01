@@ -20,7 +20,11 @@ import { getAssetIdFromValueView } from '@penumbra-zone/getters/value-view';
 import { getFormattedAmtFromValueView } from '@penumbra-zone/types/value-view';
 import { toBaseUnit } from '@penumbra-zone/types/lo-hi';
 import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
-import { AddressView } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
+import {
+  AddressView,
+  Address,
+  AddressIndex,
+} from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
 import { penumbra } from '@/shared/const/penumbra';
 import { planBuildBroadcast } from './helpers';
 
@@ -39,7 +43,8 @@ export class OrderFormAsset {
   exponent?: number;
   assetId?: AssetId;
   balanceView?: ValueView;
-  accountAddress?: AddressView;
+  accountAddress?: Address;
+  accountIndex?: AddressIndex;
   balance?: number;
   amount?: number;
   onAmountChangeCallback?: (asset: OrderFormAsset) => void;
@@ -60,8 +65,9 @@ export class OrderFormAsset {
     this.setBalanceFromBalanceView(balanceView);
   };
 
-  setAccountAddress = (accountAddress: AddressView): void => {
-    this.accountAddress = accountAddress;
+  setAccountAddress = (addressView: AddressView): void => {
+    this.accountAddress = getAddress(addressView);
+    this.accountIndex = getAddressIndex(addressView);
   };
 
   setBalanceFromBalanceView = (balanceView: ValueView): void => {
@@ -210,8 +216,6 @@ class OrderFormStore {
       const assetIn = isBuy ? this.quoteAsset : this.baseAsset;
       const assetOut = isBuy ? this.baseAsset : this.quoteAsset;
 
-      const source = getAddressIndex(assetIn.accountAddress);
-
       const swapReq = new TransactionPlannerRequest({
         swaps: [
           {
@@ -220,17 +224,22 @@ class OrderFormStore {
               amount: assetIn.toAmount(),
               assetId: assetIn.assetId,
             },
-            claimAddress: getAddress(assetIn.accountAddress),
+            claimAddress: assetIn.accountAddress,
           },
         ],
-        source,
+        source: assetIn.accountIndex,
       });
 
       const swapTx = await planBuildBroadcast('swap', swapReq);
+      console.log('TCL: OrderFormStore -> swapTx', swapTx);
       const swapCommitment = getSwapCommitmentFromTx(swapTx);
+      console.log('TCL: OrderFormStore -> swapCommitment', swapCommitment);
 
       // Issue swap claim
-      const req = new TransactionPlannerRequest({ swapClaims: [{ swapCommitment }], source });
+      const req = new TransactionPlannerRequest({
+        swapClaims: [{ swapCommitment }],
+        source: assetIn.accountIndex,
+      });
       await planBuildBroadcast('swapClaim', req, { skipAuth: true });
 
       assetIn.setAmount(0);

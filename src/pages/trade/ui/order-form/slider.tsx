@@ -2,6 +2,7 @@ import { observer } from 'mobx-react-lite';
 import { Slider as PenumbraSlider } from '@penumbra-zone/ui/Slider';
 import { Text } from '@penumbra-zone/ui/Text';
 import { OrderFormAsset } from './order-form-store';
+import { theme } from '@penumbra-zone/ui/PenumbraUIProvider';
 
 export const Slider = observer(({ asset, steps }: { asset: OrderFormAsset; steps: number }) => {
   return (
@@ -14,9 +15,9 @@ export const Slider = observer(({ asset, steps }: { asset: OrderFormAsset; steps
           defaultValue={asset.amount}
           showValue={false}
           onChange={asset.setAmount}
-          focusedOutlineColor='#BA4D14'
+          focusedOutlineColor={theme.color.primary.main}
           showTrackGaps={true}
-          trackGapBackground='#0D0D0D'
+          trackGapBackground={theme.color.base.black}
           showFill={true}
         />
       </div>

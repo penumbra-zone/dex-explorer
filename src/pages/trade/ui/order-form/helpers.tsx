@@ -16,7 +16,8 @@ import {
 } from '@penumbra-zone/protobuf/penumbra/core/transaction/v1/transaction_pb';
 import { TransactionId } from '@penumbra-zone/protobuf/penumbra/core/txhash/v1/txhash_pb';
 import { PartialMessage } from '@bufbuild/protobuf';
-import { TransactionToast } from '@penumbra-zone/ui/lib/toast/transaction-toast';
+import { openToast } from '@penumbra-zone/ui/Toast';
+import { Progress } from '@penumbra-zone/ui/Progress';
 import { TransactionClassification } from '@penumbra-zone/perspective/transaction/classification';
 import { uint8ArrayToHex } from '@penumbra-zone/types/hex';
 import { fromValueView } from '@penumbra-zone/types/amount';
@@ -28,6 +29,39 @@ import {
 import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { PromiseClient } from '@connectrpc/connect';
 import { penumbra } from '@/shared/const/penumbra';
+import { TRANSACTION_LABEL_BY_CLASSIFICATION } from '@penumbra-zone/perspective/transaction/classify';
+import { ReactNode } from 'react';
+import { shorten } from '@penumbra-zone/types/string';
+
+type BroadcastStatus = BroadcastTransactionResponse['status'];
+type BuildStatus = (AuthorizeAndBuildResponse | WitnessAndBuildResponse)['status'];
+
+const getBroadcastStatusMessage = (label: string, status?: BroadcastStatus) => {
+  if (status?.case === 'broadcastSuccess' || status?.case === 'confirmed') {
+    return 'Waiting for confirmation';
+  }
+  return `Emitting ${label} transaction`;
+};
+
+const getBuildStatusDescription = (
+  status?: Exclude<BuildStatus, undefined>,
+): ReactNode | undefined => {
+  if (status?.case === 'buildProgress') {
+    return (
+      <div className='mt-2'>
+        <Progress value={Math.round(status.value.progress * 100)} />
+      </div>
+    );
+  }
+  if (status?.case === 'complete') {
+    return (
+      <div className='mt-2'>
+        <Progress value={100} />
+      </div>
+    );
+  }
+  return undefined;
+};
 
 /**
  * Handles the common use case of planning, building, and broadcasting a
@@ -50,8 +84,13 @@ export const planBuildBroadcast = async (
     skipAuth?: boolean;
   },
 ): Promise<Transaction | undefined> => {
-  const toast = new TransactionToast(transactionClassification);
-  toast.onStart();
+  const label = TRANSACTION_LABEL_BY_CLASSIFICATION[transactionClassification];
+
+  const toast = openToast({
+    type: 'loading',
+    message: `Building ${label} transaction`,
+  });
+  console.log('TCL: toast', toast);
 
   const rpcMethod = options?.skipAuth
     ? penumbra.service(ViewService).witnessAndBuild
@@ -60,26 +99,44 @@ export const planBuildBroadcast = async (
   try {
     const transactionPlan = await plan(req);
 
-    const transaction = await build({ transactionPlan }, rpcMethod, status =>
-      toast.onBuildStatus(status),
-    );
+    const transaction = await build({ transactionPlan }, rpcMethod, status => {
+      toast.update({
+        description: getBuildStatusDescription(status),
+      });
+    });
 
     const txHash = uint8ArrayToHex((await txSha256(transaction)).inner);
-    toast.txHash(txHash);
+    const shortenedTxHash = shorten(txHash, 8);
 
     const { detectionHeight } = await broadcast({ transaction, awaitDetection: true }, status =>
-      toast.onBroadcastStatus(status),
+      toast.update({
+        type: 'success',
+        message: getBroadcastStatusMessage(label, status),
+        description: shortenedTxHash,
+      }),
     );
-    toast.onSuccess(detectionHeight);
 
     return transaction;
   } catch (e) {
+    console.log('TCL: e', e);
     if (userDeniedTransaction(e)) {
-      toast.onDenied();
+      toast.update({
+        type: 'error',
+        message: 'Transaction canceled',
+        description: undefined,
+      });
     } else if (unauthenticated(e)) {
-      toast.onUnauthenticated();
+      toast.update({
+        type: 'warning',
+        message: 'Not logged in',
+        description: 'Please log into the extension to continue.',
+      });
     } else {
-      toast.onFailure(e);
+      toast.update({
+        type: 'error',
+        message: 'Transaction failed',
+        description: String(e),
+      });
       throw e;
     }
   }
