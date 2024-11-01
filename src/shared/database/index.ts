@@ -5,32 +5,36 @@ import { DB } from '@/shared/database/schema.ts';
 import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 const { Pool, types } = pkg;
 
-const ca = process.env['PENUMBRA_INDEXER_CA_CERT'];
-const connectionString = process.env['PENUMBRA_INDEXER_ENDPOINT'];
-const dbConfig = {
-  connectionString: connectionString,
-  ...(ca && {
-    ssl: {
-      rejectUnauthorized: true,
-      ca: ca.startsWith('-----BEGIN CERTIFICATE-----') ? ca : fs.readFileSync(ca, 'utf-8'),
-    },
-  }),
-};
-const dialect = new PostgresDialect({
-  pool: new Pool(dbConfig),
-});
+class Pindexer {
+  private db: Kysely<DB>;
 
-export const db = new Kysely<DB>({ dialect });
+  constructor() {
+    const ca = process.env['PENUMBRA_INDEXER_CA_CERT'];
+    const connectionString = process.env['PENUMBRA_INDEXER_ENDPOINT'];
+    const dbConfig = {
+      connectionString: connectionString,
+      ...(ca && {
+        ssl: {
+          rejectUnauthorized: true,
+          ca: ca.startsWith('-----BEGIN CERTIFICATE-----') ? ca : fs.readFileSync(ca, 'utf-8'),
+        },
+      }),
+    };
+    const dialect = new PostgresDialect({
+      pool: new Pool(dbConfig),
+    });
 
-const int8TypeId = 20;
-// Map int8 to number.
-types.setTypeParser(int8TypeId, val => {
-  return BigInt(val);
-});
+    this.db = new Kysely<DB>({ dialect });
 
-export class Pindexer {
-  static async summary(baseAsset: AssetId, quoteAsset: AssetId) {
-    return db
+    const int8TypeId = 20;
+    // Map int8 to number.
+    types.setTypeParser(int8TypeId, val => {
+      return BigInt(val);
+    });
+  }
+
+  async summary(baseAsset: AssetId, quoteAsset: AssetId) {
+    return this.db
       .selectFrom('dex_ex_summary')
       .selectAll()
       .where('asset_start', '=', Buffer.from(baseAsset.inner))
@@ -38,3 +42,5 @@ export class Pindexer {
       .execute();
   }
 }
+
+export const pindexer = new Pindexer();

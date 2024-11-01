@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Pindexer } from '@/shared/database';
+import { pindexer } from '@/shared/database';
 import { ChainRegistryClient } from '@penumbra-labs/registry';
 import { DexExSummary } from '@/shared/database/schema.ts';
 
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<SummaryRespons
     );
   }
 
-  const results = await Pindexer.summary(
+  const results = await pindexer.summary(
     baseAssetMetadata.penumbraAssetId,
     quoteAssetMetadata.penumbraAssetId,
   );
