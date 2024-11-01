@@ -3,9 +3,9 @@ import { Pindexer } from '@/shared/database';
 import { ChainRegistryClient } from '@penumbra-labs/registry';
 import { DexExSummary } from '@/shared/database/schema.ts';
 
-type AllResponses = DexExSummary | { error: string };
+export type SummaryResponse = DexExSummary | { error: string };
 
-export async function GET(req: NextRequest): Promise<NextResponse<AllResponses>> {
+export async function GET(req: NextRequest): Promise<NextResponse<SummaryResponse>> {
   const chainId = process.env['PENUMBRA_CHAIN_ID'];
   if (!chainId) {
     return NextResponse.json({ error: 'PENUMBRA_CHAIN_ID is not set' }, { status: 500 });
