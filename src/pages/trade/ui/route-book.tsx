@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { usePathToMetadata } from '../model/use-path-to-metadata';
 import { useBook } from '../api/book';
 import { observer } from 'mobx-react-lite';
 import { RouteBookResponse, Trace } from '@/shared/api/server/book/types';
 import { ChevronRight } from 'lucide-react';
 import { getSymbolFromValueView } from '@penumbra-zone/getters/value-view';
+import { usePathSymbols } from '@/pages/trade/model/use-path.ts';
 const TabButton = ({ active, children }: { active: boolean; children: React.ReactNode }) => {
   return (
     <button
@@ -43,7 +43,6 @@ const RouteDisplay = ({ tokens }: { tokens: string[] }) => {
 const TradeRow = ({
   trace,
   isSell,
-  liquidityPercentage = 50,
   isDirect = false,
 }: {
   trace: Trace;
@@ -111,13 +110,8 @@ const SpreadRow = ({ spread }: { spread: { amount: number; percentage: number } 
 };
 
 const RouteBookData = observer(
-  ({
-    bookData: { singleHops, multiHops },
-    pair,
-  }: {
-    bookData: RouteBookResponse;
-    pair: [string, string];
-  }) => {
+  ({ bookData: { singleHops, multiHops } }: { bookData: RouteBookResponse }) => {
+    const pair = usePathSymbols();
     const tokens = ['UM', 'OSMO', 'SHITMOS', 'USDY', 'USDC'];
 
     const combineSortTraces = (direct: Trace[], multi: Trace[], isSell: boolean) => {
@@ -147,8 +141,8 @@ const RouteBookData = observer(
           <table className='w-full'>
             <thead>
               <tr className='text-xs text-gray-400'>
-                <th className='py-[8px] font-normal  text-left'>Price({pair[0]})</th>
-                <th className='py-[8px] font-normal  text-right'>Amount({pair[1]})</th>
+                <th className='py-[8px] font-normal  text-left'>Price({pair.baseSymbol})</th>
+                <th className='py-[8px] font-normal  text-right'>Amount({pair.quoteSymbol})</th>
                 <th className='py-[8px] font-normal  text-right'>Total</th>
                 <th className='py-[8px] font-normal  text-right'>Route</th>
               </tr>
@@ -172,7 +166,6 @@ const RouteBookData = observer(
                   key={`${trace.price}-${trace.total}-${idx}-${trace.isDirect}`}
                   trace={trace}
                   isSell={false}
-                  tokens={tokens}
                   liquidityPercentage={(buyOrders.length - idx) * (100 / buyOrders.length)}
                   isDirect={trace.isDirect}
                 />
@@ -186,24 +179,17 @@ const RouteBookData = observer(
 );
 
 export const RouteBook = observer(() => {
-  const { baseAsset, quoteAsset, error: pairError } = usePathToMetadata();
-  const {
-    data: bookData,
-    isLoading: bookIsLoading,
-    error: bookErr,
-  } = useBook(baseAsset?.symbol, quoteAsset?.symbol);
+  const { data: bookData, isLoading: bookIsLoading, error: bookErr } = useBook();
 
   if (bookIsLoading || !bookData) {
     return <div className='text-gray-400'>Loading...</div>;
   }
 
-  if (bookErr ?? pairError) {
-    return (
-      <div className='text-red-500'>Error loading route book: {String(bookErr ?? pairError)}</div>
-    );
+  if (bookErr) {
+    return <div className='text-red-500'>Error loading route book: {String(bookErr)}</div>;
   }
 
-  return <RouteBookData bookData={bookData} pair={[baseAsset?.symbol, quoteAsset?.symbol]} />;
+  return <RouteBookData bookData={bookData} />;
 });
 
 export default RouteBook;
