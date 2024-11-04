@@ -43,7 +43,7 @@ const RouteDisplay = ({ tokens }: { tokens: string[] }) => {
 const TradeRow = ({
   trace,
   isSell,
-  liquidityPercentage = 50,
+  // liquidityPercentage = 50,
   isDirect = false,
 }: {
   trace: Trace;
@@ -52,7 +52,7 @@ const TradeRow = ({
   isDirect?: boolean;
 }) => {
   const [showRoute, setShowRoute] = useState(false);
-  const bgColor = isSell ? '#AF2626' : '#1C793F';
+  // const bgColor = isSell ? '#AF2626' : '#1C793F';
 
   return (
     <tr
@@ -60,8 +60,8 @@ const TradeRow = ({
         ${showRoute ? 'bg-[rgba(250,250,250,0.05)]' : ''}`}
       onClick={() => setShowRoute(prev => !prev)}
     >
-      {/*/!* Liquidity progress bar *!/*/}
-      {/*<div className='absolute inset-0 p-0'>
+      {/*/ !* Liquidity progress bar *!/ */}
+      {/* <div className='absolute inset-0 p-0'>
         <div
           className='absolute inset-0 opacity-24'
           style={{
@@ -69,7 +69,7 @@ const TradeRow = ({
             right: `${100 - liquidityPercentage}%`,
           }}
         />
-      </div>*/}
+      </div> */}
 
       {showRoute ? (
         <td colSpan={4} className='relative px-4'>
@@ -118,7 +118,7 @@ const RouteBookData = observer(
     bookData: RouteBookResponse;
     pair: [string, string];
   }) => {
-    const tokens = ['UM', 'OSMO', 'SHITMOS', 'USDY', 'USDC'];
+    // const tokens = ['UM', 'OSMO', 'SHITMOS', 'USDY', 'USDC'];
 
     const combineSortTraces = (direct: Trace[], multi: Trace[], isSell: boolean) => {
       const combined = [
@@ -172,8 +172,8 @@ const RouteBookData = observer(
                   key={`${trace.price}-${trace.total}-${idx}-${trace.isDirect}`}
                   trace={trace}
                   isSell={false}
-                  tokens={tokens}
-                  liquidityPercentage={(buyOrders.length - idx) * (100 / buyOrders.length)}
+                  // tokens={tokens}
+                  // liquidityPercentage={(buyOrders.length - idx) * (100 / buyOrders.length)}
                   isDirect={trace.isDirect}
                 />
               ))}
@@ -203,7 +203,9 @@ export const RouteBook = observer(() => {
     );
   }
 
-  return <RouteBookData bookData={bookData} pair={[baseAsset?.symbol, quoteAsset?.symbol]} />;
+  return (
+    <RouteBookData bookData={bookData} pair={[baseAsset?.symbol ?? '', quoteAsset?.symbol ?? '']} />
+  );
 });
 
 export default RouteBook;
