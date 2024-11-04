@@ -11,7 +11,7 @@ export const Slider = observer(({ asset, steps }: { asset: OrderFormAsset; steps
         <PenumbraSlider
           min={0}
           max={asset.balance}
-          step={asset.balance / steps}
+          step={asset.balance ?? 0 / steps}
           defaultValue={asset.amount}
           showValue={false}
           onChange={asset.setAmount}

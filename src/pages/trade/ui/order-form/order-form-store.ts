@@ -18,8 +18,7 @@ import { getSwapCommitmentFromTx } from '@penumbra-zone/getters/transaction';
 import { getAddressIndex, getAddress } from '@penumbra-zone/getters/address-view';
 import { getAssetIdFromValueView } from '@penumbra-zone/getters/value-view';
 import { getFormattedAmtFromValueView } from '@penumbra-zone/types/value-view';
-import { toBaseUnit } from '@penumbra-zone/types/lo-hi';
-import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
+import { LoHi, toBaseUnit } from '@penumbra-zone/types/lo-hi';
 import {
   AddressView,
   Address,
@@ -35,6 +34,7 @@ export enum Direction {
 
 export enum OrderType {
   Swap = 'Swap',
+  Auction = 'Auction',
 }
 
 export class OrderFormAsset {
@@ -47,7 +47,7 @@ export class OrderFormAsset {
   accountIndex?: AddressIndex;
   balance?: number;
   amount?: number;
-  onAmountChangeCallback?: (asset: OrderFormAsset) => void;
+  onAmountChangeCallback?: (asset: OrderFormAsset) => Promise<void>;
   isEstimating = false;
   isApproximately = false;
 
@@ -75,15 +75,15 @@ export class OrderFormAsset {
     this.balance = Number(balance);
   };
 
-  setAmount = (amount: number, callOnAmountChange = true): void => {
+  setAmount = (amount: string | number, callOnAmountChange = true): void => {
     const prevAmount = this.amount;
-    const nextAmount = round(amount, this.exponent);
+    const nextAmount = round(Number(amount), this.exponent);
 
     if (prevAmount !== nextAmount) {
       this.amount = nextAmount;
 
       if (this.onAmountChangeCallback && callOnAmountChange) {
-        this.onAmountChangeCallback(this);
+        void this.onAmountChangeCallback(this);
       }
     }
   };
@@ -96,11 +96,11 @@ export class OrderFormAsset {
     this.isApproximately = isApproximately;
   };
 
-  onAmountChange = (callback: (asset: OrderFormAsset) => void): void => {
+  onAmountChange = (callback: (asset: OrderFormAsset) => Promise<void>): void => {
     this.onAmountChangeCallback = callback;
   };
 
-  toAmount = (): Amount => {
+  toAmount = (): LoHi => {
     return toBaseUnit(BigNumber(this.amount ?? 0), this.exponent);
   };
 
@@ -249,10 +249,12 @@ class OrderFormStore {
 
   submitOrder = (): void => {
     if (this.type === OrderType.Swap) {
-      this.initiateSwapTx();
+      void this.initiateSwapTx();
     }
 
-    // @TODO: handle other order types
+    if (this.type === OrderType.Auction) {
+      // @TODO: handle other order types
+    }
   };
 }
 

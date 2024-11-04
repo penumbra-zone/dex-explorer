@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Button } from '@penumbra-zone/ui/Button';
 import { connectionStore } from '@/shared/model/connection';
@@ -42,7 +42,7 @@ export const OrderForm = observer(() => {
       <OrderInput
         label={direction}
         value={baseAsset.amount}
-        onChange={baseAsset.setAmount}
+        onChange={baseAsset.setAmount as (amount: string, ...args: unknown[]) => void}
         min={0}
         max={1000}
         isEstimating={baseAsset.isEstimating}
@@ -52,7 +52,7 @@ export const OrderForm = observer(() => {
       <OrderInput
         label={direction === Direction.Buy ? 'Pay with' : 'Receive'}
         value={quoteAsset.amount}
-        onChange={quoteAsset.setAmount}
+        onChange={quoteAsset.setAmount as (amount: string, ...args: unknown[]) => void}
         isEstimating={quoteAsset.isEstimating}
         isApproximately={quoteAsset.isApproximately}
         denominator={quoteAsset.symbol}

@@ -1,4 +1,4 @@
-import { styled, keyframes, css } from 'styled-components';
+import { styled, keyframes } from 'styled-components';
 import { small, large } from '@penumbra-zone/ui/utils/typography';
 import { forwardRef, useId } from 'react';
 import SpinnerIcon from '@/shared/assets/spinner-icon.svg';
@@ -112,22 +112,20 @@ const StyledInput = styled.input<{ $isApproximately: boolean }>`
 `;
 
 export interface OrderInputProps {
+  id?: string;
   label: string;
-  value: number;
+  value?: number;
   placeholder?: string;
   isEstimating: boolean;
   isApproximately: boolean;
-  onChange: (value: string) => void;
+  onChange?: (amount: string, ...args: unknown[]) => void;
   denominator: string;
   max?: string | number;
   min?: string | number;
 }
 
 /**
- * A simple text field.
- *
- * Can be enriched with start and end adornments, which are markup that render
- * inside the text input's visual frame.
+ * The order form input field.
  */
 // eslint-disable-next-line react/display-name -- exotic component
 export const OrderInput = forwardRef<HTMLInputElement, OrderInputProps>(

@@ -19,6 +19,7 @@ import { PartialMessage } from '@bufbuild/protobuf';
 import { openToast } from '@penumbra-zone/ui/Toast';
 import { Progress } from '@penumbra-zone/ui/Progress';
 import { TransactionClassification } from '@penumbra-zone/perspective/transaction/classification';
+import { TRANSACTION_LABEL_BY_CLASSIFICATION } from '@penumbra-zone/perspective/transaction/classify';
 import { uint8ArrayToHex } from '@penumbra-zone/types/hex';
 import { fromValueView } from '@penumbra-zone/types/amount';
 import { BigNumber } from 'bignumber.js';
@@ -29,7 +30,6 @@ import {
 import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { PromiseClient } from '@connectrpc/connect';
 import { penumbra } from '@/shared/const/penumbra';
-import { TRANSACTION_LABEL_BY_CLASSIFICATION } from '@penumbra-zone/perspective/transaction/classify';
 import { ReactNode } from 'react';
 import { shorten } from '@penumbra-zone/types/string';
 
@@ -84,7 +84,10 @@ export const planBuildBroadcast = async (
     skipAuth?: boolean;
   },
 ): Promise<Transaction | undefined> => {
-  const label = TRANSACTION_LABEL_BY_CLASSIFICATION[transactionClassification];
+  const label =
+    transactionClassification in TRANSACTION_LABEL_BY_CLASSIFICATION
+      ? TRANSACTION_LABEL_BY_CLASSIFICATION[transactionClassification]
+      : '';
 
   const toast = openToast({
     type: 'loading',
