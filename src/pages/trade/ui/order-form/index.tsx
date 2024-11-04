@@ -65,6 +65,7 @@ export const OrderForm = observer(() => {
           valueColor='success'
           toolTip='On Penumbra, trading fees are completely free.'
         />
+        {/* @TODO: Add gas fee */}
         <InfoRow
           label='Gas Fee'
           isLoading={true}
