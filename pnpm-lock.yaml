@@ -63,8 +63,8 @@ importers:
         specifier: ^26.0.0
         version: 26.1.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/getters@20.0.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0))
       '@penumbra-zone/ui':
-        specifier: ^12.2.1
-        version: 12.2.1(kg7ery3m263qwpevyyqvv24aiu)
+        specifier: ^12.4.0
+        version: 12.4.0(kg7ery3m263qwpevyyqvv24aiu)
       '@penumbra-zone/wasm':
         specifier: ^31.0.0
         version: 31.0.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0))(@penumbra-zone/types@26.1.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/getters@20.0.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))
@@ -2204,8 +2204,8 @@ packages:
       '@penumbra-zone/getters': 20.0.0
       '@penumbra-zone/protobuf': 6.3.0
 
-  '@penumbra-zone/ui@12.2.1':
-    resolution: {integrity: sha512-5bWomxhj14UY9T2SgYEpUQ278ljYBijHHAUFBS9NM2MHEKPaK9Q9Pr5u8jBFdwGIihDuAFLkUdGVM66xwzA1eg==}
+  '@penumbra-zone/ui@12.4.0':
+    resolution: {integrity: sha512-nyG4PgOrp9OJaF848VVKW+YKGxKR1X5+Y1tFgwbsUaTtLeqJvdEFsNHolCBV/dJQpacdqoeDadU7xH25ZgwZFw==}
     peerDependencies:
       '@bufbuild/protobuf': ^1.10.0
       '@penumbra-zone/protobuf': 6.3.0
@@ -8733,7 +8733,7 @@ snapshots:
       idb: 8.0.0
       zod: 3.23.8
 
-  '@penumbra-zone/ui@12.2.1(kg7ery3m263qwpevyyqvv24aiu)':
+  '@penumbra-zone/ui@12.4.0(kg7ery3m263qwpevyyqvv24aiu)':
     dependencies:
       '@bufbuild/protobuf': 1.10.0
       '@emotion/react': 11.13.3(@types/react@18.3.5)(react@18.3.1)
