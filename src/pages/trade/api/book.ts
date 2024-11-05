@@ -3,7 +3,7 @@ import { useRefetchOnNewBlock } from '@/shared/api/compact-block.ts';
 import { RouteBookResponse } from '@/shared/api/server/book/types';
 import { deserializeRouteBookResponseJson } from '@/shared/api/server/book/serialization.ts';
 import { RouteBookApiResponse } from '@/shared/api/server/book';
-import { usePathSymbols } from '@/pages/trade/model/use-path-to-metadata.ts';
+import { usePathSymbols } from '@/pages/trade/model/use-path.ts';
 
 export const useBook = () => {
   const { baseSymbol, quoteSymbol } = usePathSymbols();

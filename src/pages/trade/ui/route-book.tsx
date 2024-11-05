@@ -48,12 +48,12 @@ const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBo
 export const RouteBook = observer(() => {
   const { data, isLoading, error } = useBook();
 
-  if (isLoading || !data) {
-    return <RouteBookLoadingState />;
-  }
-
   if (error) {
     return <div>Error loading route book: ${String(error)}</div>;
+  }
+
+  if (isLoading || !data) {
+    return <RouteBookLoadingState />;
   }
 
   return <RouteBookData bookData={data} />;

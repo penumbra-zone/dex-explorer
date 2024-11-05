@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ChainRegistryClient } from '@penumbra-labs/registry';
 import { pindexer } from '@/shared/database';
 import { isValidDate } from 'iso-datestring-validator';
-import { CandleApiResponse } from '@/shared/api/server/candles/types.ts';
+import { CandleApiResponse, dbCandleToOhlc } from '@/shared/api/server/candles/types.ts';
 import { durationWindows, isDurationWindow } from '@/shared/database/schema.ts';
 
 const MAX_LIMIT = 10000n;
@@ -77,5 +77,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<CandleApiRespo
     durationWindow,
   );
 
-  return NextResponse.json(candlesFwd);
+  const response = candlesFwd.map(dbCandleToOhlc);
+
+  return NextResponse.json(response);
 }

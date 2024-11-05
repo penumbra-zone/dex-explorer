@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { usePathSymbols } from '@/pages/trade/model/use-path-to-metadata.ts';
+import { usePathSymbols } from '@/pages/trade/model/use-path.ts';
 import { SummaryResponse } from '@/shared/api/server/summary.ts';
 
 export const useSummary = () => {
