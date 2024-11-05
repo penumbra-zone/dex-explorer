@@ -4,7 +4,7 @@ import { Token } from '@/shared/const/token';
 export interface VolumeCandle extends CandlestickData {
   volume: number;
 }
-
+// TODO: Delete
 // Merge the two arrays, forward will be left alone, however backward will need to
 // have 1/price and volumes will have to account for the pricing and decimal difference
 export function createMergeCandles(asset1Token: Token, asset2Token: Token) {

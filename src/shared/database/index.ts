@@ -41,6 +41,19 @@ class Pindexer {
       .where('asset_end', '=', Buffer.from(quoteAsset.inner))
       .execute();
   }
+
+  async candles(baseAsset: AssetId, quoteAsset: AssetId, start: Date, end: Date) {
+    return this.db
+      .selectFrom('dex_ex_price_charts')
+      .innerJoin('dex_ex_candlesticks', 'candlestick_id', 'dex_ex_candlesticks.id')
+      .select(['start_time', 'open', 'close', 'low', 'high', 'swap_volume', 'direct_volume'])
+      .where('the_window', '=', '1d')
+      .where('asset_start', '=', Buffer.from(baseAsset.inner))
+      .where('asset_end', '=', Buffer.from(quoteAsset.inner))
+      .where('start_time', '<', start)
+      .where('start_time', '>=', end)
+      .execute();
+  }
 }
 
 export const pindexer = new Pindexer();

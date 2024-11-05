@@ -2,6 +2,7 @@ import { ClientEnv } from './types';
 
 const defaults = {
   PENUMBRA_CHAIN_ID: 'penumbra-1',
+  // TODO: Remove
   PENUMBRA_CUILOA_URL: 'https://cuiloa.testnet.penumbra.zone',
 };
 
