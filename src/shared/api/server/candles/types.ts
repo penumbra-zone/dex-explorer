@@ -1,3 +1,5 @@
+export type CandleApiResponse = Candle[] | { error: string };
+
 export interface Candle {
   close: number;
   direct_volume: number;

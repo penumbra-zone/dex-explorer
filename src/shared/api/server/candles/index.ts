@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ChainRegistryClient } from '@penumbra-labs/registry';
 import { pindexer } from '@/shared/database';
 import { isValidDate } from 'iso-datestring-validator';
-import { Candle } from '@/shared/api/server/candles/types.ts';
+import { CandleApiResponse } from '@/shared/api/server/candles/types.ts';
+import { durationWindows, isDurationWindow } from '@/shared/database/schema.ts';
 
 const MAX_LIMIT = 10000n;
-export type CandleApiResponse = Candle[] | { error: string };
 
 export async function GET(req: NextRequest): Promise<NextResponse<CandleApiResponse>> {
   const grpcEndpoint = process.env['PENUMBRA_GRPC_ENDPOINT'];
@@ -20,13 +20,20 @@ export async function GET(req: NextRequest): Promise<NextResponse<CandleApiRespo
   const { searchParams } = new URL(req.url);
   const baseAssetSymbol = searchParams.get('baseAsset');
   const quoteAssetSymbol = searchParams.get('quoteAsset');
-  const limitParam = searchParams.get('limit');
-  if (!baseAssetSymbol || !quoteAssetSymbol || !limitParam) {
+  if (!baseAssetSymbol || !quoteAssetSymbol) {
     return NextResponse.json(
-      { error: 'Missing required baseAsset, quoteAsset, or limit' },
+      { error: 'Missing required baseAsset or quoteAsset' },
       { status: 400 },
     );
   }
+  const durationWindow = searchParams.get('durationWindow');
+  if (!durationWindow || !isDurationWindow(durationWindow)) {
+    return NextResponse.json(
+      { error: `durationWindow missing or invalid window. Options: ${durationWindows.join(', ')}` },
+      { status: 400 },
+    );
+  }
+
   const startDateParam = searchParams.get('startDate');
   const endDateParam = searchParams.get('endDate');
   if (
@@ -42,12 +49,6 @@ export async function GET(req: NextRequest): Promise<NextResponse<CandleApiRespo
   }
   const startDate = new Date(startDateParam);
   const endDate = new Date(endDateParam);
-
-  const limit = BigInt(limitParam);
-  // Set a HARD limit to prevent abuse
-  if (limit > MAX_LIMIT) {
-    return NextResponse.json({ error: `Limit exceeded, max ${MAX_LIMIT}` }, { status: 400 });
-  }
 
   const registryClient = new ChainRegistryClient();
   const registry = await registryClient.remote.get(chainId);
@@ -73,6 +74,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<CandleApiRespo
     quoteAssetMetadata.penumbraAssetId,
     startDate,
     endDate,
+    durationWindow,
   );
 
   return NextResponse.json(candlesFwd);

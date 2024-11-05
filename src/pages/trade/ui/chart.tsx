@@ -35,12 +35,6 @@ const ChartData = observer(
     const chartElRef = useRef<HTMLInputElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
 
-    const {
-      data: candles,
-      isLoading,
-      error,
-    } = useCandles(baseAsset.symbol, quoteAsset.symbol, 0, 10000);
-
     useEffect(() => {
       if (chartElRef.current && !chartRef.current) {
         chartRef.current = createChart(chartElRef.current, {
@@ -104,14 +98,18 @@ const ChartData = observer(
 );
 
 export const Chart = observer(({ height }: ChartProps) => {
-  const { baseAsset, quoteAsset, error, isLoading: pairIsLoading } = usePathToMetadata();
-  if (pairIsLoading || !baseAsset || !quoteAsset) {
+  const { data, isLoading, error } = useCandles();
+
+  if (isLoading) {
     return <ChartLoadingState height={height} />;
   }
 
   if (error) {
-    return <div>Error loading pair selector: ${String(error)}</div>;
+    return <div className='text-white'>Error loading pair selector: ${String(error)}</div>;
   }
 
-  return <ChartData height={height} baseAsset={baseAsset} quoteAsset={quoteAsset} />;
+  console.log(data);
+  return <div className='text-white'>Loaded</div>;
+
+  // return <ChartData height={height} baseAsset={baseAsset} quoteAsset={quoteAsset} />;
 });
