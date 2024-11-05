@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ChainRegistryClient } from '@penumbra-labs/registry';
 import { pindexer } from '@/shared/database';
 import { isValidDate } from 'iso-datestring-validator';
-import { CandleApiResponse, dbCandleToOhlc } from '@/shared/api/server/candles/types.ts';
+import { CandleApiResponse } from '@/shared/api/server/candles/types.ts';
 import { durationWindows, isDurationWindow } from '@/shared/database/schema.ts';
-
-const MAX_LIMIT = 10000n;
+import { dbCandleToOhlc, mergeCandles } from '@/shared/api/server/candles/utils.ts';
 
 export async function GET(req: NextRequest): Promise<NextResponse<CandleApiResponse>> {
   const grpcEndpoint = process.env['PENUMBRA_GRPC_ENDPOINT'];
@@ -68,7 +67,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<CandleApiRespo
     );
   }
 
-  // TODO: DOCUMENT
+  // Need to query both directions and aggregate results
   const candlesFwd = await pindexer.candles(
     baseAssetMetadata.penumbraAssetId,
     quoteAssetMetadata.penumbraAssetId,
@@ -76,8 +75,20 @@ export async function GET(req: NextRequest): Promise<NextResponse<CandleApiRespo
     endDate,
     durationWindow,
   );
+  const candlesReverse = await pindexer.candles(
+    quoteAssetMetadata.penumbraAssetId,
+    baseAssetMetadata.penumbraAssetId,
+    startDate,
+    endDate,
+    durationWindow,
+  );
 
-  const response = candlesFwd.map(dbCandleToOhlc);
+  const mergedCandles = mergeCandles(
+    { metadata: baseAssetMetadata, candles: candlesFwd },
+    { metadata: quoteAssetMetadata, candles: candlesReverse },
+  );
+
+  const response = mergedCandles.map(dbCandleToOhlc);
 
   return NextResponse.json(response);
 }

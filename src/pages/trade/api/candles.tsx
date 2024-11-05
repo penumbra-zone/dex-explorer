@@ -24,7 +24,7 @@ export const useCandles = (durationWindow: DurationWindow) => {
         endDate: DEX_ENABLED_DATE,
         durationWindow,
       };
-      const baseUrl = '/api/candles-v2';
+      const baseUrl = '/api/candles';
       const urlParams = new URLSearchParams(paramsObj).toString();
       const res = await fetch(`${baseUrl}?${urlParams}`);
       const jsonRes = (await res.json()) as CandleApiResponse;
