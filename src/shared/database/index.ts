@@ -42,13 +42,7 @@ class Pindexer {
       .execute();
   }
 
-  async candles(
-    baseAsset: AssetId,
-    quoteAsset: AssetId,
-    start: Date,
-    end: Date,
-    window: DurationWindow,
-  ) {
+  async candles(baseAsset: AssetId, quoteAsset: AssetId, window: DurationWindow) {
     return this.db
       .selectFrom('dex_ex_price_charts')
       .innerJoin('dex_ex_candlesticks', 'candlestick_id', 'dex_ex_candlesticks.id')
@@ -56,8 +50,6 @@ class Pindexer {
       .where('the_window', '=', window)
       .where('asset_start', '=', Buffer.from(baseAsset.inner))
       .where('asset_end', '=', Buffer.from(quoteAsset.inner))
-      .where('start_time', '<', start)
-      .where('start_time', '>=', end)
       .execute();
   }
 }

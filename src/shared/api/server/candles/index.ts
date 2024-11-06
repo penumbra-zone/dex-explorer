@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ChainRegistryClient } from '@penumbra-labs/registry';
 import { pindexer } from '@/shared/database';
-import { isValidDate } from 'iso-datestring-validator';
 import { CandleApiResponse } from '@/shared/api/server/candles/types.ts';
 import { durationWindows, isDurationWindow } from '@/shared/database/schema.ts';
 import { dbCandleToOhlc, mergeCandles } from '@/shared/api/server/candles/utils.ts';
@@ -33,22 +32,6 @@ export async function GET(req: NextRequest): Promise<NextResponse<CandleApiRespo
     );
   }
 
-  const startDateParam = searchParams.get('startDate');
-  const endDateParam = searchParams.get('endDate');
-  if (
-    !startDateParam ||
-    !endDateParam ||
-    !isValidDate(startDateParam) ||
-    !isValidDate(endDateParam)
-  ) {
-    return NextResponse.json(
-      { error: 'start or end date missing or invalid iso format' },
-      { status: 400 },
-    );
-  }
-  const startDate = new Date(startDateParam);
-  const endDate = new Date(endDateParam);
-
   const registryClient = new ChainRegistryClient();
   const registry = await registryClient.remote.get(chainId);
 
@@ -71,15 +54,11 @@ export async function GET(req: NextRequest): Promise<NextResponse<CandleApiRespo
   const candlesFwd = await pindexer.candles(
     baseAssetMetadata.penumbraAssetId,
     quoteAssetMetadata.penumbraAssetId,
-    startDate,
-    endDate,
     durationWindow,
   );
   const candlesReverse = await pindexer.candles(
     quoteAssetMetadata.penumbraAssetId,
     baseAssetMetadata.penumbraAssetId,
-    startDate,
-    endDate,
     durationWindow,
   );
 

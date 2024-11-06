@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { ChainRegistryClient } from '@penumbra-labs/registry';
 import { envQueryFn } from '@/shared/api/env/env.ts';
 import { useQuery } from '@tanstack/react-query';
+import { assetPatterns } from '@penumbra-zone/types/assets';
 
 const redirectSymbolsQueryFn = async () => {
   const { PENUMBRA_CHAIN_ID } = await envQueryFn();
@@ -11,7 +12,9 @@ const redirectSymbolsQueryFn = async () => {
   const registry = await chainRegistryClient.remote.get(PENUMBRA_CHAIN_ID);
   const allAssets = registry
     .getAllAssets()
+    .filter(m => !assetPatterns.delegationToken.matches(m.display))
     .toSorted((a, b) => Number(b.priorityScore - a.priorityScore));
+
   const baseAsset = allAssets[0]?.symbol;
   const quoteAsset = allAssets[1]?.symbol;
   if (!baseAsset || !quoteAsset) {
