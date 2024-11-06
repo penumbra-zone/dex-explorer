@@ -112,7 +112,6 @@ const SpreadRow = ({ spread }: { spread: { amount: number; percentage: number } 
 const RouteBookData = observer(
   ({ bookData: { singleHops, multiHops } }: { bookData: RouteBookResponse }) => {
     const pair = usePathSymbols();
-    const tokens = ['UM', 'OSMO', 'SHITMOS', 'USDY', 'USDC'];
 
     const combineSortTraces = (direct: Trace[], multi: Trace[], isSell: boolean) => {
       const combined = [
@@ -134,7 +133,6 @@ const RouteBookData = observer(
       <div className='flex flex-col max-w-full  border-y border-[#262626]'>
         <div className='flex items-center gap-2 px-4 h-11 border-b border-[#262626]'>
           <TabButton active={true}>Route Book</TabButton>
-          <TabButton active={false}>Route Depth</TabButton>
         </div>
 
         <div className='flex-1'>
