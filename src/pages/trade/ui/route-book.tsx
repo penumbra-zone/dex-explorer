@@ -5,6 +5,7 @@ import { RouteBookResponse, Trace } from '@/shared/api/server/book/types';
 import { ChevronRight } from 'lucide-react';
 import { getSymbolFromValueView } from '@penumbra-zone/getters/value-view';
 import { usePathSymbols } from '@/pages/trade/model/use-path.ts';
+
 const TabButton = ({ active, children }: { active: boolean; children: React.ReactNode }) => {
   return (
     <button
@@ -40,27 +41,17 @@ const RouteDisplay = ({ tokens }: { tokens: string[] }) => {
   );
 };
 
-const TradeRow = ({
-  trace,
-  isSell,
-  isDirect = false,
-}: {
-  trace: Trace;
-  isSell: boolean;
-  liquidityPercentage?: number;
-  isDirect?: boolean;
-}) => {
+const TradeRow = ({ trace, isSell }: { trace: Trace; isSell: boolean }) => {
   const [showRoute, setShowRoute] = useState(false);
-  const bgColor = isSell ? '#AF2626' : '#1C793F';
-
+  console.log(trace);
   return (
     <tr
-      className={`group relative h-[33px]  border-b border-[rgba(250,250,250,0.15)]
+      className={`group relative h-[33px] border-b border-[rgba(250,250,250,0.15)]
         ${showRoute ? 'bg-[rgba(250,250,250,0.05)]' : ''}`}
       onClick={() => setShowRoute(prev => !prev)}
     >
-      {/*/!* Liquidity progress bar *!/*/}
-      {/*<div className='absolute inset-0 p-0'>
+      {/*/ !* Liquidity progress bar *!/*/}
+      {/* <div className='absolute inset-0 p-0'>
         <div
           className='absolute inset-0 opacity-24'
           style={{
@@ -86,7 +77,7 @@ const TradeRow = ({
           <td className='relative text-xs text-right text-white'>{trace.amount}</td>
           <td className='relative text-xs text-right text-white'>{trace.total}</td>
           <td className='relative text-xs text-right w-14'>
-            <HopCount count={isDirect ? 0 : trace.hops.length} />
+            <HopCount count={trace.hops.length} />
           </td>
         </>
       )}
@@ -94,87 +85,41 @@ const TradeRow = ({
   );
 };
 
-const SpreadRow = ({ spread }: { spread: { amount: number; percentage: number } }) => {
+const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBookResponse }) => {
+  const pair = usePathSymbols();
+
   return (
-    <tr>
-      <td colSpan={4} className='border-y border-[#262626]'>
-        <div className='flex items-center justify-center gap-2 px-3 py-3 text-xs'>
-          <span className='text-[#55D383]'>0.45533225</span>
-          <span className='text-gray-400'>Spread:</span>
-          <span className='text-white'>{spread.amount} USDC</span>
-          <span className='text-gray-400'>({spread.percentage}%)</span>
-        </div>
-      </td>
-    </tr>
-  );
-};
-
-const RouteBookData = observer(
-  ({ bookData: { singleHops, multiHops } }: { bookData: RouteBookResponse }) => {
-    const pair = usePathSymbols();
-
-    const combineSortTraces = (direct: Trace[], multi: Trace[], isSell: boolean) => {
-      const combined = [
-        ...direct.map(t => ({ ...t, isDirect: true })),
-        ...multi.map(t => ({ ...t, isDirect: false })),
-      ];
-
-      return combined.sort((a, b) => {
-        const priceA = parseFloat(a.price);
-        const priceB = parseFloat(b.price);
-        return isSell ? priceB - priceA : priceA - priceB;
-      });
-    };
-
-    const sellOrders = combineSortTraces(singleHops.sell, multiHops.sell, true);
-    const buyOrders = combineSortTraces(singleHops.buy, multiHops.buy, false);
-
-    return (
-      <div className='flex flex-col max-w-full  border-y border-[#262626]'>
-        <div className='flex items-center gap-2 px-4 h-11 border-b border-[#262626]'>
-          <TabButton active={true}>Route Book</TabButton>
-        </div>
-
-        <div className='flex-1'>
-          <table className='w-full'>
-            <thead>
-              <tr className='text-xs text-gray-400'>
-                <th className='py-[8px] font-normal  text-left'>Price({pair.baseSymbol})</th>
-                <th className='py-[8px] font-normal  text-right'>Amount({pair.quoteSymbol})</th>
-                <th className='py-[8px] font-normal  text-right'>Total</th>
-                <th className='py-[8px] font-normal  text-right'>Route</th>
-              </tr>
-            </thead>
-
-            <tbody className='relative'>
-              {sellOrders.map((trace, idx) => (
-                <TradeRow
-                  key={`${trace.price}-${trace.total}-${idx}-${trace.isDirect}`}
-                  trace={trace}
-                  isSell={true}
-                  liquidityPercentage={(sellOrders.length - idx) * (100 / sellOrders.length)}
-                  isDirect={trace.isDirect}
-                />
-              ))}
-
-              <SpreadRow spread={{ amount: 0.02, percentage: 0.2 }} />
-
-              {buyOrders.map((trace, idx) => (
-                <TradeRow
-                  key={`${trace.price}-${trace.total}-${idx}-${trace.isDirect}`}
-                  trace={trace}
-                  isSell={false}
-                  liquidityPercentage={(buyOrders.length - idx) * (100 / buyOrders.length)}
-                  isDirect={trace.isDirect}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+    <div className='flex flex-col max-w-full border-y border-[#262626]'>
+      <div className='flex items-center gap-2 px-4 h-11 border-b border-[#262626]'>
+        <TabButton active={true}>Route Book</TabButton>
       </div>
-    );
-  },
-);
+
+      <div className='flex-1'>
+        <table className='w-full'>
+          <thead>
+            <tr className='text-xs text-gray-400'>
+              <th className='py-[8px] font-normal text-left'>Price({pair.baseSymbol})</th>
+              <th className='py-[8px] font-normal text-right'>Amount({pair.quoteSymbol})</th>
+              <th className='py-[8px] font-normal text-right'>Total</th>
+              <th className='py-[8px] font-normal text-right'>Route</th>
+            </tr>
+          </thead>
+
+          <tbody className='relative'>
+            {multiHops.sell.map((trace, idx) => (
+              <TradeRow key={`${trace.price}-${trace.total}-${idx}`} trace={trace} isSell={true} />
+            ))}
+
+            <SpreadRow sellOrders={multiHops.sell} buyOrders={multiHops.buy} />
+            {multiHops.buy.map((trace, idx) => (
+              <TradeRow key={`${trace.price}-${trace.total}-${idx}`} trace={trace} isSell={false} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+});
 
 export const RouteBook = observer(() => {
   const { data: bookData, isLoading: bookIsLoading, error: bookErr } = useBook();
@@ -189,5 +134,48 @@ export const RouteBook = observer(() => {
 
   return <RouteBookData bookData={bookData} />;
 });
+
+const calculateSpread = (sellOrders: Trace[], buyOrders: Trace[]) => {
+  if (!sellOrders.length || !buyOrders.length) {
+    return null;
+  }
+
+  const lowestSell = sellOrders[sellOrders.length - 1]!;
+  const highestBuy = buyOrders[0]!;
+
+  const sellPrice = parseFloat(lowestSell.price);
+  const buyPrice = parseFloat(highestBuy.price);
+
+  const spread = sellPrice - buyPrice;
+  const midPrice = (sellPrice + buyPrice) / 2;
+  const spreadPercentage = (spread / midPrice) * 100;
+
+  return {
+    amount: spread.toFixed(8),
+    percentage: spreadPercentage.toFixed(2),
+    midPrice: midPrice.toFixed(8),
+  };
+};
+
+const SpreadRow = ({ sellOrders, buyOrders }: { sellOrders: Trace[]; buyOrders: Trace[] }) => {
+  const spreadInfo = calculateSpread(sellOrders, buyOrders);
+
+  if (!spreadInfo) {
+    return null;
+  }
+
+  return (
+    <tr>
+      <td colSpan={4} className='border-y border-[#262626]'>
+        <div className='flex items-center justify-center gap-2 px-3 py-3 text-xs'>
+          <span className='text-[#55D383]'>{spreadInfo.midPrice}</span>
+          <span className='text-gray-400'>Spread:</span>
+          <span className='text-white'>{spreadInfo.amount} USDC</span>
+          <span className='text-gray-400'>({spreadInfo.percentage}%)</span>
+        </div>
+      </td>
+    </tr>
+  );
+};
 
 export default RouteBook;
