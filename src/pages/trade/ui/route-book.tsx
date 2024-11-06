@@ -29,25 +29,27 @@ const RouteDisplay = ({ tokens }: { tokens: string[] }) => {
   );
 };
 
-const TradeRow = ({ trace, isSell }: { trace: Trace; isSell: boolean }) => {
+const TradeRow = ({
+  trace,
+  isSell,
+  relativeSize,
+}: {
+  trace: Trace;
+  isSell: boolean;
+  relativeSize: number;
+}) => {
   const [showRoute, setShowRoute] = useState(false);
+  const bgColor = isSell ? 'rgba(175, 38, 38, 0.24)' : 'rgba(28, 121, 63, 0.24)';
+
   return (
     <tr
       className={`group relative h-[33px] border-b border-[rgba(250,250,250,0.15)]
         ${showRoute ? 'bg-[rgba(250,250,250,0.05)]' : ''}`}
       onClick={() => setShowRoute(prev => !prev)}
+      style={{
+        backgroundImage: `linear-gradient(to right, ${bgColor} ${relativeSize}%, transparent ${relativeSize}%)`,
+      }}
     >
-      {/*/ !* Liquidity progress bar *!/*/}
-      {/* <div className='absolute inset-0 p-0'>
-        <div
-          className='absolute inset-0 opacity-24'
-          style={{
-            background: bgColor,
-            right: `${100 - liquidityPercentage}%`,
-          }}
-        />
-      </div>*/}
-
       {showRoute ? (
         <td colSpan={4} className='relative px-4'>
           <RouteDisplay tokens={trace.hops.map(valueView => getSymbolFromValueView(valueView))} />
@@ -77,6 +79,9 @@ export const ROUTEBOOK_TABS = [{ label: 'Route book', value: 'routes' }];
 const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBookResponse }) => {
   const pair = usePathSymbols();
 
+  const sellRelativeSizes = calculateRelativeSizes(multiHops.sell);
+  const buyRelativeSizes = calculateRelativeSizes(multiHops.buy);
+
   return (
     <div className='flex flex-col max-w-full border-y border-[#262626]'>
       <div className='flex items-center gap-2 px-4 h-11 border-b border-[#262626]'>
@@ -103,12 +108,23 @@ const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBo
 
           <tbody className='relative'>
             {multiHops.sell.map((trace, idx) => (
-              <TradeRow key={`${trace.price}-${trace.total}-${idx}`} trace={trace} isSell={true} />
+              <TradeRow
+                key={`${trace.price}-${trace.total}-${idx}`}
+                trace={trace}
+                isSell={true}
+                relativeSize={sellRelativeSizes.get(trace.total) ?? 0}
+              />
             ))}
 
             <SpreadRow sellOrders={multiHops.sell} buyOrders={multiHops.buy} />
+
             {multiHops.buy.map((trace, idx) => (
-              <TradeRow key={`${trace.price}-${trace.total}-${idx}`} trace={trace} isSell={false} />
+              <TradeRow
+                key={`${trace.price}-${trace.total}-${idx}`}
+                trace={trace}
+                isSell={false}
+                relativeSize={buyRelativeSizes.get(trace.total) ?? 0}
+              />
             ))}
           </tbody>
         </table>
@@ -136,8 +152,12 @@ const calculateSpread = (sellOrders: Trace[], buyOrders: Trace[]) => {
     return null;
   }
 
-  const lowestSell = sellOrders[sellOrders.length - 1]!;
-  const highestBuy = buyOrders[0]!;
+  const lowestSell = sellOrders[sellOrders.length - 1];
+  const highestBuy = buyOrders[0];
+
+  if (lowestSell === undefined || highestBuy === undefined) {
+    return null;
+  }
 
   const sellPrice = parseFloat(lowestSell.price);
   const buyPrice = parseFloat(highestBuy.price);
@@ -172,6 +192,21 @@ const SpreadRow = ({ sellOrders, buyOrders }: { sellOrders: Trace[]; buyOrders: 
       </td>
     </tr>
   );
+};
+
+const calculateRelativeSizes = (orders: Trace[]): Map<string, number> => {
+  if (!orders.length) {
+    return new Map();
+  }
+
+  const totals = orders.map(order => parseFloat(order.total));
+  const maxTotal = Math.max(...totals);
+
+  return orders.reduce((map, order) => {
+    const percentage = (parseFloat(order.total) / maxTotal) * 100;
+    map.set(order.total, percentage);
+    return map;
+  }, new Map<string, number>());
 };
 
 export default RouteBook;
