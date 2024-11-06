@@ -6,19 +6,7 @@ import { ChevronRight } from 'lucide-react';
 import { getSymbolFromValueView } from '@penumbra-zone/getters/value-view';
 import { usePathSymbols } from '@/pages/trade/model/use-path.ts';
 
-const TabButton = ({ active, children }: { active: boolean; children: React.ReactNode }) => {
-  return (
-    <button
-      className={`h-11 px-2 text-xs font-medium ${
-        active
-          ? 'text-white border-b-2 border-[#BA4D14] bg-gradient-to-t from-[rgba(186,77,20,0.35)] to-transparent'
-          : 'text-gray-400'
-      }`}
-    >
-      {children}
-    </button>
-  );
-};
+import { Tabs } from '@penumbra-zone/ui/Tabs';
 
 const HopCount = ({ count }: { count: number }) => {
   return (
@@ -43,7 +31,6 @@ const RouteDisplay = ({ tokens }: { tokens: string[] }) => {
 
 const TradeRow = ({ trace, isSell }: { trace: Trace; isSell: boolean }) => {
   const [showRoute, setShowRoute] = useState(false);
-  console.log(trace);
   return (
     <tr
       className={`group relative h-[33px] border-b border-[rgba(250,250,250,0.15)]
@@ -76,7 +63,7 @@ const TradeRow = ({ trace, isSell }: { trace: Trace; isSell: boolean }) => {
           </td>
           <td className='relative text-xs text-right text-white'>{trace.amount}</td>
           <td className='relative text-xs text-right text-white'>{trace.total}</td>
-          <td className='relative text-xs text-right w-14'>
+          <td className='relative text-xs text-right'>
             <HopCount count={trace.hops.length} />
           </td>
         </>
@@ -85,21 +72,30 @@ const TradeRow = ({ trace, isSell }: { trace: Trace; isSell: boolean }) => {
   );
 };
 
+export const ROUTEBOOK_TABS = [{ label: 'Route book', value: 'routes' }];
+
 const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBookResponse }) => {
   const pair = usePathSymbols();
 
   return (
     <div className='flex flex-col max-w-full border-y border-[#262626]'>
       <div className='flex items-center gap-2 px-4 h-11 border-b border-[#262626]'>
-        <TabButton active={true}>Route Book</TabButton>
+        <Tabs
+          value={'routes'}
+          onChange={() => {
+            undefined;
+          }}
+          options={ROUTEBOOK_TABS}
+          actionType='accent'
+        />
       </div>
 
       <div className='flex-1'>
         <table className='w-full'>
           <thead>
             <tr className='text-xs text-gray-400'>
-              <th className='py-[8px] font-normal text-left'>Price({pair.baseSymbol})</th>
-              <th className='py-[8px] font-normal text-right'>Amount({pair.quoteSymbol})</th>
+              <th className='py-[8px] font-normal text-left'>Price({pair.quoteSymbol})</th>
+              <th className='py-[8px] font-normal text-right'>Amount({pair.baseSymbol})</th>
               <th className='py-[8px] font-normal text-right'>Total</th>
               <th className='py-[8px] font-normal text-right'>Route</th>
             </tr>
