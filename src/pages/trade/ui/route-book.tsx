@@ -105,10 +105,10 @@ const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBo
           <table className='w-full'>
             <thead>
               <tr className='text-xs text-gray-400'>
-                <th className='py-[8px] font-normal text-left'>Price({pair.quoteSymbol})</th>
-                <th className='py-[8px] font-normal text-right'>Amount({pair.baseSymbol})</th>
-                <th className='py-[8px] font-normal text-right'>Total</th>
-                <th className='py-[8px] font-normal text-right'>Route</th>
+                <th className='py-2 font-normal text-left'>Price({pair.quoteSymbol})</th>
+                <th className='py-2 font-normal text-right'>Amount({pair.baseSymbol})</th>
+                <th className='py-2 font-normal text-right'>Total</th>
+                <th className='py-2 font-normal text-right'>Route</th>
               </tr>
             </thead>
 
@@ -160,14 +160,14 @@ export const RouteBook = observer(() => {
 
 const calculateSpread = (sellOrders: Trace[], buyOrders: Trace[]) => {
   if (!sellOrders.length || !buyOrders.length) {
-    return null;
+    return;
   }
 
   const lowestSell = sellOrders[sellOrders.length - 1];
   const highestBuy = buyOrders[0];
 
   if (lowestSell === undefined || highestBuy === undefined) {
-    return null;
+    return;
   }
 
   const sellPrice = parseFloat(lowestSell.price);
@@ -183,12 +183,12 @@ const calculateSpread = (sellOrders: Trace[], buyOrders: Trace[]) => {
     midPrice: midPrice.toFixed(8),
   };
 };
-
 const SpreadRow = ({ sellOrders, buyOrders }: { sellOrders: Trace[]; buyOrders: Trace[] }) => {
   const spreadInfo = calculateSpread(sellOrders, buyOrders);
+  const pair = usePathSymbols();
 
   if (!spreadInfo) {
-    return null;
+    return;
   }
 
   return (
@@ -197,7 +197,9 @@ const SpreadRow = ({ sellOrders, buyOrders }: { sellOrders: Trace[]; buyOrders: 
         <div className='flex items-center justify-center gap-2 px-3 py-3 text-xs'>
           <span className='text-[#55D383]'>{spreadInfo.midPrice}</span>
           <span className='text-gray-400'>Spread:</span>
-          <span className='text-white'>{spreadInfo.amount} USDC</span>
+          <span className='text-white'>
+            {spreadInfo.amount} {pair.quoteSymbol}
+          </span>
           <span className='text-gray-400'>({spreadInfo.percentage}%)</span>
         </div>
       </td>
