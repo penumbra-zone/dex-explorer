@@ -8,10 +8,13 @@ import { usePathSymbols } from '@/pages/trade/model/use-path.ts';
 
 import { Tabs } from '@penumbra-zone/ui/Tabs';
 
+const SELL_BG_COLOR = 'rgba(175, 38, 38, 0.24)';
+const BUY_BG_COLOR = 'rgba(28, 121, 63, 0.24)';
+
 const HopCount = ({ count }: { count: number }) => {
   return (
     <span className={count === 0 ? 'text-white' : 'text-[#F49C43]'}>
-      {count === 0 ? 'Direct' : `${count} ${count === 1 ? 'Hop' : 'Hops'}`}
+      {count === 2 ? 'Direct' : `${count} Hops`}
     </span>
   );
 };
@@ -39,7 +42,7 @@ const TradeRow = ({
   relativeSize: number;
 }) => {
   const [showRoute, setShowRoute] = useState(false);
-  const bgColor = isSell ? 'rgba(175, 38, 38, 0.24)' : 'rgba(28, 121, 63, 0.24)';
+  const bgColor = isSell ? SELL_BG_COLOR : BUY_BG_COLOR;
 
   return (
     <tr
@@ -74,10 +77,14 @@ const TradeRow = ({
   );
 };
 
-export const ROUTEBOOK_TABS = [{ label: 'Route book', value: 'routes' }];
+export const ROUTEBOOK_TABS = [
+  { label: 'Route book', value: 'routes' },
+  { label: 'Route Depth', value: 'depth' },
+];
 
 const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBookResponse }) => {
   const pair = usePathSymbols();
+  const [activeTab, setActiveTab] = useState('routes');
 
   const sellRelativeSizes = calculateRelativeSizes(multiHops.sell);
   const buyRelativeSizes = calculateRelativeSizes(multiHops.buy);
@@ -86,48 +93,52 @@ const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBo
     <div className='flex flex-col max-w-full border-y border-[#262626]'>
       <div className='flex items-center gap-2 px-4 h-11 border-b border-[#262626]'>
         <Tabs
-          value={'routes'}
-          onChange={() => {
-            undefined;
-          }}
+          value={activeTab}
+          onChange={setActiveTab}
           options={ROUTEBOOK_TABS}
           actionType='accent'
         />
       </div>
 
       <div className='flex-1'>
-        <table className='w-full'>
-          <thead>
-            <tr className='text-xs text-gray-400'>
-              <th className='py-[8px] font-normal text-left'>Price({pair.quoteSymbol})</th>
-              <th className='py-[8px] font-normal text-right'>Amount({pair.baseSymbol})</th>
-              <th className='py-[8px] font-normal text-right'>Total</th>
-              <th className='py-[8px] font-normal text-right'>Route</th>
-            </tr>
-          </thead>
+        {activeTab === 'routes' ? (
+          <table className='w-full'>
+            <thead>
+              <tr className='text-xs text-gray-400'>
+                <th className='py-[8px] font-normal text-left'>Price({pair.quoteSymbol})</th>
+                <th className='py-[8px] font-normal text-right'>Amount({pair.baseSymbol})</th>
+                <th className='py-[8px] font-normal text-right'>Total</th>
+                <th className='py-[8px] font-normal text-right'>Route</th>
+              </tr>
+            </thead>
 
-          <tbody className='relative'>
-            {multiHops.sell.map((trace, idx) => (
-              <TradeRow
-                key={`${trace.price}-${trace.total}-${idx}`}
-                trace={trace}
-                isSell={true}
-                relativeSize={sellRelativeSizes.get(trace.total) ?? 0}
-              />
-            ))}
+            <tbody className='relative'>
+              {multiHops.sell.map((trace, idx) => (
+                <TradeRow
+                  key={`${trace.price}-${trace.total}-${idx}`}
+                  trace={trace}
+                  isSell={true}
+                  relativeSize={sellRelativeSizes.get(trace.total) ?? 0}
+                />
+              ))}
 
-            <SpreadRow sellOrders={multiHops.sell} buyOrders={multiHops.buy} />
+              <SpreadRow sellOrders={multiHops.sell} buyOrders={multiHops.buy} />
 
-            {multiHops.buy.map((trace, idx) => (
-              <TradeRow
-                key={`${trace.price}-${trace.total}-${idx}`}
-                trace={trace}
-                isSell={false}
-                relativeSize={buyRelativeSizes.get(trace.total) ?? 0}
-              />
-            ))}
-          </tbody>
-        </table>
+              {multiHops.buy.map((trace, idx) => (
+                <TradeRow
+                  key={`${trace.price}-${trace.total}-${idx}`}
+                  trace={trace}
+                  isSell={false}
+                  relativeSize={buyRelativeSizes.get(trace.total) ?? 0}
+                />
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className='flex items-center justify-center h-full text-gray-400'>
+            Coming soon...
+          </div>
+        )}
       </div>
     </div>
   );
