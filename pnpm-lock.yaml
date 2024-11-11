@@ -12,19 +12,19 @@ importers:
         specifier: ^1.10.0
         version: 1.10.0
       '@chakra-ui/icons':
-        specifier: ^2.2.4
+        specifier: ^2.1.1
         version: 2.2.4(@chakra-ui/react@2.10.3(@emotion/react@11.13.3(@types/react@18.3.12)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.12)(react@18.3.1))(@types/react@18.3.12)(react@18.3.1))(@types/react@18.3.12)(framer-motion@11.11.11(@emotion/is-prop-valid@1.3.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
       '@chakra-ui/react':
-        specifier: ^2.10.3
+        specifier: ^2.8.2
         version: 2.10.3(@emotion/react@11.13.3(@types/react@18.3.12)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.12)(react@18.3.1))(@types/react@18.3.12)(react@18.3.1))(@types/react@18.3.12)(framer-motion@11.11.11(@emotion/is-prop-valid@1.3.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@chakra-ui/styled-system':
-        specifier: ^2.12.0
+        specifier: ^2.9.2
         version: 2.12.0(react@18.3.1)
       '@connectrpc/connect':
-        specifier: ^1.6.1
+        specifier: ^1.4.0
         version: 1.6.1(@bufbuild/protobuf@1.10.0)
       '@connectrpc/connect-web':
-        specifier: ^1.6.1
+        specifier: ^1.4.0
         version: 1.6.1(@bufbuild/protobuf@1.10.0)(@connectrpc/connect@1.6.1(@bufbuild/protobuf@1.10.0))
       '@emotion/react':
         specifier: ^11.13.3
@@ -54,16 +54,16 @@ importers:
         specifier: ^7.5.0
         version: 7.5.0
       '@penumbra-zone/types':
-        specifier: ^26.1.0
+        specifier: ^26.0.0
         version: 26.1.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/getters@20.0.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0))
       '@penumbra-zone/ui':
-        specifier: file:../web/packages/ui-tailwind/penumbra-zone-ui-tailwind-0.1.0.tgz
-        version: '@penumbra-zone/ui-tailwind@file:../web/packages/ui-tailwind/penumbra-zone-ui-tailwind-0.1.0.tgz(@bufbuild/protobuf@1.10.0)(@types/react-dom@18.3.1)(@types/react@18.3.12)'
+        specifier: ^13.0.0
+        version: 13.0.0(@bufbuild/protobuf@1.10.0)(@types/react-dom@18.3.1)(@types/react@18.3.12)
       '@penumbra-zone/wasm':
         specifier: ^31.0.0
         version: 31.0.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0))(@penumbra-zone/types@26.1.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/getters@20.0.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))
       '@radix-ui/react-icons':
-        specifier: ^1.3.1
+        specifier: ^1.3.0
         version: 1.3.1(react@18.3.1)
       '@rehooks/component-size':
         specifier: ^1.0.3
@@ -72,7 +72,7 @@ importers:
         specifier: ^10.47.0
         version: 10.47.0(react@18.3.1)(styled-components@6.1.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       '@tanstack/react-query':
-        specifier: ^5.59.20
+        specifier: ^5.59.0
         version: 5.59.20(react@18.3.1)
       '@tsconfig/strictest':
         specifier: ^2.0.5
@@ -81,10 +81,10 @@ importers:
         specifier: ^3.0.2
         version: 3.0.2
       '@vercel/analytics':
-        specifier: ^1.3.2
+        specifier: ^1.3.1
         version: 1.3.2(next@14.2.17(@babel/core@7.26.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
       '@vercel/speed-insights':
-        specifier: ^1.0.14
+        specifier: ^1.0.12
         version: 1.0.14(next@14.2.17(@babel/core@7.26.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
       bech32:
         specifier: ^2.0.0
@@ -93,7 +93,7 @@ importers:
         specifier: ^9.1.2
         version: 9.1.2
       chart.js:
-        specifier: ^4.4.6
+        specifier: ^4.4.4
         version: 4.4.6
       chartjs-adapter-date-fns:
         specifier: ^3.0.0
@@ -102,13 +102,13 @@ importers:
         specifier: ^0.2.1
         version: 0.2.1(chart.js@4.4.6)
       chartjs-plugin-annotation:
-        specifier: ^3.1.0
+        specifier: ^3.0.1
         version: 3.1.0(chart.js@4.4.6)
       chartjs-plugin-zoom:
         specifier: ^2.0.1
         version: 2.0.1(chart.js@4.4.6)
       configs:
-        specifier: github:prax-wallet/configs#main
+        specifier: https://github.com/prax-wallet/configs.git#main
         version: prax-configs@https://codeload.github.com/prax-wallet/configs/tar.gz/28bb663aa5d042781e714288f28bf15a7075a990(@types/eslint@9.6.1)(@typescript-eslint/parser@7.18.0(eslint@9.14.0(jiti@1.21.6))(typescript@5.6.3))(jiti@1.21.6)(prettier@3.3.3)(tailwindcss@3.4.14)(typescript@5.6.3)(vitest@2.1.4(@types/node@22.9.0)(terser@5.36.0))
       date-fns:
         specifier: ^3.6.0
@@ -120,7 +120,7 @@ importers:
         specifier: ^3.0.2
         version: 3.0.2(echarts@5.5.1)(react@18.3.1)
       framer-motion:
-        specifier: ^11.11.11
+        specifier: ^11.3.31
         version: 11.11.11(@emotion/is-prop-valid@1.3.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       grpc-tools:
         specifier: ^1.12.4
@@ -132,7 +132,7 @@ importers:
         specifier: ^0.27.4
         version: 0.27.4
       lightweight-charts:
-        specifier: ^4.2.1
+        specifier: ^4.2.0
         version: 4.2.1
       lodash:
         specifier: ^4.17.21
@@ -141,16 +141,16 @@ importers:
         specifier: ^0.445.0
         version: 0.445.0(react@18.3.1)
       mobx:
-        specifier: ^6.13.5
+        specifier: ^6.13.3
         version: 6.13.5
       mobx-react-lite:
         specifier: ^4.0.7
         version: 4.0.7(mobx@6.13.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       next:
-        specifier: ^14.2.17
+        specifier: ^14.2.7
         version: 14.2.17(@babel/core@7.26.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       pg:
-        specifier: ^8.13.1
+        specifier: ^8.12.0
         version: 8.13.1
       prettier:
         specifier: ^3.3.3
@@ -171,29 +171,29 @@ importers:
         specifier: ^0.33.5
         version: 0.33.5
       webpack:
-        specifier: ^5.96.1
+        specifier: ^5.94.0
         version: 5.96.1
       zod:
         specifier: ^3.23.8
         version: 3.23.8
     devDependencies:
       '@babel/core':
-        specifier: ^7.26.0
+        specifier: ^7.25.2
         version: 7.26.0
       '@babel/preset-env':
-        specifier: ^7.26.0
+        specifier: ^7.25.4
         version: 7.26.0(@babel/core@7.26.0)
       '@babel/preset-react':
-        specifier: ^7.25.9
+        specifier: ^7.24.7
         version: 7.25.9(@babel/core@7.26.0)
       '@babel/preset-typescript':
-        specifier: ^7.26.0
+        specifier: ^7.24.7
         version: 7.26.0(@babel/core@7.26.0)
       '@chakra-ui/react-types':
         specifier: ^2.0.6
         version: 2.0.6(react@18.3.1)
       '@eslint/js':
-        specifier: ^9.14.0
+        specifier: ^9.10.0
         version: 9.14.0
       '@svgr/webpack':
         specifier: ^8.1.0
@@ -202,34 +202,34 @@ importers:
         specifier: ^0.0.278
         version: 0.0.278
       '@types/date-fns':
-        specifier: ^2.6.3
+        specifier: ^2.6.0
         version: 2.6.3
       '@types/lodash':
-        specifier: ^4.17.13
+        specifier: ^4.17.7
         version: 4.17.13
       '@types/milliseconds':
         specifier: ^0.0.33
         version: 0.0.33
       '@types/node':
-        specifier: ^22.9.0
+        specifier: ^22.5.4
         version: 22.9.0
       '@types/pg':
-        specifier: ^8.11.10
+        specifier: ^8.11.8
         version: 8.11.10
       '@types/react':
-        specifier: ^18.3.12
+        specifier: ^18.3.5
         version: 18.3.12
       '@types/react-dom':
-        specifier: ^18.3.1
+        specifier: ^18.3.0
         version: 18.3.1
       '@types/react-outside-click-handler':
-        specifier: ^1.3.4
+        specifier: ^1.3.3
         version: 1.3.4
       autoprefixer:
         specifier: ^10.4.20
         version: 10.4.20(postcss@8.4.47)
       babel-loader:
-        specifier: ^9.2.1
+        specifier: ^9.1.3
         version: 9.2.1(@babel/core@7.26.0)(webpack@5.96.1)
       eslint:
         specifier: 8.57.0
@@ -238,10 +238,10 @@ importers:
         specifier: 14.2.3
         version: 14.2.3(eslint-plugin-import-x@0.5.3(eslint@8.57.0)(typescript@5.6.3))(eslint@8.57.0)(typescript@5.6.3)
       eslint-plugin-react:
-        specifier: ^7.37.2
+        specifier: ^7.35.2
         version: 7.37.2(eslint@8.57.0)
       globals:
-        specifier: ^15.12.0
+        specifier: ^15.9.0
         version: 15.12.0
       postcss:
         specifier: ^8.4.47
@@ -250,7 +250,7 @@ importers:
         specifier: ^6.1.13
         version: 6.1.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       tailwindcss:
-        specifier: ^3.4.14
+        specifier: ^3.4.12
         version: 3.4.14
       ts-loader:
         specifier: ^9.5.1
@@ -259,13 +259,13 @@ importers:
         specifier: ^4.19.2
         version: 4.19.2
       typescript:
-        specifier: ^5.6.3
+        specifier: ^5.5.4
         version: 5.6.3
       typescript-eslint:
-        specifier: ^8.13.0
+        specifier: ^8.4.0
         version: 8.13.0(eslint@8.57.0)(typescript@5.6.3)
       vitest:
-        specifier: ^2.1.4
+        specifier: ^2.1.3
         version: 2.1.4(@types/node@22.9.0)(terser@5.36.0)
       webpack-watch-external-files-plugin:
         specifier: ^3.1.0
@@ -1609,9 +1609,8 @@ packages:
       '@penumbra-zone/getters': 20.0.0
       '@penumbra-zone/protobuf': 6.3.0
 
-  '@penumbra-zone/ui-tailwind@file:../web/packages/ui-tailwind/penumbra-zone-ui-tailwind-0.1.0.tgz':
-    resolution: {integrity: sha512-nkGv5mHSpFoDoA1mQWFRYhvP30QwODkE3+YK3GJ0K4lRDBdn3R7vlkTUb5ra18GbGJrwcAeSzNmYfd95RPV89g==, tarball: file:../web/packages/ui-tailwind/penumbra-zone-ui-tailwind-0.1.0.tgz}
-    version: 0.1.0
+  '@penumbra-zone/ui@13.0.0':
+    resolution: {integrity: sha512-QcN3wCP9S+iC1EzYy2uTnlVrzwk+adJDBLtzV1tt03KPxxRwqLOU0tKdaKuCxJAwvrk5vV0W8A76A9HraSBBCA==}
 
   '@penumbra-zone/wasm@31.0.0':
     resolution: {integrity: sha512-1W36JCVS8dlaZ3MQpzQg9LPQKphSopowRcURPx2Zv4NcX7RS/IU570BTF2HNqjv/5xtdJUKpoGUW8vzllURQNw==}
@@ -6793,7 +6792,7 @@ snapshots:
       idb: 8.0.0
       zod: 3.23.8
 
-  '@penumbra-zone/ui-tailwind@file:../web/packages/ui-tailwind/penumbra-zone-ui-tailwind-0.1.0.tgz(@bufbuild/protobuf@1.10.0)(@types/react-dom@18.3.1)(@types/react@18.3.12)':
+  '@penumbra-zone/ui@13.0.0(@bufbuild/protobuf@1.10.0)(@types/react-dom@18.3.1)(@types/react@18.3.12)':
     dependencies:
       '@penumbra-zone/bech32m': 10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0))
       '@penumbra-zone/getters': 20.0.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0))
