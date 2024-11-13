@@ -7,6 +7,7 @@ import { getSymbolFromValueView } from '@penumbra-zone/getters/value-view';
 import { usePathSymbols } from '@/pages/trade/model/use-path.ts';
 
 import { Tabs } from '@penumbra-zone/ui/Tabs';
+import { calculateSpread } from '@/pages/trade/model/trace.ts';
 
 const SELL_BG_COLOR = 'rgba(175, 38, 38, 0.24)';
 const BUY_BG_COLOR = 'rgba(28, 121, 63, 0.24)';
@@ -145,9 +146,9 @@ const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBo
 });
 
 export const RouteBook = observer(() => {
-  const { data: bookData, isLoading: bookIsLoading, error: bookErr } = useBook();
+  const { data, isLoading: bookIsLoading, error: bookErr } = useBook();
 
-  if (bookIsLoading || !bookData) {
+  if (bookIsLoading || !data) {
     return <div className='text-gray-400'>Loading...</div>;
   }
 
@@ -155,34 +156,9 @@ export const RouteBook = observer(() => {
     return <div className='text-red-500'>Error loading route book: {String(bookErr)}</div>;
   }
 
-  return <RouteBookData bookData={bookData} />;
+  return <RouteBookData bookData={data} />;
 });
 
-const calculateSpread = (sellOrders: Trace[], buyOrders: Trace[]) => {
-  if (!sellOrders.length || !buyOrders.length) {
-    return;
-  }
-
-  const lowestSell = sellOrders[sellOrders.length - 1];
-  const highestBuy = buyOrders[0];
-
-  if (lowestSell === undefined || highestBuy === undefined) {
-    return;
-  }
-
-  const sellPrice = parseFloat(lowestSell.price);
-  const buyPrice = parseFloat(highestBuy.price);
-
-  const spread = sellPrice - buyPrice;
-  const midPrice = (sellPrice + buyPrice) / 2;
-  const spreadPercentage = (spread / midPrice) * 100;
-
-  return {
-    amount: spread.toFixed(8),
-    percentage: spreadPercentage.toFixed(2),
-    midPrice: midPrice.toFixed(8),
-  };
-};
 const SpreadRow = ({ sellOrders, buyOrders }: { sellOrders: Trace[]; buyOrders: Trace[] }) => {
   const spreadInfo = calculateSpread(sellOrders, buyOrders);
   const pair = usePathSymbols();
@@ -215,9 +191,9 @@ const calculateRelativeSizes = (orders: Trace[]): Map<string, number> => {
   const totals = orders.map(order => parseFloat(order.total));
   const maxTotal = Math.max(...totals);
 
-  return orders.reduce((map, order) => {
-    const percentage = (parseFloat(order.total) / maxTotal) * 100;
-    map.set(order.total, percentage);
+  return totals.reduce((map, total) => {
+    const percentage = (total / maxTotal) * 100;
+    map.set(total.toString(), percentage);
     return map;
   }, new Map<string, number>());
 };
