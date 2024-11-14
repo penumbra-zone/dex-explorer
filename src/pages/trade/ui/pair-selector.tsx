@@ -86,7 +86,7 @@ export const PairSelector = observer(({ disabled, dialogTitle }: PairSelectorPro
           balances={balances}
           disabled={disabled}
           dialogTitle={dialogTitle}
-          onChange={val => handleRouting({router, baseAsset: val, quoteAsset: quoteAsset})}
+          onChange={val => handleRouting({ router, baseAsset: val, quoteAsset: quoteAsset })}
         />
 
         <Button
@@ -94,7 +94,7 @@ export const PairSelector = observer(({ disabled, dialogTitle }: PairSelectorPro
           iconOnly
           icon={ArrowLeftRight}
           disabled={disabled}
-          onClick={() => handleRouting({router, baseAsset: quoteAsset, quoteAsset: baseAsset})}
+          onClick={() => handleRouting({ router, baseAsset: quoteAsset, quoteAsset: baseAsset })}
         >
           Swap
         </Button>
@@ -105,7 +105,7 @@ export const PairSelector = observer(({ disabled, dialogTitle }: PairSelectorPro
           balances={balances}
           disabled={disabled}
           dialogTitle={dialogTitle}
-          onChange={val => handleRouting({router, baseAsset: baseAsset, quoteAsset: val})}
+          onChange={val => handleRouting({ router, baseAsset: baseAsset, quoteAsset: val })}
         />
       </div>
     </Density>
