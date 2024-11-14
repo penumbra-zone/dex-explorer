@@ -15,6 +15,7 @@ import { useAssets } from '@/shared/api/assets';
 import { useBalances } from '@/shared/api/balances';
 import { PagePath } from '@/shared/const/pages.ts';
 import { usePathToMetadata } from '../model/use-path.ts';
+import { Skeleton } from '@/shared/ui/skeleton';
 
 const handleRouting = ({
   router,
@@ -68,7 +69,11 @@ export const PairSelector = observer(({ disabled, dialogTitle }: PairSelectorPro
   }
 
   if (isLoading || !baseAsset || !quoteAsset) {
-    return <div>Loading...</div>;
+    return (
+      <div className='w-[200px]'>
+        <Skeleton />
+      </div>
+    );
   }
 
   return (
