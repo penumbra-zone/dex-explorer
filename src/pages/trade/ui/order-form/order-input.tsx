@@ -1,115 +1,7 @@
-import { styled, keyframes } from 'styled-components';
-import { small, large } from '@penumbra-zone/ui/utils/typography';
 import { forwardRef, useId } from 'react';
+import { useComponentSize } from 'react-use-size';
 import SpinnerIcon from '@/shared/assets/spinner-icon.svg';
-
-const Wrapper = styled.div`
-  position: relative;
-  height: 64px;
-  background: ${props =>
-    `linear-gradient(to right, ${props.theme.color.other.tonalFill5}, ${props.theme.color.other.tonalFill10})`};
-  border-radius: ${props => props.theme.borderRadius.sm};
-  margin-bottom: ${props => props.theme.spacing(4)};
-`;
-
-const StyledLabel = styled.label`
-  position: absolute;
-  top: ${props => props.theme.spacing(2)};
-  left: ${props => props.theme.spacing(3)};
-  z-index: 1;
-  ${small};
-  color: ${props => props.theme.color.text.secondary};
-`;
-
-const Denominator = styled.div`
-  position: absolute;
-  top: 0;
-  right: ${props => props.theme.spacing(3)};
-  pointer-events: none;
-  z-index: 1;
-  ${small};
-  color: ${props => props.theme.color.text.secondary};
-  line-height: 64px;
-`;
-
-const fadeInOut = keyframes`
-  0% {
-    opacity: 0.5;
-  }
-
-  50% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0.5;
-  }
-`;
-
-const Estimating = styled.div`
-  display: flex;
-  padding: ${props => props.theme.spacing(2)} ${props => props.theme.spacing(3)};
-  padding-top: 28px;
-  color: ${props => props.theme.color.text.secondary};
-  animation: ${fadeInOut} 3s linear infinite;
-`;
-
-const EstimatingText = styled.span`
-  ${small};
-  color: ${props => props.theme.color.text.secondary};
-  line-height: 24px;
-`;
-
-const SpinnerIconWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 24px;
-  margin-right: ${props => props.theme.spacing(1)};
-`;
-
-const ApproximateTilde = styled.span`
-  position: absolute;
-  top: 28px;
-  left: ${props => props.theme.spacing(3)};
-  ${large};
-  color: ${props => props.theme.color.secondary.light};
-  line-height: 24px;
-`;
-
-const StyledInput = styled.input<{ $isApproximately: boolean }>`
-  width: 100%;
-  appearance: none;
-  border: none;
-  background: transparent;
-  border-radius: ${props => props.theme.borderRadius.sm};
-  color: ${props => props.theme.color.text.primary};
-  transition: border-color 0.15s;
-  padding: ${props => props.theme.spacing(2)}
-    ${props => (props.$isApproximately ? props.theme.spacing(7) : props.theme.spacing(3))};
-  padding-top: 28px;
-  transition: background-color 0.15s;
-  ${large};
-
-  &::-webkit-outer-spin-button,
-  &::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-
-  &[type='number'] {
-    -moz-appearance: textfield;
-  }
-
-  &:hover {
-    background: ${props => props.theme.color.other.tonalFill5};
-  }
-
-  &:focus {
-    outline: none;
-    background: ${props => props.theme.color.other.tonalFill10};
-  }
-`;
+import cn from 'clsx';
 
 export interface OrderInputProps {
   id?: string;
@@ -144,22 +36,41 @@ export const OrderInput = forwardRef<HTMLInputElement, OrderInputProps>(
     }: OrderInputProps,
     ref,
   ) => {
+    const { ref: denomRef, width: denomWidth } = useComponentSize();
     const reactId = useId();
     const id = idProp ?? reactId;
 
     return (
-      <Wrapper>
-        <StyledLabel htmlFor={id}>{label}</StyledLabel>
+      <div className='relative h-16 mb-4 bg-gradient-to-r from-other-tonalFill5 to-other-tonalFill10 rounded-sm'>
+        <label
+          htmlFor={id}
+          className='absolute top-2 left-3 z-[1] font-default text-textSm font-normal leading-textXs text-text-secondary'
+        >
+          {label}
+        </label>
         {isEstimating ? (
-          <Estimating>
-            <SpinnerIconWrapper>
+          <div className='flex items-center p-2 pl-3 pt-7 text-text-secondary animate-pulse'>
+            <div className='flex items-center h-6 mr-1'>
               <SpinnerIcon />
-            </SpinnerIconWrapper>
-            <EstimatingText>Estimating...</EstimatingText>
-          </Estimating>
+            </div>
+            <span className='font-default text-textSm font-normal leading-textXs'>
+              Estimating...
+            </span>
+          </div>
         ) : (
           <>
-            <StyledInput
+            <input
+              className={cn(
+                'w-full appearance-none border-none bg-transparent',
+                'rounded-sm text-text-primary transition-colors duration-150',
+                'p-2 pt-7',
+                isApproximately ? 'pl-7' : 'pl-3',
+                'font-default text-textLg font-medium leading-textLg',
+                'hover:bg-other-tonalFill5 focus:outline-none focus:bg-other-tonalFill10',
+                '[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
+                "[&[type='number']]:[-moz-appearance:textfield]",
+              )}
+              style={{ paddingRight: denomWidth + 20 }}
               value={value}
               onChange={e => onChange?.(e.target.value)}
               placeholder={placeholder}
@@ -168,13 +79,21 @@ export const OrderInput = forwardRef<HTMLInputElement, OrderInputProps>(
               min={min}
               ref={ref}
               id={id}
-              $isApproximately={isApproximately}
             />
-            {isApproximately && <ApproximateTilde>≈</ApproximateTilde>}
+            {isApproximately && (
+              <span className='absolute top-[27px] left-3 font-default text-textLg font-medium leading-textLg text-secondary-light'>
+                ≈
+              </span>
+            )}
           </>
         )}
-        <Denominator>{denominator}</Denominator>
-      </Wrapper>
+        <div
+          ref={denomRef}
+          className='absolute top-0 right-3 pointer-events-none z-[1] font-default text-textSm font-normal leading-textXs text-text-secondary !leading-[64px]'
+        >
+          {denominator}
+        </div>
+      </div>
     );
   },
 );

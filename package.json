@@ -57,6 +57,7 @@
     "chartjs-chart-financial": "^0.2.1",
     "chartjs-plugin-annotation": "^3.0.1",
     "chartjs-plugin-zoom": "^2.0.1",
+    "clsx": "^2.1.1",
     "configs": "https://github.com/prax-wallet/configs.git#main",
     "date-fns": "^3.6.0",
     "echarts": "^5.5.1",
@@ -77,6 +78,7 @@
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.3.1",
     "react-outside-click-handler": "^1.3.0",
+    "react-use-size": "^3.0.3",
     "sharp": "^0.33.5",
     "webpack": "^5.94.0",
     "zod": "^3.23.8"

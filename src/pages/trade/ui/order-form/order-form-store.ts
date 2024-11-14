@@ -72,7 +72,7 @@ export class OrderFormAsset {
 
   setBalanceFromBalanceView = (balanceView: ValueView): void => {
     const balance = getFormattedAmtFromValueView(balanceView, true);
-    this.balance = Number(balance);
+    this.balance = parseFloat(balance.replace(/,/g, ''));
   };
 
   setAmount = (amount: string | number, callOnAmountChange = true): void => {

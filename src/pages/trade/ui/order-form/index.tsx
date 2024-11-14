@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Button } from '@penumbra-zone/ui/Button';
+import { Text } from '@penumbra-zone/ui/Text';
 import { connectionStore } from '@/shared/model/connection';
 import { useBalances } from '@/shared/api/balances';
-import { usePathToMetadata } from '../../model/use-path-to-metadata';
+import { usePathToMetadata } from '../../model/use-path';
 import { OrderInput } from './order-input';
 import { SegmentedControl } from './segmented-control';
 import { ConnectButton } from './connect-button';
@@ -74,13 +75,23 @@ export const OrderForm = observer(() => {
           toolTip='Gas fees tooltip here.'
         />
       </div>
-      {connected ? (
-        <Button actionType='accent' disabled={isLoading} onClick={submitOrder}>
-          {direction} {baseAsset.symbol}
-        </Button>
-      ) : (
-        <ConnectButton />
-      )}
+      <div className='mb-4'>
+        {connected ? (
+          <Button actionType='accent' disabled={isLoading} onClick={submitOrder}>
+            {direction} {baseAsset.symbol}
+          </Button>
+        ) : (
+          <ConnectButton />
+        )}
+      </div>
+      <div className='flex justify-center p-1'>
+        <Text small color='text.secondary'>
+          1 {baseAsset.symbol} ={' '}
+          <Text small color='text.primary'>
+            10 {quoteAsset.symbol}
+          </Text>
+        </Text>
+      </div>
     </div>
   );
 });
