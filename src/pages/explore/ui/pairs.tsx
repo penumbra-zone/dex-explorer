@@ -22,8 +22,8 @@ export const ExplorePairs = () => {
         />
       </div>
 
-      <div className='grid grid-cols-[1fr_1fr_1fr_1fr_128px_56px]'>
-        <div className='grid grid-cols-subgrid col-span-6 gap-2 py-2 px-3'>
+      <div className='grid grid-cols-[1fr_1fr_1fr_1fr_128px_56px] gap-2 overflow-auto'>
+        <div className='grid grid-cols-subgrid col-span-6 py-2 px-3'>
           <Text detail color='text.secondary' align='left'>
             Pair
           </Text>
@@ -33,10 +33,10 @@ export const ExplorePairs = () => {
           <Text detail color='text.secondary' align='right'>
             Liquidity
           </Text>
-          <Text detail color='text.secondary' align='right'>
+          <Text detail color='text.secondary' align='right' whitespace='nowrap'>
             24h Volume
           </Text>
-          <Text detail color='text.secondary' align='right'>
+          <Text detail color='text.secondary' align='right' whitespace='nowrap'>
             24h Price Change
           </Text>
           <Text detail color='text.secondary' align='right'>

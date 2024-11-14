@@ -4,6 +4,9 @@ import { Button } from '@penumbra-zone/ui/Button';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Density } from '@penumbra-zone/ui/Density';
 import { AssetIcon } from '@penumbra-zone/ui/AssetIcon';
+import SparklineChart from './sparkline-chart.svg';
+import { ShortChart } from './short-chart';
+import ChevronDown from './chevron-down.svg';
 
 const u8 = (length: number) => Uint8Array.from({ length }, () => Math.floor(Math.random() * 256));
 export const PENUMBRA_METADATA = new Metadata({
@@ -40,9 +43,15 @@ const ShimmeringBars = () => {
   );
 };
 
-export const PairCard = () => {
+export interface PairCardProps {
+  loading?: boolean;
+}
+
+export const PairCard = ({ loading }: PairCardProps) => {
+  const change = -5.35;
+
   return (
-    <div className='grid grid-cols-subgrid col-span-6 gap-2 p-3 rounded-sm cursor-pointer transition-colors hover:bg-action-hoverOverlay'>
+    <div className='grid grid-cols-subgrid col-span-6 p-3 rounded-sm cursor-pointer transition-colors hover:bg-action-hoverOverlay'>
       <div className='relative h-10 flex items-center gap-2 text-text-primary'>
         <Density compact>
           <Button icon={Star} iconOnly>
@@ -61,24 +70,72 @@ export const PairCard = () => {
       </div>
 
       <div className='h-10 flex flex-col items-end justify-center'>
-        <ShimmeringBars />
+        {loading ? (
+          <ShimmeringBars />
+        ) : (
+          <>
+            <Text color='text.primary'>0.23</Text>
+            <Text detail color='text.secondary'>
+              delUM
+            </Text>
+          </>
+        )}
       </div>
 
       <div className='h-10 flex flex-col items-end justify-center'>
-        <ShimmeringBars />
+        {loading ? (
+          <ShimmeringBars />
+        ) : (
+          <>
+            <Text color='text.primary'>2.34M</Text>
+            <Text detail color='text.secondary'>
+              USDC
+            </Text>
+          </>
+        )}
       </div>
 
       <div className='h-10 flex flex-col items-end justify-center'>
-        <ShimmeringBars />
+        {loading ? (
+          <ShimmeringBars />
+        ) : (
+          <>
+            <Text color='text.primary'>1.37K</Text>
+            <Text detail color='text.secondary'>
+              USDC
+            </Text>
+          </>
+        )}
       </div>
 
-      <div className='h-10 flex flex-col items-end justify-center'>
-        <ShimmeringBars />
-      </div>
+      <div className='h-10 flex items-center justify-end gap-2'>
+        {loading ? (
+          <>
+            <div className="w-10 h-4 bg-shimmer rounded-xs"/>
+            <SparklineChart className="w-14 h-8"/>
+          </>
+        ) : (
+          <>
+          {change >= 0 ? (
+            <div className="flex items-center text-success-light">
+              <ChevronDown className="size-3 rotate-180 inline-block"/>
+              <Text>{change}%</Text>
+            </div>
+          ) : (
+            <div className="flex items-center text-destructive-light">
+              <ChevronDown className="size-3 inline-block "/>
+              <Text>{Math.abs(change)}%</Text>
+            </div>
+        )}
 
-      <div className='h-10 flex flex-col items-end justify-center'>
-        <Density compact>
-          <Button icon={CandlestickChart} iconOnly>
+        <ShortChart change={change}/>
+      </>
+      )}
+    </div>
+
+  <div className="h-10 flex flex-col items-end justify-center">
+    <Density compact>
+      <Button icon={CandlestickChart} iconOnly>
             Actions
           </Button>
         </Density>
