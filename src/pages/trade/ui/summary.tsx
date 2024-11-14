@@ -84,7 +84,12 @@ export const Summary = () => {
             )}
           >
             <Text detail>{change24h.change}</Text>
-            <span className='flex h-4 px-1 bg-success-light rounded-full text-success-dark'>
+            <span
+              className={cn(
+                'flex h-4 px-1 rounded-full text-success-dark',
+                change24h.positive ? 'bg-success-light' : 'bg-destructive-light',
+              )}
+            >
               <Text detail>
                 {change24h.positive ? '+' : '-'}
                 {change24h.percent}%
