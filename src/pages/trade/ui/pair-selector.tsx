@@ -16,6 +16,7 @@ import { useBalances } from '@/shared/api/balances';
 import { PagePath } from '@/shared/const/pages.ts';
 import { usePathToMetadata } from '../model/use-path.ts';
 import { Skeleton } from '@/shared/ui/skeleton';
+import { Density } from '@penumbra-zone/ui/Density';
 
 const handleRouting = ({
   router,
@@ -77,34 +78,36 @@ export const PairSelector = observer(({ disabled, dialogTitle }: PairSelectorPro
   }
 
   return (
-    <div className='flex gap-2'>
-      <AssetSelector
-        value={baseAsset}
-        assets={assets}
-        balances={balances}
-        disabled={disabled}
-        dialogTitle={dialogTitle}
-        onChange={val => handleRouting({ router, baseAsset: val, quoteAsset: quoteAsset })}
-      />
+    <Density compact>
+      <div className='flex gap-2'>
+        <AssetSelector
+          value={baseAsset}
+          assets={assets}
+          balances={balances}
+          disabled={disabled}
+          dialogTitle={dialogTitle}
+          onChange={val => handleRouting({router, baseAsset: val, quoteAsset: quoteAsset})}
+        />
 
-      <Button
-        priority='primary'
-        iconOnly
-        icon={ArrowLeftRight}
-        disabled={disabled}
-        onClick={() => handleRouting({ router, baseAsset: quoteAsset, quoteAsset: baseAsset })}
-      >
-        Swap
-      </Button>
+        <Button
+          priority='primary'
+          iconOnly
+          icon={ArrowLeftRight}
+          disabled={disabled}
+          onClick={() => handleRouting({router, baseAsset: quoteAsset, quoteAsset: baseAsset})}
+        >
+          Swap
+        </Button>
 
-      <AssetSelector
-        value={quoteAsset}
-        assets={assets}
-        balances={balances}
-        disabled={disabled}
-        dialogTitle={dialogTitle}
-        onChange={val => handleRouting({ router, baseAsset: baseAsset, quoteAsset: val })}
-      />
-    </div>
+        <AssetSelector
+          value={quoteAsset}
+          assets={assets}
+          balances={balances}
+          disabled={disabled}
+          dialogTitle={dialogTitle}
+          onChange={val => handleRouting({router, baseAsset: baseAsset, quoteAsset: val})}
+        />
+      </div>
+    </Density>
   );
 });

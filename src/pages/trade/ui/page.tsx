@@ -11,8 +11,8 @@ export const TradePage = () => {
     <div>
       <hr className='h-[1px] w-full border-t border-t-other-solidStroke' />
 
-      <div className='flex flex-col desktop:flex-row p-4 gap-4 border-b border-b-other-solidStroke'>
-        <div className='flex gap-2 h-8 overflow-hidden'>
+      <div className='flex flex-col items-center desktop:flex-row p-4 gap-4 border-b border-b-other-solidStroke'>
+        <div className='flex gap-2 h-8'>
           <PairSelector />
         </div>
         <Summary />
