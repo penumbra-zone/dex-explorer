@@ -7,6 +7,7 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { useSummary } from '../model/useSummary';
 import { usePathToMetadata } from '../model/use-path';
 import { shortify } from '@/shared/utils/numbers/shortify';
+import { round } from '@/shared/utils/numbers/round';
 
 const SummaryCard = ({
   title,
@@ -48,10 +49,11 @@ export const Summary = () => {
 
   const change24h = data && {
     positive: data.current_price >= data.price_24h_ago,
-    change: Number(data.current_price - data.price_24h_ago).toFixed(4),
-    percent: Number(
+    change: round(data.current_price - data.price_24h_ago, 4),
+    percent: round(
       Math.abs(((data.current_price - data.price_24h_ago) / data.price_24h_ago) * 100),
-    ).toFixed(2),
+      2,
+    ),
   };
 
   if (error) {
@@ -69,7 +71,7 @@ export const Summary = () => {
       <SummaryCard title='Price' loading={isLoading}>
         {data && (
           <Text detail color='text.primary'>
-            {Number(data.current_price).toFixed(6)}
+            {round(data.current_price, 6)}
           </Text>
         )}
       </SummaryCard>
@@ -94,14 +96,14 @@ export const Summary = () => {
       <SummaryCard title='24h High' loading={isLoading}>
         {data && (
           <Text detail color='text.primary'>
-            {Number(data.high_24h).toFixed(4)}
+            {round(data.high_24h, 4)}
           </Text>
         )}
       </SummaryCard>
       <SummaryCard title='24h Low' loading={isLoading}>
         {data && (
           <Text detail color='text.primary'>
-            {Number(data.low_24h).toFixed(4)}
+            {round(data.low_24h, 4)}
           </Text>
         )}
       </SummaryCard>
