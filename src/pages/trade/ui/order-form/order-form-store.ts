@@ -25,7 +25,7 @@ import {
   AddressIndex,
 } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
 import { penumbra } from '@/shared/const/penumbra';
-import { planBuildBroadcast } from './helpers';
+import { plan, planBuildBroadcast } from './helpers';
 
 export enum Direction {
   Buy = 'Buy',
@@ -123,10 +123,13 @@ class OrderFormStore {
   quoteAsset = new OrderFormAsset();
   balances: BalancesResponse[] | undefined;
   exchangeRate: number | null = null;
+  gasFee: number | null = null;
   isLoading = false;
 
   constructor() {
     makeAutoObservable(this);
+
+    void this.calculateGasFee();
     void this.calculateExchangeRate();
   }
 
@@ -206,6 +209,8 @@ class OrderFormStore {
     const assetOut = assetIsBaseAsset ? this.quoteAsset : this.baseAsset;
 
     try {
+      void this.calculateGasFee();
+
       assetOut.setIsEstimating(true);
 
       // reset potentially previously set flag
@@ -227,12 +232,56 @@ class OrderFormStore {
   calculateExchangeRate = async (): Promise<void> => {
     this.exchangeRate = null;
 
-    const baseAsset: OrderFormAsset = this.baseAsset.clone();
+    const baseAsset: OrderFormAsset = new OrderFormAsset(this.baseAsset.metadata);
     baseAsset.setAmount(1);
 
     const output = await this.simulateSwapTx(baseAsset, this.quoteAsset);
     const outputAmount = getFormattedAmtFromValueView(output, true);
     this.exchangeRate = Number(outputAmount);
+  };
+
+  calculateGasFee = async (): Promise<void> => {
+    this.gasFee = null;
+
+    const isBuy = this.direction === Direction.Buy;
+    const assetIn = isBuy ? this.quoteAsset : this.baseAsset;
+    const assetOut = isBuy ? this.baseAsset : this.quoteAsset;
+
+    console.log('TCL: OrderFormStore -> assetIn', assetIn);
+    console.log('TCL: OrderFormStore -> assetOut', assetOut);
+    if (!assetIn.amount || !assetOut.amount) {
+      this.gasFee = 0;
+      return;
+    }
+
+    const req = new TransactionPlannerRequest({
+      swaps: [
+        {
+          targetAsset: assetOut.assetId,
+          value: {
+            amount: assetIn.toAmount(),
+            assetId: assetIn.assetId,
+          },
+          claimAddress: assetIn.accountAddress,
+        },
+      ],
+      source: assetIn.accountIndex,
+    });
+
+    const txPlan = await plan(req);
+    const fee = txPlan.transactionParameters?.fee;
+    const feeValueView = new ValueView({
+      valueView: {
+        case: 'knownAssetId',
+        value: {
+          amount: fee?.amount ?? { hi: 0n, lo: 0n },
+          metadata: this.baseAsset.metadata,
+        },
+      },
+    });
+
+    const feeAmount = getFormattedAmtFromValueView(feeValueView, true);
+    this.gasFee = Number(feeAmount);
   };
 
   initiateSwapTx = async (): Promise<void> => {
@@ -268,7 +317,10 @@ class OrderFormStore {
       await planBuildBroadcast('swapClaim', req, { skipAuth: true });
 
       assetIn.setAmount(0);
+      assetIn.setIsApproximately(false);
+
       assetOut.setAmount(0);
+      assetOut.setIsApproximately(false);
     } finally {
       this.isLoading = false;
     }

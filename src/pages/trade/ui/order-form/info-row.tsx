@@ -25,8 +25,8 @@ const getValueColor = (valueColor: InfoRowProps['valueColor']) => {
 export const InfoRow = observer(
   ({ label, isLoading, value, valueColor, toolTip }: InfoRowProps) => {
     return (
-      <div className='flex justify-between mb-1 last:mb-0 py-1'>
-        <Text small color='text.secondary'>
+      <div className='flex items-center justify-between mb-1 last:mb-0 py-1'>
+        <Text as='div' small color='text.secondary'>
           {label}
         </Text>
         <div className='flex items-center'>
@@ -34,7 +34,7 @@ export const InfoRow = observer(
             {isLoading ? (
               <div className='w-16 h-4 bg-neutral-main rounded-xs animate-pulse' />
             ) : (
-              <Text small color={getValueColor(valueColor)}>
+              <Text as='div' small color={getValueColor(valueColor)}>
                 {value}
               </Text>
             )}

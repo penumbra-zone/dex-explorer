@@ -34,8 +34,16 @@ const useOrderFormStore = () => {
 
 export const OrderForm = observer(() => {
   const { connected } = connectionStore;
-  const { baseAsset, quoteAsset, direction, setDirection, submitOrder, isLoading, exchangeRate } =
-    useOrderFormStore();
+  const {
+    baseAsset,
+    quoteAsset,
+    direction,
+    setDirection,
+    submitOrder,
+    isLoading,
+    gasFee,
+    exchangeRate,
+  } = useOrderFormStore();
 
   return (
     <div>
@@ -69,8 +77,8 @@ export const OrderForm = observer(() => {
         {/* @TODO: Add gas fee */}
         <InfoRow
           label='Gas Fee'
-          isLoading={true}
-          value='Free'
+          isLoading={gasFee === null}
+          value={`${gasFee} ${baseAsset.symbol}`}
           valueColor='success'
           toolTip='Gas fees tooltip here.'
         />
