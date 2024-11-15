@@ -116,10 +116,6 @@ export class OrderFormAsset {
       amount: this.toAmount(),
     });
   };
-
-  clone = (): OrderFormAsset => {
-    return Object.assign(Object.create(Object.getPrototypeOf(this)), this);
-  };
 }
 
 class OrderFormStore {
@@ -253,8 +249,6 @@ class OrderFormStore {
     const assetIn = isBuy ? this.quoteAsset : this.baseAsset;
     const assetOut = isBuy ? this.baseAsset : this.quoteAsset;
 
-    console.log('TCL: OrderFormStore -> assetIn', assetIn);
-    console.log('TCL: OrderFormStore -> assetOut', assetOut);
     if (!assetIn.amount || !assetOut.amount) {
       this.gasFee = 0;
       return;
