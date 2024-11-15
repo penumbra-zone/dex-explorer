@@ -34,7 +34,7 @@ const useOrderFormStore = () => {
 
 export const OrderForm = observer(() => {
   const { connected } = connectionStore;
-  const { baseAsset, quoteAsset, direction, setDirection, submitOrder, isLoading } =
+  const { baseAsset, quoteAsset, direction, setDirection, submitOrder, isLoading, exchangeRate } =
     useOrderFormStore();
 
   return (
@@ -84,14 +84,16 @@ export const OrderForm = observer(() => {
           <ConnectButton />
         )}
       </div>
-      <div className='flex justify-center p-1'>
-        <Text small color='text.secondary'>
-          1 {baseAsset.symbol} ={' '}
-          <Text small color='text.primary'>
-            10 {quoteAsset.symbol}
+      {exchangeRate !== null && (
+        <div className='flex justify-center p-1'>
+          <Text small color='text.secondary'>
+            1 {baseAsset.symbol} ={' '}
+            <Text small color='text.primary'>
+              {exchangeRate} {quoteAsset.symbol}
+            </Text>
           </Text>
-        </Text>
-      </div>
+        </div>
+      )}
     </div>
   );
 });

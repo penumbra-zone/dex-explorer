@@ -110,6 +110,10 @@ export class OrderFormAsset {
       amount: this.toAmount(),
     });
   };
+
+  clone = (): OrderFormAsset => {
+    return Object.assign(Object.create(Object.getPrototypeOf(this)), this);
+  };
 }
 
 class OrderFormStore {
@@ -118,10 +122,12 @@ class OrderFormStore {
   baseAsset = new OrderFormAsset();
   quoteAsset = new OrderFormAsset();
   balances: BalancesResponse[] | undefined;
+  exchangeRate: number | null = null;
   isLoading = false;
 
   constructor() {
     makeAutoObservable(this);
+    void this.calculateExchangeRate();
   }
 
   setType = (type: OrderType): void => {
@@ -154,14 +160,39 @@ class OrderFormStore {
     }
   };
 
+  private simulateSwapTx = async (
+    assetIn: OrderFormAsset,
+    assetOut: OrderFormAsset,
+  ): Promise<ValueView> => {
+    const req = new SimulateTradeRequest({
+      input: assetIn.toValue(),
+      output: assetOut.assetId,
+    });
+
+    const res = await penumbra.service(SimulationService).simulateTrade(req);
+
+    const output = new ValueView({
+      valueView: {
+        case: 'knownAssetId',
+        value: {
+          amount: res.output?.output?.amount,
+          metadata: assetOut.metadata,
+        },
+      },
+    });
+
+    return output;
+  };
+
   setAssets = (baseAsset: Metadata, quoteAsset: Metadata): void => {
     this.baseAsset = new OrderFormAsset(baseAsset);
     this.quoteAsset = new OrderFormAsset(quoteAsset);
 
-    this.baseAsset.onAmountChange(this.simulateSwapTx);
-    this.quoteAsset.onAmountChange(this.simulateSwapTx);
+    this.baseAsset.onAmountChange(this.handleAmountChange);
+    this.quoteAsset.onAmountChange(this.handleAmountChange);
 
     this.setBalancesOfAssets();
+    void this.calculateExchangeRate();
   };
 
   setBalances = (balances: BalancesResponse[]): void => {
@@ -169,7 +200,7 @@ class OrderFormStore {
     this.setBalancesOfAssets();
   };
 
-  simulateSwapTx = async (asset: OrderFormAsset): Promise<void> => {
+  handleAmountChange = async (asset: OrderFormAsset): Promise<void> => {
     const assetIsBaseAsset = asset.assetId === this.baseAsset.assetId;
     const assetIn = assetIsBaseAsset ? this.baseAsset : this.quoteAsset;
     const assetOut = assetIsBaseAsset ? this.quoteAsset : this.baseAsset;
@@ -180,24 +211,9 @@ class OrderFormStore {
       // reset potentially previously set flag
       assetIn.setIsApproximately(false);
 
-      const req = new SimulateTradeRequest({
-        input: assetIn.toValue(),
-        output: assetOut.assetId,
-      });
-
-      const res = await penumbra.service(SimulationService).simulateTrade(req);
-
-      const output = new ValueView({
-        valueView: {
-          case: 'knownAssetId',
-          value: {
-            amount: res.output?.output?.amount,
-            metadata: assetOut.metadata,
-          },
-        },
-      });
-
+      const output = await this.simulateSwapTx(assetIn, assetOut);
       const outputAmount = getFormattedAmtFromValueView(output, true);
+
       assetOut.setAmount(Number(outputAmount), false);
       assetOut.setIsApproximately(true);
     } catch (e) {
@@ -206,6 +222,17 @@ class OrderFormStore {
     } finally {
       assetOut.setIsEstimating(false);
     }
+  };
+
+  calculateExchangeRate = async (): Promise<void> => {
+    this.exchangeRate = null;
+
+    const baseAsset: OrderFormAsset = this.baseAsset.clone();
+    baseAsset.setAmount(1);
+
+    const output = await this.simulateSwapTx(baseAsset, this.quoteAsset);
+    const outputAmount = getFormattedAmtFromValueView(output, true);
+    this.exchangeRate = Number(outputAmount);
   };
 
   initiateSwapTx = async (): Promise<void> => {
