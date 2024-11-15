@@ -88,6 +88,12 @@ export class OrderFormAsset {
     }
   };
 
+  unsetAmount = (): void => {
+    this.amount = undefined;
+    this.isApproximately = false;
+    this.isEstimating = false;
+  };
+
   setIsEstimating = (isEstimating: boolean): void => {
     this.isEstimating = isEstimating;
   };
@@ -316,11 +322,8 @@ class OrderFormStore {
       });
       await planBuildBroadcast('swapClaim', req, { skipAuth: true });
 
-      assetIn.setAmount(0);
-      assetIn.setIsApproximately(false);
-
-      assetOut.setAmount(0);
-      assetOut.setIsApproximately(false);
+      assetIn.unsetAmount();
+      assetOut.unsetAmount();
     } finally {
       this.isLoading = false;
     }
