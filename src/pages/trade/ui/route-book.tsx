@@ -5,7 +5,6 @@ import { RouteBookResponse, Trace } from '@/shared/api/server/book/types';
 import { ChevronRight } from 'lucide-react';
 import { getSymbolFromValueView } from '@penumbra-zone/getters/value-view';
 import { usePathSymbols } from '@/pages/trade/model/use-path.ts';
-
 import { Tabs } from '@penumbra-zone/ui/Tabs';
 import { calculateSpread } from '@/pages/trade/model/trace.ts';
 
@@ -62,6 +61,7 @@ const TradeRow = ({
         <>
           <td
             className={
+              /* TODO: make this a constant*/
               isSell ? 'text-[#F17878] text-xs relative' : 'text-[#55D383] text-xs relative'
             }
           >
@@ -100,7 +100,7 @@ const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBo
           actionType='accent'
         />
       </div>
-
+      {/* TODO: move skeleton here, make a skeletonrow that copies the TradeRow.*/}
       <div className='flex-1'>
         {activeTab === 'routes' ? (
           <table className='w-full'>
@@ -146,14 +146,41 @@ const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBo
 });
 
 export const RouteBook = observer(() => {
+  const [isLoading, setIsLoading] = useState(true);
   const { data, isLoading: bookIsLoading, error: bookErr } = useBook();
-
-  if (bookIsLoading || !data) {
-    return <div className='text-gray-400'>Loading...</div>;
-  }
 
   if (bookErr) {
     return <div className='text-red-500'>Error loading route book: {String(bookErr)}</div>;
+  }
+  /* TODO: zero-pad digits to have them all at the same time */
+
+  if (isLoading || bookIsLoading || !data || data.multiHops.buy.length === 0) {
+    return (
+      <>
+        {Array(8)
+          .fill(1)
+          .map((_, i) => (
+            <tr
+              key={i}
+              onClick={() => setIsLoading(false)}
+              className='group relative h-[33px] border-b border-[rgba(250,250,250,0.15)]'
+            >
+              <td className=''>
+                <div className='w-20 h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+              </td>
+              <td className=''>
+                <div className='w-20 h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+              </td>
+              <td className=''>
+                <div className='w-24 h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+              </td>
+              <td className=''>
+                <div className='w-16 h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+              </td>
+            </tr>
+          ))}
+      </>
+    );
   }
 
   return <RouteBookData bookData={data} />;
