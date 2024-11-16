@@ -91,6 +91,7 @@ const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBo
   const buyRelativeSizes = calculateRelativeSizes(multiHops.buy);
 
   return (
+    /*TODO: move these colors to tailwind config*/
     <div className='flex flex-col max-w-full border-y border-[#262626]'>
       <div className='flex items-center gap-2 px-4 h-11 border-b border-[#262626]'>
         <Tabs
