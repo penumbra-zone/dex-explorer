@@ -2,81 +2,10 @@ import React, { useState } from 'react';
 import { useBook } from '../api/book';
 import { observer } from 'mobx-react-lite';
 import { RouteBookResponse, Trace } from '@/shared/api/server/book/types';
-import { ChevronRight } from 'lucide-react';
-import { getSymbolFromValueView } from '@penumbra-zone/getters/value-view';
 import { usePathSymbols } from '@/pages/trade/model/use-path.ts';
 import { Tabs } from '@penumbra-zone/ui/Tabs';
 import { calculateSpread } from '@/pages/trade/model/trace.ts';
-
-const HopCount = ({ count }: { count: number }) => {
-  return (
-    <span className={count === 0 ? 'text-white' : 'text-route-text'}>
-      {count === 2 ? 'Direct' : `${count} Hops`}
-    </span>
-  );
-};
-
-const RouteDisplay = ({ tokens }: { tokens: string[] }) => {
-  return (
-    <div className='flex items-center gap-1 py-2 text-xs text-white'>
-      {tokens.map((token, index) => (
-        <React.Fragment key={token}>
-          {index > 0 && <ChevronRight className='w-3 h-3 text-gray-400' />}
-          <span>{token}</span>
-        </React.Fragment>
-      ))}
-    </div>
-  );
-};
-
-function padPrice(price: string): string {
-  const [whole, decimal = ''] = price.split('.');
-  const maxDigits = 8; // Maximum decimals commonly used for crypto prices
-  const paddedDecimal = decimal.padEnd(maxDigits, '0');
-  return `${whole}.${paddedDecimal}`;
-}
-
-const TradeRow = ({
-  trace,
-  isSell,
-  relativeSize,
-}: {
-  trace: Trace;
-  isSell: boolean;
-  relativeSize: number;
-}) => {
-  const [showRoute, setShowRoute] = useState(false);
-  const bgColor = isSell ? 'rgba(175, 38, 38, 0.24)' : 'rgba(28, 121, 63, 0.24)';
-  const paddedPrice = padPrice(trace.price);
-
-  return (
-    <tr
-      className={`group relative h-[33px] border-b border-border-faded
-        ${showRoute ? 'bg-[rgba(250,250,250,0.05)]' : ''}`}
-      onClick={() => setShowRoute(prev => !prev)}
-      style={{
-        backgroundImage: `linear-gradient(to right, ${bgColor} ${relativeSize}%, transparent ${relativeSize}%)`,
-      }}
-    >
-      {showRoute ? (
-        <td colSpan={4} className='relative px-4'>
-          <RouteDisplay tokens={trace.hops.map(valueView => getSymbolFromValueView(valueView))} />
-        </td>
-      ) : (
-        <>
-          <td className={`${isSell ? 'text-sell-text' : 'text-buy-text'} text-xs relative`}>
-            {paddedPrice}
-          </td>
-          <td className='relative text-xs text-right text-white'>{trace.amount}</td>
-          <td className='relative text-xs text-right text-white'>{trace.total}</td>
-          <td className='relative text-xs text-right'>
-            <HopCount count={trace.hops.length} />
-          </td>
-        </>
-      )}
-    </tr>
-  );
-};
+import { TradeRow } from '@/pages/trade/ui/trade-row.tsx';
 
 export const ROUTEBOOK_TABS = [
   { label: 'Route book', value: 'routes' },
