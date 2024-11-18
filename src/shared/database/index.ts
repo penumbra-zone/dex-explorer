@@ -36,7 +36,7 @@ class Pindexer {
 
   async summary(baseAsset: AssetId, quoteAsset: AssetId) {
     return this.db
-      .selectFrom('dex_ex_summary')
+      .selectFrom('dex_ex_pairs_summary')
       .selectAll()
       .where('asset_start', '=', Buffer.from(baseAsset.inner))
       .where('asset_end', '=', Buffer.from(quoteAsset.inner))
@@ -56,7 +56,6 @@ class Pindexer {
   }) {
     let query = this.db
       .selectFrom('dex_ex_price_charts')
-      .innerJoin('dex_ex_candlesticks', 'candlestick_id', 'dex_ex_candlesticks.id')
       .select(['start_time', 'open', 'close', 'low', 'high', 'swap_volume', 'direct_volume'])
       .where('the_window', '=', window)
       .where('asset_start', '=', Buffer.from(baseAsset.inner))
