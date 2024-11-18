@@ -52,7 +52,11 @@ export const MobileTabs = ({ noChart = false }: { noChart?: boolean }) => {
 
       {!collapsed && (
         <>
-          {!noChart && tab === MobileTabsType.Chart && <Chart />}
+          {!noChart && tab === MobileTabsType.Chart && (
+            <div className='h-[300px]'>
+              <Chart />
+            </div>
+          )}
           {tab === MobileTabsType.MarketTrades && <MarketTrades />}
           {tab === MobileTabsType.MyTrades && <MarketTrades />}
         </>
