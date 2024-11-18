@@ -57,11 +57,9 @@ const main = (): void => {
     }
 
     // Run codegen
-    execSync('pnpm kysely-codegen --dialect postgres', { stdio: 'inherit' });
-
-    // Copy output
-    const sourceDbDtsPath = path.resolve('node_modules', 'kysely-codegen', 'dist', 'db.d.ts');
-    fs.copyFileSync(sourceDbDtsPath, targetSchemaPath);
+    execSync('pnpm kysely-codegen --dialect postgres --out-file ./src/shared/database/schema.ts', {
+      stdio: 'inherit',
+    });
 
     modifySchema();
   } catch (error) {
