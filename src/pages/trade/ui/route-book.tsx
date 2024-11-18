@@ -8,12 +8,9 @@ import { usePathSymbols } from '@/pages/trade/model/use-path.ts';
 import { Tabs } from '@penumbra-zone/ui/Tabs';
 import { calculateSpread } from '@/pages/trade/model/trace.ts';
 
-const SELL_BG_COLOR = 'rgba(175, 38, 38, 0.24)';
-const BUY_BG_COLOR = 'rgba(28, 121, 63, 0.24)';
-
 const HopCount = ({ count }: { count: number }) => {
   return (
-    <span className={count === 0 ? 'text-white' : 'text-[#F49C43]'}>
+    <span className={count === 0 ? 'text-white' : 'text-route-text'}>
       {count === 2 ? 'Direct' : `${count} Hops`}
     </span>
   );
@@ -42,11 +39,11 @@ const TradeRow = ({
   relativeSize: number;
 }) => {
   const [showRoute, setShowRoute] = useState(false);
-  const bgColor = isSell ? SELL_BG_COLOR : BUY_BG_COLOR;
+  const bgColor = isSell ? 'bg-sell-bg' : 'bg-buy-bg';
 
   return (
     <tr
-      className={`group relative h-[33px] border-b border-[rgba(250,250,250,0.15)]
+      className={`group relative h-[33px] border-b border-border-faded
         ${showRoute ? 'bg-[rgba(250,250,250,0.05)]' : ''}`}
       onClick={() => setShowRoute(prev => !prev)}
       style={{
@@ -59,12 +56,7 @@ const TradeRow = ({
         </td>
       ) : (
         <>
-          <td
-            className={
-              /* TODO: make this a constant*/
-              isSell ? 'text-[#F17878] text-xs relative' : 'text-[#55D383] text-xs relative'
-            }
-          >
+          <td className={`${isSell ? 'text-sell-text' : 'text-buy-text'} text-xs relative`}>
             {trace.price}
           </td>
           <td className='relative text-xs text-right text-white'>{trace.amount}</td>
@@ -83,6 +75,23 @@ export const ROUTEBOOK_TABS = [
   { label: 'Route Depth', value: 'depth' },
 ];
 
+const SkeletonRow = () => (
+  <tr className='group relative h-[33px] border-b border-border-faded'>
+    <td className=''>
+      <div className='w-20 h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+    </td>
+    <td className=''>
+      <div className='w-20 h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+    </td>
+    <td className=''>
+      <div className='w-24 h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+    </td>
+    <td className=''>
+      <div className='w-16 h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+    </td>
+  </tr>
+);
+
 const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBookResponse }) => {
   const pair = usePathSymbols();
   const [activeTab, setActiveTab] = useState('routes');
@@ -91,10 +100,8 @@ const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBo
   const buyRelativeSizes = calculateRelativeSizes(multiHops.buy);
 
   return (
-    /*TODO: move these colors to tailwind config*/
-    <div className='flex flex-col max-w-full border-y border-[#262626]'>
-      <div className='flex items-center gap-2 px-4 h-11 border-b border-[#262626]'>
-        {/*TODO: can this be condensed?*/}
+    <div className='flex flex-col max-w-full border-y border-border-base'>
+      <div className='flex items-center gap-2 px-4 h-11 border-b border-border-base'>
         <Tabs
           value={activeTab}
           onChange={setActiveTab}
@@ -102,7 +109,6 @@ const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBo
           actionType='accent'
         />
       </div>
-      {/* TODO: move skeleton here, make a skeletonrow that copies the TradeRow.*/}
       <div className='flex-1'>
         {activeTab === 'routes' ? (
           <table className='w-full'>
@@ -162,24 +168,7 @@ export const RouteBook = observer(() => {
         {Array(8)
           .fill(1)
           .map((_, i) => (
-            <tr
-              key={i}
-              onClick={() => setIsLoading(false)}
-              className='group relative h-[33px] border-b border-[rgba(250,250,250,0.15)]'
-            >
-              <td className=''>
-                <div className='w-20 h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
-              </td>
-              <td className=''>
-                <div className='w-20 h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
-              </td>
-              <td className=''>
-                <div className='w-24 h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
-              </td>
-              <td className=''>
-                <div className='w-16 h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
-              </td>
-            </tr>
+            <SkeletonRow key={i} />
           ))}
       </>
     );
@@ -198,9 +187,9 @@ const SpreadRow = ({ sellOrders, buyOrders }: { sellOrders: Trace[]; buyOrders: 
 
   return (
     <tr>
-      <td colSpan={4} className='border-y border-[#262626]'>
+      <td colSpan={4} className='border-y border-border-base'>
         <div className='flex items-center justify-center gap-2 px-3 py-3 text-xs'>
-          <span className='text-[#55D383]'>{spreadInfo.midPrice}</span>
+          <span className='text-buy-text'>{spreadInfo.midPrice}</span>
           <span className='text-gray-400'>Spread:</span>
           <span className='text-white'>
             {spreadInfo.amount} {pair.quoteSymbol}

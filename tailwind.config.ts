@@ -4,6 +4,23 @@ export default withPenumbra({
   content: ['./src/**/*.{js,ts,jsx,tsx,mdx,css}'],
   theme: {
     extend: {
+      colors: {
+        sell: {
+          bg: 'rgba(175, 38, 38, 0.24)',
+          text: '#F17878',
+        },
+        buy: {
+          bg: 'rgba(28, 121, 63, 0.24)',
+          text: '#55D383',
+        },
+        route: {
+          text: '#F49C43',
+        },
+        border: {
+          base: '#262626',
+          faded: 'rgba(250,250,250,0.15)',
+        },
+      },
       backgroundImage: {
         ...tailwindConfig.theme.extend.backgroundImage,
         shimmer:

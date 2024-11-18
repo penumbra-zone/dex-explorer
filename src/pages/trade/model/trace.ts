@@ -1,6 +1,5 @@
 import { Trace } from '@/shared/api/server/book/types.ts';
 
-/* TODO: write tests for this*/
 export const calculateSpread = (sellOrders: Trace[], buyOrders: Trace[]) => {
   if (!sellOrders.length || !buyOrders.length) {
     return;
