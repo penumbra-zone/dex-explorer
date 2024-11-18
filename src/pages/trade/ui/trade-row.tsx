@@ -37,6 +37,7 @@ export const TradeRow = ({
       </td>
 
       {/* Overlay row that appears on hover */}
+      {/* eslint-disable-next-line react/no-unknown-property -- JSX style is valid in nextjs */}
       <style jsx>{`
         tr:hover td {
           visibility: hidden;
