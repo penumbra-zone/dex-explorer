@@ -26,6 +26,7 @@ import {
 } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
 import { penumbra } from '@/shared/const/penumbra';
 import { plan, planBuildBroadcast } from './helpers';
+import { openToast } from '@penumbra-zone/ui/Toast';
 
 export enum Direction {
   Buy = 'Buy',
@@ -197,6 +198,7 @@ class OrderFormStore {
     this.quoteAsset.onAmountChange(this.handleAmountChange);
 
     this.setBalancesOfAssets();
+    void this.calculateGasFee();
     void this.calculateExchangeRate();
   };
 
@@ -224,8 +226,13 @@ class OrderFormStore {
       assetOut.setAmount(Number(outputAmount), false);
       assetOut.setIsApproximately(true);
     } catch (e) {
-      // @TODO: handle error
-      console.error(e);
+      if (e instanceof Error && e.name !== 'PenumbraProviderNotAvailableError') {
+        openToast({
+          type: 'error',
+          message: 'Error estimating amount',
+          description: JSON.stringify(e),
+        });
+      }
     } finally {
       assetOut.setIsEstimating(false);
     }
