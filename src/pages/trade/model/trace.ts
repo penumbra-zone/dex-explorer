@@ -1,4 +1,5 @@
 import { Trace } from '@/shared/api/server/book/types.ts';
+import { round } from '@/shared/utils/numbers/round.ts';
 
 export const calculateSpread = (sellOrders: Trace[], buyOrders: Trace[]) => {
   if (!sellOrders.length || !buyOrders.length) {
@@ -20,8 +21,8 @@ export const calculateSpread = (sellOrders: Trace[], buyOrders: Trace[]) => {
   const spreadPercentage = (spread / midPrice) * 100;
 
   return {
-    amount: spread.toFixed(8),
-    percentage: spreadPercentage.toFixed(2),
-    midPrice: midPrice.toFixed(8),
+    amount: round(spread, 8),
+    percentage: round(spreadPercentage, 2),
+    midPrice: round(midPrice, 8),
   };
 };

@@ -136,7 +136,7 @@ const SpreadRow = ({ sellOrders, buyOrders }: { sellOrders: Trace[]; buyOrders: 
     <tr>
       <td colSpan={4} className='border-y border-border-base'>
         <div className='flex items-center justify-center gap-2 px-3 py-3 text-xs'>
-          <span className='text-buy-text'>{parseFloat(spreadInfo.midPrice)}</span>
+          <span className='text-green-400'>{parseFloat(spreadInfo.midPrice)}</span>
           <span className='text-gray-400'>Spread:</span>
           <span className='text-white'>
             {parseFloat(spreadInfo.amount)} {pair.quoteSymbol}

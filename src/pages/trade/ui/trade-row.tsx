@@ -10,6 +10,7 @@ function padPrice(price: string): string {
   return `${whole}.${paddedDecimal}`;
 }
 
+const SELL_BG_COLOR = 'rgba(175, 38, 38, 0.24)';
 export const TradeRow = ({
   trace,
   isSell,
@@ -19,7 +20,7 @@ export const TradeRow = ({
   isSell: boolean;
   relativeSize: number;
 }) => {
-  const bgColor = isSell ? 'rgba(175, 38, 38, 0.24)' : 'rgba(28, 121, 63, 0.24)';
+  const bgColor = isSell ? SELL_BG_COLOR : 'rgba(28, 121, 63, 0.24)';
   const paddedPrice = padPrice(trace.price);
 
   return (
@@ -29,7 +30,7 @@ export const TradeRow = ({
         backgroundImage: `linear-gradient(to right, ${bgColor} ${relativeSize}%, transparent ${relativeSize}%)`,
       }}
     >
-      <td className={`${isSell ? 'text-sell-text' : 'text-buy-text'} text-xs`}>{paddedPrice}</td>
+      <td className={`${isSell ? 'text-red-400' : 'text-green-400'} text-xs`}>{paddedPrice}</td>
       <td className='text-xs text-right text-white'>{trace.amount}</td>
       <td className='text-xs text-right text-white'>{trace.total}</td>
       <td className='text-xs text-right'>
@@ -54,9 +55,9 @@ export const TradeRow = ({
 
       {/* Route display that shows on hover */}
       <td
-        className='hidden group-hover:flex justify-center absolute left-0 right-0 px-4'
+        className='hidden group-hover:flex justify-center absolute left-0 right-0 px-4 select-none z-30'
         colSpan={4}
-        style={{ visibility: 'visible', zIndex: 30 }}
+        style={{ visibility: 'visible' }}
       >
         <RouteDisplay tokens={trace.hops.map(valueView => getSymbolFromValueView(valueView))} />
       </td>
@@ -66,7 +67,7 @@ export const TradeRow = ({
 
 const HopCount = ({ count }: { count: number }) => {
   return (
-    <span className={count === 0 ? 'text-white' : 'text-route-text'}>
+    <span className={count === 0 ? 'text-white' : 'text-orange-400'}>
       {count === 2 ? 'Direct' : `${count - 2} Hops`}
     </span>
   );
