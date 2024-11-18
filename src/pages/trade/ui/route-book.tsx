@@ -83,22 +83,37 @@ export const ROUTEBOOK_TABS = [
   { label: 'Route Depth', value: 'depth' },
 ];
 
-const SkeletonRow = () => (
-  <tr className={`group relative h-[33px] border-b border-border-faded`}>
-    <td>
-      <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
-    </td>
-    <td className='relative text-xs text-right text-white'>
-      <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
-    </td>
-    <td className='relative text-xs text-right text-white'>
-      <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
-    </td>
-    <td className='relative text-xs text-right'>
-      <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
-    </td>
-  </tr>
-);
+const SkeletonRow = (props: { isSpread: boolean }) =>
+  props.isSpread ? (
+    <tr>
+      <td colSpan={4} className='border-y border-border-base'>
+        <div className='flex items-center justify-center gap-2 px-3 py-3 text-xs'>
+          <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+
+          <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+
+          <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+
+          <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+        </div>
+      </td>
+    </tr>
+  ) : (
+    <tr className={`group relative h-[33px] border-b border-border-faded`}>
+      <td>
+        <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+      </td>
+      <td className='relative text-xs text-right text-white'>
+        <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+      </td>
+      <td className='relative text-xs text-right text-white'>
+        <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+      </td>
+      <td className='relative text-xs text-right'>
+        <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+      </td>
+    </tr>
+  );
 
 const RouteBookData = observer(({ bookData }: { bookData?: RouteBookResponse }) => {
   const multiHops = bookData?.multiHops;
@@ -154,9 +169,9 @@ const RouteBookData = observer(({ bookData }: { bookData?: RouteBookResponse }) 
                   ))}
                 </>
               ) : (
-                Array(16)
+                Array(17)
                   .fill(1)
-                  .map((_, i) => <SkeletonRow key={i} />)
+                  .map((_, i) => <SkeletonRow isSpread={i === 8} key={i} />)
               )}
             </tbody>
           </table>
@@ -192,10 +207,10 @@ const SpreadRow = ({ sellOrders, buyOrders }: { sellOrders: Trace[]; buyOrders: 
     <tr>
       <td colSpan={4} className='border-y border-border-base'>
         <div className='flex items-center justify-center gap-2 px-3 py-3 text-xs'>
-          <span className='text-buy-text'>{spreadInfo.midPrice}</span>
+          <span className='text-buy-text'>{parseFloat(spreadInfo.midPrice)}</span>
           <span className='text-gray-400'>Spread:</span>
           <span className='text-white'>
-            {spreadInfo.amount} {pair.quoteSymbol}
+            {parseFloat(spreadInfo.amount)} {pair.quoteSymbol}
           </span>
           <span className='text-gray-400'>({spreadInfo.percentage}%)</span>
         </div>
