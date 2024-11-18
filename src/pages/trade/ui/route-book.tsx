@@ -46,7 +46,7 @@ const TradeRow = ({
   relativeSize: number;
 }) => {
   const [showRoute, setShowRoute] = useState(false);
-  const bgColor = isSell ? 'bg-sell-bg' : 'bg-buy-bg';
+  const bgColor = isSell ? 'rgba(175, 38, 38, 0.24)' : 'rgba(28, 121, 63, 0.24)';
   const paddedPrice = padPrice(trace.price);
 
   return (
@@ -84,28 +84,29 @@ export const ROUTEBOOK_TABS = [
 ];
 
 const SkeletonRow = () => (
-  <tr className='group relative h-[33px] border-b border-border-faded'>
-    <td className=''>
-      <div className='w-20 h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+  <tr className={`group relative h-[33px] border-b border-border-faded`}>
+    <td>
+      <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
     </td>
-    <td className=''>
-      <div className='w-20 h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+    <td className='relative text-xs text-right text-white'>
+      <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
     </td>
-    <td className=''>
-      <div className='w-24 h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+    <td className='relative text-xs text-right text-white'>
+      <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
     </td>
-    <td className=''>
-      <div className='w-16 h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+    <td className='relative text-xs text-right'>
+      <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
     </td>
   </tr>
 );
 
-const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBookResponse }) => {
+const RouteBookData = observer(({ bookData }: { bookData?: RouteBookResponse }) => {
+  const multiHops = bookData?.multiHops;
   const pair = usePathSymbols();
   const [activeTab, setActiveTab] = useState('routes');
 
-  const sellRelativeSizes = calculateRelativeSizes(multiHops.sell);
-  const buyRelativeSizes = calculateRelativeSizes(multiHops.buy);
+  const sellRelativeSizes = calculateRelativeSizes(multiHops?.sell ?? []);
+  const buyRelativeSizes = calculateRelativeSizes(multiHops?.buy ?? []);
 
   return (
     <div className='flex flex-col max-w-full border-y border-border-base'>
@@ -130,25 +131,33 @@ const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBo
             </thead>
 
             <tbody className='relative'>
-              {multiHops.sell.map((trace, idx) => (
-                <TradeRow
-                  key={`${trace.price}-${trace.total}-${idx}`}
-                  trace={trace}
-                  isSell={true}
-                  relativeSize={sellRelativeSizes.get(trace.total) ?? 0}
-                />
-              ))}
+              {multiHops ? (
+                <>
+                  {multiHops.sell.map((trace, idx) => (
+                    <TradeRow
+                      key={`${trace.price}-${trace.total}-${idx}`}
+                      trace={trace}
+                      isSell={true}
+                      relativeSize={sellRelativeSizes.get(trace.total) ?? 0}
+                    />
+                  ))}
 
-              <SpreadRow sellOrders={multiHops.sell} buyOrders={multiHops.buy} />
+                  <SpreadRow sellOrders={multiHops.sell} buyOrders={multiHops.buy} />
 
-              {multiHops.buy.map((trace, idx) => (
-                <TradeRow
-                  key={`${trace.price}-${trace.total}-${idx}`}
-                  trace={trace}
-                  isSell={false}
-                  relativeSize={buyRelativeSizes.get(trace.total) ?? 0}
-                />
-              ))}
+                  {multiHops.buy.map((trace, idx) => (
+                    <TradeRow
+                      key={`${trace.price}-${trace.total}-${idx}`}
+                      trace={trace}
+                      isSell={false}
+                      relativeSize={buyRelativeSizes.get(trace.total) ?? 0}
+                    />
+                  ))}
+                </>
+              ) : (
+                Array(16)
+                  .fill(1)
+                  .map((_, i) => <SkeletonRow key={i} />)
+              )}
             </tbody>
           </table>
         ) : (
@@ -162,23 +171,10 @@ const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBo
 });
 
 export const RouteBook = observer(() => {
-  const [isLoading, setIsLoading] = useState(false);
-  const { data, isLoading: bookIsLoading, error: bookErr } = useBook();
+  const { data, error: bookErr } = useBook();
 
   if (bookErr) {
     return <div className='text-red-500'>Error loading route book: {String(bookErr)}</div>;
-  }
-
-  if (isLoading || bookIsLoading || !data || data.multiHops.buy.length === 0) {
-    return (
-      <>
-        {Array(8)
-          .fill(1)
-          .map((_, i) => (
-            <SkeletonRow key={i} />
-          ))}
-      </>
-    );
   }
 
   return <RouteBookData bookData={data} />;
