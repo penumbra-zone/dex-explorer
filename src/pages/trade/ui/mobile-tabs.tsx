@@ -6,6 +6,7 @@ import { Density } from '@penumbra-zone/ui/Density';
 import { Button } from '@penumbra-zone/ui/Button';
 import { Chart } from './chart';
 import { MarketTrades } from './market-trades';
+import cn from 'clsx';
 
 enum MobileTabsType {
   Chart = 'chart',
@@ -13,23 +14,26 @@ enum MobileTabsType {
   MyTrades = 'my-trades',
 }
 
-export const MobileTabs = () => {
+export const MobileTabs = ({ noChart = false }: { noChart?: boolean }) => {
   const [parent] = useAutoAnimate();
 
-  const [tab, setTab] = useState<MobileTabsType>(MobileTabsType.Chart);
+  const [tab, setTab] = useState<MobileTabsType>(noChart ? MobileTabsType.MarketTrades : MobileTabsType.Chart);
   const [collapsed, setCollapsed] = useState(false);
 
   const toggleCollapsed = () => setCollapsed(prev => !prev);
 
   return (
-    <div ref={parent} className='lg:hidden flex flex-col'>
+    <div ref={parent} className={cn(!noChart && 'lg:hidden', 'flex flex-col')}>
       <div className='flex justify-between items-center px-4 border-b border-b-other-solidStroke'>
         <Density medium>
           <Tabs
             value={tab}
             actionType='accent'
             onChange={value => setTab(value as MobileTabsType)}
-            options={[
+            options={noChart ? [
+              { value: MobileTabsType.MarketTrades, label: 'Market Trades' },
+              { value: MobileTabsType.MyTrades, label: 'My Trades' },
+            ] : [
               { value: MobileTabsType.Chart, label: 'Chart' },
               { value: MobileTabsType.MarketTrades, label: 'Market Trades' },
               { value: MobileTabsType.MyTrades, label: 'My Trades' },
@@ -37,16 +41,18 @@ export const MobileTabs = () => {
           />
         </Density>
 
-        <Density compact>
-          <Button iconOnly icon={collapsed ? ChevronDown : ChevronUp} onClick={toggleCollapsed}>
-            Toggle
-          </Button>
-        </Density>
+        {!noChart && (
+          <Density compact>
+            <Button iconOnly icon={collapsed ? ChevronDown : ChevronUp} onClick={toggleCollapsed}>
+              Toggle
+            </Button>
+          </Density>
+        )}
       </div>
 
       {!collapsed && (
         <>
-          {tab === MobileTabsType.Chart && <Chart />}
+          {!noChart && tab === MobileTabsType.Chart && <Chart />}
           {tab === MobileTabsType.MarketTrades && <MarketTrades />}
           {tab === MobileTabsType.MyTrades && <MarketTrades />}
         </>

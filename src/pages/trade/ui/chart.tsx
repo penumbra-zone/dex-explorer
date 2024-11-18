@@ -72,14 +72,14 @@ export const Chart = observer(() => {
   const { data, isLoading, error } = useCandles(duration);
 
   return (
-    <>
+    <div className='flex flex-col grow h-full border-b border-b-other-solidStroke'>
       <div className='flex gap-3 py-3 px-4 border-b border-b-other-solidStroke'>
         {durationWindows.map(w => (
           <button
             key={w}
             type='button'
             className={cn(
-              'text-text-secondary hover:text-text-primary transition-colors',
+              'flex items-center h-4 text-text-secondary hover:text-text-primary transition-colors',
               w === duration && 'text-text-primary',
             )}
             onClick={() => setDuration(w)}
@@ -91,10 +91,10 @@ export const Chart = observer(() => {
 
       {error && <div className='text-white'>Error loading pair selector: ${String(error)}</div>}
 
-      <div className='w-full h-[328px] pt-2 pl-4 pb-4 border-b border-b-other-solidStroke'>
+      <div className='grow w-full h-full max-h-full pt-2 pl-4 pb-4'>
         {isLoading && <ChartLoadingState />}
         {data && <ChartData candles={data} />}
       </div>
-    </>
+    </div>
   );
 });

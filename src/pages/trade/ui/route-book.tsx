@@ -12,7 +12,7 @@ const RouteBookLoadingState = () => {
 
 const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBookResponse }) => {
   return (
-    <div className='text-white'>
+    <div className='text-white w-full overflow-auto'>
       <table className='w-full'>
         <thead>
           <tr>
