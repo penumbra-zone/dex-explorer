@@ -31,19 +31,13 @@ export const FormTabs = () => {
       </div>
 
       {tab === FormTabsType.Market && (
-        <div className='h-[380px] p-4 text-text-secondary'>
-          Order form
-        </div>
+        <div className='h-[380px] p-4 text-text-secondary'>Order form</div>
       )}
       {tab === FormTabsType.Limit && (
-        <div className='h-[380px] p-4 text-text-secondary'>
-          Limit order form
-        </div>
+        <div className='h-[380px] p-4 text-text-secondary'>Limit order form</div>
       )}
       {tab === FormTabsType.Range && (
-        <div className='h-[380px] p-4 text-text-secondary'>
-          Range liquidity form
-        </div>
+        <div className='h-[380px] p-4 text-text-secondary'>Range liquidity form</div>
       )}
     </div>
   );

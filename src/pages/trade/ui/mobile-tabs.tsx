@@ -17,7 +17,9 @@ enum MobileTabsType {
 export const MobileTabs = ({ noChart = false }: { noChart?: boolean }) => {
   const [parent] = useAutoAnimate();
 
-  const [tab, setTab] = useState<MobileTabsType>(noChart ? MobileTabsType.MarketTrades : MobileTabsType.Chart);
+  const [tab, setTab] = useState<MobileTabsType>(
+    noChart ? MobileTabsType.MarketTrades : MobileTabsType.Chart,
+  );
   const [collapsed, setCollapsed] = useState(false);
 
   const toggleCollapsed = () => setCollapsed(prev => !prev);
@@ -30,14 +32,18 @@ export const MobileTabs = ({ noChart = false }: { noChart?: boolean }) => {
             value={tab}
             actionType='accent'
             onChange={value => setTab(value as MobileTabsType)}
-            options={noChart ? [
-              { value: MobileTabsType.MarketTrades, label: 'Market Trades' },
-              { value: MobileTabsType.MyTrades, label: 'My Trades' },
-            ] : [
-              { value: MobileTabsType.Chart, label: 'Chart' },
-              { value: MobileTabsType.MarketTrades, label: 'Market Trades' },
-              { value: MobileTabsType.MyTrades, label: 'My Trades' },
-            ]}
+            options={
+              noChart
+                ? [
+                    { value: MobileTabsType.MarketTrades, label: 'Market Trades' },
+                    { value: MobileTabsType.MyTrades, label: 'My Trades' },
+                  ]
+                : [
+                    { value: MobileTabsType.Chart, label: 'Chart' },
+                    { value: MobileTabsType.MarketTrades, label: 'Market Trades' },
+                    { value: MobileTabsType.MyTrades, label: 'My Trades' },
+                  ]
+            }
           />
         </Density>
 

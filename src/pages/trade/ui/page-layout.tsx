@@ -7,30 +7,30 @@ import { FormTabs } from './form-tabs';
 
 export const PageLayout = () => {
   return (
-    <div className="lg:grid lg:grid-cols-[1fr,320px] overflow-x-hidden overflow-y-auto">
-      <div className="lg:grid lg:grid-cols-[1fr,320px] lg:grid-rows-[400px,1fr]">
-        <div className="flex flex-col grow min-h-full border-r border-r-other-solidStroke">
-          <PairInfo/>
+    <div className='lg:grid lg:grid-cols-[1fr,320px] overflow-x-hidden overflow-y-auto'>
+      <div className='lg:grid lg:grid-cols-[1fr,320px] lg:grid-rows-[400px,1fr]'>
+        <div className='flex flex-col grow min-h-full border-r border-r-other-solidStroke'>
+          <PairInfo />
 
-          <MobileTabs/>
+          <MobileTabs />
 
-          <div className="block lg:hidden">
-            <FormTabs/>
+          <div className='block lg:hidden'>
+            <FormTabs />
           </div>
 
-          <div className="hidden lg:block grow">
-            <Chart/>
+          <div className='hidden lg:block grow'>
+            <Chart />
           </div>
         </div>
 
-        <RouteTabs/>
+        <RouteTabs />
 
-        <HistoryTabs/>
+        <HistoryTabs />
       </div>
 
-      <div className="hidden lg:flex flex-col min-w-[320px] grow">
-        <FormTabs/>
-        <MobileTabs noChart/>
+      <div className='hidden lg:flex flex-col min-w-[320px] grow'>
+        <FormTabs />
+        <MobileTabs noChart />
       </div>
     </div>
   );
