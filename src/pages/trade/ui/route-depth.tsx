@@ -5,5 +5,5 @@ export const RouteDepth = () => {
     <div className='w-full h-[320px] p-4'>
       <Skeleton />
     </div>
-  )
+  );
 };

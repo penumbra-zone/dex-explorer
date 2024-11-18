@@ -32,9 +32,9 @@ export const HistoryTabs = () => {
           />
         </Density>
 
-        <label className="flex gap-2 h-[42px] items-center py-2 text-text-secondary cursor-pointer">
+        <label className='flex gap-2 h-[42px] items-center py-2 text-text-secondary cursor-pointer'>
           <Text small>Show all</Text>
-          <Toggle label="Show all" value={showAll} onChange={setShowAll} />
+          <Toggle label='Show all' value={showAll} onChange={setShowAll} />
         </label>
       </div>
 
