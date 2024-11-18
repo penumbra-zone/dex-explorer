@@ -1,6 +1,7 @@
 import { makeAutoObservable } from 'mobx';
 import { BigNumber } from 'bignumber.js';
 import { round } from 'lodash';
+import debounce from 'lodash/debounce';
 import { SimulationService } from '@penumbra-zone/protobuf';
 import {
   BalancesResponse,
@@ -169,33 +170,49 @@ class OrderFormStore {
   private simulateSwapTx = async (
     assetIn: OrderFormAsset,
     assetOut: OrderFormAsset,
-  ): Promise<ValueView> => {
-    const req = new SimulateTradeRequest({
-      input: assetIn.toValue(),
-      output: assetOut.assetId,
-    });
+  ): Promise<ValueView | void> => {
+    try {
+      const req = new SimulateTradeRequest({
+        input: assetIn.toValue(),
+        output: assetOut.assetId,
+      });
 
-    const res = await penumbra.service(SimulationService).simulateTrade(req);
+      const res = await penumbra.service(SimulationService).simulateTrade(req);
 
-    const output = new ValueView({
-      valueView: {
-        case: 'knownAssetId',
-        value: {
-          amount: res.output?.output?.amount,
-          metadata: assetOut.metadata,
+      const output = new ValueView({
+        valueView: {
+          case: 'knownAssetId',
+          value: {
+            amount: res.output?.output?.amount,
+            metadata: assetOut.metadata,
+          },
         },
-      },
-    });
+      });
 
-    return output;
+      return output;
+    } catch (e) {
+      if (e instanceof Error && e.name !== 'PenumbraProviderNotAvailableError') {
+        openToast({
+          type: 'error',
+          message: e.name,
+          description: e.message,
+        });
+      }
+    }
   };
 
   setAssets = (baseAsset: Metadata, quoteAsset: Metadata): void => {
     this.baseAsset = new OrderFormAsset(baseAsset);
     this.quoteAsset = new OrderFormAsset(quoteAsset);
 
-    this.baseAsset.onAmountChange(this.handleAmountChange);
-    this.quoteAsset.onAmountChange(this.handleAmountChange);
+    const debouncedHandleAmountChange = debounce(this.handleAmountChange, 500);
+
+    this.baseAsset.onAmountChange(
+      debouncedHandleAmountChange as (asset: OrderFormAsset) => Promise<void>,
+    );
+    this.quoteAsset.onAmountChange(
+      debouncedHandleAmountChange as (asset: OrderFormAsset) => Promise<void>,
+    );
 
     this.setBalancesOfAssets();
     void this.calculateGasFee();
@@ -221,18 +238,14 @@ class OrderFormStore {
       assetIn.setIsApproximately(false);
 
       const output = await this.simulateSwapTx(assetIn, assetOut);
+      if (!output) {
+        return;
+      }
+
       const outputAmount = getFormattedAmtFromValueView(output, true);
 
       assetOut.setAmount(Number(outputAmount), false);
       assetOut.setIsApproximately(true);
-    } catch (e) {
-      if (e instanceof Error && e.name !== 'PenumbraProviderNotAvailableError') {
-        openToast({
-          type: 'error',
-          message: 'Error estimating amount',
-          description: JSON.stringify(e),
-        });
-      }
     } finally {
       assetOut.setIsEstimating(false);
     }
@@ -245,6 +258,10 @@ class OrderFormStore {
     baseAsset.setAmount(1);
 
     const output = await this.simulateSwapTx(baseAsset, this.quoteAsset);
+    if (!output) {
+      return;
+    }
+
     const outputAmount = getFormattedAmtFromValueView(output, true);
     this.exchangeRate = Number(outputAmount);
   };
@@ -325,6 +342,12 @@ class OrderFormStore {
 
       assetIn.unsetAmount();
       assetOut.unsetAmount();
+    } catch (e) {
+      openToast({
+        type: 'error',
+        message: 'Error submitting order',
+        description: JSON.stringify(e),
+      });
     } finally {
       this.isLoading = false;
     }

@@ -2,6 +2,7 @@ import { observer } from 'mobx-react-lite';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Icon } from '@penumbra-zone/ui/Icon';
 import { Tooltip } from '@penumbra-zone/ui/Tooltip';
+import { Skeleton } from '@/shared/ui/skeleton';
 import { InfoIcon } from 'lucide-react';
 
 interface InfoRowProps {
@@ -32,7 +33,9 @@ export const InfoRow = observer(
         <div className='flex items-center'>
           <div className='mr-1'>
             {isLoading ? (
-              <div className='w-16 h-4 bg-neutral-main rounded-xs animate-pulse' />
+              <div className='w-16 h-4'>
+                <Skeleton />
+              </div>
             ) : (
               <Text as='div' small color={getValueColor(valueColor)}>
                 {value}

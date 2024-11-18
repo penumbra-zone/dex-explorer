@@ -19,7 +19,6 @@ export interface OrderInputProps {
 /**
  * The order form input field.
  */
-// eslint-disable-next-line react/display-name -- exotic component
 export const OrderInput = forwardRef<HTMLInputElement, OrderInputProps>(
   (
     {
@@ -51,7 +50,7 @@ export const OrderInput = forwardRef<HTMLInputElement, OrderInputProps>(
         {isEstimating ? (
           <div className='flex items-center p-2 pl-3 pt-7 text-text-secondary animate-pulse'>
             <div className='flex items-center h-6 mr-1'>
-              <SpinnerIcon />
+              <SpinnerIcon className='animate-spin' />
             </div>
             <span className='font-default text-textSm font-normal leading-textXs'>
               Estimating...
@@ -71,7 +70,7 @@ export const OrderInput = forwardRef<HTMLInputElement, OrderInputProps>(
                 "[&[type='number']]:[-moz-appearance:textfield]",
               )}
               style={{ paddingRight: denomWidth + 20 }}
-              value={value}
+              value={value ?? ''}
               onChange={e => onChange?.(e.target.value)}
               placeholder={placeholder}
               type='number'
@@ -97,3 +96,5 @@ export const OrderInput = forwardRef<HTMLInputElement, OrderInputProps>(
     );
   },
 );
+
+OrderInput.displayName = 'OrderInput';
