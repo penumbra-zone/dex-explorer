@@ -4,16 +4,13 @@ import { theme } from '@penumbra-zone/ui/theme';
 import { useCandles } from '../api/candles';
 import { observer } from 'mobx-react-lite';
 import { DurationWindow, durationWindows } from '@/shared/database/schema.ts';
-import { Button } from '@penumbra-zone/ui/Button';
-
-const CHART_HEIGHT = 512;
+import { Text } from '@penumbra-zone/ui/Text';
+import cn from 'clsx';
 
 const ChartLoadingState = () => {
   return (
-    <div style={{ height: CHART_HEIGHT }}>
-      <div className='flex w-full items-center justify-center' style={{ height: CHART_HEIGHT }}>
-        <div className='text-gray-500'>Loading...</div>
-      </div>
+    <div className='flex w-full h-full items-center justify-center'>
+      <div className='text-gray-500'>Loading...</div>
     </div>
   );
 };
@@ -67,7 +64,7 @@ const ChartData = observer(({ candles }: { candles: OhlcData[] }) => {
     }
   }, [chartRef, candles]);
 
-  return <div ref={chartElRef} style={{ height: CHART_HEIGHT }}></div>;
+  return <div className='h-full' ref={chartElRef} />;
 });
 
 export const Chart = observer(() => {
@@ -75,21 +72,29 @@ export const Chart = observer(() => {
   const { data, isLoading, error } = useCandles(duration);
 
   return (
-    <div>
-      <div className='flex gap-2 w-1/2'>
+    <>
+      <div className='flex gap-3 py-3 px-4 border-b border-b-other-solidStroke'>
         {durationWindows.map(w => (
-          <Button
+          <button
             key={w}
-            actionType={w === duration ? 'accent' : 'default'}
+            type='button'
+            className={cn(
+              'text-text-secondary hover:text-text-primary transition-colors',
+              w === duration && 'text-text-primary',
+            )}
             onClick={() => setDuration(w)}
           >
-            {w}
-          </Button>
+            <Text detail>{w}</Text>
+          </button>
         ))}
       </div>
+
       {error && <div className='text-white'>Error loading pair selector: ${String(error)}</div>}
-      {isLoading && <ChartLoadingState />}
-      {data && <ChartData candles={data} />}
-    </div>
+
+      <div className='w-full h-[328px] pt-2 pl-4 pb-4 border-b border-b-other-solidStroke'>
+        {isLoading && <ChartLoadingState />}
+        {data && <ChartData candles={data} />}
+      </div>
+    </>
   );
 });

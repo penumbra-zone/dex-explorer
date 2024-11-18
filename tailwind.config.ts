@@ -4,6 +4,12 @@ export default withPenumbra({
   content: ['./src/**/*.{js,ts,jsx,tsx,mdx,css}'],
   theme: {
     extend: {
+      colors: {
+        ...tailwindConfig.theme.extend.colors,
+        app: {
+          main: '#0d0d0d',
+        },
+      },
       backgroundImage: {
         ...tailwindConfig.theme.extend.backgroundImage,
         shimmer:

@@ -1,12 +1,20 @@
 'use client';
 
-import { Card } from '@penumbra-zone/ui/Card';
+import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { Tabs } from '@penumbra-zone/ui/Tabs';
+import { Density } from '@penumbra-zone/ui/Density';
+import { Button } from '@penumbra-zone/ui/Button';
 import { PairSelector } from './pair-selector';
-import { RouteBook } from './route-book';
 import { Chart } from './chart';
-import { Summary } from '@/pages/trade/ui/summary.tsx';
+import { Summary } from './summary';
+import { MarketTrades } from './market-trades';
+import { HistoryTabs } from './history-tabs';
+import { RouteTabs } from './route-tabs';
 
 export const TradePage = () => {
+  const [mobileTab, setMobileTab] = useState<string>('chart');
+
   return (
     <div>
       <hr className='h-[1px] w-full border-t border-t-other-solidStroke' />
@@ -18,40 +26,33 @@ export const TradePage = () => {
         <Summary />
       </div>
 
-      <div className='flex flex-wrap lg:gap-2'>
-        <div className='w-full lg:w-auto lg:flex-grow mb-2'>
-          <Card title='Chart'>
-            <Chart />
-          </Card>
-        </div>
-        <div className='w-full sm:w-1/2 sm:pr-1 lg:w-[336px] lg:pr-0 mb-2'>
-          <Card title='Route Book'>
-            <RouteBook />
-          </Card>
-        </div>
-        <div className='w-full sm:w-1/2 sm:pl-1 lg:w-[304px] lg:pl-0 mb-2'>
-          <Card title='Order Form'>
-            <div className='h-[512px]'>-</div>
-          </Card>
-        </div>
+      <div className='flex justify-between items-center px-4 border-b border-b-other-solidStroke'>
+        <Density medium>
+          <Tabs
+            value={mobileTab}
+            actionType='accent'
+            onChange={setMobileTab}
+            options={[
+              { value: 'chart', label: 'Chart' },
+              { value: 'market-trades', label: 'Market Trades' },
+              { value: 'my-trades', label: 'My Trades' },
+            ]}
+          />
+        </Density>
+
+        <Density compact>
+          <Button iconOnly icon={ChevronDown}>
+            Toggle
+          </Button>
+        </Density>
       </div>
-      <div className='flex flex-wrap lg:gap-2'>
-        <div className='w-full lg:w-auto lg:flex-grow mb-2'>
-          <Card title='Positions'>
-            <div className='h-[256px]'>-</div>
-          </Card>
-        </div>
-        <div className='w-full sm:w-1/2 sm:pr-1 lg:w-[336px] lg:pr-0 mb-2'>
-          <Card title='Market Trades'>
-            <div className='h-[256px]'>-</div>
-          </Card>
-        </div>
-        <div className='w-full sm:w-1/2 sm:pl-1 lg:w-[304px] lg:pl-0 mb-2'>
-          <Card title='Assets'>
-            <div className='h-[256px]'>-</div>
-          </Card>
-        </div>
-      </div>
+
+      {mobileTab === 'chart' && <Chart />}
+      {mobileTab === 'market-trades' && <MarketTrades />}
+      {mobileTab === 'my-trades' && <MarketTrades />}
+
+      <RouteTabs />
+      <HistoryTabs />
     </div>
   );
 };
