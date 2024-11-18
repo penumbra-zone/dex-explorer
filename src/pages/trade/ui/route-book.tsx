@@ -29,6 +29,13 @@ const RouteDisplay = ({ tokens }: { tokens: string[] }) => {
   );
 };
 
+function padPrice(price: string): string {
+  const [whole, decimal = ''] = price.split('.');
+  const maxDigits = 8; // Maximum decimals commonly used for crypto prices
+  const paddedDecimal = decimal.padEnd(maxDigits, '0');
+  return `${whole}.${paddedDecimal}`;
+}
+
 const TradeRow = ({
   trace,
   isSell,
@@ -40,6 +47,7 @@ const TradeRow = ({
 }) => {
   const [showRoute, setShowRoute] = useState(false);
   const bgColor = isSell ? 'bg-sell-bg' : 'bg-buy-bg';
+  const paddedPrice = padPrice(trace.price);
 
   return (
     <tr
@@ -57,7 +65,7 @@ const TradeRow = ({
       ) : (
         <>
           <td className={`${isSell ? 'text-sell-text' : 'text-buy-text'} text-xs relative`}>
-            {trace.price}
+            {paddedPrice}
           </td>
           <td className='relative text-xs text-right text-white'>{trace.amount}</td>
           <td className='relative text-xs text-right text-white'>{trace.total}</td>
@@ -154,13 +162,12 @@ const RouteBookData = observer(({ bookData: { multiHops } }: { bookData: RouteBo
 });
 
 export const RouteBook = observer(() => {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const { data, isLoading: bookIsLoading, error: bookErr } = useBook();
 
   if (bookErr) {
     return <div className='text-red-500'>Error loading route book: {String(bookErr)}</div>;
   }
-  /* TODO: zero-pad digits to have them all at the same time */
 
   if (isLoading || bookIsLoading || !data || data.multiHops.buy.length === 0) {
     return (
