@@ -11,8 +11,10 @@ import { Summary } from './summary';
 export const TradePage = () => {
   return (
     <TooltipProvider>
-      <div>
-        <div className='flex gap-2'>
+      <hr className='h-[1px] w-full border-t border-t-other-solidStroke' />
+
+      <div className='flex flex-col items-start desktop:items-center desktop:flex-row p-4 gap-4 border-b border-b-other-solidStroke'>
+        <div className='flex gap-2 h-8'>
           <PairSelector />
         </div>
         <div>
