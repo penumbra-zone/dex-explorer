@@ -7,7 +7,7 @@ import { useBalances } from '@/shared/api/balances';
 import { usePathToMetadata } from '../../model/use-path';
 import { OrderInput } from './order-input';
 import { SegmentedControl } from './segmented-control';
-import { ConnectButton } from './connect-button';
+import { ConnectButton } from '@/features/connect/connect-button';
 import { Slider } from './slider';
 import { InfoRow } from './info-row';
 import { orderFormStore, Direction } from './order-form-store';
@@ -89,7 +89,7 @@ export const OrderForm = observer(() => {
             {direction} {baseAsset.symbol}
           </Button>
         ) : (
-          <ConnectButton />
+          <ConnectButton buttonActionType='default' />
         )}
       </div>
       {exchangeRate !== null && (
