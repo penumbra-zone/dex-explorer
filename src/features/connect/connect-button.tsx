@@ -11,13 +11,7 @@ import { connectionStore } from '@/shared/model/connection';
 import { useProviderManifests } from '@/shared/api/providerManifests';
 
 export const ConnectButton = observer(
-  ({
-    buttonText = 'Connect wallet',
-    buttonActionType = 'accent',
-  }: {
-    buttonText?: string;
-    buttonActionType?: ButtonProps['actionType'];
-  }) => {
+  ({ actionType = 'accent' }: { actionType?: ButtonProps['actionType'] }) => {
     const [isOpen, setIsOpen] = useState(false);
     const { data: providers } = useProviderManifests();
 
@@ -40,8 +34,8 @@ export const ConnectButton = observer(
     return (
       <>
         <Density sparse>
-          <Button icon={Wallet2} actionType={buttonActionType} onClick={onClick}>
-            {buttonText}
+          <Button icon={Wallet2} actionType={actionType} onClick={onClick}>
+            Connect wallet
           </Button>
         </Density>
 

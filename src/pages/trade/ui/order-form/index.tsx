@@ -89,7 +89,7 @@ export const OrderForm = observer(() => {
             {direction} {baseAsset.symbol}
           </Button>
         ) : (
-          <ConnectButton buttonActionType='default' />
+          <ConnectButton actionType='default' />
         )}
       </div>
       {exchangeRate !== null && (
