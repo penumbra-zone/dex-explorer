@@ -44,23 +44,22 @@ const SummaryCard = ({
 };
 
 export const Summary = () => {
-  const { data, isLoading, error } = useSummary();
+  const { data, isLoading, error } = useSummary('1d');
   const { quoteAsset } = usePathToMetadata();
 
   const change24h = data && {
-    positive: data.current_price >= data.price_24h_ago,
-    change: round(data.current_price - data.price_24h_ago, 4),
-    percent: round(
-      Math.abs(((data.current_price - data.price_24h_ago) / data.price_24h_ago) * 100),
-      2,
-    ),
+    positive: data.price >= data.price_then,
+    change: round(data.price - data.price_then, 4),
+    percent: !data.price
+      ? '0'
+      : round(Math.abs(((data.price - data.price_then) / data.price_then) * 100), 2),
   };
 
   if (error) {
     return (
-      <SummaryCard title='Error'>
+      <SummaryCard title=''>
         <Text detail color='destructive.light'>
-          Error: {String(error)}
+          {String(error)}
         </Text>
       </SummaryCard>
     );
@@ -71,7 +70,7 @@ export const Summary = () => {
       <SummaryCard title='Price' loading={isLoading}>
         {data && (
           <Text detail color='text.primary'>
-            {round(data.current_price, 6)}
+            {round(data.price, 6)}
           </Text>
         )}
       </SummaryCard>
@@ -99,25 +98,23 @@ export const Summary = () => {
         )}
       </SummaryCard>
       <SummaryCard title='24h High' loading={isLoading}>
-        {data && (
-          <Text detail color='text.primary'>
-            {round(data.high_24h, 4)}
-          </Text>
-        )}
+        {/*  TODO: After added to DB, show here */}
+        <Text detail color='text.primary'>
+          -
+        </Text>
       </SummaryCard>
       <SummaryCard title='24h Low' loading={isLoading}>
-        {data && (
-          <Text detail color='text.primary'>
-            {round(data.low_24h, 4)}
-          </Text>
-        )}
+        {/*  TODO: After added to DB, show here */}
+        <Text detail color='text.primary'>
+          -
+        </Text>
       </SummaryCard>
       <SummaryCard title='24h Volume' loading={isLoading}>
         {data && (
           <div className='flex items-center gap-1'>
             {quoteAsset && <AssetIcon metadata={quoteAsset} size='sm' />}
             <Text detail color='text.primary'>
-              {shortify(data.direct_volume_24h)}
+              {shortify(data.direct_volume_over_window)}
             </Text>
           </div>
         )}
