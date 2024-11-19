@@ -5,10 +5,7 @@ import { theme } from '@penumbra-zone/ui/theme';
 import { Text } from '@penumbra-zone/ui/Text';
 import { useCandles } from '../api/candles';
 import { observer } from 'mobx-react-lite';
-import { Button } from '@penumbra-zone/ui/Button';
 import { DurationWindow, durationWindows } from '@/shared/utils/duration.ts';
-
-const CHART_HEIGHT = 512;
 
 const ChartLoadingState = () => {
   return (
@@ -82,8 +79,8 @@ export const Chart = observer(() => {
             key={w}
             type='button'
             className={cn(
-              'flex items-center h-4 text-text-secondary hover:text-text-primary transition-colors',
-              w === duration && 'text-text-primary',
+              'flex items-center h-4 hover:text-text-primary transition-colors',
+              w === duration ? 'text-text-primary' : 'text-text-secondary',
             )}
             onClick={() => setDuration(w)}
           >
