@@ -1,11 +1,14 @@
+import cn from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 import { createChart, IChartApi, OhlcData } from 'lightweight-charts';
 import { theme } from '@penumbra-zone/ui/theme';
+import { Text } from '@penumbra-zone/ui/Text';
 import { useCandles } from '../api/candles';
 import { observer } from 'mobx-react-lite';
-import { DurationWindow, durationWindows } from '@/shared/database/schema.ts';
-import { Text } from '@penumbra-zone/ui/Text';
-import cn from 'clsx';
+import { Button } from '@penumbra-zone/ui/Button';
+import { DurationWindow, durationWindows } from '@/shared/utils/duration.ts';
+
+const CHART_HEIGHT = 512;
 
 const ChartLoadingState = () => {
   return (
