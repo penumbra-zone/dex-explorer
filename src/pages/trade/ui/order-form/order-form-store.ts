@@ -316,6 +316,14 @@ class OrderFormStore {
       const assetIn = isBuy ? this.quoteAsset : this.baseAsset;
       const assetOut = isBuy ? this.baseAsset : this.quoteAsset;
 
+      if (!assetIn.amount || !assetOut.amount) {
+        openToast({
+          type: 'error',
+          message: 'Please enter an amount.',
+        });
+        return;
+      }
+
       const swapReq = new TransactionPlannerRequest({
         swaps: [
           {
