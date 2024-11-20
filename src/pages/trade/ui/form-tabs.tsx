@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { Tabs } from '@penumbra-zone/ui/Tabs';
 import { Density } from '@penumbra-zone/ui/Density';
+import { OrderForm } from './order-form';
 
 enum FormTabsType {
   Market = 'market',
@@ -30,9 +31,7 @@ export const FormTabs = () => {
         </Density>
       </div>
 
-      {tab === FormTabsType.Market && (
-        <div className='h-[380px] p-4 text-text-secondary'>Order form</div>
-      )}
+      {tab === FormTabsType.Market && <OrderForm />}
       {tab === FormTabsType.Limit && (
         <div className='h-[380px] p-4 text-text-secondary'>Limit order form</div>
       )}
