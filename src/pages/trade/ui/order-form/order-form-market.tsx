@@ -1,38 +1,15 @@
-import { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Button } from '@penumbra-zone/ui/Button';
 import { Text } from '@penumbra-zone/ui/Text';
 import { connectionStore } from '@/shared/model/connection';
-import { useBalances } from '@/shared/api/balances';
-import { usePathToMetadata } from '../../model/use-path';
 import { OrderInput } from './order-input';
 import { SegmentedControl } from './segmented-control';
 import { ConnectButton } from '@/features/connect/connect-button';
 import { Slider } from './slider';
 import { InfoRow } from './info-row';
-import { orderFormStore, Direction } from './order-form-store';
+import { useOrderFormStore, Direction } from './order-form-store';
 
-const useOrderFormStore = () => {
-  const { baseAsset, quoteAsset } = usePathToMetadata();
-  const { data: balances } = useBalances();
-  const { setAssets, setBalances } = orderFormStore;
-
-  useEffect(() => {
-    if (baseAsset && quoteAsset) {
-      setAssets(baseAsset, quoteAsset);
-    }
-  }, [baseAsset, quoteAsset, setAssets]);
-
-  useEffect(() => {
-    if (balances) {
-      setBalances(balances);
-    }
-  }, [balances, setBalances]);
-
-  return orderFormStore;
-};
-
-export const OrderForm = observer(() => {
+export const MarketOrderForm = observer(() => {
   const { connected } = connectionStore;
   const {
     baseAsset,
@@ -74,7 +51,6 @@ export const OrderForm = observer(() => {
           valueColor='success'
           toolTip='On Penumbra, trading fees are completely free.'
         />
-        {/* @TODO: Add gas fee */}
         <InfoRow
           label='Gas Fee'
           isLoading={gasFee === null}

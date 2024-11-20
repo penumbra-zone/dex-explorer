@@ -28,6 +28,9 @@ import {
 import { penumbra } from '@/shared/const/penumbra';
 import { plan, planBuildBroadcast } from './helpers';
 import { openToast } from '@penumbra-zone/ui/Toast';
+import { useEffect } from 'react';
+import { useBalances } from '@/shared/api/balances';
+import { usePathToMetadata } from '../../model/use-path';
 
 export enum Direction {
   Buy = 'Buy',
@@ -367,3 +370,23 @@ class OrderFormStore {
 }
 
 export const orderFormStore = new OrderFormStore();
+
+export const useOrderFormStore = () => {
+  const { baseAsset, quoteAsset } = usePathToMetadata();
+  const { data: balances } = useBalances();
+  const { setAssets, setBalances } = orderFormStore;
+
+  useEffect(() => {
+    if (baseAsset && quoteAsset) {
+      setAssets(baseAsset, quoteAsset);
+    }
+  }, [baseAsset, quoteAsset, setAssets]);
+
+  useEffect(() => {
+    if (balances) {
+      setBalances(balances);
+    }
+  }, [balances, setBalances]);
+
+  return orderFormStore;
+};

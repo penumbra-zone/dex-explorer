@@ -8,8 +8,8 @@ export interface OrderInputProps {
   label: string;
   value?: number;
   placeholder?: string;
-  isEstimating: boolean;
-  isApproximately: boolean;
+  isEstimating?: boolean;
+  isApproximately?: boolean;
   onChange?: (amount: string, ...args: unknown[]) => void;
   denominator: string;
   max?: string | number;
