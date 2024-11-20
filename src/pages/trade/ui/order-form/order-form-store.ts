@@ -350,12 +350,6 @@ class OrderFormStore {
 
       assetIn.unsetAmount();
       assetOut.unsetAmount();
-    } catch (e) {
-      openToast({
-        type: 'error',
-        message: 'Error submitting order',
-        description: JSON.stringify(e),
-      });
     } finally {
       this.isLoading = false;
     }
