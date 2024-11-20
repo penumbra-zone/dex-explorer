@@ -6,12 +6,11 @@ import { DurationWindow } from '@/shared/utils/duration.ts';
  * Please do not edit it manually.
  */
 
-import type { ColumnType } from 'kysely';
+import type { ColumnType } from "kysely";
 
-export type Generated<T> =
-  T extends ColumnType<infer S, infer I, infer U>
-    ? ColumnType<S, I | undefined, U>
-    : ColumnType<T, T | undefined, T>;
+export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
+  ? ColumnType<S, I | undefined, U>
+  : ColumnType<T, T | undefined, T>;
 
 export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
 
@@ -83,8 +82,10 @@ export interface DexExPairsSummary {
   asset_end: Buffer;
   asset_start: Buffer;
   direct_volume_over_window: number;
+  high: number;
   liquidity: number;
   liquidity_then: number;
+  low: number;
   price: number;
   price_then: number;
   swap_volume_over_window: number;
@@ -262,10 +263,5 @@ interface RawDB {
   supply_validators: SupplyValidators;
 }
 
-export type DB = Pick<
-  RawDB,
-  | 'dex_ex_aggregate_summary'
-  | 'dex_ex_pairs_block_snapshot'
-  | 'dex_ex_pairs_summary'
-  | 'dex_ex_price_charts'
->;
+
+export type DB = Pick<RawDB, 'dex_ex_aggregate_summary' | 'dex_ex_pairs_block_snapshot' | 'dex_ex_pairs_summary' | 'dex_ex_price_charts'>;
