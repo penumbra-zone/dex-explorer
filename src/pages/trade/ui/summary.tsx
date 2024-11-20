@@ -6,6 +6,7 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { useSummary } from '../model/useSummary';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
 import { round } from '@/shared/utils/numbers/round';
+import { Density } from '@penumbra-zone/ui/Density';
 
 const SummaryCard = ({
   title,
@@ -108,7 +109,14 @@ export const Summary = () => {
       </SummaryCard>
       <SummaryCard title='24h Volume' loading={isLoading}>
         {data && 'directVolume' in data ? (
-          <ValueViewComponent valueView={data.directVolume} />
+          <Density compact>
+            <ValueViewComponent
+              valueView={data.directVolume}
+              context='table'
+              abbreviate
+              hideSymbol
+            />
+          </Density>
         ) : (
           '-'
         )}
