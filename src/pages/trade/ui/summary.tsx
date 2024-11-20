@@ -5,8 +5,10 @@ import { Text } from '@penumbra-zone/ui/Text';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { useSummary } from '../model/useSummary';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
-import { round } from '@/shared/utils/numbers/round';
+import { round } from '@penumbra-zone/types/round';
 import { Density } from '@penumbra-zone/ui/Density';
+import { SummaryDataResponse } from '@/shared/api/server/types.ts';
+import { removeTrailingZeros } from '@penumbra-zone/types/shortify';
 
 const SummaryCard = ({
   title,
@@ -59,38 +61,23 @@ export const Summary = () => {
     <div className='flex flex-wrap items-center gap-x-4 gap-y-2'>
       <SummaryCard title='Price' loading={isLoading}>
         <Text detail color='text.primary'>
-          {data && 'price' in data ? round(data.price, 6) : '-'}
+          {data && 'price' in data ? roundTrim(data.price) : '-'}
         </Text>
       </SummaryCard>
       <SummaryCard title='24h Change' loading={isLoading}>
-        {data && 'noData' in data && '-'}
+        {data && 'noData' in data && (
+          <Text detail color='text.primary'>
+            -
+          </Text>
+        )}
         {data && 'change' in data && (
-          <div
-            className={cn(
-              'flex items-center gap-1',
-              // eslint-disable-next-line -- don't like this rule
-              data.change.sign === 'positive'
-                ? 'text-success-light'
-                : data.change.sign === 'negative'
-                  ? 'text-destructive-light'
-                  : 'text-neutral-light',
-            )}
-          >
-            <Text detail>{data.change.percent}</Text>
+          <div className={cn('flex items-center gap-1', getColor(data, 'text'))}>
+            <Text detail>{roundTrim(data.change.value)}</Text>
             <span
-              className={cn(
-                'flex h-4 px-1 rounded-full text-success-dark',
-                // eslint-disable-next-line -- don't like this rule
-                data.change.sign === 'positive'
-                  ? 'bg-success-light'
-                  : data.change.sign === 'negative'
-                    ? 'bg-destructive-light'
-                    : 'bg-neutral-light',
-              )}
+              className={cn('flex h-4 px-1 rounded-full text-success-dark', getColor(data, 'bg'))}
             >
               <Text detail>
-                {/* eslint-disable-next-line -- don't like this rule */}
-                {data.change.sign === 'positive' ? '+' : data.change.sign === 'negative' ? '-' : ''}
+                {getTextSign(data)}
                 {data.change.percent}%
               </Text>
             </span>
@@ -99,12 +86,12 @@ export const Summary = () => {
       </SummaryCard>
       <SummaryCard title='24h High' loading={isLoading}>
         <Text detail color='text.primary'>
-          {data && 'high' in data ? round(data.high, 6) : '-'}
+          {data && 'high' in data ? roundTrim(data.high) : '-'}
         </Text>
       </SummaryCard>
       <SummaryCard title='24h Low' loading={isLoading}>
         <Text detail color='text.primary'>
-          {data && 'low' in data ? round(data.low, 6) : '-'}
+          {data && 'low' in data ? roundTrim(data.low) : '-'}
         </Text>
       </SummaryCard>
       <SummaryCard title='24h Volume' loading={isLoading}>
@@ -118,9 +105,37 @@ export const Summary = () => {
             />
           </Density>
         ) : (
-          '-'
+          <Text detail color='text.primary'>
+            -
+          </Text>
         )}
       </SummaryCard>
     </div>
   );
+};
+
+// TODO: When rounding trim updated shipped in @penumbra-zone/types,
+//  can remove the removeTrailingZeros() wrapper
+const roundTrim = (value: number) => {
+  return removeTrailingZeros(round({ value, decimals: 6 }));
+};
+
+const getTextSign = (res: SummaryDataResponse) => {
+  if (res.change.sign === 'positive') {
+    return '+';
+  }
+  if (res.change.sign === 'negative') {
+    return '-';
+  }
+  return '';
+};
+
+const getColor = (res: SummaryDataResponse, version: 'text' | 'bg') => {
+  if (res.change.sign === 'positive') {
+    return `${version}-success-light`;
+  }
+  if (res.change.sign === 'negative') {
+    return `${version}-destructive-light`;
+  }
+  return `${version}-neutral-light`;
 };

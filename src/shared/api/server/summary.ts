@@ -3,7 +3,7 @@ import { pindexer } from '@/shared/database';
 import { ChainRegistryClient } from '@penumbra-labs/registry';
 import { durationWindows, isDurationWindow } from '@/shared/utils/duration.ts';
 import { ChangeData, SummaryDataResponse, SummaryResponse } from '@/shared/api/server/types.ts';
-import { round } from '@/shared/utils/numbers/round.ts';
+import { round } from '@penumbra-zone/types/round';
 import { toValueView } from '@/shared/utils/value-view.ts';
 import { calculateDisplayPrice } from '@/shared/utils/price-conversion.ts';
 
@@ -57,17 +57,20 @@ export async function GET(req: NextRequest): Promise<NextResponse<SummaryRespons
 
   const summary = results[0];
   if (!summary) {
-    return NextResponse.json({ window: durationWindow, data: 'none' });
+    return NextResponse.json({ window: durationWindow, noData: true });
   }
 
   const priceDiff = summary.price - summary.price_then;
   const change = {
-    value: priceDiff,
+    value: calculateDisplayPrice(priceDiff, baseAssetMetadata, quoteAssetMetadata),
     sign: priceDiffLabel(priceDiff),
     percent:
       summary.price === 0
         ? '0'
-        : round(Math.abs(((summary.price - summary.price_then) / summary.price_then) * 100), 2),
+        : round({
+            value: Math.abs(((summary.price - summary.price_then) / summary.price_then) * 100),
+            decimals: 2,
+          }),
   };
 
   const dataResponse = new SummaryDataResponse({

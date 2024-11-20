@@ -15,10 +15,10 @@ export const calculateDisplayPrice = (
   const exponentDifference = quoteExponent - baseExponent;
 
   if (exponentDifference >= 0) {
-    const multiplier = Math.pow(10, exponentDifference);
+    const multiplier = Math.pow(10, -exponentDifference);
     return baseCalculatedPrice * multiplier;
   } else {
-    const divisor = Math.pow(10, -exponentDifference);
+    const divisor = Math.pow(10, exponentDifference);
     return baseCalculatedPrice / divisor;
   }
 };
