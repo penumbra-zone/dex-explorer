@@ -67,6 +67,7 @@
     "framer-motion": "^11.3.31",
     "grpc-tools": "^1.12.4",
     "grpc_tools_node_protoc_ts": "^5.3.3",
+    "is-mobile": "^5.0.0",
     "kysely": "^0.27.4",
     "lightweight-charts": "^4.2.0",
     "lodash": "^4.17.21",
