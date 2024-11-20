@@ -72,7 +72,7 @@ export const Chart = observer(() => {
   const { data, isLoading, error } = useCandles(duration);
 
   return (
-    <div className='flex flex-col grow h-full border-b border-b-other-solidStroke'>
+    <div className='flex flex-col grow h-full'>
       <div className='flex gap-3 py-3 px-4 border-b border-b-other-solidStroke'>
         {durationWindows.map(w => (
           <button

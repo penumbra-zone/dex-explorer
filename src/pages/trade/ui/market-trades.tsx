@@ -39,7 +39,7 @@ const LoadingRow = () => {
 
 export const MarketTrades = () => {
   return (
-    <div className='grid grid-cols-4 pt-4 px-4 pb-0 h-auto max-h-[350px] overflow-auto border-b border-b-other-solidStroke'>
+    <div className='grid grid-cols-4 pt-4 px-4 pb-0 h-auto overflow-auto'>
       <div className='grid grid-cols-subgrid col-span-4 text-text-secondary border-b border-other-tonalStroke'>
         <HeaderCell>Price</HeaderCell>
         <HeaderCell>Amount</HeaderCell>

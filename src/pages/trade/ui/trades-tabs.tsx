@@ -6,48 +6,47 @@ import { Density } from '@penumbra-zone/ui/Density';
 import { Button } from '@penumbra-zone/ui/Button';
 import { Chart } from './chart';
 import { MarketTrades } from './market-trades';
-import cn from 'clsx';
 
-enum MobileTabsType {
+enum TradesTabsType {
   Chart = 'chart',
   MarketTrades = 'market-trades',
   MyTrades = 'my-trades',
 }
 
-export const MobileTabs = ({ noChart = false }: { noChart?: boolean }) => {
+export const TradesTabs = ({ withChart = false }: { withChart?: boolean }) => {
   const [parent] = useAutoAnimate();
 
-  const [tab, setTab] = useState<MobileTabsType>(
-    noChart ? MobileTabsType.MarketTrades : MobileTabsType.Chart,
+  const [tab, setTab] = useState<TradesTabsType>(
+    withChart ? TradesTabsType.Chart : TradesTabsType.MarketTrades,
   );
   const [collapsed, setCollapsed] = useState(false);
 
   const toggleCollapsed = () => setCollapsed(prev => !prev);
 
   return (
-    <div ref={parent} className={cn(!noChart && 'lg:hidden', 'flex flex-col')}>
+    <div ref={parent} className='flex flex-col'>
       <div className='flex justify-between items-center px-4 border-b border-b-other-solidStroke'>
         <Density medium>
           <Tabs
             value={tab}
             actionType='accent'
-            onChange={value => setTab(value as MobileTabsType)}
+            onChange={value => setTab(value as TradesTabsType)}
             options={
-              noChart
+              withChart
                 ? [
-                    { value: MobileTabsType.MarketTrades, label: 'Market Trades' },
-                    { value: MobileTabsType.MyTrades, label: 'My Trades' },
+                    { value: TradesTabsType.Chart, label: 'Chart' },
+                    { value: TradesTabsType.MarketTrades, label: 'Market Trades' },
+                    { value: TradesTabsType.MyTrades, label: 'My Trades' },
                   ]
                 : [
-                    { value: MobileTabsType.Chart, label: 'Chart' },
-                    { value: MobileTabsType.MarketTrades, label: 'Market Trades' },
-                    { value: MobileTabsType.MyTrades, label: 'My Trades' },
+                    { value: TradesTabsType.MarketTrades, label: 'Market Trades' },
+                    { value: TradesTabsType.MyTrades, label: 'My Trades' },
                   ]
             }
           />
         </Density>
 
-        {!noChart && (
+        {withChart && (
           <Density compact>
             <Button iconOnly icon={collapsed ? ChevronDown : ChevronUp} onClick={toggleCollapsed}>
               Toggle
@@ -58,13 +57,13 @@ export const MobileTabs = ({ noChart = false }: { noChart?: boolean }) => {
 
       {!collapsed && (
         <>
-          {!noChart && tab === MobileTabsType.Chart && (
+          {withChart && tab === TradesTabsType.Chart && (
             <div className='h-[300px]'>
               <Chart />
             </div>
           )}
-          {tab === MobileTabsType.MarketTrades && <MarketTrades />}
-          {tab === MobileTabsType.MyTrades && <MarketTrades />}
+          {tab === TradesTabsType.MarketTrades && <MarketTrades />}
+          {tab === TradesTabsType.MyTrades && <MarketTrades />}
         </>
       )}
     </div>

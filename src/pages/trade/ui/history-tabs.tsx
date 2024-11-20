@@ -18,7 +18,7 @@ export const HistoryTabs = () => {
   const [showAll, setShowAll] = useState(false);
 
   return (
-    <div ref={parent} className='flex flex-col border-r border-r-other-solidStroke col-span-2'>
+    <div ref={parent} className='flex flex-col'>
       <div className='flex justify-between gap-2 px-4 border-b border-b-other-solidStroke'>
         <Density medium>
           <Tabs

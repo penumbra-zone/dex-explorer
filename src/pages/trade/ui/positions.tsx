@@ -19,7 +19,7 @@ const LoadingRow = () => {
 export const Positions = () => {
   return (
     <div className='pt-4 px-4 pb-0 overflow-hidden'>
-      <div className='relative grid grid-cols-[repeat(9,1fr)] min-w-full h-auto max-h-[350px] overflow-auto border-b border-b-other-solidStroke'>
+      <div className='relative grid grid-cols-[repeat(9,1fr)] min-w-full h-auto overflow-auto'>
         <div className='grid grid-cols-subgrid sticky top-0 z-10 col-span-9 text-text-secondary border-b border-other-tonalStroke bg-app-main'>
           <HeaderCell>Time</HeaderCell>
           <HeaderCell>Side</HeaderCell>

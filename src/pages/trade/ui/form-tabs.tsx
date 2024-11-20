@@ -14,8 +14,8 @@ export const FormTabs = () => {
   const [tab, setTab] = useState<FormTabsType>(FormTabsType.Market);
 
   return (
-    <div ref={parent} className='flex flex-col border-b border-b-other-solidStroke'>
-      <div className='px-4 border-b border-b-other-solidStroke'>
+    <div ref={parent} className='h-full flex flex-col'>
+      <div className='px-4 lg:pt-2 border-b border-b-other-solidStroke'>
         <Density medium>
           <Tabs
             value={tab}

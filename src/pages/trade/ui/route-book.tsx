@@ -9,7 +9,7 @@ import { TradeRow } from '@/pages/trade/ui/trade-row.tsx';
 const SkeletonRow = (props: { isSpread: boolean }) =>
   props.isSpread ? (
     <tr>
-      <td colSpan={4} className='border-y border-border-base'>
+      <td colSpan={4} className='border-y border-l-other-solidStroke'>
         <div className='flex items-center justify-center gap-2 px-3 py-3 text-xs'>
           <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
 
@@ -22,7 +22,7 @@ const SkeletonRow = (props: { isSpread: boolean }) =>
       </td>
     </tr>
   ) : (
-    <tr className={`group relative h-[33px] border-b border-border-faded`}>
+    <tr className={`group relative h-[33px] border-b border-b-other-tonalStroke`}>
       <td>
         <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
       </td>
@@ -109,7 +109,7 @@ const SpreadRow = ({ sellOrders, buyOrders }: { sellOrders: Trace[]; buyOrders: 
 
   return (
     <tr>
-      <td colSpan={4} className='border-y border-border-base'>
+      <td colSpan={4} className='border-y border-y-other-solidStroke'>
         <div className='flex items-center justify-center gap-2 px-3 py-3 text-xs'>
           <span className='text-green-400'>{parseFloat(spreadInfo.midPrice)}</span>
           <span className='text-gray-400'>Spread:</span>

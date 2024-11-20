@@ -15,11 +15,8 @@ export const RouteTabs = () => {
   const [tab, setTab] = useState<RouteTabsType>(RouteTabsType.Book);
 
   return (
-    <div
-      ref={parent}
-      className='flex flex-col gap-2 border-b border-r border-other-solidStroke h-full overflow-hidden'
-    >
-      <div className='flex justify-between gap-2 px-4 border-b border-b-other-solidStroke'>
+    <div ref={parent} className='flex flex-col gap-2 h-full overflow-hidden'>
+      <div className='flex justify-between gap-2 px-4 lg:pt-2 border-b border-b-other-solidStroke'>
         <Density medium>
           <Tabs
             value={tab}
