@@ -1,5 +1,4 @@
 import { isServer, QueryClient } from '@tanstack/react-query';
-import { cache } from 'react';
 
 const makeQueryClient = () => {
   return new QueryClient({
@@ -13,13 +12,12 @@ const makeQueryClient = () => {
   });
 };
 
-const serverClient =  cache(() => makeQueryClient());
 let browserQueryClient: QueryClient | undefined = undefined;
 
 export const getQueryClient = () => {
   if (isServer) {
     // Server: always make a new query client
-    return serverClient();
+    return makeQueryClient();
   } else {
     // Browser: make a new query client if we don't already have one
     // This is very important, so we don't re-make a new client if React
