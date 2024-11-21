@@ -1,3 +1,5 @@
+'use client';
+
 import cn from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 import { createChart, IChartApi, OhlcData } from 'lightweight-charts';

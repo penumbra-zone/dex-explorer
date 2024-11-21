@@ -1,5 +1,3 @@
-'use client';
-
 import cn from 'clsx';
 import { PairInfo } from './pair-info';
 import { Chart } from './chart';
