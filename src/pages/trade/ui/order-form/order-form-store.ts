@@ -188,7 +188,11 @@ class OrderFormStore {
 
       return output;
     } catch (e) {
-      if (e instanceof Error && e.name !== 'PenumbraProviderNotAvailableError') {
+      if (
+        e instanceof Error &&
+        e.name !== 'PenumbraProviderNotAvailableError' &&
+        e.name !== 'PenumbraProviderNotConnectedError'
+      ) {
         openToast({
           type: 'error',
           message: e.name,
