@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pindexer } from '@/shared/database';
 import { ChainRegistryClient } from '@penumbra-labs/registry';
-import { DexExSummary } from '@/shared/database/schema.ts';
+import { DexExPairsSummary } from '@/shared/database/schema.ts';
+import { durationWindows, isDurationWindow } from '@/shared/utils/duration.ts';
 
-export type SummaryResponse = DexExSummary | { error: string };
+export type SummaryResponse = DexExPairsSummary | { error: string };
 
 export async function GET(req: NextRequest): Promise<NextResponse<SummaryResponse>> {
   const chainId = process.env['PENUMBRA_CHAIN_ID'];
@@ -17,6 +18,14 @@ export async function GET(req: NextRequest): Promise<NextResponse<SummaryRespons
   if (!baseAssetSymbol || !quoteAssetSymbol) {
     return NextResponse.json(
       { error: 'Missing required baseAsset or quoteAsset' },
+      { status: 400 },
+    );
+  }
+
+  const durationWindow = searchParams.get('durationWindow');
+  if (!durationWindow || !isDurationWindow(durationWindow)) {
+    return NextResponse.json(
+      { error: `durationWindow missing or invalid window. Options: ${durationWindows.join(', ')}` },
       { status: 400 },
     );
   }
@@ -40,6 +49,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<SummaryRespons
   }
 
   const results = await pindexer.summary(
+    durationWindow,
     baseAssetMetadata.penumbraAssetId,
     quoteAssetMetadata.penumbraAssetId,
   );

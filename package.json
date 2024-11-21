@@ -5,7 +5,7 @@
   "license": "(MIT OR Apache-2.0)",
   "type": "module",
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "packageManager": "pnpm@9.7.0+sha512.dc09430156b427f5ecfc79888899e1c39d2d690f004be70e05230b72cb173d96839587545d09429b55ac3c429c801b4dc3c0e002f653830a420fa2dd4e3cf9cf",
   "scripts": {
@@ -19,7 +19,8 @@
     "lint:fix": "eslint src --fix",
     "lint:strict": "tsc --noEmit && pnpm lint --max-warnings 0",
     "lint:prettier": "prettier --check .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "generate-pindexer-schema": "tsx ./scripts/generate-pindexer-schema.ts"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^1.10.0",
@@ -30,15 +31,18 @@
     "@connectrpc/connect-web": "^1.4.0",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
+    "@formkit/auto-animate": "^0.8.2",
     "@grpc/proto-loader": "^0.7.13",
     "@penumbra-labs/registry": "^12.0.0",
     "@penumbra-zone/bech32m": "^10.0.0",
     "@penumbra-zone/client": "^21.0.0",
+    "@penumbra-zone/crypto-web": "^28.0.0",
     "@penumbra-zone/getters": "^20.0.0",
+    "@penumbra-zone/perspective": "^36.0.0",
     "@penumbra-zone/protobuf": "^6.3.0",
     "@penumbra-zone/transport-dom": "^7.5.0",
     "@penumbra-zone/types": "^26.0.0",
-    "@penumbra-zone/ui": "^13.0.0",
+    "@penumbra-zone/ui": "^13.2.0",
     "@penumbra-zone/wasm": "^31.0.0",
     "@radix-ui/react-icons": "^1.3.0",
     "@rehooks/component-size": "^1.0.3",
@@ -55,6 +59,7 @@
     "chartjs-chart-financial": "^0.2.1",
     "chartjs-plugin-annotation": "^3.0.1",
     "chartjs-plugin-zoom": "^2.0.1",
+    "clsx": "^2.1.1",
     "configs": "https://github.com/prax-wallet/configs.git#main",
     "date-fns": "^3.6.0",
     "echarts": "^5.5.1",
@@ -74,7 +79,9 @@
     "react": "^18.3.1",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.3.1",
+    "react-loader-spinner": "^6.1.6",
     "react-outside-click-handler": "^1.3.0",
+    "react-use-size": "^3.0.3",
     "sharp": "^0.33.5",
     "webpack": "^5.94.0",
     "zod": "^3.23.8"
@@ -86,6 +93,7 @@
     "@babel/preset-typescript": "^7.24.7",
     "@chakra-ui/react-types": "^2.0.6",
     "@eslint/js": "^9.10.0",
+    "@penumbra-zone/types": "^25.0.0",
     "@svgr/webpack": "^8.1.0",
     "@types/chrome": "^0.0.278",
     "@types/date-fns": "^2.6.0",
@@ -102,6 +110,7 @@
     "eslint-config-next": "14.2.3",
     "eslint-plugin-react": "^7.35.2",
     "globals": "^15.9.0",
+    "kysely-codegen": "^0.17.0",
     "postcss": "^8.4.47",
     "styled-components": "^6.1.13",
     "tailwindcss": "^3.4.12",
