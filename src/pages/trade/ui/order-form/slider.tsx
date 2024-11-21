@@ -2,7 +2,7 @@ import { observer } from 'mobx-react-lite';
 import { connectionStore } from '@/shared/model/connection';
 import { Slider as PenumbraSlider } from '@penumbra-zone/ui/Slider';
 import { Text } from '@penumbra-zone/ui/Text';
-import { OrderFormAsset } from './order-form-store';
+import { OrderFormAsset } from './store';
 
 export const Slider = observer(({ asset, steps }: { asset: OrderFormAsset; steps: number }) => {
   const { connected } = connectionStore;

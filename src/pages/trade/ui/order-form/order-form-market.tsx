@@ -7,7 +7,7 @@ import { SegmentedControl } from './segmented-control';
 import { ConnectButton } from '@/features/connect/connect-button';
 import { Slider } from './slider';
 import { InfoRow } from './info-row';
-import { useOrderFormStore, Direction } from './order-form-store';
+import { useOrderFormStore, Direction } from './store';
 
 export const MarketOrderForm = observer(() => {
   const { connected } = connectionStore;

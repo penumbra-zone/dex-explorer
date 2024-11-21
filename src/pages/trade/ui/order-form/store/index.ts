@@ -1,36 +1,24 @@
 import { makeAutoObservable } from 'mobx';
-import { BigNumber } from 'bignumber.js';
-import { round } from 'lodash';
 import debounce from 'lodash/debounce';
 import { SimulationService } from '@penumbra-zone/protobuf';
 import {
   BalancesResponse,
   TransactionPlannerRequest,
 } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
-import {
-  AssetId,
-  Metadata,
-  Value,
-  ValueView,
-} from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { Metadata, ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { SimulateTradeRequest } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
-import { getAssetId, getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
+import { getAssetId } from '@penumbra-zone/getters/metadata';
 import { getSwapCommitmentFromTx } from '@penumbra-zone/getters/transaction';
-import { getAddressIndex, getAddress } from '@penumbra-zone/getters/address-view';
 import { getAssetIdFromValueView } from '@penumbra-zone/getters/value-view';
 import { getFormattedAmtFromValueView } from '@penumbra-zone/types/value-view';
-import { LoHi, toBaseUnit } from '@penumbra-zone/types/lo-hi';
-import {
-  AddressView,
-  Address,
-  AddressIndex,
-} from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
 import { penumbra } from '@/shared/const/penumbra';
-import { plan, planBuildBroadcast } from './helpers';
+import { plan, planBuildBroadcast } from '../helpers';
 import { openToast } from '@penumbra-zone/ui/Toast';
 import { useEffect } from 'react';
 import { useBalances } from '@/shared/api/balances';
-import { usePathToMetadata } from '../../model/use-path';
+import { usePathToMetadata } from '../../../model/use-path';
+import { OrderFormAsset } from './asset';
+import { RangeLiquidity } from './range-liquidity';
 
 export enum Direction {
   Buy = 'Buy',
@@ -42,86 +30,12 @@ export enum OrderType {
   Auction = 'Auction',
 }
 
-export class OrderFormAsset {
-  symbol: string;
-  metadata?: Metadata;
-  exponent?: number;
-  assetId?: AssetId;
-  balanceView?: ValueView;
-  accountAddress?: Address;
-  accountIndex?: AddressIndex;
-  balance?: number;
-  amount?: number;
-  onAmountChangeCallback?: (asset: OrderFormAsset) => Promise<void>;
-  isEstimating = false;
-
-  constructor(metadata?: Metadata) {
-    makeAutoObservable(this);
-
-    this.metadata = metadata;
-    this.symbol = metadata?.symbol ?? '';
-    this.assetId = metadata ? getAssetId(metadata) : undefined;
-    this.exponent = metadata ? getDisplayDenomExponent(metadata) : undefined;
-  }
-
-  setBalanceView = (balanceView: ValueView): void => {
-    this.balanceView = balanceView;
-    this.setBalanceFromBalanceView(balanceView);
-  };
-
-  setAccountAddress = (addressView: AddressView): void => {
-    this.accountAddress = getAddress(addressView);
-    this.accountIndex = getAddressIndex(addressView);
-  };
-
-  setBalanceFromBalanceView = (balanceView: ValueView): void => {
-    const balance = getFormattedAmtFromValueView(balanceView, true);
-    this.balance = parseFloat(balance.replace(/,/g, ''));
-  };
-
-  setAmount = (amount: string | number, callOnAmountChange = true): void => {
-    const prevAmount = this.amount;
-    const nextAmount = round(Number(amount), this.exponent);
-
-    if (prevAmount !== nextAmount) {
-      this.amount = nextAmount;
-
-      if (this.onAmountChangeCallback && callOnAmountChange) {
-        void this.onAmountChangeCallback(this);
-      }
-    }
-  };
-
-  unsetAmount = (): void => {
-    this.amount = undefined;
-    this.isEstimating = false;
-  };
-
-  setIsEstimating = (isEstimating: boolean): void => {
-    this.isEstimating = isEstimating;
-  };
-
-  onAmountChange = (callback: (asset: OrderFormAsset) => Promise<void>): void => {
-    this.onAmountChangeCallback = callback;
-  };
-
-  toAmount = (): LoHi => {
-    return toBaseUnit(BigNumber(this.amount ?? 0), this.exponent);
-  };
-
-  toValue = (): Value => {
-    return new Value({
-      assetId: this.assetId,
-      amount: this.toAmount(),
-    });
-  };
-}
-
 class OrderFormStore {
   type: OrderType = OrderType.Swap;
   direction: Direction = Direction.Buy;
   baseAsset = new OrderFormAsset();
   quoteAsset = new OrderFormAsset();
+  rangeLiquidity = new RangeLiquidity();
   balances: BalancesResponse[] | undefined;
   exchangeRate: number | null = null;
   gasFee: number | null = null;

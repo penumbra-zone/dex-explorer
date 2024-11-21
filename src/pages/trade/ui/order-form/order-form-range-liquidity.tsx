@@ -4,41 +4,15 @@ import { Text } from '@penumbra-zone/ui/Text';
 import { Slider as PenumbraSlider } from '@penumbra-zone/ui/Slider';
 import { connectionStore } from '@/shared/model/connection';
 import { OrderInput } from './order-input';
-// import { SegmentedControl } from './segmented-control';
 import { ConnectButton } from '@/features/connect/connect-button';
-import { Slider } from './slider';
 import { SelectGroup } from './select-group';
 import { InfoRow } from './info-row';
-import { useOrderFormStore, Direction } from './order-form-store';
+import { useOrderFormStore } from './store';
 
 export const RangeLiquidityOrderForm = observer(() => {
   const { connected } = connectionStore;
-  const {
-    baseAsset,
-    quoteAsset,
-    // rangeLiquidity,
-    direction,
-    setDirection,
-    submitOrder,
-    isLoading,
-    gasFee,
-    exchangeRate,
-  } = useOrderFormStore();
-
-  const rangeLiquidity = {
-    setUpperBound: (amount: string) => {
-      console.log('setUpperBound', amount);
-    },
-    setLowerBound: (amount: string) => {
-      console.log('setUpperBound', amount);
-    },
-    setFeeTier: (feeTier: string) => {
-      console.log('setFeeTier', feeTier);
-    },
-    setPositions: (positions: string) => {
-      console.log('setPositions', positions);
-    },
-  };
+  const { baseAsset, quoteAsset, rangeLiquidity, submitOrder, isLoading, gasFee, exchangeRate } =
+    useOrderFormStore();
 
   return (
     <div className='p-4'>
@@ -65,9 +39,9 @@ export const RangeLiquidityOrderForm = observer(() => {
         denominator={quoteAsset.symbol}
       />
       <SelectGroup
-        value='+2%'
+        value={rangeLiquidity.upperBound}
         options={['Market', '+2%', '+5%', '+10%', '+15%']}
-        onChange={rangeLiquidity.setFeeTier}
+        onChange={rangeLiquidity.setUpperBound}
       />
       <OrderInput
         label='Lower bound'
@@ -76,9 +50,9 @@ export const RangeLiquidityOrderForm = observer(() => {
         denominator={quoteAsset.symbol}
       />
       <SelectGroup
-        value='-5%'
+        value={rangeLiquidity.lowerBound}
         options={['Market', '-2%', '-5%', '-10%', '-15%']}
-        onChange={rangeLiquidity.setFeeTier}
+        onChange={rangeLiquidity.setLowerBound}
       />
       <OrderInput
         label='Fee tier'
@@ -87,7 +61,7 @@ export const RangeLiquidityOrderForm = observer(() => {
         denominator='%'
       />
       <SelectGroup
-        value='-5%'
+        value={rangeLiquidity.feeTier}
         options={['0.1%', '0.25%', '0.5%', '1.00%']}
         onChange={rangeLiquidity.setFeeTier}
       />
