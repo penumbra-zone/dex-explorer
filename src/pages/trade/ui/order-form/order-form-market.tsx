@@ -61,7 +61,11 @@ export const MarketOrderForm = observer(() => {
       </div>
       <div className='mb-4'>
         {connected ? (
-          <Button actionType='accent' disabled={isLoading} onClick={submitOrder}>
+          <Button
+            actionType='accent'
+            disabled={isLoading || !baseAsset.amount || !quoteAsset.amount}
+            onClick={submitOrder}
+          >
             {direction} {baseAsset.symbol}
           </Button>
         ) : (
