@@ -8,7 +8,6 @@ import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
 import { round } from '@penumbra-zone/types/round';
 import { Density } from '@penumbra-zone/ui/Density';
 import { SummaryDataResponse } from '@/shared/api/server/types.ts';
-import { removeTrailingZeros } from '@penumbra-zone/types/shortify';
 
 const SummaryCard = ({
   title,
@@ -61,7 +60,7 @@ export const Summary = () => {
     <div className='flex flex-wrap items-center gap-x-4 gap-y-2'>
       <SummaryCard title='Price' loading={isLoading}>
         <Text detail color='text.primary'>
-          {data && 'price' in data ? roundTrim(data.price) : '-'}
+          {data && 'price' in data ? round({ value: data.price, decimals: 6 }) : '-'}
         </Text>
       </SummaryCard>
       <SummaryCard title='24h Change' loading={isLoading}>
@@ -71,10 +70,10 @@ export const Summary = () => {
           </Text>
         )}
         {data && 'change' in data && (
-          <div className={cn('flex items-center gap-1', getColor(data, 'text'))}>
-            <Text detail>{roundTrim(data.change.value)}</Text>
+          <div className={cn('flex items-center gap-1', getColor(data, false))}>
+            <Text detail>{round({ value: data.change.value, decimals: 6 })}</Text>
             <span
-              className={cn('flex h-4 px-1 rounded-full text-success-dark', getColor(data, 'bg'))}
+              className={cn('flex h-4 px-1 rounded-full text-success-dark', getColor(data, true))}
             >
               <Text detail>
                 {getTextSign(data)}
@@ -86,12 +85,12 @@ export const Summary = () => {
       </SummaryCard>
       <SummaryCard title='24h High' loading={isLoading}>
         <Text detail color='text.primary'>
-          {data && 'high' in data ? roundTrim(data.high) : '-'}
+          {data && 'high' in data ? round({ value: data.high, decimals: 6 }) : '-'}
         </Text>
       </SummaryCard>
       <SummaryCard title='24h Low' loading={isLoading}>
         <Text detail color='text.primary'>
-          {data && 'low' in data ? roundTrim(data.low) : '-'}
+          {data && 'low' in data ? round({ value: data.low, decimals: 6 }) : '-'}
         </Text>
       </SummaryCard>
       <SummaryCard title='24h Volume' loading={isLoading}>
@@ -114,12 +113,6 @@ export const Summary = () => {
   );
 };
 
-// TODO: When rounding trim updated shipped in @penumbra-zone/types,
-//  can remove the removeTrailingZeros() wrapper
-const roundTrim = (value: number) => {
-  return removeTrailingZeros(round({ value, decimals: 6 }));
-};
-
 const getTextSign = (res: SummaryDataResponse) => {
   if (res.change.sign === 'positive') {
     return '+';
@@ -130,12 +123,12 @@ const getTextSign = (res: SummaryDataResponse) => {
   return '';
 };
 
-const getColor = (res: SummaryDataResponse, version: 'text' | 'bg') => {
+const getColor = (res: SummaryDataResponse, isBg = false): string => {
   if (res.change.sign === 'positive') {
-    return `${version}-success-light`;
+    return isBg ? 'bg-success-light' : 'text-success-light';
   }
   if (res.change.sign === 'negative') {
-    return `${version}-destructive-light`;
+    return isBg ? 'bg-destructive-light' : 'text-destructive-light';
   }
-  return `${version}-neutral-light`;
+  return isBg ? 'bg-neutral-light' : 'text-neutral-light';
 };

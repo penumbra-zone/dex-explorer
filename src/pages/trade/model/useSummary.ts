@@ -2,11 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { usePathSymbols } from '@/pages/trade/model/use-path.ts';
 import { DurationWindow } from '@/shared/utils/duration.ts';
 import { SummaryDataResponse, SummaryResponse } from '@/shared/api/server/types.ts';
+import { useRefetchOnNewBlock } from '@/shared/api/compact-block.ts';
 
 export const useSummary = (window: DurationWindow) => {
   const { baseSymbol, quoteSymbol } = usePathSymbols();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['summary', baseSymbol, quoteSymbol],
     retry: 1,
     queryFn: async () => {
@@ -30,4 +31,8 @@ export const useSummary = (window: DurationWindow) => {
       return SummaryDataResponse.fromJson(jsonRes);
     },
   });
+
+  useRefetchOnNewBlock(query);
+
+  return query;
 };
