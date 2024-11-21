@@ -22,6 +22,8 @@ export const MarketOrderForm = observer(() => {
     exchangeRate,
   } = useOrderFormStore();
 
+  const isBuy = direction === Direction.Buy;
+
   return (
     <div className='p-4'>
       <SegmentedControl direction={direction} setDirection={setDirection} />
@@ -31,19 +33,19 @@ export const MarketOrderForm = observer(() => {
         onChange={baseAsset.setAmount as (amount: string, ...args: unknown[]) => void}
         min={0}
         max={1000}
-        isEstimating={baseAsset.isEstimating}
-        isApproximately={baseAsset.isApproximately}
+        isEstimating={isBuy ? baseAsset.isEstimating : false}
+        isApproximately={isBuy ? baseAsset.isApproximately : false}
         denominator={baseAsset.symbol}
       />
       <OrderInput
-        label={direction === Direction.Buy ? 'Pay with' : 'Receive'}
+        label={isBuy ? 'Pay with' : 'Receive'}
         value={quoteAsset.amount}
         onChange={quoteAsset.setAmount as (amount: string, ...args: unknown[]) => void}
-        isEstimating={quoteAsset.isEstimating}
-        isApproximately={quoteAsset.isApproximately}
+        isEstimating={isBuy ? false : quoteAsset.isEstimating}
+        isApproximately={isBuy ? false : quoteAsset.isApproximately}
         denominator={quoteAsset.symbol}
       />
-      <Slider steps={8} asset={quoteAsset} />
+      <Slider steps={8} asset={isBuy ? quoteAsset : baseAsset} />
       <div className='mb-4'>
         <InfoRow
           label='Trading Fee'
