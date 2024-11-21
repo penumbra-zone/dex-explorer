@@ -1,20 +1,23 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { XCircle } from 'lucide-react';
 import { Button } from '@penumbra-zone/ui/Button';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Density } from '@penumbra-zone/ui/Density';
-import mobile from 'is-mobile';
+import isMobile from 'is-mobile';
 
 export const PortfolioPage = () => {
-  const isOnMobile = mobile();
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  useEffect(() => {
+    setIsMobileDevice(isMobile());
+  }, []);
 
-  return isOnMobile ? (
-    <section className='absolute inset-0 flex flex-col items-center justify-between p-4 gap-3 border-t  border-neutral-800'>
+  return isMobileDevice ? (
+    <section className='absolute inset-0 h-screen flex flex-col items-center justify-between p-4 gap-3 border-t border-neutral-800'>
       <div className='flex flex-col justify-center items-center p-0 gap-4 w-full flex-grow'>
         <div className='relative'>
-          <XCircle className='text-neutral-400  w-8 h-8' />
+          <XCircle className='text-neutral-light w-8 h-8' />
         </div>
 
         <Text color={'text.secondary'} align={'center'} small={true}>
@@ -40,7 +43,7 @@ export const PortfolioPage = () => {
 
       {/* Go Back Button */}
       <Button>
-        <Text body>Go Back</span>
+        <Text body>Go Back</Text>
       </Button>
     </section>
   ) : (
