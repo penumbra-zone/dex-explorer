@@ -5,7 +5,7 @@ import { CompactBlockService, TendermintProxyService } from '@penumbra-zone/prot
 import { createPromiseClient, Transport } from '@connectrpc/connect';
 import { errorIsStreamAbort, useStream } from '@/shared/use-stream.ts';
 import { useCallback, useEffect } from 'react';
-import { queryClient } from '@/shared/const/queryClient.ts';
+import { getQueryClient } from '@/shared/const/queryClient.ts';
 import { useGrpcTransport } from '@/shared/api/transport.ts';
 
 const fetchLatestBlockHeight = async (transport: Transport) => {
@@ -30,7 +30,7 @@ const startBlockHeightStream = async (transport: Transport, signal: AbortSignal)
     )) {
       if (response.compactBlock?.height) {
         const newHeight = Number(response.compactBlock.height);
-        queryClient.setQueryData(LATEST_HEIGHT_QUERY_KEY, newHeight);
+        getQueryClient().setQueryData(LATEST_HEIGHT_QUERY_KEY, newHeight);
       }
     }
   } catch (error) {

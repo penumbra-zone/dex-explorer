@@ -1,8 +1,10 @@
+'use client';
+
 import { useAssets } from '@/shared/api/assets';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 
-interface PathParams {
+export interface PathParams {
   baseSymbol: string;
   quoteSymbol: string;
   [key: string]: string; // required for useParams signature
@@ -10,7 +12,7 @@ interface PathParams {
 
 export const usePathSymbols = () => {
   const params = useParams<PathParams>();
-  if (!params) {
+  if (!params?.baseSymbol || !params.quoteSymbol) {
     throw new Error('No symbol params in path');
   }
   return { baseSymbol: params.baseSymbol, quoteSymbol: params.quoteSymbol };

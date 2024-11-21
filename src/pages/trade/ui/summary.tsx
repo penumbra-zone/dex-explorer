@@ -1,10 +1,12 @@
+'use client';
+
 import { ReactNode } from 'react';
 import cn from 'clsx';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { Text } from '@penumbra-zone/ui/Text';
 import { AssetIcon } from '@penumbra-zone/ui/AssetIcon';
 import { Skeleton } from '@/shared/ui/skeleton';
-import { useSummary } from '../model/useSummary';
+import { useSummary } from '../model/use-summary';
 import { usePathToMetadata } from '../model/use-path';
 import { shortify } from '@/shared/utils/numbers/shortify';
 import { round } from '@/shared/utils/numbers/round';
