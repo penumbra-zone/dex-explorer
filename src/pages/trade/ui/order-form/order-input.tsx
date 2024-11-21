@@ -46,7 +46,7 @@ export const OrderInput = forwardRef<HTMLInputElement, OrderInputProps>(
 
     useEffect(() => {
       requestAnimationFrame(() => {
-        // useComponentSize doesnt update width correctly on updates
+        // useComponentSize doesnt set width correctly on updates
         setTextWidth(textRef.current?.offsetWidth ?? 0);
       });
     }, [value]);
@@ -97,7 +97,7 @@ export const OrderInput = forwardRef<HTMLInputElement, OrderInputProps>(
               ref={ref}
               id={id}
             />
-            {isApproximately && (
+            {isApproximately && value && (
               <>
                 <span className='absolute top-[27px] left-3 font-default text-textLg font-medium leading-textLg text-secondary-light'>
                   ≈

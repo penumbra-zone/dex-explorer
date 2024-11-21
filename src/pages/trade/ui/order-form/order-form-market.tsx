@@ -34,7 +34,7 @@ export const MarketOrderForm = observer(() => {
         min={0}
         max={1000}
         isEstimating={isBuy ? baseAsset.isEstimating : false}
-        isApproximately={isBuy ? baseAsset.isApproximately : false}
+        isApproximately={isBuy}
         denominator={baseAsset.symbol}
       />
       <OrderInput
@@ -42,7 +42,7 @@ export const MarketOrderForm = observer(() => {
         value={quoteAsset.amount}
         onChange={quoteAsset.setAmount as (amount: string, ...args: unknown[]) => void}
         isEstimating={isBuy ? false : quoteAsset.isEstimating}
-        isApproximately={isBuy ? false : quoteAsset.isApproximately}
+        isApproximately={!isBuy}
         denominator={quoteAsset.symbol}
       />
       <Slider steps={8} asset={isBuy ? quoteAsset : baseAsset} />

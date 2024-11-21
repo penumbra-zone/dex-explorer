@@ -54,7 +54,6 @@ export class OrderFormAsset {
   amount?: number;
   onAmountChangeCallback?: (asset: OrderFormAsset) => Promise<void>;
   isEstimating = false;
-  isApproximately = false;
 
   constructor(metadata?: Metadata) {
     makeAutoObservable(this);
@@ -95,16 +94,11 @@ export class OrderFormAsset {
 
   unsetAmount = (): void => {
     this.amount = undefined;
-    this.isApproximately = false;
     this.isEstimating = false;
   };
 
   setIsEstimating = (isEstimating: boolean): void => {
     this.isEstimating = isEstimating;
-  };
-
-  setIsApproximately = (isApproximately: boolean): void => {
-    this.isApproximately = isApproximately;
   };
 
   onAmountChange = (callback: (asset: OrderFormAsset) => Promise<void>): void => {
@@ -237,9 +231,6 @@ class OrderFormStore {
 
       assetOut.setIsEstimating(true);
 
-      // reset potentially previously set flag
-      assetIn.setIsApproximately(false);
-
       const output = await this.simulateSwapTx(assetIn, assetOut);
       if (!output) {
         return;
@@ -248,7 +239,6 @@ class OrderFormStore {
       const outputAmount = getFormattedAmtFromValueView(output, true);
 
       assetOut.setAmount(Number(outputAmount), false);
-      assetOut.setIsApproximately(true);
     } finally {
       assetOut.setIsEstimating(false);
     }
