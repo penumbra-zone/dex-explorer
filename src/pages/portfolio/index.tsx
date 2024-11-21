@@ -40,7 +40,7 @@ export const PortfolioPage = () => {
 
       {/* Go Back Button */}
       <Button>
-        <span className="text-sm font-medium text-white font-['Poppins']">Go Back</span>
+        <Text body>Go Back</span>
       </Button>
     </section>
   ) : (
