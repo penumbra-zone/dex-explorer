@@ -6,8 +6,16 @@ import { Button } from '@penumbra-zone/ui/Button';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Density } from '@penumbra-zone/ui/Density';
 
-export const PortfolioPage = (props: { isMobile: boolean }) => {
-  return props.isMobile ? (
+interface PortfolioPageProps {
+  isMobile: boolean;
+}
+
+export function PortfolioPage({ isMobile }: PortfolioPageProps): React.ReactNode {
+  return isMobile ? <MobilePortfolioPage /> : <DesktopPortfolioPage />;
+}
+
+function MobilePortfolioPage() {
+  return (
     <section className='absolute inset-0 h-screen flex flex-col items-center justify-between p-4 gap-3 border-t border-neutral-800'>
       <div className='flex flex-col justify-center items-center p-0 gap-4 w-full flex-grow'>
         <div className='relative'>
@@ -25,6 +33,7 @@ export const PortfolioPage = (props: { isMobile: boolean }) => {
               // We discard the promise using void,
               // because Button only expects void-returning functions.
               void (async () => {
+                /* Write the current url to clipboard */
                 const currentUrl = window.location.href;
                 await navigator.clipboard.writeText(currentUrl);
               })();
@@ -40,7 +49,9 @@ export const PortfolioPage = (props: { isMobile: boolean }) => {
         <Text body>Go Back</Text>
       </Button>
     </section>
-  ) : (
-    'Hi from desktop!'
   );
-};
+}
+
+function DesktopPortfolioPage() {
+  return 'Hi from desktop!';
+}
