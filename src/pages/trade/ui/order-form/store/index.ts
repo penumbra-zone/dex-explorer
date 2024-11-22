@@ -1,12 +1,21 @@
 import { makeAutoObservable } from 'mobx';
 import debounce from 'lodash/debounce';
+import times from 'lodash/times';
 import { SimulationService } from '@penumbra-zone/protobuf';
 import {
   BalancesResponse,
   TransactionPlannerRequest,
 } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
-import { Metadata, ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
-import { SimulateTradeRequest } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
+import {
+  AssetId,
+  Metadata,
+  ValueView,
+} from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import {
+  SimulateTradeRequest,
+  PositionState_PositionStateEnum,
+  PositionOpen,
+} from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { getAssetId } from '@penumbra-zone/getters/metadata';
 import { getSwapCommitmentFromTx } from '@penumbra-zone/getters/transaction';
 import { getAssetIdFromValueView } from '@penumbra-zone/getters/value-view';
@@ -25,13 +34,14 @@ export enum Direction {
   Sell = 'Sell',
 }
 
-export enum OrderType {
-  Swap = 'Swap',
-  Auction = 'Auction',
+export enum FormType {
+  Market = 'Market',
+  Limit = 'Limit',
+  RangeLiquidity = 'RangeLiquidity',
 }
 
 class OrderFormStore {
-  type: OrderType = OrderType.Swap;
+  type: FormType = FormType.Swap;
   direction: Direction = Direction.Buy;
   baseAsset = new OrderFormAsset();
   quoteAsset = new OrderFormAsset();
@@ -48,7 +58,7 @@ class OrderFormStore {
     void this.calculateExchangeRate();
   }
 
-  setType = (type: OrderType): void => {
+  setType = (type: FormType): void => {
     this.type = type;
   };
 
@@ -266,23 +276,82 @@ class OrderFormStore {
     }
   };
 
+  initiatePositionsTx = async (): Promise<void> => {
+    try {
+      this.isLoading = true;
+
+      const { lowerBound, upperBound, positions } = this.rangeLiquidity;
+      if (!this.quoteAsset.amount || !lowerBound || !upperBound || !positions) {
+        openToast({
+          type: 'error',
+          message: 'Please enter a valid range.',
+        });
+        return;
+      }
+
+      const quantity = this.quoteAsset.amount / positions;
+
+      const positionsReq = new TransactionPlannerRequest({
+        positionOpens: times(positions, (i): PositionOpen => {
+          const price = lowerBound + (i * (upperBound - lowerBound)) / (positions - 1);
+
+          return {
+            position: {
+              phi: {
+                component: { p: price, q: quantity },
+                pair: {
+                  asset1: this.baseAsset.assetId,
+                  asset2: this.quoteAsset.assetId,
+                },
+              },
+              nonce: crypto.getRandomValues(new Uint8Array(32)),
+              state: { state: PositionState_PositionStateEnum.OPENED },
+              reserves: { r1: { lo: 1n }, r2: {} },
+              closeOnFill: true,
+            },
+          };
+        }),
+        source: this.baseAsset.accountIndex,
+      });
+
+      const positionsTx = await planBuildBroadcast('positionOpen', positionsReq);
+      // const positionsCommitment = getSwapCommitmentFromTx(positionsTx);
+
+      // Issue swap claim
+      // const req = new TransactionPlannerRequest({
+      //   // swapClaims: [{ swapCommitment }],
+      //   source: assetIn.accountIndex,
+      // });
+      // await planBuildBroadcast('positionOpen', req, { skipAuth: true });
+
+      // assetIn.unsetAmount();
+      // assetOut.unsetAmount();
+    } finally {
+      this.isLoading = false;
+    }
+  };
+
   submitOrder = (): void => {
-    if (this.type === OrderType.Swap) {
+    if (this.type === FormType.Market) {
       void this.initiateSwapTx();
     }
 
-    if (this.type === OrderType.Auction) {
-      // @TODO: handle other order types
+    if (this.type === FormType.RangeLiquidity) {
+      void this.initiatePositionsTx();
     }
   };
 }
 
 export const orderFormStore = new OrderFormStore();
 
-export const useOrderFormStore = () => {
+export const useOrderFormStore = (type: FormType) => {
   const { baseAsset, quoteAsset } = usePathToMetadata();
   const { data: balances } = useBalances();
-  const { setAssets, setBalances } = orderFormStore;
+  const { setAssets, setBalances, setType } = orderFormStore;
+
+  useEffect(() => {
+    setType(type);
+  }, [type, setType]);
 
   useEffect(() => {
     if (baseAsset && quoteAsset) {

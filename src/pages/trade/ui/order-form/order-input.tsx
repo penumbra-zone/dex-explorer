@@ -52,7 +52,7 @@ export const OrderInput = forwardRef<HTMLInputElement, OrderInputProps>(
     }, [value]);
 
     return (
-      <div className='relative h-16 mb-4 bg-gradient-to-r from-other-tonalFill5 to-other-tonalFill10 rounded-sm'>
+      <div className='relative h-16 bg-gradient-to-r from-other-tonalFill5 to-other-tonalFill10 rounded-sm'>
         <label
           htmlFor={id}
           className='absolute top-2 left-3 z-[1] font-default text-textSm font-normal leading-textXs text-text-secondary'

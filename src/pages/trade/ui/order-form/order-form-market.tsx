@@ -7,7 +7,7 @@ import { SegmentedControl } from './segmented-control';
 import { ConnectButton } from '@/features/connect/connect-button';
 import { Slider } from './slider';
 import { InfoRow } from './info-row';
-import { useOrderFormStore, Direction } from './store';
+import { useOrderFormStore, FormType, Direction } from './store';
 
 export const MarketOrderForm = observer(() => {
   const { connected } = connectionStore;
@@ -20,31 +20,35 @@ export const MarketOrderForm = observer(() => {
     isLoading,
     gasFee,
     exchangeRate,
-  } = useOrderFormStore();
+  } = useOrderFormStore(FormType.Market);
 
   const isBuy = direction === Direction.Buy;
 
   return (
     <div className='p-4'>
       <SegmentedControl direction={direction} setDirection={setDirection} />
-      <OrderInput
-        label={direction}
-        value={baseAsset.amount}
-        onChange={baseAsset.setAmount as (amount: string, ...args: unknown[]) => void}
-        min={0}
-        max={1000}
-        isEstimating={isBuy ? baseAsset.isEstimating : false}
-        isApproximately={isBuy}
-        denominator={baseAsset.symbol}
-      />
-      <OrderInput
-        label={isBuy ? 'Pay with' : 'Receive'}
-        value={quoteAsset.amount}
-        onChange={quoteAsset.setAmount as (amount: string, ...args: unknown[]) => void}
-        isEstimating={isBuy ? false : quoteAsset.isEstimating}
-        isApproximately={!isBuy}
-        denominator={quoteAsset.symbol}
-      />
+      <div className='mb-4'>
+        <OrderInput
+          label={direction}
+          value={baseAsset.amount}
+          onChange={baseAsset.setAmount as (amount: string, ...args: unknown[]) => void}
+          min={0}
+          max={1000}
+          isEstimating={isBuy ? baseAsset.isEstimating : false}
+          isApproximately={isBuy}
+          denominator={baseAsset.symbol}
+        />
+      </div>
+      <div className='mb-4'>
+        <OrderInput
+          label={isBuy ? 'Pay with' : 'Receive'}
+          value={quoteAsset.amount}
+          onChange={quoteAsset.setAmount as (amount: string, ...args: unknown[]) => void}
+          isEstimating={isBuy ? false : quoteAsset.isEstimating}
+          isApproximately={!isBuy}
+          denominator={quoteAsset.symbol}
+        />
+      </div>
       <Slider steps={8} asset={isBuy ? quoteAsset : baseAsset} />
       <div className='mb-4'>
         <InfoRow

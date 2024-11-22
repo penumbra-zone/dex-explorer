@@ -1,86 +1,123 @@
 import { observer } from 'mobx-react-lite';
+import { useEffect } from 'react';
 import { Button } from '@penumbra-zone/ui/Button';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Slider as PenumbraSlider } from '@penumbra-zone/ui/Slider';
 import { connectionStore } from '@/shared/model/connection';
-import { OrderInput } from './order-input';
 import { ConnectButton } from '@/features/connect/connect-button';
+import { useSummary } from '../../model/useSummary';
+import { OrderInput } from './order-input';
 import { SelectGroup } from './select-group';
 import { InfoRow } from './info-row';
-import { useOrderFormStore } from './store';
+import { useOrderFormStore, FormType } from './store';
+import { UpperBoundOptions, LowerBoundOptions, FeeTierOptions } from './store/range-liquidity';
 
 export const RangeLiquidityOrderForm = observer(() => {
   const { connected } = connectionStore;
   const { baseAsset, quoteAsset, rangeLiquidity, submitOrder, isLoading, gasFee, exchangeRate } =
-    useOrderFormStore();
+    useOrderFormStore(FormType.RangeLiquidity);
+  // const { data } = useSummary('1d');
+  const data = { price: 1.17 };
+
+  useEffect(() => {
+    if (data?.price) {
+      rangeLiquidity.setMarketPrice(data.price);
+    }
+  }, [data?.price, rangeLiquidity]);
+
+  useEffect(() => {
+    if (quoteAsset.exponent) {
+      rangeLiquidity.setExponent(quoteAsset.exponent);
+    }
+  }, [quoteAsset.exponent, rangeLiquidity]);
 
   return (
     <div className='p-4'>
       <div className='mb-4'>
-        <OrderInput
-          label='Liquidity Amount'
-          value={quoteAsset.amount}
-          onChange={quoteAsset.setAmount as (amount: string, ...args: unknown[]) => void}
-          denominator={quoteAsset.symbol}
-        />
+        <div className='mb-1'>
+          <OrderInput
+            label='Liquidity Amount'
+            value={quoteAsset.amount}
+            onChange={quoteAsset.setAmount as (amount: string, ...args: unknown[]) => void}
+            denominator={quoteAsset.symbol}
+          />
+        </div>
         <div className='flex flex-row items-center justify-between py-1'>
           <Text small color='text.secondary'>
             Available Balance
           </Text>
-          <Text small color='text.primary'>
-            {quoteAsset.balance} {quoteAsset.symbol}
-          </Text>
+          <button
+            type='button'
+            className='text-primary'
+            onClick={connected ? () => quoteAsset.setAmount(quoteAsset.balance ?? 0) : undefined}
+          >
+            <Text small color='text.primary'>
+              {quoteAsset.balance} {quoteAsset.symbol}
+            </Text>
+          </button>
         </div>
       </div>
-      <OrderInput
-        label='Upper bound'
-        value={rangeLiquidity.upperBound}
-        onChange={rangeLiquidity.setUpperBound}
-        denominator={quoteAsset.symbol}
-      />
-      <SelectGroup
-        value={rangeLiquidity.upperBound}
-        options={['Market', '+2%', '+5%', '+10%', '+15%']}
-        onChange={rangeLiquidity.setUpperBound}
-      />
-      <OrderInput
-        label='Lower bound'
-        value={rangeLiquidity.lowerBound}
-        onChange={rangeLiquidity.setLowerBound}
-        denominator={quoteAsset.symbol}
-      />
-      <SelectGroup
-        value={rangeLiquidity.lowerBound}
-        options={['Market', '-2%', '-5%', '-10%', '-15%']}
-        onChange={rangeLiquidity.setLowerBound}
-      />
-      <OrderInput
-        label='Fee tier'
-        value={rangeLiquidity.feeTier}
-        onChange={rangeLiquidity.setFeeTier}
-        denominator='%'
-      />
-      <SelectGroup
-        value={rangeLiquidity.feeTier}
-        options={['0.1%', '0.25%', '0.5%', '1.00%']}
-        onChange={rangeLiquidity.setFeeTier}
-      />
-      <OrderInput
-        label='Number of positions'
-        value={rangeLiquidity.positions}
-        onChange={rangeLiquidity.setPositions}
-      />
-      <PenumbraSlider
-        min={2}
-        max={20}
-        step={2}
-        defaultValue={rangeLiquidity.positions}
-        showValue={false}
-        onChange={rangeLiquidity.setPositions}
-        showTrackGaps={true}
-        trackGapBackground='base.black'
-        showFill={true}
-      />
+      <div className='mb-4'>
+        <div className='mb-2'>
+          <OrderInput
+            label='Upper bound'
+            value={rangeLiquidity.upperBound}
+            onChange={rangeLiquidity.setUpperBound}
+            denominator={quoteAsset.symbol}
+          />
+        </div>
+        <SelectGroup
+          options={Object.values(UpperBoundOptions)}
+          onChange={rangeLiquidity.setUpperBoundOption}
+        />
+      </div>
+      <div className='mb-4'>
+        <div className='mb-2'>
+          <OrderInput
+            label='Lower bound'
+            value={rangeLiquidity.lowerBound}
+            onChange={rangeLiquidity.setLowerBound}
+            denominator={quoteAsset.symbol}
+          />
+        </div>
+        <SelectGroup
+          options={Object.values(LowerBoundOptions)}
+          onChange={rangeLiquidity.setLowerBoundOption}
+        />
+      </div>
+      <div className='mb-4'>
+        <div className='mb-2'>
+          <OrderInput
+            label='Fee tier'
+            value={rangeLiquidity.feeTier}
+            onChange={rangeLiquidity.setFeeTier}
+            denominator='%'
+          />
+        </div>
+        <SelectGroup
+          value={rangeLiquidity.feeTier}
+          options={Object.values(FeeTierOptions)}
+          onChange={rangeLiquidity.setFeeTierOption}
+        />
+      </div>
+      <div className='mb-4'>
+        <OrderInput
+          label='Number of positions'
+          value={rangeLiquidity.positions}
+          onChange={rangeLiquidity.setPositions}
+        />
+        <PenumbraSlider
+          min={5}
+          max={15}
+          step={1}
+          defaultValue={rangeLiquidity.positions}
+          showValue={false}
+          onChange={rangeLiquidity.setPositions}
+          showTrackGaps={true}
+          trackGapBackground='base.black'
+          showFill={true}
+        />
+      </div>
       <div className='mb-4'>
         <InfoRow label='Number of positions' value={rangeLiquidity.positions} toolTip='' />
         <InfoRow label='Base asset amount' value={baseAsset.amount} toolTip='' />
