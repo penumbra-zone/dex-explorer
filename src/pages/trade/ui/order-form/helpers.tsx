@@ -131,6 +131,7 @@ export const planBuildBroadcast = async (
 
     return transaction;
   } catch (e) {
+    console.error(e);
     if (userDeniedTransaction(e)) {
       toast.update({
         type: 'error',

@@ -13,7 +13,7 @@ import {
   PositionOpen,
   Reserves,
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
-import { splitLoHi } from '@penumbra-zone/types/lo-hi';
+import { joinLoHi, LoHi, splitLoHi, toBaseUnit } from '@penumbra-zone/types/lo-hi';
 import { getAssetId } from '@penumbra-zone/getters/metadata';
 import { getSwapCommitmentFromTx } from '@penumbra-zone/getters/transaction';
 import { getAssetIdFromValueView } from '@penumbra-zone/getters/value-view';
@@ -26,6 +26,7 @@ import { useBalances } from '@/shared/api/balances';
 import { usePathToMetadata } from '../../../model/use-path';
 import { OrderFormAsset } from './asset';
 import { RangeLiquidity } from './range-liquidity';
+import BigNumber from 'bignumber.js';
 
 export enum Direction {
   Buy = 'Buy',
@@ -295,14 +296,24 @@ class OrderFormStore {
         return;
       }
 
-      const positionAmount = BigInt(this.quoteAsset.amount / positions);
       const baseAssetUnitAmount = this.baseAsset.toUnitAmount();
+      const positionUnitAmount = baseAssetUnitAmount / BigInt(positions);
       const quoteAssetUnitAmount = this.quoteAsset.toUnitAmount();
+
+      const toBaseUnit2 = (value: BigNumber, exponent = 0): LoHi => {
+        const multipliedValue = value.multipliedBy(new BigNumber(10).pow(exponent));
+        const bigInt = BigInt(multipliedValue.toFixed(0));
+
+        return splitLoHi(bigInt);
+      };
 
       const positionsReq = new TransactionPlannerRequest({
         positionOpens: times(positions, (i): PositionOpen => {
-          const price = BigInt(lowerBound + (i * (upperBound - lowerBound)) / (positions - 1));
+          const price = lowerBound + (i * (upperBound - lowerBound)) / (positions - 1);
+          const priceLoHi = toBaseUnit2(BigNumber(price), this.quoteAsset.exponent);
+          const priceUnit = joinLoHi(priceLoHi.hi, priceLoHi.lo);
 
+          // Cross-multiply exponents and prices for trading function coefficients
           // Cross-multiply exponents and prices for trading function coefficients
           //
           // We want to write
@@ -312,7 +323,7 @@ class OrderFormStore {
           // To handle this, conditionally apply a scaling factor if the EndUnit amount is too small.
           const scale = BigInt(quoteAssetUnitAmount < 1_000_000 ? 1_000_000 : 1);
 
-          const p = splitLoHi(quoteAssetUnitAmount * scale * price);
+          const p = splitLoHi(quoteAssetUnitAmount * scale * priceUnit);
           const q = splitLoHi(baseAssetUnitAmount * scale);
 
           // Compute reserves
@@ -322,12 +333,12 @@ class OrderFormStore {
                 // so the position isn't immediately arbitraged.
                 {
                   r1: { lo: 0n },
-                  r2: splitLoHi(positionAmount),
+                  r2: splitLoHi(positionUnitAmount),
                 }
               : // If the position's price is _greater_ than the current price, fund it with
                 // an equivalent amount of asset 1 as the target per-position amount of asset 2.
                 {
-                  r1: splitLoHi(positionAmount / price),
+                  r1: splitLoHi(positionUnitAmount / priceUnit),
                   r2: { lo: 0n },
                 };
 
@@ -348,13 +359,13 @@ class OrderFormStore {
           };
         }),
         source: this.baseAsset.accountIndex,
-        feeMode: {
-          case: 'manualFee',
-          value: {
-            amount: splitLoHi(BigInt(feeTier)),
-            assetId: this.baseAsset.assetId,
-          },
-        },
+        // feeMode: {
+        //   case: 'manualFee',
+        //   value: {
+        //     amount: splitLoHi(BigInt(feeTier * 100)),
+        //     assetId: this.baseAsset.assetId,
+        //   },
+        // },
       });
 
       const positionsTx = await planBuildBroadcast('positionOpen', positionsReq);
