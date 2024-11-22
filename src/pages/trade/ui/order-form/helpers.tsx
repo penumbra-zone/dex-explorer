@@ -46,7 +46,6 @@ const getBroadcastStatusMessage = (label: string, status?: BroadcastStatus) => {
 const getBuildStatusDescription = (
   status?: Exclude<BuildStatus, undefined>,
 ): ReactNode | undefined => {
-  console.log('TCL: status', status);
   if (status?.case === 'buildProgress') {
     return (
       <div className='mt-2'>

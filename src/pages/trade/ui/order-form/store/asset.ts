@@ -10,7 +10,7 @@ import {
 import { getAssetId, getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { getAddressIndex, getAddress } from '@penumbra-zone/getters/address-view';
 import { getFormattedAmtFromValueView } from '@penumbra-zone/types/value-view';
-import { LoHi, toBaseUnit } from '@penumbra-zone/types/lo-hi';
+import { joinLoHi, LoHi, toBaseUnit } from '@penumbra-zone/types/lo-hi';
 import {
   AddressView,
   Address,
@@ -82,6 +82,11 @@ export class OrderFormAsset {
 
   toAmount = (): LoHi => {
     return toBaseUnit(BigNumber(this.amount ?? 0), this.exponent);
+  };
+
+  toUnitAmount = (): bigint => {
+    const amount = this.toAmount();
+    return joinLoHi(amount.hi, amount.lo);
   };
 
   toValue = (): Value => {

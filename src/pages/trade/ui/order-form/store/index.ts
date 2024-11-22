@@ -6,16 +6,14 @@ import {
   BalancesResponse,
   TransactionPlannerRequest,
 } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
-import {
-  AssetId,
-  Metadata,
-  ValueView,
-} from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { Metadata, ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import {
   SimulateTradeRequest,
   PositionState_PositionStateEnum,
   PositionOpen,
+  Reserves,
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
+import { splitLoHi } from '@penumbra-zone/types/lo-hi';
 import { getAssetId } from '@penumbra-zone/getters/metadata';
 import { getSwapCommitmentFromTx } from '@penumbra-zone/getters/transaction';
 import { getAssetIdFromValueView } from '@penumbra-zone/getters/value-view';
@@ -41,7 +39,7 @@ export enum FormType {
 }
 
 class OrderFormStore {
-  type: FormType = FormType.Swap;
+  type: FormType = FormType.Market;
   direction: Direction = Direction.Buy;
   baseAsset = new OrderFormAsset();
   quoteAsset = new OrderFormAsset();
@@ -204,7 +202,7 @@ class OrderFormStore {
         {
           targetAsset: assetOut.assetId,
           value: {
-            amount: assetIn.toAmount(),
+            amount: assetIn.toLoHi(),
             assetId: assetIn.assetId,
           },
           claimAddress: assetIn.accountAddress,
@@ -250,7 +248,7 @@ class OrderFormStore {
           {
             targetAsset: assetOut.assetId,
             value: {
-              amount: assetIn.toAmount(),
+              amount: assetIn.toLoHi(),
               assetId: assetIn.assetId,
             },
             claimAddress: assetIn.accountAddress,
@@ -276,12 +274,20 @@ class OrderFormStore {
     }
   };
 
+  // ref: https://github.com/penumbra-zone/penumbra/blob/main/crates/bin/pcli/src/command/tx/replicate/linear.rs
   initiatePositionsTx = async (): Promise<void> => {
     try {
       this.isLoading = true;
 
-      const { lowerBound, upperBound, positions } = this.rangeLiquidity;
-      if (!this.quoteAsset.amount || !lowerBound || !upperBound || !positions) {
+      const { lowerBound, upperBound, positions, marketPrice, feeTier } = this.rangeLiquidity;
+      if (
+        !this.quoteAsset.amount ||
+        !lowerBound ||
+        !upperBound ||
+        !positions ||
+        !marketPrice ||
+        !feeTier
+      ) {
         openToast({
           type: 'error',
           message: 'Please enter a valid range.',
@@ -289,16 +295,46 @@ class OrderFormStore {
         return;
       }
 
-      const quantity = this.quoteAsset.amount / positions;
+      const positionAmount = BigInt(this.quoteAsset.amount / positions);
+      const baseAssetUnitAmount = this.baseAsset.toUnitAmount();
+      const quoteAssetUnitAmount = this.quoteAsset.toUnitAmount();
 
       const positionsReq = new TransactionPlannerRequest({
         positionOpens: times(positions, (i): PositionOpen => {
-          const price = lowerBound + (i * (upperBound - lowerBound)) / (positions - 1);
+          const price = BigInt(lowerBound + (i * (upperBound - lowerBound)) / (positions - 1));
+
+          // Cross-multiply exponents and prices for trading function coefficients
+          //
+          // We want to write
+          // p = EndUnit * price
+          // q = StartUnit
+          // However, if EndUnit is too small, it might not round correctly after multiplying by price
+          // To handle this, conditionally apply a scaling factor if the EndUnit amount is too small.
+          const scale = BigInt(quoteAssetUnitAmount < 1_000_000 ? 1_000_000 : 1);
+
+          const p = splitLoHi(quoteAssetUnitAmount * scale * price);
+          const q = splitLoHi(baseAssetUnitAmount * scale);
+
+          // Compute reserves
+          const reserves: Reserves =
+            price < marketPrice
+              ? // If the position's price is _less_ than the current price, fund it with asset 2
+                // so the position isn't immediately arbitraged.
+                {
+                  r1: { lo: 0n },
+                  r2: splitLoHi(positionAmount),
+                }
+              : // If the position's price is _greater_ than the current price, fund it with
+                // an equivalent amount of asset 1 as the target per-position amount of asset 2.
+                {
+                  r1: splitLoHi(positionAmount / price),
+                  r2: { lo: 0n },
+                };
 
           return {
             position: {
               phi: {
-                component: { p: price, q: quantity },
+                component: { p, q },
                 pair: {
                   asset1: this.baseAsset.assetId,
                   asset2: this.quoteAsset.assetId,
@@ -306,15 +342,23 @@ class OrderFormStore {
               },
               nonce: crypto.getRandomValues(new Uint8Array(32)),
               state: { state: PositionState_PositionStateEnum.OPENED },
-              reserves: { r1: { lo: 1n }, r2: {} },
+              reserves,
               closeOnFill: true,
             },
           };
         }),
         source: this.baseAsset.accountIndex,
+        feeMode: {
+          case: 'manualFee',
+          value: {
+            amount: splitLoHi(BigInt(feeTier)),
+            assetId: this.baseAsset.assetId,
+          },
+        },
       });
 
       const positionsTx = await planBuildBroadcast('positionOpen', positionsReq);
+      console.log('TCL: OrderFormStore -> positionsTx', positionsTx);
       // const positionsCommitment = getSwapCommitmentFromTx(positionsTx);
 
       // Issue swap claim
