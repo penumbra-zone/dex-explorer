@@ -182,7 +182,7 @@ export const Chart = observer(() => {
 
       {error && <div className='text-white'>Error loading pair selector: ${String(error)}</div>}
 
-      <div className='grow w-full h-full max-h-full min-w-[328px] pt-2 pl-4 pb-4 self-center flex items-center'>
+      <div className='grow w-full h-full max-h-full pt-2 pl-4 pb-4 self-center flex items-center'>
         {isLoading && <ChartLoadingState />}
         {data && <ChartData candles={data} />}
       </div>
