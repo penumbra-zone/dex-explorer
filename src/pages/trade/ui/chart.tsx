@@ -9,7 +9,7 @@ import { DurationWindow, durationWindows } from '@/shared/utils/duration.ts';
 
 export const ChartLoadingState = () => {
   return (
-    <svg overflow={'visible'} width="100%" height="100%" viewBox="0 0 328 164" preserveAspectRatio="xMidYMid meet" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg overflow={'visible'} className='max-h-[400px]' width="100%" height="100%" viewBox="0 0 328 164" preserveAspectRatio="xMidYMid meet" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="chart-gradient" x1="0" y1="0.5" x2="1" y2="0.5" gradientUnits="objectBoundingBox">
           <stop offset="0%" stopColor="#FAFAFA" stopOpacity="0.05">
@@ -97,7 +97,7 @@ const ChartData = observer(({ candles }: { candles: OhlcData[] }) => {
     }
   }, [chartRef, candles]);
 
-  return <div className='h-full' ref={chartElRef} />;
+  return <div className='h-full w-full' ref={chartElRef} />;
 });
 
 export const Chart = observer(() => {
@@ -124,9 +124,9 @@ export const Chart = observer(() => {
 
       {error && <div className='text-white'>Error loading pair selector: ${String(error)}</div>}
 
-      <div className='grow w-full h-full max-h-full min-w-[328px] pt-2 pl-4 pb-4'>
-        {!isLoading && <ChartLoadingState />}
-        {/* {data && <ChartData candles={data} />} */}
+      <div className='grow w-full h-full max-h-full min-w-[328px] pt-2 pl-4 pb-4 self-center flex items-center'>
+        {isLoading && <ChartLoadingState />}
+        {data && <ChartData candles={data} />}
       </div>
     </div>
   );
