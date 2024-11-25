@@ -111,31 +111,31 @@ export const PairCard = ({ loading }: PairCardProps) => {
       <div className='h-10 flex items-center justify-end gap-2'>
         {loading ? (
           <>
-            <div className="w-10 h-4 bg-shimmer rounded-xs"/>
-            <SparklineChart className="w-14 h-8"/>
+            <div className='w-10 h-4 bg-shimmer rounded-xs' />
+            <SparklineChart className='w-14 h-8' />
           </>
         ) : (
           <>
-          {change >= 0 ? (
-            <div className="flex items-center text-success-light">
-              <ChevronDown className="size-3 rotate-180 inline-block"/>
-              <Text>{change}%</Text>
-            </div>
-          ) : (
-            <div className="flex items-center text-destructive-light">
-              <ChevronDown className="size-3 inline-block "/>
-              <Text>{Math.abs(change)}%</Text>
-            </div>
+            {change >= 0 ? (
+              <div className='flex items-center text-success-light'>
+                <ChevronDown className='size-3 rotate-180 inline-block' />
+                <Text>{change}%</Text>
+              </div>
+            ) : (
+              <div className='flex items-center text-destructive-light'>
+                <ChevronDown className='size-3 inline-block ' />
+                <Text>{Math.abs(change)}%</Text>
+              </div>
+            )}
+
+            <ShortChart change={change} />
+          </>
         )}
+      </div>
 
-        <ShortChart change={change}/>
-      </>
-      )}
-    </div>
-
-  <div className="h-10 flex flex-col items-end justify-center">
-    <Density compact>
-      <Button icon={CandlestickChart} iconOnly>
+      <div className='h-10 flex flex-col items-end justify-center'>
+        <Density compact>
+          <Button icon={CandlestickChart} iconOnly>
             Actions
           </Button>
         </Density>

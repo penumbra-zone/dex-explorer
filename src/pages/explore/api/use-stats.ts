@@ -1,6 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
-import { StatsResponse, StatsData } from '@/shared/api/server/stats';
+import type { StatsResponse, StatsData, StatsJSONData } from '@/shared/api/server/stats';
 import { DurationWindow } from '@/shared/utils/duration';
+import { ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+
+const deserializeStats = (json: StatsJSONData): StatsData => {
+  return {
+    ...json,
+    largestPairLiquidity: json.largestPairLiquidity
+      ? ValueView.fromJson(json.largestPairLiquidity)
+      : undefined,
+    liquidity: ValueView.fromJson(json.liquidity),
+    directVolume: ValueView.fromJson(json.directVolume),
+  };
+};
 
 export const useStats = () => {
   return useQuery<StatsData>({
@@ -16,7 +28,8 @@ export const useStats = () => {
       if ('error' in jsonRes) {
         throw new Error(jsonRes.error);
       }
-      return jsonRes;
+
+      return deserializeStats(jsonRes);
     },
   });
 };
