@@ -48,7 +48,7 @@ export interface PairCardProps {
 }
 
 export const PairCard = ({ loading }: PairCardProps) => {
-  const change = -5.35;
+  const change = Number(-5.35);
 
   return (
     <div className='grid grid-cols-subgrid col-span-6 p-3 rounded-sm cursor-pointer transition-colors hover:bg-action-hoverOverlay'>
