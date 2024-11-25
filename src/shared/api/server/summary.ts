@@ -62,7 +62,6 @@ export async function GET(req: NextRequest): Promise<NextResponse<SummaryRespons
 
   const priceDiff = summary.price - summary.price_then;
   const change = {
-    value: calculateDisplayPrice(priceDiff, baseAssetMetadata, quoteAssetMetadata),
     sign: priceDiffLabel(priceDiff),
     percent:
       summary.price === 0

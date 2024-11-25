@@ -1,5 +1,4 @@
 import { ReactNode } from 'react';
-import cn from 'clsx';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Skeleton } from '@/shared/ui/skeleton';
@@ -64,23 +63,15 @@ export const Summary = () => {
         </Text>
       </SummaryCard>
       <SummaryCard title='24h Change' loading={isLoading}>
-        {data && 'noData' in data && (
+        {data && 'change' in data ? (
+          <Text detail color={getColor(data)}>
+            {getTextSign(data)}
+            {data.change.percent}%
+          </Text>
+        ) : (
           <Text detail color='text.primary'>
             -
           </Text>
-        )}
-        {data && 'change' in data && (
-          <div className={cn('flex items-center gap-1', getColor(data, false))}>
-            <Text detail>{round({ value: data.change.value, decimals: 6 })}</Text>
-            <span
-              className={cn('flex h-4 px-1 rounded-full text-success-dark', getColor(data, true))}
-            >
-              <Text detail>
-                {getTextSign(data)}
-                {data.change.percent}%
-              </Text>
-            </span>
-          </div>
         )}
       </SummaryCard>
       <SummaryCard title='24h High' loading={isLoading}>
@@ -123,12 +114,12 @@ const getTextSign = (res: SummaryDataResponse) => {
   return '';
 };
 
-const getColor = (res: SummaryDataResponse, isBg = false): string => {
+const getColor = (res: SummaryDataResponse) => {
   if (res.change.sign === 'positive') {
-    return isBg ? 'bg-success-light' : 'text-success-light';
+    return 'success.light';
   }
   if (res.change.sign === 'negative') {
-    return isBg ? 'bg-destructive-light' : 'text-destructive-light';
+    return 'destructive.light';
   }
-  return isBg ? 'bg-neutral-light' : 'text-neutral-light';
+  return 'neutral.light';
 };

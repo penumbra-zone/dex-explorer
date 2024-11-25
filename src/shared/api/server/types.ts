@@ -4,7 +4,6 @@ import type { JsonValue } from '@bufbuild/protobuf';
 
 export interface ChangeData {
   sign: 'positive' | 'negative' | 'neutral';
-  value: number;
   percent: string;
 }
 
