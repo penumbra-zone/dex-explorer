@@ -1,6 +1,6 @@
-import { OhlcData, UTCTimestamp } from 'lightweight-charts';
+import { OhlcData } from 'lightweight-charts';
 
-export type CandleApiResponse = OhlcData<UTCTimestamp>[] | { error: string };
+export type CandleApiResponse = OhlcData[] | { error: string };
 
 export interface DbCandle {
   close: number;
