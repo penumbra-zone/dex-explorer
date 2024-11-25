@@ -16,10 +16,10 @@ export interface StatsData {
 
 export type StatsResponse = StatsData | { error: string };
 
+const STATS_DURATION_WINDOW: DurationWindow = '1d';
+
 export const getStats = async (): Promise<StatsResponse> => {
   try {
-    const durationWindow: DurationWindow = '1d';
-
     const chainId = process.env['PENUMBRA_CHAIN_ID'];
     if (!chainId) {
       return { error: 'PENUMBRA_CHAIN_ID is not set' };
@@ -29,7 +29,7 @@ export const getStats = async (): Promise<StatsResponse> => {
 
     const [registry, results] = await Promise.all([
       registryClient.remote.get(chainId),
-      pindexer.stats(durationWindow),
+      pindexer.stats(STATS_DURATION_WINDOW),
     ]);
 
     const stats = results[0];
