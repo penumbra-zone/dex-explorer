@@ -1,49 +1,45 @@
 import { round } from '@penumbra-zone/types/round';
 import { Text } from '@penumbra-zone/ui/Text';
 import { InfoCard } from './info-card';
-import { useStats } from '../api/use-stats';
 import { pluralizeAndShortify } from '@/shared/utils/pluralize';
 import { shortify } from '@penumbra-zone/types/shortify';
 import { getFormattedAmtFromValueView } from '@penumbra-zone/types/value-view';
+import { getStats } from '../api/get-stats';
 
-export const ExploreStats = () => {
-  const { data, isLoading, error } = useStats();
+export const ExploreStats = async () => {
+  const stats = await getStats();
 
-  if (error) {
+  if ('error' in stats) {
     return (
       <Text large color='destructive.light'>
-        {error.name}: {error.message}
+        {stats.error}
       </Text>
     );
   }
 
   return (
     <div className='grid grid-cols-1 desktop:grid-cols-3 gap-2'>
-      <InfoCard loading={isLoading} title='Total Trading Volume (24h)'>
+      <InfoCard title='Total Trading Volume (24h)'>
         <Text large color='text.primary'>
-          {data && (
-            <Text large color='text.primary'>
-              {shortify(Number(getFormattedAmtFromValueView(data.directVolume)))}
-            </Text>
-          )}
+          <Text large color='text.primary'>
+            {shortify(Number(getFormattedAmtFromValueView(stats.directVolume)))}
+          </Text>
         </Text>
       </InfoCard>
-      <InfoCard loading={isLoading} title='Number of Trades (24h)'>
-        {data && (
-          <Text large color='text.primary'>
-            {pluralizeAndShortify(data.trades, 'trade', 'trades')}
-          </Text>
-        )}
+      <InfoCard title='Number of Trades (24h)'>
+        <Text large color='text.primary'>
+          {pluralizeAndShortify(stats.trades, 'trade', 'trades')}
+        </Text>
       </InfoCard>
-      <InfoCard loading={isLoading} title='Largest Trading Pair (24h volume)'>
-        {data?.largestPair ? (
+      <InfoCard title='Largest Trading Pair (24h volume)'>
+        {stats.largestPair ? (
           <>
             <Text large color='text.primary'>
-              {data.largestPair.start}/{data.largestPair.end}
+              {stats.largestPair.start}/{stats.largestPair.end}
             </Text>
-            {data.largestPairLiquidity && (
+            {stats.largestPairLiquidity && (
               <Text large color='success.light'>
-                {shortify(Number(getFormattedAmtFromValueView(data.largestPairLiquidity)))}
+                {shortify(Number(getFormattedAmtFromValueView(stats.largestPairLiquidity)))}
               </Text>
             )}
           </>
@@ -53,29 +49,25 @@ export const ExploreStats = () => {
           </Text>
         )}
       </InfoCard>
-      <InfoCard loading={isLoading} title='Total Liquidity Available'>
-        {data && (
-          <Text large color='text.primary'>
-            {shortify(Number(getFormattedAmtFromValueView(data.liquidity)))}
-          </Text>
-        )}
+      <InfoCard title='Total Liquidity Available'>
+        <Text large color='text.primary'>
+          {shortify(Number(getFormattedAmtFromValueView(stats.liquidity)))}
+        </Text>
       </InfoCard>
-      <InfoCard loading={isLoading} title='Number of Active Pairs'>
-        {data && (
-          <Text large color='text.primary'>
-            {pluralizeAndShortify(data.activePairs, 'pair', 'pairs')}
-          </Text>
-        )}
+      <InfoCard title='Number of Active Pairs'>
+        <Text large color='text.primary'>
+          {pluralizeAndShortify(stats.activePairs, 'pair', 'pairs')}
+        </Text>
       </InfoCard>
-      <InfoCard loading={isLoading} title='Top Price Mover (24h)'>
-        {data?.topPriceMover ? (
+      <InfoCard title='Top Price Mover (24h)'>
+        {stats.topPriceMover ? (
           <>
             <Text large color='text.primary'>
-              {data.topPriceMover.start}/{data.topPriceMover.end}
+              {stats.topPriceMover.start}/{stats.topPriceMover.end}
             </Text>
-            <Text large color={data.topPriceMover.percent ? 'success.light' : 'destructive.light'}>
-              {data.topPriceMover.percent && '+'}
-              {round({ value: data.topPriceMover.percent, decimals: 1 })}%
+            <Text large color={stats.topPriceMover.percent ? 'success.light' : 'destructive.light'}>
+              {stats.topPriceMover.percent && '+'}
+              {round({ value: stats.topPriceMover.percent, decimals: 1 })}%
             </Text>
           </>
         ) : (
