@@ -16,8 +16,7 @@ export const RangeLiquidityOrderForm = observer(() => {
   const { connected } = connectionStore;
   const { baseAsset, quoteAsset, rangeLiquidity, submitOrder, isLoading, gasFee, exchangeRate } =
     useOrderFormStore(FormType.RangeLiquidity);
-  // const { data } = useSummary('1d');
-  const data = { price: 1.17 };
+  const { data } = useSummary('1d');
 
   useEffect(() => {
     if (data?.price) {
