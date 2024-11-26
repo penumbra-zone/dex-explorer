@@ -31,7 +31,7 @@ export const FormTabs = () => {
         </Density>
       </div>
 
-      {tab === FormTabsType.Market && <OrderForm />}
+      {/*{tab === FormTabsType.Market && <OrderForm />}*/}
       {tab === FormTabsType.Limit && (
         <div className='h-[380px] p-4 text-text-secondary'>Limit order form</div>
       )}
