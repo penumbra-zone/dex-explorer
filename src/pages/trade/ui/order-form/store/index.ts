@@ -24,6 +24,7 @@ import { plan, planBuildBroadcast } from '../helpers';
 import { openToast } from '@penumbra-zone/ui/Toast';
 import { useEffect } from 'react';
 import { useBalances } from '@/shared/api/balances';
+import { round } from '@/shared/utils/numbers/round';
 import { usePathToMetadata } from '../../../model/use-path';
 import { OrderFormAsset } from './asset';
 import { RangeLiquidity } from './range-liquidity';
@@ -332,7 +333,7 @@ class OrderFormStore {
                   r2: new Amount(splitLoHi(positionUnitAmount)),
                 }
               : {
-                  r1: new Amount(splitLoHi(positionUnitAmount / priceUnit)),
+                  r1: new Amount(splitLoHi(BigInt(round(Number(positionUnitAmount) / price, 0)))),
                   r2: new Amount(splitLoHi(0n)),
                 };
 
