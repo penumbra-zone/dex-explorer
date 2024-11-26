@@ -86,7 +86,7 @@ export class OrderFormAsset {
 
   toUnitAmount = (): bigint => {
     const amount = this.toAmount();
-    return joinLoHi(amount.hi, amount.lo);
+    return joinLoHi(amount.lo, amount.hi);
   };
 
   toValue = (): Value => {

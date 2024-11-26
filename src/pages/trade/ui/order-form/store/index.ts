@@ -14,7 +14,7 @@ import {
   Position,
   PositionState,
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
-import { joinLoHi, splitLoHi, toBaseUnit } from '@penumbra-zone/types/lo-hi';
+import { joinLoHi, LoHi, splitLoHi, toBaseUnit } from '@penumbra-zone/types/lo-hi';
 import { getAssetId } from '@penumbra-zone/getters/metadata';
 import { getSwapCommitmentFromTx } from '@penumbra-zone/getters/transaction';
 import { getAssetIdFromValueView } from '@penumbra-zone/getters/value-view';
@@ -305,10 +305,11 @@ class OrderFormStore {
       const positionsReq = new TransactionPlannerRequest({
         positionOpens: times(positions, i => {
           const price = lowerBound + (i * (upperBound - lowerBound)) / (positions - 1);
-          const priceLoHi = toBaseUnit(BigNumber(price), this.quoteAsset.exponent ?? 0);
-          const priceUnit = joinLoHi(priceLoHi.hi, priceLoHi.lo);
+          const priceValue = BigNumber(price).multipliedBy(
+            new BigNumber(10).pow(this.quoteAsset.exponent ?? 0),
+          );
+          const priceUnit = BigInt(priceValue.toFixed(0));
 
-          // Cross-multiply exponents and prices for trading function coefficients
           // Cross-multiply exponents and prices for trading function coefficients
           //
           // We want to write
@@ -316,10 +317,8 @@ class OrderFormStore {
           // q = StartUnit
           // However, if EndUnit is too small, it might not round correctly after multiplying by price
           // To handle this, conditionally apply a scaling factor if the EndUnit amount is too small.
-          const scale = BigInt(quoteAssetUnitAmount < 1_000_000 ? 1_000_000 : 1);
-          const p = new Amount(
-            splitLoHi(BigInt(Number(quoteAssetUnitAmount) * Number(scale) * price)),
-          );
+          const scale = quoteAssetUnitAmount < 1_000_000n ? 1_000_000n : 1n;
+          const p = new Amount(splitLoHi(quoteAssetUnitAmount * scale * priceUnit));
           const q = new Amount(splitLoHi(baseAssetUnitAmount * scale));
 
           // Compute reserves
@@ -329,12 +328,12 @@ class OrderFormStore {
           const reserves =
             price < marketPrice
               ? {
-                  r1: new Amount({ lo: 0n, hi: 0n }),
+                  r1: new Amount(splitLoHi(0n)),
                   r2: new Amount(splitLoHi(positionUnitAmount)),
                 }
               : {
                   r1: new Amount(splitLoHi(positionUnitAmount / priceUnit)),
-                  r2: new Amount({ lo: 0n, hi: 0n }),
+                  r2: new Amount(splitLoHi(0n)),
                 };
 
           return {
@@ -363,18 +362,10 @@ class OrderFormStore {
         // },
       });
 
-      const positionsTx = await planBuildBroadcast('positionOpen', positionsReq);
-      // const positionsCommitment = getSwapCommitmentFromTx(positionsTx);
+      await planBuildBroadcast('positionOpen', positionsReq);
 
-      // Issue swap claim
-      // const req = new TransactionPlannerRequest({
-      //   // swapClaims: [{ swapCommitment }],
-      //   source: assetIn.accountIndex,
-      // });
-      // await planBuildBroadcast('positionOpen', req, { skipAuth: true });
-
-      // assetIn.unsetAmount();
-      // assetOut.unsetAmount();
+      this.baseAsset.unsetAmount();
+      this.quoteAsset.unsetAmount();
     } finally {
       this.isLoading = false;
     }

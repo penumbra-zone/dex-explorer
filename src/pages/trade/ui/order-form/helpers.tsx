@@ -49,14 +49,15 @@ const getBuildStatusDescription = (
   if (status?.case === 'buildProgress') {
     return (
       <div className='mt-2'>
-        <Progress value={Math.round(status.value.progress * 100)} />
+        <Progress value={status.value.progress} />
       </div>
     );
   }
+
   if (status?.case === 'complete') {
     return (
       <div className='mt-2'>
-        <Progress value={100} />
+        <Progress value={1} />
       </div>
     );
   }
