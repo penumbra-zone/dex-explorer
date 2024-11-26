@@ -99,7 +99,7 @@ export class RangeLiquidity {
     this.feeTier = FeeTierValues[option];
   };
 
-  setPositions = (positions: string) => {
+  setPositions = (positions: number | string) => {
     this.positions = Number(positions);
   };
 

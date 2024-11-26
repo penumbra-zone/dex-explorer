@@ -14,7 +14,7 @@ import {
   Position,
   PositionState,
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
-import { joinLoHi, LoHi, splitLoHi, toBaseUnit } from '@penumbra-zone/types/lo-hi';
+import { splitLoHi } from '@penumbra-zone/types/lo-hi';
 import { getAssetId } from '@penumbra-zone/getters/metadata';
 import { getSwapCommitmentFromTx } from '@penumbra-zone/getters/transaction';
 import { getAssetIdFromValueView } from '@penumbra-zone/getters/value-view';
@@ -206,7 +206,7 @@ class OrderFormStore {
         {
           targetAsset: assetOut.assetId,
           value: {
-            amount: assetIn.toLoHi(),
+            amount: assetIn.toAmount(),
             assetId: assetIn.assetId,
           },
           claimAddress: assetIn.accountAddress,
@@ -252,7 +252,7 @@ class OrderFormStore {
           {
             targetAsset: assetOut.assetId,
             value: {
-              amount: assetIn.toLoHi(),
+              amount: assetIn.toAmount(),
               assetId: assetIn.assetId,
             },
             claimAddress: assetIn.accountAddress,

@@ -67,7 +67,7 @@ export const RangeLiquidityOrderForm = observer(() => {
         </div>
         <SelectGroup
           options={Object.values(UpperBoundOptions)}
-          onChange={rangeLiquidity.setUpperBoundOption}
+          onChange={rangeLiquidity.setUpperBoundOption as (option: string) => void}
         />
       </div>
       <div className='mb-4'>
@@ -81,7 +81,7 @@ export const RangeLiquidityOrderForm = observer(() => {
         </div>
         <SelectGroup
           options={Object.values(LowerBoundOptions)}
-          onChange={rangeLiquidity.setLowerBoundOption}
+          onChange={rangeLiquidity.setLowerBoundOption as (option: string) => void}
         />
       </div>
       <div className='mb-4'>
@@ -96,7 +96,7 @@ export const RangeLiquidityOrderForm = observer(() => {
         <SelectGroup
           value={rangeLiquidity.feeTier}
           options={Object.values(FeeTierOptions)}
-          onChange={rangeLiquidity.setFeeTierOption}
+          onChange={rangeLiquidity.setFeeTierOption as (option: string) => void}
         />
       </div>
       <div className='mb-4'>

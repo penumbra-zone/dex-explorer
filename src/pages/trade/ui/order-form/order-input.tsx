@@ -14,7 +14,7 @@ export interface OrderInputProps {
   isEstimating?: boolean;
   isApproximately?: boolean;
   onChange?: (amount: string, ...args: unknown[]) => void;
-  denominator: string;
+  denominator?: string;
   max?: string | number;
   min?: string | number;
 }
@@ -111,12 +111,14 @@ export const OrderInput = forwardRef<HTMLInputElement, OrderInputProps>(
             )}
           </>
         )}
-        <div
-          ref={denomRef}
-          className='absolute top-0 right-3 pointer-events-none z-[1] font-default text-textSm font-normal leading-textXs text-text-secondary !leading-[64px]'
-        >
-          {denominator}
-        </div>
+        {denominator && (
+          <div
+            ref={denomRef}
+            className='absolute top-0 right-3 pointer-events-none z-[1] font-default text-textSm font-normal leading-textXs text-text-secondary !leading-[64px]'
+          >
+            {denominator}
+          </div>
+        )}
       </div>
     );
   },

@@ -3,7 +3,7 @@ import { Text } from '@penumbra-zone/ui/Text';
 import cn from 'clsx';
 
 export const SelectGroup: React.FC<{
-  value: string;
+  value?: string | number;
   options: string[];
   onChange: (option: string) => void;
 }> = ({ value, options, onChange }) => {
