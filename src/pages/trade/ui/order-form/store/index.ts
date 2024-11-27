@@ -299,6 +299,14 @@ class OrderFormStore {
         return;
       }
 
+      if (lowerBound > upperBound) {
+        openToast({
+          type: 'error',
+          message: 'Upper bound must be greater than the lower bound.',
+        });
+        return;
+      }
+
       const baseAssetUnitAmount = this.baseAsset.toUnitAmount();
       const quoteAssetUnitAmount = this.quoteAsset.toUnitAmount();
       const positionUnitAmount = quoteAssetUnitAmount / BigInt(positions);

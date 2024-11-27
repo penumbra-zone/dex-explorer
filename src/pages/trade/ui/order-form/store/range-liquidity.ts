@@ -60,11 +60,7 @@ export class RangeLiquidity {
   }
 
   setUpperBound = (amount: string) => {
-    const nextUpperBound = Number(amount);
-
-    if (nextUpperBound > (this.lowerBound ?? 0)) {
-      this.upperBound = Number(round(nextUpperBound, this.exponent ?? 0));
-    }
+    this.upperBound = Number(round(Number(amount), this.exponent ?? 0));
   };
 
   setUpperBoundOption = (option: UpperBoundOptions) => {
@@ -76,11 +72,7 @@ export class RangeLiquidity {
   };
 
   setLowerBound = (amount: string) => {
-    const nextLowerBound = Number(amount);
-
-    if (nextLowerBound < (this.upperBound ?? 0)) {
-      this.lowerBound = Number(round(nextLowerBound, this.exponent ?? 0));
-    }
+    this.lowerBound = Number(round(Number(amount), this.exponent ?? 0));
   };
 
   setLowerBoundOption = (option: LowerBoundOptions) => {

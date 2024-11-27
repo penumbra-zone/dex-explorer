@@ -109,7 +109,7 @@ export const RangeLiquidityOrderForm = observer(() => {
           min={5}
           max={15}
           step={1}
-          defaultValue={rangeLiquidity.positions}
+          value={rangeLiquidity.positions}
           showValue={false}
           onChange={rangeLiquidity.setPositions}
           showTrackGaps={true}
