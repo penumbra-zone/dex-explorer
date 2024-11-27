@@ -10,7 +10,7 @@ import {
 import { AssetId, ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { bech32mPositionId } from '@penumbra-zone/bech32m/plpid';
 import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
-import { chainRegistryClient } from '@/shared/api/registry.ts';
+import { registryQueryFn } from '@/shared/api/registry.ts';
 
 interface PositionData {
   positionId: string;
@@ -25,10 +25,9 @@ const assetIdToValueView = async (assetId?: AssetId, amount?: Amount) => {
     throw new Error('No asset id found to convert to ValueView');
   }
 
-  // const registry = await registryQueryFn();
-  const registry = await chainRegistryClient.remote.get('penumbra-testnet-phobos-2');
+  const registry = await registryQueryFn();
   const metadata = registry.tryGetMetadata(assetId);
-  if (!metadata) {
+  if (metadata) {
     return new ValueView({
       valueView: { case: 'knownAssetId', value: { amount, metadata } },
     });

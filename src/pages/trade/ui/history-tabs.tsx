@@ -1,12 +1,10 @@
-'use client';
-
 import { useState } from 'react';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { Tabs } from '@penumbra-zone/ui/Tabs';
 import { Density } from '@penumbra-zone/ui/Density';
 import { Toggle } from '@penumbra-zone/ui/Toggle';
 import { Text } from '@penumbra-zone/ui/Text';
-import { Positions } from './positions';
+import Positions from './positions';
 import { History } from './history';
 
 enum HistoryTabsType {
