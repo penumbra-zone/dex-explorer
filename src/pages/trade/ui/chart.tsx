@@ -21,15 +21,15 @@ const ChartLoadingState = () => {
           }
         `}
       </style>
-      <svg 
-        overflow={'visible'} 
-        width="100%" 
-        height="100%" 
-        viewBox="0 0 328 164" 
-        preserveAspectRatio="xMidYMid meet" 
-        fill="none" 
-        xmlns="http://www.w3.org/2000/svg"
-        className="chart-loading-fade-in"
+      <svg
+        overflow={'visible'}
+        width='100%'
+        height='100%'
+        viewBox='0 0 328 164'
+        preserveAspectRatio='xMidYMid meet'
+        fill='none'
+        xmlns='http://www.w3.org/2000/svg'
+        className='chart-loading-fade-in'
       >
         <defs>
           <linearGradient
