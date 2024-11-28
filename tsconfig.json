@@ -2,7 +2,12 @@
   "compilerOptions": {
     "composite": true,
     "exactOptionalPropertyTypes": false,
-    "lib": ["ESNext", "DOM", "DOM.Iterable", "DOM.AsyncIterable"],
+    "lib": [
+      "ESNext",
+      "DOM",
+      "DOM.Iterable",
+      "DOM.AsyncIterable"
+    ],
     "noEmit": true,
     "target": "ESNext",
     "skipLibCheck": true,
@@ -12,14 +17,29 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*", "./styles/*"]
+      "@/*": [
+        "./src/*",
+        "./styles/*"
+      ]
     },
     "allowJs": true,
     "incremental": true,
     "jsx": "preserve",
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "resolveJsonModule": true
   },
-  "extends": ["@tsconfig/strictest/tsconfig.json", "@tsconfig/vite-react/tsconfig.json"],
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "styles/styles.d.ts"],
-  "exclude": ["node_modules"]
+  "extends": [
+    "@tsconfig/strictest/tsconfig.json",
+    "@tsconfig/vite-react/tsconfig.json"
+  ],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "styles/styles.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

@@ -1,11 +1,32 @@
 import { Pool, types } from 'pg';
 import fs from 'fs';
-import { Kysely, PostgresDialect, sql } from 'kysely';
+import { Kysely, PostgresDialect, Selectable, sql } from 'kysely';
+import { DB, DexExPositionState, DexExAggregateSummary, DexExPositionExecutions, DexExPositionReserves, DexExPositionWithdrawals, Numeric, } from '@/shared/database/schema.ts';
 import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { DurationWindow } from '@/shared/utils/duration.ts';
-import { DB, DexExAggregateSummary } from './schema';
 
 const MAINNET_CHAIN_ID = 'penumbra-1';
+
+export type ExecutionWithReserves = {
+  execution: Selectable<DexExPositionExecutions>;
+  reserves: Selectable<DexExPositionReserves>;
+};
+
+export type PositionStateWithReserves = {
+  state: Selectable<DexExPositionState>;
+  opening_reserves: Selectable<DexExPositionReserves>;
+  latest_reserves: Selectable<DexExPositionReserves>;
+};
+
+export type VolumeAndFees = {
+  volume1: Numeric,
+  volume2: Numeric,
+  fees1: Numeric,
+  fees2: Numeric,
+  context_asset_start: Buffer,
+  context_asset_end: Buffer,
+  executionCount: number,
+}
 
 class Pindexer {
   private db: Kysely<DB>;
@@ -171,6 +192,159 @@ class Pindexer {
       .offset(offset);
 
     return joinedTable.execute();
+  }
+
+  async getPositionState(positionId: Buffer): Promise<PositionStateWithReserves | undefined> {
+    const [row, latestReserves] = await Promise.all([
+      this.db
+        .selectFrom('dex_ex_position_state as state')
+        .innerJoin(
+          'dex_ex_position_reserves as reserves',
+          'state.opening_reserves_rowid',
+          'reserves.rowid'
+        )
+        .selectAll('state')
+        .selectAll('reserves')
+        .where('state.position_id', '=', positionId)
+        .executeTakeFirst(),
+      this.db
+        .selectFrom('dex_ex_position_reserves')
+        .selectAll()
+        .where('position_id', '=', positionId)
+        .orderBy('height', 'desc')
+        .orderBy('rowid', 'desc')
+        .limit(1)
+        .executeTakeFirst()
+    ]);
+
+    if (!row || !latestReserves) return undefined;
+
+    return {
+      state: {
+        position_id: row.position_id,
+        asset_1: row.asset_1,
+        asset_2: row.asset_2,
+        fee_bps: row.fee_bps,
+        effective_price_1_to_2: row.effective_price_1_to_2,
+        effective_price_2_to_1: row.effective_price_2_to_1,
+        opening_height: row.opening_height,
+        opening_time: row.opening_time,
+        opening_reserves_rowid: row.opening_reserves_rowid,
+        close_on_fill: row.close_on_fill,
+        closing_height: row.closing_height,
+        closing_time: row.closing_time,
+        closing_tx: row.closing_tx,
+        opening_tx: row.opening_tx,
+        position_raw: row.position_raw,
+        p: row.p,
+        q: row.q,
+        rowid: row.rowid
+      },
+      opening_reserves: {
+        height: row.height,
+        position_id: row.position_id,
+        reserves_1: row.reserves_1,
+        reserves_2: row.reserves_2,
+        rowid: row.opening_reserves_rowid,
+        time: row.time,
+      },
+      latest_reserves: latestReserves,
+    };
+  }
+
+  async getPositionExecutionsWithReserves(positionId: Buffer): Promise<{ items: ExecutionWithReserves[], skippedRows: number }> {
+    const maxCount = 100;
+
+    // First, get the total count
+    const totalCount = await this.db
+      .selectFrom('dex_ex_position_executions')
+      .select(sql`count(*)`.as('count'))
+      .where('position_id', '=', positionId)
+      .executeTakeFirstOrThrow();
+
+    // Then get the actual items
+    const results = await this.db
+      .selectFrom('dex_ex_position_executions as executions')
+      .innerJoin(
+        'dex_ex_position_reserves as reserves',
+        'executions.reserves_rowid',
+        'reserves.rowid'
+      )
+      .selectAll('executions')
+      .selectAll('reserves')
+      .where('executions.position_id', '=', positionId)
+      .orderBy('executions.height', 'desc')
+      .orderBy('executions.rowid', 'desc')
+      .limit(maxCount)
+      .execute();
+
+    const items = results.map(row => ({
+      execution: {
+        context_asset_end: row.context_asset_end,
+        context_asset_start: row.context_asset_start,
+        delta_1: row.delta_1,
+        delta_2: row.delta_2,
+        fee_1: row.fee_1,
+        fee_2: row.fee_2,
+        height: row.height,
+        lambda_1: row.lambda_1,
+        lambda_2: row.lambda_2,
+        position_id: row.position_id,
+        reserves_rowid: row.reserves_rowid,
+        rowid: row.rowid,
+        time: row.time,
+      },
+      reserves: {
+        height: row.height,
+        position_id: row.position_id,
+        reserves_1: row.reserves_1,
+        reserves_2: row.reserves_2,
+        rowid: row.reserves_rowid,
+        time: row.time,
+      }
+    }));
+
+    return {
+      items,
+      skippedRows: Math.max(0, Number(totalCount.count) - maxCount)
+    };
+  }
+
+  async getPositionWithdrawals(positionId: Buffer): Promise<Selectable<DexExPositionWithdrawals>[]> {
+    return this.db
+      .selectFrom('dex_ex_position_withdrawals')
+      .selectAll()
+      .where('position_id', '=', positionId)
+      .orderBy('height', 'desc')
+      .orderBy('rowid', 'desc')
+      .execute();
+  }
+
+  async getPositionVolumeAndFees(positionId: Buffer): Promise<VolumeAndFees[]> {
+    const results = await this.db
+      .selectFrom('dex_ex_position_executions')
+      .select([
+        'context_asset_start',
+        'context_asset_end',
+        sql`sum(delta_1 + lambda_1)`.as('volume1'),
+        sql`sum(delta_2 + lambda_2)`.as('volume2'),
+        sql`sum(fee_1)`.as('fees1'),
+        sql`sum(fee_2)`.as('fees2'),
+        sql`CAST(count(*) AS INTEGER)`.as('executionCount'),
+      ])
+      .where('position_id', '=', positionId)
+      .groupBy(['context_asset_start', 'context_asset_end'])
+      .orderBy('executionCount', 'desc')
+      .execute();
+
+    return results.map(row => ({
+      ...row,
+      volume1: row.volume1 as Numeric,
+      volume2: row.volume2 as Numeric,
+      fees1: row.fees1 as Numeric,
+      fees2: row.fees2 as Numeric,
+      executionCount: row.executionCount as number,
+    }));
   }
 }
 

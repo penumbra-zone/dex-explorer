@@ -6,12 +6,11 @@ import { DurationWindow } from '@/shared/utils/duration.ts';
  * Please do not edit it manually.
  */
 
-import type { ColumnType } from 'kysely';
+import type { ColumnType } from "kysely";
 
-export type Generated<T> =
-  T extends ColumnType<infer S, infer I, infer U>
-    ? ColumnType<S, I | undefined, U>
-    : ColumnType<T, T | undefined, T>;
+export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
+  ? ColumnType<S, I | undefined, U>
+  : ColumnType<T, T | undefined, T>;
 
 export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
 
@@ -92,6 +91,64 @@ export interface DexExPairsSummary {
   swap_volume_over_window: number;
   the_window: DurationWindow;
   trades_over_window: number;
+}
+
+export interface DexExPositionExecutions {
+  context_asset_end: Buffer;
+  context_asset_start: Buffer;
+  delta_1: Numeric;
+  delta_2: Numeric;
+  fee_1: Numeric;
+  fee_2: Numeric;
+  height: number;
+  lambda_1: Numeric;
+  lambda_2: Numeric;
+  position_id: Buffer;
+  reserves_rowid: number;
+  rowid: Generated<number>;
+  time: Timestamp;
+}
+
+export interface DexExPositionReserves {
+  height: number;
+  position_id: Buffer;
+  reserves_1: Numeric;
+  reserves_2: Numeric;
+  rowid: Generated<number>;
+  time: Timestamp;
+}
+
+export interface DexExPositionState {
+  asset_1: Buffer;
+  asset_2: Buffer;
+  close_on_fill: boolean;
+  closing_height: number | null;
+  closing_time: Timestamp | null;
+  closing_tx: Buffer | null;
+  effective_price_1_to_2: number;
+  effective_price_2_to_1: number;
+  fee_bps: number;
+  opening_height: number;
+  opening_reserves_rowid: number;
+  opening_time: Timestamp;
+  opening_tx: Buffer | null;
+  p: Numeric;
+  position_id: Buffer;
+  position_raw: Buffer;
+  q: Numeric;
+  rowid: Generated<number>;
+}
+
+export interface DexExPositionWithdrawals {
+  height: number;
+  position_id: Buffer;
+  reserves_1: Numeric;
+  reserves_2: Numeric;
+  reserves_rowid: number;
+  rowid: Generated<number>;
+  sequence: number;
+  time: Timestamp;
+  withdrawal_tx: Buffer | null;
 }
 
 export interface DexExPriceCharts {
@@ -246,6 +303,10 @@ interface RawDB {
   dex_ex_aggregate_summary: DexExAggregateSummary;
   dex_ex_pairs_block_snapshot: DexExPairsBlockSnapshot;
   dex_ex_pairs_summary: DexExPairsSummary;
+  dex_ex_position_executions: DexExPositionExecutions;
+  dex_ex_position_reserves: DexExPositionReserves;
+  dex_ex_position_state: DexExPositionState;
+  dex_ex_position_withdrawals: DexExPositionWithdrawals;
   dex_ex_price_charts: DexExPriceCharts;
   governance_delegator_votes: GovernanceDelegatorVotes;
   governance_proposals: GovernanceProposals;
@@ -264,10 +325,5 @@ interface RawDB {
   supply_validators: SupplyValidators;
 }
 
-export type DB = Pick<
-  RawDB,
-  | 'dex_ex_aggregate_summary'
-  | 'dex_ex_pairs_block_snapshot'
-  | 'dex_ex_pairs_summary'
-  | 'dex_ex_price_charts'
->;
+
+export type DB = Pick<RawDB, 'dex_ex_aggregate_summary' | 'dex_ex_pairs_block_snapshot' | 'dex_ex_pairs_summary' | 'dex_ex_price_charts' | 'dex_ex_position_executions' | 'dex_ex_position_state' | 'dex_ex_position_reserves' | 'dex_ex_position_withdrawals'>;
