@@ -1,5 +1,5 @@
 import { makeAutoObservable } from 'mobx';
-import { round } from '@/shared/utils/numbers/round';
+import { round } from '@penumbra-zone/types/round';
 
 export enum UpperBoundOptions {
   Market = 'Market',
@@ -60,25 +60,31 @@ export class RangeLiquidity {
   }
 
   setUpperBound = (amount: string) => {
-    this.upperBound = Number(round(Number(amount), this.exponent ?? 0));
+    this.upperBound = Number(round({ value: Number(amount), decimals: this.exponent ?? 0 }));
   };
 
   setUpperBoundOption = (option: UpperBoundOptions) => {
     if (this.marketPrice) {
       this.upperBound = Number(
-        round(this.marketPrice * UpperBoundMultipliers[option], this.exponent ?? 0),
+        round({
+          value: this.marketPrice * UpperBoundMultipliers[option],
+          decimals: this.exponent ?? 0,
+        }),
       );
     }
   };
 
   setLowerBound = (amount: string) => {
-    this.lowerBound = Number(round(Number(amount), this.exponent ?? 0));
+    this.lowerBound = Number(round({ value: Number(amount), decimals: this.exponent ?? 0 }));
   };
 
   setLowerBoundOption = (option: LowerBoundOptions) => {
     if (this.marketPrice) {
       this.lowerBound = Number(
-        round(this.marketPrice * LowerBoundMultipliers[option], this.exponent ?? 0),
+        round({
+          value: this.marketPrice * LowerBoundMultipliers[option],
+          decimals: this.exponent ?? 0,
+        }),
       );
     }
   };

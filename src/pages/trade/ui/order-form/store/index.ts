@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { makeAutoObservable } from 'mobx';
 import debounce from 'lodash/debounce';
 import times from 'lodash/times';
@@ -14,22 +15,21 @@ import {
   Position,
   PositionState,
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
+import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
 import { splitLoHi } from '@penumbra-zone/types/lo-hi';
 import { getAssetId } from '@penumbra-zone/getters/metadata';
 import { getSwapCommitmentFromTx } from '@penumbra-zone/getters/transaction';
 import { getAssetIdFromValueView } from '@penumbra-zone/getters/value-view';
 import { getFormattedAmtFromValueView } from '@penumbra-zone/types/value-view';
-import { penumbra } from '@/shared/const/penumbra';
-import { plan, planBuildBroadcast } from '../helpers';
+import { round } from '@penumbra-zone/types/round';
 import { openToast } from '@penumbra-zone/ui/Toast';
-import { useEffect } from 'react';
+import { penumbra } from '@/shared/const/penumbra';
 import { useBalances } from '@/shared/api/balances';
-import { round } from '@/shared/utils/numbers/round';
+import { plan, planBuildBroadcast } from '../helpers';
 import { usePathToMetadata } from '../../../model/use-path';
 import { OrderFormAsset } from './asset';
 import { RangeLiquidity } from './range-liquidity';
 import BigNumber from 'bignumber.js';
-import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
 
 export enum Direction {
   Buy = 'Buy',
@@ -341,7 +341,11 @@ class OrderFormStore {
                   r2: new Amount(splitLoHi(positionUnitAmount)),
                 }
               : {
-                  r1: new Amount(splitLoHi(BigInt(round(Number(positionUnitAmount) / price, 0)))),
+                  r1: new Amount(
+                    splitLoHi(
+                      BigInt(round({ value: Number(positionUnitAmount) / price, decimals: 0 })),
+                    ),
+                  ),
                   r2: new Amount(splitLoHi(0n)),
                 };
 
