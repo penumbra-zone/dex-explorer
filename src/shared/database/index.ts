@@ -1,9 +1,9 @@
 import { Pool, types } from 'pg';
 import fs from 'fs';
 import { Kysely, PostgresDialect } from 'kysely';
-import { DB } from '@/shared/database/schema.ts';
 import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { DurationWindow } from '@/shared/utils/duration.ts';
+import { DB, DexExAggregateSummary } from './schema';
 
 const MAINNET_CHAIN_ID = 'penumbra-1';
 
@@ -45,6 +45,14 @@ class Pindexer {
       .execute();
   }
 
+  async stats(window: DurationWindow): Promise<DexExAggregateSummary[]> {
+    return this.db
+      .selectFrom('dex_ex_aggregate_summary')
+      .selectAll()
+      .where('the_window', '=', window)
+      .execute();
+  }
+
   async candles({
     baseAsset,
     quoteAsset,
@@ -61,7 +69,8 @@ class Pindexer {
       .select(['start_time', 'open', 'close', 'low', 'high', 'swap_volume', 'direct_volume'])
       .where('the_window', '=', window)
       .where('asset_start', '=', Buffer.from(baseAsset.inner))
-      .where('asset_end', '=', Buffer.from(quoteAsset.inner));
+      .where('asset_end', '=', Buffer.from(quoteAsset.inner))
+      .orderBy('start_time', 'asc');
 
     // Due to a lot of price volatility at the launch of the chain, manually setting start date a few days later
     if (chainId === MAINNET_CHAIN_ID) {
