@@ -17,12 +17,13 @@ export const RangeLiquidityOrderForm = observer(() => {
   const { baseAsset, quoteAsset, rangeLiquidity, submitOrder, isLoading, gasFee, exchangeRate } =
     useOrderFormStore(FormType.RangeLiquidity);
   const { data } = useSummary('1d');
+  const price = data && 'price' in data ? data.price : null;
 
   useEffect(() => {
-    if (data?.price) {
-      rangeLiquidity.setMarketPrice(data.price);
+    if (price) {
+      rangeLiquidity.setMarketPrice(price);
     }
-  }, [data?.price, rangeLiquidity]);
+  }, [price, rangeLiquidity]);
 
   useEffect(() => {
     if (quoteAsset.exponent) {
