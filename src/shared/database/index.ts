@@ -79,6 +79,26 @@ class Pindexer {
 
     return query.execute();
   }
+
+  // Paginated pair summaries
+  async summaries({
+    window,
+    limit,
+    offset,
+  }: {
+    window: DurationWindow;
+    limit: number;
+    offset: number;
+  }) {
+    return this.db
+      .selectFrom('dex_ex_pairs_summary')
+      .selectAll()
+      .where('the_window', '=', window)
+      .orderBy('liquidity', 'desc')
+      .limit(limit)
+      .offset(offset)
+      .execute();
+  }
 }
 
 export const pindexer = new Pindexer();
