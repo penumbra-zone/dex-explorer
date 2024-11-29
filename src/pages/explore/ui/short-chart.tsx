@@ -2,6 +2,14 @@ export interface ShortChartProps {
   sign: 'positive' | 'negative' | 'neutral';
 }
 
+// TODO: use test data to draw a candles short chart
+// 14 candles???
+// const TEST_DATA = [
+//   1.0283755324651125, 0.9512070351758792, 1.0, 1.0, 1.0095638190954774, 1.0068517034068136,
+//   1.0262454909819638, 1.0262454909819638, 0.9901115577889448, 0.9802307117735226, 0.9867328,
+//   0.9641784983498348, 1.0278573147060304, 0.9764837652489284,
+// ];
+
 export const ShortChart = ({ sign }: ShortChartProps) => {
   if (sign === 'positive') {
     return (

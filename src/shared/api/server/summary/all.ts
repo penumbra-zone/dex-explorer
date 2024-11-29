@@ -42,7 +42,7 @@ export const getAllSummaries = async (
         return undefined;
       }
 
-      const data = SummaryDataResponse.build(summary, baseAsset, quoteAsset);
+      const data = SummaryDataResponse.build(summary, baseAsset, quoteAsset, summary.candles);
       return data.toJson();
     }),
   );

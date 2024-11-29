@@ -32,6 +32,7 @@ export interface SummaryDataResponseJson {
   high: number;
   low: number;
   change: ChangeData;
+  candles?: number[];
 }
 
 export class SummaryDataResponse {
@@ -44,6 +45,7 @@ export class SummaryDataResponse {
   high: number;
   low: number;
   change: ChangeData;
+  candles?: number[];
 
   constructor({
     window,
@@ -55,6 +57,7 @@ export class SummaryDataResponse {
     change,
     baseAsset,
     quoteAsset,
+    candles,
   }: {
     window: DurationWindow;
     directVolume: ValueView;
@@ -65,6 +68,7 @@ export class SummaryDataResponse {
     change: ChangeData;
     baseAsset: Metadata;
     quoteAsset: Metadata;
+    candles?: number[];
   }) {
     this.window = window;
     this.directVolume = directVolume;
@@ -75,12 +79,14 @@ export class SummaryDataResponse {
     this.change = change;
     this.baseAsset = baseAsset;
     this.quoteAsset = quoteAsset;
+    this.candles = candles;
   }
 
   static build(
     summary: DexExPairsSummary,
     baseAsset: Metadata,
     quoteAsset: Metadata,
+    candles?: number[],
   ): SummaryDataResponse {
     const directVolume = toValueView({
       amount: summary.direct_volume_over_window,
@@ -115,6 +121,7 @@ export class SummaryDataResponse {
       change,
       liquidity,
       directVolume,
+      candles,
     });
   }
 
@@ -129,6 +136,7 @@ export class SummaryDataResponse {
       high: this.high,
       low: this.low,
       change: this.change,
+      candles: this.candles,
     };
   }
 
@@ -143,6 +151,7 @@ export class SummaryDataResponse {
       liquidity: ValueView.fromJson(json.liquidity),
       baseAsset: Metadata.fromJson(json.baseAsset),
       quoteAsset: Metadata.fromJson(json.quoteAsset),
+      candles: json.candles,
     });
   }
 }

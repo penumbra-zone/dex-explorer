@@ -90,23 +90,62 @@ class Pindexer {
     limit: number;
     offset: number;
   }) {
-    // Selects only distinct pairs (USDT/USDC, but not reverse)
-    const innerTable = this.db
+    // Selects only distinct pairs (USDT/USDC, but not reverse) with its data
+    const summaryTable = this.db
       .selectFrom('dex_ex_pairs_summary')
       .distinctOn(sql<string>`least(asset_start, asset_end), greatest(asset_start, asset_end)`)
       .selectAll()
       .where('the_window', '=', window)
       .where('price', '!=', 0);
 
-    const outerTable = this.db
-      .selectFrom(innerTable.as('t'))
-      .selectAll()
-      // TODO: sort by liquidity in form of USD (not tokens)
-      .orderBy('trades_over_window', 'desc')
-      .offset(offset)
-      .limit(limit);
+    /*
+      TODO: fix candles returning an array of 1 always
+     */
 
-    return outerTable.execute();
+    // Selects 1h-candles for the last 24 hours and aggregates them into a single array, ordering by assets
+    const candlesTable = this.db
+      .selectFrom('dex_ex_price_charts')
+      .select(exp => [
+        'asset_end',
+        'asset_start',
+        // ARRAY_AGG(close ORDER BY start_time ASC) AS close -- produce a single array
+        sql<number[]>`array_agg(${exp.ref('close')} ORDER BY start_time ASC)`.as('candles'),
+      ])
+      .where(exp =>
+        exp.and([
+          exp.eb('the_window', '=', window),
+          sql<boolean>`${exp.ref('start_time')} > NOW() - INTERVAL '24 hours'`,
+        ]),
+      )
+      .groupBy(() => ['asset_start', 'asset_end']);
+
+    // Joins summaryTable with candlesTable to get pair info with the latest candles
+    const joinedTable = this.db
+      .selectFrom(summaryTable.as('summary'))
+      .innerJoin(candlesTable.as('candles'), join =>
+        join
+          .onRef('candles.asset_start', '=', 'summary.asset_start')
+          .onRef('candles.asset_end', '=', 'summary.asset_end'),
+      )
+      .select([
+        'summary.asset_start',
+        'summary.asset_end',
+        'summary.price',
+        'summary.price_then',
+        'summary.the_window',
+        'summary.direct_volume_over_window',
+        'summary.swap_volume_over_window',
+        'summary.liquidity',
+        'summary.liquidity_then',
+        'summary.trades_over_window',
+        'summary.low',
+        'summary.high',
+        'candles.candles',
+      ])
+      .limit(limit)
+      .offset(offset);
+
+    return joinedTable.execute();
   }
 }
 
