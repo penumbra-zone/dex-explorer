@@ -1,6 +1,6 @@
 import { Pool, types } from 'pg';
 import fs from 'fs';
-import { Kysely, PostgresDialect } from 'kysely';
+import { Kysely, PostgresDialect, sql } from 'kysely';
 import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { DurationWindow } from '@/shared/utils/duration.ts';
 import { DB, DexExAggregateSummary } from './schema';
@@ -90,14 +90,23 @@ class Pindexer {
     limit: number;
     offset: number;
   }) {
-    return this.db
+    // Selects only distinct pairs (USDT/USDC, but not reverse)
+    const innerTable = this.db
       .selectFrom('dex_ex_pairs_summary')
+      .distinctOn(sql<string>`least(asset_start, asset_end), greatest(asset_start, asset_end)`)
       .selectAll()
       .where('the_window', '=', window)
-      .orderBy('liquidity', 'desc')
-      .limit(limit)
+      .where('price', '!=', 0);
+
+    const outerTable = this.db
+      .selectFrom(innerTable.as('t'))
+      .selectAll()
+      // TODO: sort by liquidity in form of USD (not tokens)
+      .orderBy('trades_over_window', 'desc')
       .offset(offset)
-      .execute();
+      .limit(limit);
+
+    return outerTable.execute();
   }
 }
 
