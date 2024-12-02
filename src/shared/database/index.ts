@@ -98,12 +98,18 @@ class Pindexer {
       // Filters out the reversed pairs (e.g. if found UM/OSMO, then there won't be OSMO/UM)
       .distinctOn(sql<string>`least(asset_start, asset_end), greatest(asset_start, asset_end)`)
       .selectAll()
-      .where((exp) => exp.and([
-        exp.eb('the_window', '=', window),
-        exp.eb('price', '!=', 0),
-        // Filters out pairs where stablecoins are base assets (e.g. no USDC/UM, only UM/USDC)
-        exp.eb(exp.ref('asset_start'), 'not in', stablecoins.map((asset) => Buffer.from(asset.inner))),
-      ]))
+      .where(exp =>
+        exp.and([
+          exp.eb('the_window', '=', window),
+          exp.eb('price', '!=', 0),
+          // Filters out pairs where stablecoins are base assets (e.g. no USDC/UM, only UM/USDC)
+          exp.eb(
+            exp.ref('asset_start'),
+            'not in',
+            stablecoins.map(asset => Buffer.from(asset.inner)),
+          ),
+        ]),
+      );
 
     // Selects 1h-candles for the last 24 hours and aggregates them into a single array, ordering by assets
     const candlesTable = this.db
@@ -150,11 +156,11 @@ class Pindexer {
         'summary.low',
         'summary.high',
         'candles.candles',
-        'candles.candle_times'
+        'candles.candle_times',
       ])
       .limit(limit)
       .offset(offset);
-
+    
     return joinedTable.execute();
   }
 }

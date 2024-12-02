@@ -30,8 +30,8 @@ export const getAllSummaries = async (
 
   const stablecoins = registry
     .getAllAssets()
-    .filter((asset) => ['USDT', 'USDC', 'USDY'].includes(asset.symbol))
-    .map((asset) => asset.penumbraAssetId) as AssetId[];
+    .filter(asset => ['USDT', 'USDC', 'USDY'].includes(asset.symbol))
+    .map(asset => asset.penumbraAssetId) as AssetId[];
 
   const results = await pindexer.summaries({
     ...params,
@@ -48,7 +48,13 @@ export const getAllSummaries = async (
         return undefined;
       }
 
-      const data = SummaryDataResponse.build(summary, baseAsset, quoteAsset, summary.candles, summary.candle_times);
+      const data = SummaryDataResponse.build(
+        summary,
+        baseAsset,
+        quoteAsset,
+        summary.candles,
+        summary.candle_times,
+      );
       return data.toJson();
     }),
   );
