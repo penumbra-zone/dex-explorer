@@ -45,26 +45,56 @@ const assetIdToValueView = async (assetId?: AssetId, amount?: Amount) => {
 };
 
 const getOrders = async (position: Position): Promise<Order[]> => {
-  const fee = position.phi?.component?.fee ?? 0;
   const asset1Id = position.phi?.pair?.asset1;
   const asset1Amount = position.reserves?.r1;
 
   const asset2Id = position.phi?.pair?.asset2;
   const asset2Amount = position.reserves?.r2;
 
-  console.log('asset1Amount', asset1Amount);
-  console.log('asset2Amount', asset2Amount);
+  const asset1IsPresent = asset1Amount && !isZero(asset1Amount);
+  const asset2IsPresent = asset2Amount && !isZero(asset2Amount);
 
-  // Sell order
-  if (asset1Amount && !isZero(asset1Amount) && asset2Amount && isZero(asset2Amount)) {
+  // TODO: Properly calculate effectivePrice (need to subtract fee)
+
+  // Sell order: Offering to sell asset1
+  if (asset1IsPresent && !asset2IsPresent) {
     return [
       {
         side: 'Sell',
         tradeAmount: await assetIdToValueView(asset1Id, asset1Amount),
+        effectivePrice: await assetIdToValueView(asset2Id, asset2Amount),
+      },
+    ];
+  }
+
+  // Buy order: Offering to buy asset1
+  if (!asset1IsPresent && asset2IsPresent) {
+    return [
+      {
+        side: 'Buy',
+        tradeAmount: await assetIdToValueView(asset1Id, asset1Amount),
+        effectivePrice: await assetIdToValueView(asset2Id, asset2Amount),
+      },
+    ];
+  }
+
+  // Mixed order: offering to sell both assets
+  if (asset1IsPresent && asset2IsPresent) {
+    return [
+      {
+        side: 'Sell',
+        tradeAmount: await assetIdToValueView(asset1Id, asset1Amount),
+        effectivePrice: await assetIdToValueView(asset2Id, asset2Amount),
+      },
+      {
+        side: 'Sell',
+        tradeAmount: await assetIdToValueView(asset2Id, asset2Amount),
         effectivePrice: await assetIdToValueView(asset1Id, asset1Amount),
       },
     ];
   }
+
+  // If no valid orders are found, return an empty array
   return [];
 };
 
