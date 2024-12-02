@@ -33,6 +33,7 @@ export interface SummaryDataResponseJson {
   low: number;
   change: ChangeData;
   candles?: number[];
+  candleTimes?: Date[];
 }
 
 export class SummaryDataResponse {
@@ -46,6 +47,7 @@ export class SummaryDataResponse {
   low: number;
   change: ChangeData;
   candles?: number[];
+  candleTimes?: Date[];
 
   constructor({
     window,
@@ -58,6 +60,7 @@ export class SummaryDataResponse {
     baseAsset,
     quoteAsset,
     candles,
+    candleTimes,
   }: {
     window: DurationWindow;
     directVolume: ValueView;
@@ -69,6 +72,7 @@ export class SummaryDataResponse {
     baseAsset: Metadata;
     quoteAsset: Metadata;
     candles?: number[];
+    candleTimes?: Date[];
   }) {
     this.window = window;
     this.directVolume = directVolume;
@@ -80,6 +84,7 @@ export class SummaryDataResponse {
     this.baseAsset = baseAsset;
     this.quoteAsset = quoteAsset;
     this.candles = candles;
+    this.candleTimes = candleTimes;
   }
 
   static build(
@@ -87,6 +92,7 @@ export class SummaryDataResponse {
     baseAsset: Metadata,
     quoteAsset: Metadata,
     candles?: number[],
+    candleTimes?: Date[],
   ): SummaryDataResponse {
     const directVolume = toValueView({
       amount: summary.direct_volume_over_window,
@@ -122,6 +128,7 @@ export class SummaryDataResponse {
       liquidity,
       directVolume,
       candles,
+      candleTimes,
     });
   }
 
@@ -137,6 +144,7 @@ export class SummaryDataResponse {
       low: this.low,
       change: this.change,
       candles: this.candles,
+      candleTimes: this.candleTimes,
     };
   }
 
@@ -152,6 +160,7 @@ export class SummaryDataResponse {
       baseAsset: Metadata.fromJson(json.baseAsset),
       quoteAsset: Metadata.fromJson(json.quoteAsset),
       candles: json.candles,
+      candleTimes: json.candleTimes,
     });
   }
 }

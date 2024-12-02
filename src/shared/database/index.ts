@@ -85,39 +85,46 @@ class Pindexer {
     window,
     limit,
     offset,
+    stablecoins,
   }: {
     window: DurationWindow;
     limit: number;
     offset: number;
+    stablecoins: AssetId[];
   }) {
     // Selects only distinct pairs (USDT/USDC, but not reverse) with its data
     const summaryTable = this.db
       .selectFrom('dex_ex_pairs_summary')
+      // Filters out the reversed pairs (e.g. if found UM/OSMO, then there won't be OSMO/UM)
       .distinctOn(sql<string>`least(asset_start, asset_end), greatest(asset_start, asset_end)`)
       .selectAll()
-      .where('the_window', '=', window)
-      .where('price', '!=', 0);
-
-    /*
-      TODO: fix candles returning an array of 1 always
-     */
+      .where((exp) => exp.and([
+        exp.eb('the_window', '=', window),
+        exp.eb('price', '!=', 0),
+        // Filters out pairs where stablecoins are base assets (e.g. no USDC/UM, only UM/USDC)
+        exp.eb(exp.ref('asset_start'), 'not in', stablecoins.map((asset) => Buffer.from(asset.inner))),
+      ]))
 
     // Selects 1h-candles for the last 24 hours and aggregates them into a single array, ordering by assets
     const candlesTable = this.db
       .selectFrom('dex_ex_price_charts')
+      .groupBy(() => ['asset_start', 'asset_end'])
       .select(exp => [
         'asset_end',
         'asset_start',
-        // ARRAY_AGG(close ORDER BY start_time ASC) AS close -- produce a single array
+        // Produce arrays of candles and candle times per pair group
         sql<number[]>`array_agg(${exp.ref('close')} ORDER BY start_time ASC)`.as('candles'),
+        sql<Date[]>`array_agg(${exp.ref('start_time')} ORDER BY start_time ASC)`.as('candle_times'),
       ])
       .where(exp =>
         exp.and([
-          exp.eb('the_window', '=', window),
-          sql<boolean>`${exp.ref('start_time')} > NOW() - INTERVAL '24 hours'`,
+          exp.eb('the_window', '=', '1h'),
+          // TODO: remove the following two in favor of the commented one
+          sql<boolean>`${exp.ref('start_time')} > NOW() - INTERVAL '96 hours'`,
+          sql<boolean>`${exp.ref('start_time')} <= NOW() - INTERVAL '72 hours'`,
+          // sql<boolean>`${exp.ref('start_time')} > NOW() - INTERVAL '24 hours'`,
         ]),
-      )
-      .groupBy(() => ['asset_start', 'asset_end']);
+      );
 
     // Joins summaryTable with candlesTable to get pair info with the latest candles
     const joinedTable = this.db
@@ -127,6 +134,8 @@ class Pindexer {
           .onRef('candles.asset_start', '=', 'summary.asset_start')
           .onRef('candles.asset_end', '=', 'summary.asset_end'),
       )
+      // TODO: sort by volume expressed in USD. Question: how to get it expressed in USD?
+      .orderBy('trades_over_window', 'desc')
       .select([
         'summary.asset_start',
         'summary.asset_end',
@@ -141,6 +150,7 @@ class Pindexer {
         'summary.low',
         'summary.high',
         'candles.candles',
+        'candles.candle_times'
       ])
       .limit(limit)
       .offset(offset);
