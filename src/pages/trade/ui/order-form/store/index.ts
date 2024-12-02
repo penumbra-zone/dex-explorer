@@ -338,9 +338,7 @@ class OrderFormStore {
     });
 
     const txPlan = await plan(positionsReq);
-    console.log('TCL: OrderFormStore -> txPlan', txPlan);
     const fee = txPlan.transactionParameters?.fee;
-    console.log('TCL: OrderFormStore -> fee', fee);
     const feeValueView = new ValueView({
       valueView: {
         case: 'knownAssetId',
