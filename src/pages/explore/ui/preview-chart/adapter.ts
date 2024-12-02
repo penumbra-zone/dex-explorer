@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion -- we need to break the loop manually */
 
-export interface PreviewChartProps {
+export interface PreviewChartAdapterOptions {
   /** Array of prices */
   values: number[];
   /**
    * Array of dates where each date corresponds to a certain price from `values`.
-   * Always the same length as `values`. Must be sorted in ascending order without loosing the order of `values`.
+   * Always the same length as `values`.
    */
   dates: (string | Date)[];
   /** Amount of expected length for the resulting range array */
@@ -21,17 +21,14 @@ interface AdapterResult {
   value: number;
 }
 
-export const adaptData = (options: PreviewChartProps): AdapterResult[] => {
+/**
+ * Constructs an array of date-value pairs that fills the gaps between the existing data points.
+ */
+export const adaptData = (options: PreviewChartAdapterOptions): AdapterResult[] => {
   const { values, dates, intervals, from, to } = options;
 
-  if (values.length !== dates.length) {
-    throw new Error("The lengths of 'values' and 'dates' must be equal.");
-  }
-  if (intervals < 1) {
-    throw new Error("'intervals' must be at least 1.");
-  }
-  if (dates.length === 0) {
-    throw new Error("'dates' and 'values' cannot be empty.");
+  if (!values.length || !dates.length) {
+    return [];
   }
 
   // Generate equally spaced dates
@@ -75,9 +72,10 @@ const findClosestDateIndex = (
   date: Date,
   dateValuePairs: { date: Date; value: number }[],
 ): number => {
-  if (dateValuePairs.length === 0) {
-    throw new Error("The 'dateValuePairs' array cannot be empty.");
+  if (!dateValuePairs.length) {
+    return 0;
   }
+
   const targetTime = date.getTime();
   let low = 0;
   let high = dateValuePairs.length - 1;

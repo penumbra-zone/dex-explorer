@@ -15,7 +15,6 @@ import { AssetIcon } from '@penumbra-zone/ui/AssetIcon';
 import { SummaryDataResponse } from '@/shared/api/server/summary/types';
 import { Skeleton } from '@/shared/ui/skeleton';
 import SparklineChart from './sparkline-chart.svg';
-import { ShortChart } from './short-chart';
 import ChevronDown from './chevron-down.svg';
 import { PreviewChart } from './preview-chart';
 
@@ -68,7 +67,10 @@ export const PairCard = ({ loading, summary }: PairCardProps) => {
   const yesterday = subDays(new Date(), 4);
 
   return (
-    <Link href={loading ? `/trade` : `/trade/${summary.baseAsset.symbol}/${summary.quoteAsset.symbol}`} className='grid grid-cols-subgrid col-span-6 p-3 rounded-sm cursor-pointer transition-colors hover:bg-action-hoverOverlay'>
+    <Link
+      href={loading ? `/trade` : `/trade/${summary.baseAsset.symbol}/${summary.quoteAsset.symbol}`}
+      className='grid grid-cols-subgrid col-span-6 p-3 rounded-sm cursor-pointer transition-colors hover:bg-action-hoverOverlay'
+    >
       <div className='relative h-10 flex items-center gap-2 text-text-primary'>
         {loading ? (
           <div className='h-6 w-20'>
@@ -153,14 +155,13 @@ export const PairCard = ({ loading, summary }: PairCardProps) => {
             </div>
 
             <PreviewChart
+              sign={summary.change.sign}
               values={summary.candles ?? []}
               dates={summary.candleTimes ?? []}
               intervals={24}
               from={yesterday}
               to={today}
             />
-
-            <ShortChart sign={summary.change.sign} />
           </>
         )}
       </div>

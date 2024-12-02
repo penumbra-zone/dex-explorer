@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { adaptData, PreviewChartProps } from './adapter';
+import { adaptData, PreviewChartAdapterOptions } from './adapter';
 
 describe('preview-chart', () => {
   it('adapts the data correctly', () => {
@@ -12,9 +12,14 @@ describe('preview-chart', () => {
     const adaptedData = adaptData(TEST_DATA_2);
     expect(adaptedData).toStrictEqual(RESULT_DATA_2);
   });
+
+  it('handles mid data', () => {
+    const adaptedData = adaptData(TEST_DATA_3);
+    expect(adaptedData).toStrictEqual(RESULT_DATA_3);
+  });
 });
 
-const TEST_DATA_1: PreviewChartProps = {
+const TEST_DATA_1: PreviewChartAdapterOptions = {
   values: [1, 3, 2],
   dates: [
     new Date('2024-12-01T12:00:00'),
@@ -54,7 +59,7 @@ const RESULT_DATA_1 = [
 ];
 
 // Real life data - 15 values out of 24 hours
-const TEST_DATA_2: PreviewChartProps = {
+const TEST_DATA_2: PreviewChartAdapterOptions = {
   values: [
     1.0415348817880274, 0.9839694433333334, 1.0392439608148876, 1.0283755324651125,
     0.9512070351758792, 1, 1, 1.0095638190954774, 1.0068517034068136, 1.0262454909819638,
@@ -178,5 +183,29 @@ const RESULT_DATA_2 = [
   {
     date: new Date('2024-11-29T09:38:10.978Z'),
     value: 0.9641784983498348,
+  },
+];
+
+const TEST_DATA_3: PreviewChartAdapterOptions = {
+  values: [1, 3],
+  dates: [new Date('2024-12-01T12:00:00'), new Date('2024-12-01T14:00:00')],
+  intervals: 3,
+  from: new Date('2024-12-01T12:00:00'),
+  to: new Date('2024-12-01T14:00:00'),
+};
+
+const RESULT_DATA_3 = [
+  {
+    date: new Date('2024-12-01T08:00:00.000Z'),
+    value: 1,
+  },
+  // This is a mid-data generated from the adapter function
+  {
+    date: new Date('2024-12-01T09:00:00.000Z'),
+    value: 1,
+  },
+  {
+    date: new Date('2024-12-01T10:00:00.000Z'),
+    value: 3,
   },
 ];
