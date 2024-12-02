@@ -126,7 +126,7 @@ class Pindexer {
         exp.and([
           exp.eb('the_window', '=', '1h'),
           // TODO: remove the following two in favor of the commented one
-          sql<boolean>`${exp.ref('start_time')} > NOW() - INTERVAL '96 hours'`,
+          sql<boolean>`${exp.ref('start_time')} >= NOW() - INTERVAL '96 hours'`,
           sql<boolean>`${exp.ref('start_time')} <= NOW() - INTERVAL '72 hours'`,
           // sql<boolean>`${exp.ref('start_time')} > NOW() - INTERVAL '24 hours'`,
         ]),
@@ -160,7 +160,7 @@ class Pindexer {
       ])
       .limit(limit)
       .offset(offset);
-    
+
     return joinedTable.execute();
   }
 }
