@@ -11,13 +11,19 @@ import { AssetId, ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/
 import { bech32mPositionId } from '@penumbra-zone/bech32m/plpid';
 import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
 import { registryQueryFn } from '@/shared/api/registry.ts';
+import { isZero } from '@penumbra-zone/types/amount';
+
+interface Order {
+  side: 'Buy' | 'Sell';
+  tradeAmount: ValueView;
+  effectivePrice: ValueView;
+}
 
 interface PositionData {
   positionId: string;
   positionState: PositionStateStr;
   fee: number;
-  asset1: ValueView;
-  asset2: ValueView;
+  orders: Order[];
 }
 
 const assetIdToValueView = async (assetId?: AssetId, amount?: Amount) => {
@@ -38,19 +44,36 @@ const assetIdToValueView = async (assetId?: AssetId, amount?: Amount) => {
   }
 };
 
-const positionToDisplayData = async (id: PositionId, position: Position): Promise<PositionData> => {
+const getOrders = async (position: Position): Promise<Order[]> => {
+  const fee = position.phi?.component?.fee ?? 0;
   const asset1Id = position.phi?.pair?.asset1;
   const asset1Amount = position.reserves?.r1;
 
   const asset2Id = position.phi?.pair?.asset2;
   const asset2Amount = position.reserves?.r2;
 
+  console.log('asset1Amount', asset1Amount);
+  console.log('asset2Amount', asset2Amount);
+
+  // Sell order
+  if (asset1Amount && !isZero(asset1Amount) && asset2Amount && isZero(asset2Amount)) {
+    return [
+      {
+        side: 'Sell',
+        tradeAmount: await assetIdToValueView(asset1Id, asset1Amount),
+        effectivePrice: await assetIdToValueView(asset1Id, asset1Amount),
+      },
+    ];
+  }
+  return [];
+};
+
+const positionToDisplayData = async (id: PositionId, position: Position): Promise<PositionData> => {
   return {
     positionId: bech32mPositionId(id),
     positionState: stateToString(position.state?.state),
     fee: position.phi?.component?.fee ?? 0,
-    asset1: await assetIdToValueView(asset1Id, asset1Amount),
-    asset2: await assetIdToValueView(asset2Id, asset2Amount),
+    orders: await getOrders(position),
   };
 };
 
@@ -95,27 +118,27 @@ export const usePositions = () => {
   });
 };
 
-type PositionStateStr = 'UNSPECIFIED' | 'OPENED' | 'CLOSED' | 'WITHDRAWN' | 'CLAIMED';
+type PositionStateStr = 'unspecified' | 'opened' | 'closed' | 'withdrawn' | 'claimed';
 
 export const stateToString = (state?: PositionState_PositionStateEnum): PositionStateStr => {
   switch (state) {
     case PositionState_PositionStateEnum.UNSPECIFIED: {
-      return 'UNSPECIFIED';
+      return 'unspecified';
     }
     case PositionState_PositionStateEnum.OPENED: {
-      return 'OPENED';
+      return 'opened';
     }
     case PositionState_PositionStateEnum.CLOSED: {
-      return 'CLOSED';
+      return 'closed';
     }
     case PositionState_PositionStateEnum.WITHDRAWN: {
-      return 'WITHDRAWN';
+      return 'withdrawn';
     }
     case PositionState_PositionStateEnum.CLAIMED: {
-      return 'CLAIMED';
+      return 'claimed';
     }
     case undefined: {
-      return 'UNSPECIFIED';
+      return 'unspecified';
     }
   }
 };

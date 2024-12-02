@@ -12,7 +12,7 @@ import { Density } from '@penumbra-zone/ui/Density';
 const LoadingRow = () => {
   return (
     <div className='grid grid-cols-8 text-text-secondary border-b border-other-tonalStroke'>
-      {Array.from({ length: 8 }).map((_, index) => (
+      {Array.from({ length: 7 }).map((_, index) => (
         <LoadingCell key={index} />
       ))}
     </div>
@@ -54,7 +54,6 @@ const PositionsInner = observer(() => {
   return (
     <div className='pt-4 px-4 pb-0 overflow-x-auto'>
       <div className='sticky top-0 z-10 grid grid-cols-8 text-text-secondary border-b border-other-tonalStroke bg-app-main'>
-        <HeaderCell>Time</HeaderCell>
         <HeaderCell>Side</HeaderCell>
         <HeaderCell>Trade Amount</HeaderCell>
         <HeaderCell>Effective Price</HeaderCell>
@@ -68,24 +67,25 @@ const PositionsInner = observer(() => {
 
       <Density compact>
         {data
-          ?.filter(p => p.positionState === 'OPENED')
+          ?.filter(p => p.positionState === 'opened')
           .map(p => (
             <div key={p.positionId} className='grid grid-cols-8 border-b border-other-tonalStroke'>
               <Cell>
-                <Text detail color='text.secondary'>
-                  -
-                </Text>
+                {p.orders.map((o, i) => (
+                  <Text detail color='text.secondary' key={i}>
+                    {o.side}
+                  </Text>
+                ))}
               </Cell>
               <Cell>
-                <Text detail color='text.secondary'>
-                  -
-                </Text>
+                {p.orders.map((o, i) => (
+                  <ValueViewComponent valueView={o.tradeAmount} context='table' key={i} />
+                ))}
               </Cell>
               <Cell>
-                <ValueViewComponent valueView={p.asset1} context='table' />
-              </Cell>
-              <Cell>
-                <ValueViewComponent valueView={p.asset2} context='table' />
+                {p.orders.map((o, i) => (
+                  <ValueViewComponent valueView={o.effectivePrice} context='table' key={i} />
+                ))}
               </Cell>
               <Cell>
                 <Text detail color='text.secondary'>
