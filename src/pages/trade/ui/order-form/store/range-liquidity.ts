@@ -54,6 +54,7 @@ export class RangeLiquidity {
   positions?: number;
   marketPrice?: number;
   exponent?: number;
+  onFieldChangeCallback?: () => Promise<void>;
 
   constructor() {
     makeAutoObservable(this);
@@ -76,6 +77,9 @@ export class RangeLiquidity {
 
   setLowerBound = (amount: string) => {
     this.lowerBound = Number(round({ value: Number(amount), decimals: this.exponent ?? 0 }));
+    if (this.onFieldChangeCallback) {
+      void this.onFieldChangeCallback();
+    }
   };
 
   setLowerBoundOption = (option: LowerBoundOptions) => {
@@ -87,18 +91,30 @@ export class RangeLiquidity {
         }),
       );
     }
+    if (this.onFieldChangeCallback) {
+      void this.onFieldChangeCallback();
+    }
   };
 
   setFeeTier = (feeTier: string) => {
     this.feeTier = Number(feeTier);
+    if (this.onFieldChangeCallback) {
+      void this.onFieldChangeCallback();
+    }
   };
 
   setFeeTierOption = (option: FeeTierOptions) => {
     this.feeTier = FeeTierValues[option];
+    if (this.onFieldChangeCallback) {
+      void this.onFieldChangeCallback();
+    }
   };
 
   setPositions = (positions: number | string) => {
     this.positions = Number(positions);
+    if (this.onFieldChangeCallback) {
+      void this.onFieldChangeCallback();
+    }
   };
 
   setMarketPrice = (price: number) => {
@@ -107,5 +123,9 @@ export class RangeLiquidity {
 
   setExponent = (exponent: number) => {
     this.exponent = exponent;
+  };
+
+  onFieldChange = (callback: () => Promise<void>): void => {
+    this.onFieldChangeCallback = callback;
   };
 }

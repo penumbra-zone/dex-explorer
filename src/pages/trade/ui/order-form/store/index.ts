@@ -141,6 +141,9 @@ class OrderFormStore {
       debouncedHandleAmountChange as (asset: OrderFormAsset) => Promise<void>,
     );
 
+    const debouncedCalculateGasFee = debounce(this.calculateGasFee, 500);
+    this.rangeLiquidity.onFieldChange(debouncedCalculateGasFee as () => Promise<void>);
+
     this.setBalancesOfAssets();
     void this.calculateGasFee();
     void this.calculateExchangeRate();
@@ -189,7 +192,7 @@ class OrderFormStore {
     this.exchangeRate = Number(outputAmount);
   };
 
-  calculateGasFee = async (): Promise<void> => {
+  calculateMarketGasFee = async (): Promise<void> => {
     this.gasFee = null;
 
     const isBuy = this.direction === Direction.Buy;
@@ -229,6 +232,137 @@ class OrderFormStore {
 
     const feeAmount = getFormattedAmtFromValueView(feeValueView, true);
     this.gasFee = Number(feeAmount);
+  };
+
+  constructRangePosition = ({
+    positionIndex,
+    quoteAssetUnitAmount,
+    baseAssetUnitAmount,
+    positionUnitAmount,
+  }: {
+    positionIndex: number;
+    quoteAssetUnitAmount: bigint;
+    baseAssetUnitAmount: bigint;
+    positionUnitAmount: bigint;
+  }) => {
+    const { lowerBound, upperBound, positions, marketPrice, feeTier } = this
+      .rangeLiquidity as Required<typeof this.rangeLiquidity>;
+
+    const i = positionIndex;
+    const price = lowerBound + (i * (upperBound - lowerBound)) / (positions - 1);
+    const priceValue = BigNumber(price).multipliedBy(
+      new BigNumber(10).pow(this.quoteAsset.exponent ?? 0),
+    );
+    const priceUnit = BigInt(priceValue.toFixed(0));
+
+    // Cross-multiply exponents and prices for trading function coefficients
+    //
+    // We want to write
+    // p = EndUnit * price
+    // q = StartUnit
+    // However, if EndUnit is too small, it might not round correctly after multiplying by price
+    // To handle this, conditionally apply a scaling factor if the EndUnit amount is too small.
+    const scale = quoteAssetUnitAmount < 1_000_000n ? 1_000_000n : 1n;
+    const p = new Amount(splitLoHi(quoteAssetUnitAmount * scale * priceUnit));
+    const q = new Amount(splitLoHi(baseAssetUnitAmount * scale));
+
+    // Compute reserves
+    // Fund the position with asset 1 if its price exceeds the current price,
+    // matching the target per-position amount of asset 2. Otherwise, fund with
+    // asset 2 to avoid immediate arbitrage.
+    const reserves =
+      price < marketPrice
+        ? {
+            r1: new Amount(splitLoHi(0n)),
+            r2: new Amount(splitLoHi(positionUnitAmount)),
+          }
+        : {
+            r1: new Amount(
+              splitLoHi(BigInt(round({ value: Number(positionUnitAmount) / price, decimals: 0 }))),
+            ),
+            r2: new Amount(splitLoHi(0n)),
+          };
+
+    return {
+      position: new Position({
+        phi: {
+          component: { fee: feeTier * 100, p, q },
+          pair: new TradingPair({
+            asset1: this.baseAsset.assetId,
+            asset2: this.quoteAsset.assetId,
+          }),
+        },
+        nonce: crypto.getRandomValues(new Uint8Array(32)),
+        state: new PositionState({ state: PositionState_PositionStateEnum.OPENED }),
+        reserves,
+        closeOnFill: false,
+      }),
+    };
+  };
+
+  calculateRangeLiquidityGasFee = async (): Promise<void> => {
+    this.gasFee = null;
+
+    const { lowerBound, upperBound, positions, marketPrice, feeTier } = this.rangeLiquidity;
+    if (
+      !this.quoteAsset.amount ||
+      !lowerBound ||
+      !upperBound ||
+      !positions ||
+      !marketPrice ||
+      !feeTier
+    ) {
+      this.gasFee = 0;
+      return;
+    }
+
+    if (lowerBound > upperBound) {
+      this.gasFee = 0;
+      return;
+    }
+
+    const baseAssetUnitAmount = this.baseAsset.toUnitAmount();
+    const quoteAssetUnitAmount = this.quoteAsset.toUnitAmount();
+    const positionUnitAmount = quoteAssetUnitAmount / BigInt(positions);
+
+    const positionsReq = new TransactionPlannerRequest({
+      positionOpens: times(positions, i =>
+        this.constructRangePosition({
+          positionIndex: i,
+          quoteAssetUnitAmount,
+          baseAssetUnitAmount,
+          positionUnitAmount,
+        }),
+      ),
+      source: this.quoteAsset.accountIndex,
+    });
+
+    const txPlan = await plan(positionsReq);
+    console.log('TCL: OrderFormStore -> txPlan', txPlan);
+    const fee = txPlan.transactionParameters?.fee;
+    console.log('TCL: OrderFormStore -> fee', fee);
+    const feeValueView = new ValueView({
+      valueView: {
+        case: 'knownAssetId',
+        value: {
+          amount: fee?.amount ?? { hi: 0n, lo: 0n },
+          metadata: this.baseAsset.metadata,
+        },
+      },
+    });
+
+    const feeAmount = getFormattedAmtFromValueView(feeValueView, true);
+    this.gasFee = Number(feeAmount);
+  };
+
+  calculateGasFee = async (): Promise<void> => {
+    if (this.type === FormType.Market) {
+      await this.calculateMarketGasFee();
+    }
+
+    if (this.type === FormType.RangeLiquidity) {
+      await this.calculateRangeLiquidityGasFee();
+    }
   };
 
   initiateSwapTx = async (): Promise<void> => {
@@ -312,67 +446,15 @@ class OrderFormStore {
       const positionUnitAmount = quoteAssetUnitAmount / BigInt(positions);
 
       const positionsReq = new TransactionPlannerRequest({
-        positionOpens: times(positions, i => {
-          const price = lowerBound + (i * (upperBound - lowerBound)) / (positions - 1);
-          const priceValue = BigNumber(price).multipliedBy(
-            new BigNumber(10).pow(this.quoteAsset.exponent ?? 0),
-          );
-          const priceUnit = BigInt(priceValue.toFixed(0));
-
-          // Cross-multiply exponents and prices for trading function coefficients
-          //
-          // We want to write
-          // p = EndUnit * price
-          // q = StartUnit
-          // However, if EndUnit is too small, it might not round correctly after multiplying by price
-          // To handle this, conditionally apply a scaling factor if the EndUnit amount is too small.
-          const scale = quoteAssetUnitAmount < 1_000_000n ? 1_000_000n : 1n;
-          const p = new Amount(splitLoHi(quoteAssetUnitAmount * scale * priceUnit));
-          const q = new Amount(splitLoHi(baseAssetUnitAmount * scale));
-
-          // Compute reserves
-          // Fund the position with asset 1 if its price exceeds the current price,
-          // matching the target per-position amount of asset 2. Otherwise, fund with
-          // asset 2 to avoid immediate arbitrage.
-          const reserves =
-            price < marketPrice
-              ? {
-                  r1: new Amount(splitLoHi(0n)),
-                  r2: new Amount(splitLoHi(positionUnitAmount)),
-                }
-              : {
-                  r1: new Amount(
-                    splitLoHi(
-                      BigInt(round({ value: Number(positionUnitAmount) / price, decimals: 0 })),
-                    ),
-                  ),
-                  r2: new Amount(splitLoHi(0n)),
-                };
-
-          return {
-            position: new Position({
-              phi: {
-                component: { p, q },
-                pair: new TradingPair({
-                  asset1: this.baseAsset.assetId,
-                  asset2: this.quoteAsset.assetId,
-                }),
-              },
-              nonce: crypto.getRandomValues(new Uint8Array(32)),
-              state: new PositionState({ state: PositionState_PositionStateEnum.OPENED }),
-              reserves,
-              closeOnFill: true,
-            }),
-          };
-        }),
+        positionOpens: times(positions, i =>
+          this.constructRangePosition({
+            positionIndex: i,
+            quoteAssetUnitAmount,
+            baseAssetUnitAmount,
+            positionUnitAmount,
+          }),
+        ),
         source: this.quoteAsset.accountIndex,
-        // feeMode: {
-        //   case: 'manualFee',
-        //   value: {
-        //     amount: splitLoHi(BigInt(feeTier * 100)),
-        //     assetId: this.baseAsset.assetId,
-        //   },
-        // },
       });
 
       await planBuildBroadcast('positionOpen', positionsReq);

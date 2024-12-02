@@ -32,11 +32,13 @@ export const FormTabs = () => {
         </Density>
       </div>
 
-      {tab === FormTabsType.Market && <MarketOrderForm />}
-      {tab === FormTabsType.Limit && (
-        <div className='h-[380px] p-4 text-text-secondary'>Limit order form</div>
-      )}
-      {tab === FormTabsType.Range && <RangeLiquidityOrderForm />}
+      <div className='overflow-y-auto'>
+        {tab === FormTabsType.Market && <MarketOrderForm />}
+        {tab === FormTabsType.Limit && (
+          <div className='h-[380px] p-4 text-text-secondary'>Limit order form</div>
+        )}
+        {tab === FormTabsType.Range && <RangeLiquidityOrderForm />}
+      </div>
     </div>
   );
 };
