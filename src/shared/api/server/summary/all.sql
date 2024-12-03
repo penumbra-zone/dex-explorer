@@ -40,9 +40,7 @@ inner join (
     from "dex_ex_price_charts"
     where (
         "the_window" = '1h' and
-        -- TODO: change to the latest 24h instead of the 3 days ago
-        "start_time" > NOW() - INTERVAL '96 hours' and
-        "start_time" <= NOW() - INTERVAL '72 hours'
+        "start_time" >= NOW() - INTERVAL '24 hours'
     )
     group by "asset_start", "asset_end"
 ) as "candles"

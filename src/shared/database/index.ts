@@ -82,15 +82,23 @@ class Pindexer {
 
   // Paginated pair summaries
   async summaries({
-    window,
+    window = '1d',
+    candlesWindow = '1h',
+    candlesInterval = '24 hours',
     limit,
     offset,
     stablecoins,
   }: {
+    /** Window duration of information of the pairs */
     window: DurationWindow;
+    /** Window duration of candles selected for each pair */
+    candlesWindow?: DurationWindow;
+    /** Select candles starting from `NOW - candlesInterval` time till now */
+    candlesInterval?: `${number}${number} hours` | `${number} hour`;
+    /** The list of AssetIDs to exclude from base assets (stable coins can only be quote assets) */
+    stablecoins: AssetId[];
     limit: number;
     offset: number;
-    stablecoins: AssetId[];
   }) {
     // Selects only distinct pairs (USDT/USDC, but not reverse) with its data
     const summaryTable = this.db
@@ -124,11 +132,8 @@ class Pindexer {
       ])
       .where(exp =>
         exp.and([
-          exp.eb('the_window', '=', '1h'),
-          // TODO: remove the following two in favor of the commented one
-          sql<boolean>`${exp.ref('start_time')} >= NOW() - INTERVAL '96 hours'`,
-          sql<boolean>`${exp.ref('start_time')} <= NOW() - INTERVAL '72 hours'`,
-          // sql<boolean>`${exp.ref('start_time')} > NOW() - INTERVAL '24 hours'`,
+          exp.eb('the_window', '=', candlesWindow),
+          sql<boolean>`${exp.ref('start_time')} >= NOW() - CAST(${candlesInterval} AS INTERVAL)`,
         ]),
       );
 

@@ -62,9 +62,8 @@ export type PairCardProps =
     };
 
 export const PairCard = ({ loading, summary }: PairCardProps) => {
-  // TODO: change to correct dates
-  const today = subDays(new Date(), 3);
-  const yesterday = subDays(new Date(), 4);
+  const today = new Date();
+  const yesterday = subDays(new Date(), 1);
 
   return (
     <Link
