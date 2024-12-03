@@ -132,17 +132,15 @@ class OrderFormStore {
     this.baseAsset = new OrderFormAsset(baseAsset);
     this.quoteAsset = new OrderFormAsset(quoteAsset);
 
-    const debouncedHandleAmountChange = debounce(this.handleAmountChange, 500);
+    const debouncedHandleAmountChange = debounce(this.handleAmountChange, 500) as (
+      asset: OrderFormAsset,
+    ) => Promise<void>;
 
-    this.baseAsset.onAmountChange(
-      debouncedHandleAmountChange as (asset: OrderFormAsset) => Promise<void>,
-    );
-    this.quoteAsset.onAmountChange(
-      debouncedHandleAmountChange as (asset: OrderFormAsset) => Promise<void>,
-    );
+    this.baseAsset.onAmountChange(debouncedHandleAmountChange);
+    this.quoteAsset.onAmountChange(debouncedHandleAmountChange);
 
-    const debouncedCalculateGasFee = debounce(this.calculateGasFee, 500);
-    this.rangeLiquidity.onFieldChange(debouncedCalculateGasFee as () => Promise<void>);
+    const debouncedCalculateGasFee = debounce(this.calculateGasFee, 500) as () => Promise<void>;
+    this.rangeLiquidity.onFieldChange(debouncedCalculateGasFee);
 
     this.setBalancesOfAssets();
     void this.calculateGasFee();

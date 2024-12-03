@@ -17,7 +17,7 @@ export const RangeLiquidityOrderForm = observer(() => {
   const { baseAsset, quoteAsset, rangeLiquidity, submitOrder, isLoading, gasFee, exchangeRate } =
     useOrderFormStore(FormType.RangeLiquidity);
   const { data } = useSummary('1d');
-  const price = data && 'price' in data ? data.price : null;
+  const price = data && 'price' in data ? data.price : undefined;
 
   useEffect(() => {
     if (price) {
@@ -38,7 +38,7 @@ export const RangeLiquidityOrderForm = observer(() => {
           <OrderInput
             label='Liquidity Amount'
             value={quoteAsset.amount}
-            onChange={quoteAsset.setAmount as (amount: string, ...args: unknown[]) => void}
+            onChange={amount => quoteAsset.setAmount(amount)}
             denominator={quoteAsset.symbol}
           />
         </div>
@@ -68,7 +68,7 @@ export const RangeLiquidityOrderForm = observer(() => {
         </div>
         <SelectGroup
           options={Object.values(UpperBoundOptions)}
-          onChange={rangeLiquidity.setUpperBoundOption as (option: string) => void}
+          onChange={option => rangeLiquidity.setUpperBoundOption(option as UpperBoundOptions)}
         />
       </div>
       <div className='mb-4'>
@@ -82,7 +82,7 @@ export const RangeLiquidityOrderForm = observer(() => {
         </div>
         <SelectGroup
           options={Object.values(LowerBoundOptions)}
-          onChange={rangeLiquidity.setLowerBoundOption as (option: string) => void}
+          onChange={option => rangeLiquidity.setLowerBoundOption(option as LowerBoundOptions)}
         />
       </div>
       <div className='mb-4'>
