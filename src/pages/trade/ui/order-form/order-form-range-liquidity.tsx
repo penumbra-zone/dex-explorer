@@ -9,6 +9,7 @@ import { useSummary } from '../../model/useSummary';
 import { OrderInput } from './order-input';
 import { SelectGroup } from './select-group';
 import { InfoRow } from './info-row';
+import { InfoRowGasFee } from './info-row-gas-fee';
 import { useOrderFormStore, FormType } from './store';
 import { UpperBoundOptions, LowerBoundOptions, FeeTierOptions } from './store/range-liquidity';
 
@@ -122,13 +123,7 @@ export const RangeLiquidityOrderForm = observer(() => {
         <InfoRow label='Number of positions' value={rangeLiquidity.positions} toolTip='' />
         <InfoRow label='Base asset amount' value={baseAsset.amount} toolTip='' />
         <InfoRow label='Quote asset amount' value={quoteAsset.amount} toolTip='' />
-        <InfoRow
-          label='Gas Fee'
-          isLoading={gasFee === null}
-          value={`${gasFee} ${baseAsset.symbol}`}
-          valueColor='success'
-          toolTip='Gas fees tooltip here.'
-        />
+        <InfoRowGasFee gasFee={gasFee} symbol={baseAsset.symbol} />
       </div>
       <div className='mb-4'>
         {connected ? (

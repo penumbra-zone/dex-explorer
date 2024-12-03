@@ -29,6 +29,7 @@ import { plan, planBuildBroadcast } from '../helpers';
 import { usePathToMetadata } from '../../../model/use-path';
 import { OrderFormAsset } from './asset';
 import { RangeLiquidity } from './range-liquidity';
+import { LimitOrder } from './limit-order';
 import BigNumber from 'bignumber.js';
 
 export enum Direction {
@@ -48,6 +49,7 @@ class OrderFormStore {
   baseAsset = new OrderFormAsset();
   quoteAsset = new OrderFormAsset();
   rangeLiquidity = new RangeLiquidity();
+  limitOrder = new LimitOrder();
   balances: BalancesResponse[] | undefined;
   exchangeRate: number | null = null;
   gasFee: number | null = null;
@@ -298,6 +300,66 @@ class OrderFormStore {
     };
   };
 
+  constructLimitPosition = ({
+    quoteAssetUnitAmount,
+    baseAssetUnitAmount,
+  }: {
+    quoteAssetUnitAmount: bigint;
+    baseAssetUnitAmount: bigint;
+  }) => {
+    const { price, marketPrice } = this.limitOrder as Required<typeof this.limitOrder>;
+    const priceValue = BigNumber(price).multipliedBy(
+      new BigNumber(10).pow(this.quoteAsset.exponent ?? 0),
+    );
+    const priceUnit = BigInt(priceValue.toFixed(0));
+
+    // Cross-multiply exponents and prices for trading function coefficients
+    //
+    // We want to write
+    // p = EndUnit * price
+    // q = StartUnit
+    // However, if EndUnit is too small, it might not round correctly after multiplying by price
+    // To handle this, conditionally apply a scaling factor if the EndUnit amount is too small.
+    const scale = quoteAssetUnitAmount < 1_000_000n ? 1_000_000n : 1n;
+    const p = new Amount(splitLoHi(quoteAssetUnitAmount * scale * priceUnit));
+    const q = new Amount(splitLoHi(baseAssetUnitAmount * scale));
+
+    // Compute reserves
+    // Fund the position with asset 1 if its price exceeds the current price,
+    // matching the target per-position amount of asset 2. Otherwise, fund with
+    // asset 2 to avoid immediate arbitrage.
+    const reserves =
+      price < marketPrice
+        ? {
+            r1: new Amount(splitLoHi(0n)),
+            r2: new Amount(splitLoHi(quoteAssetUnitAmount)),
+          }
+        : {
+            r1: new Amount(
+              splitLoHi(
+                BigInt(round({ value: Number(quoteAssetUnitAmount) / price, decimals: 0 })),
+              ),
+            ),
+            r2: new Amount(splitLoHi(0n)),
+          };
+
+    return {
+      position: new Position({
+        phi: {
+          component: { fee: feeTier * 100, p, q },
+          pair: new TradingPair({
+            asset1: this.baseAsset.assetId,
+            asset2: this.quoteAsset.assetId,
+          }),
+        },
+        nonce: crypto.getRandomValues(new Uint8Array(32)),
+        state: new PositionState({ state: PositionState_PositionStateEnum.OPENED }),
+        reserves,
+        closeOnFill: false,
+      }),
+    };
+  };
+
   calculateRangeLiquidityGasFee = async (): Promise<void> => {
     this.gasFee = null;
 
@@ -408,6 +470,41 @@ class OrderFormStore {
     }
   };
 
+  initiatePositionTx = async (): Promise<void> => {
+    try {
+      this.isLoading = true;
+
+      const { price } = this.limitOrder;
+      if (!price) {
+        openToast({
+          type: 'error',
+          message: 'Please enter a valid limit price.',
+        });
+        return;
+      }
+
+      const baseAssetUnitAmount = this.baseAsset.toUnitAmount();
+      const quoteAssetUnitAmount = this.quoteAsset.toUnitAmount();
+
+      const positionsReq = new TransactionPlannerRequest({
+        positionOpens: [
+          this.constructLimitPosition({
+            quoteAssetUnitAmount,
+            baseAssetUnitAmount,
+          }),
+        ],
+        source: this.quoteAsset.accountIndex,
+      });
+
+      await planBuildBroadcast('positionOpen', positionsReq);
+
+      this.baseAsset.unsetAmount();
+      this.quoteAsset.unsetAmount();
+    } finally {
+      this.isLoading = false;
+    }
+  };
+
   // ref: https://github.com/penumbra-zone/penumbra/blob/main/crates/bin/pcli/src/command/tx/replicate/linear.rs
   initiatePositionsTx = async (): Promise<void> => {
     try {
@@ -465,6 +562,10 @@ class OrderFormStore {
   submitOrder = (): void => {
     if (this.type === FormType.Market) {
       void this.initiateSwapTx();
+    }
+
+    if (this.type === FormType.Limit) {
+      void this.initiatePositionTx();
     }
 
     if (this.type === FormType.RangeLiquidity) {
