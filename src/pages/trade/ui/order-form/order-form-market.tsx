@@ -6,7 +6,8 @@ import { OrderInput } from './order-input';
 import { SegmentedControl } from './segmented-control';
 import { ConnectButton } from '@/features/connect/connect-button';
 import { Slider } from './slider';
-import { InfoRow } from './info-row';
+import { InfoRowGasFee } from './info-row-gas-fee';
+import { InfoRowTradingFee } from './info-row-trading-fee';
 import { useOrderFormStore, FormType, Direction } from './store';
 
 export const MarketOrderForm = observer(() => {
@@ -51,19 +52,8 @@ export const MarketOrderForm = observer(() => {
       </div>
       <Slider steps={8} asset={isBuy ? quoteAsset : baseAsset} />
       <div className='mb-4'>
-        <InfoRow
-          label='Trading Fee'
-          value='Free'
-          valueColor='success'
-          toolTip='On Penumbra, trading fees are completely free.'
-        />
-        <InfoRow
-          label='Gas Fee'
-          isLoading={gasFee === null}
-          value={`${gasFee} ${baseAsset.symbol}`}
-          valueColor='success'
-          toolTip='Gas fees tooltip here.'
-        />
+        <InfoRowTradingFee />
+        <InfoRowGasFee gasFee={gasFee} symbol={baseAsset.symbol} />
       </div>
       <div className='mb-4'>
         {connected ? (
