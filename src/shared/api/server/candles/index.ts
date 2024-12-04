@@ -61,7 +61,5 @@ export async function GET(req: NextRequest): Promise<NextResponse<CandleApiRespo
 
   const response = insertEmptyCandles(durationWindow, candles.map(dbCandleToOhlc));
 
-  // console.log(isSortedAscending(response));
-
   return NextResponse.json(response);
 }
