@@ -1,5 +1,5 @@
 import { makeAutoObservable } from 'mobx';
-import { round } from '@penumbra-zone/types/round';
+import { pnum } from '../pnum';
 
 export enum SellLimitOrderOptions {
   Market = 'Market',
@@ -34,7 +34,7 @@ export const SellLimitOrderMultipliers = {
 };
 
 export class LimitOrder {
-  price?: number;
+  priceInput?: string | number;
   exponent?: number;
   marketPrice?: number;
 
@@ -42,29 +42,23 @@ export class LimitOrder {
     makeAutoObservable(this);
   }
 
-  setPrice = (amount: string) => {
-    this.price = Number(round({ value: Number(amount), decimals: this.exponent ?? 0 }));
+  get price(): string {
+    return pnum(this.priceInput, this.exponent).toRoundedString();
+  }
+
+  setPrice = (price: string) => {
+    this.priceInput = price;
   };
 
   setBuyLimitPriceOption = (option: BuyLimitOrderOptions) => {
     if (this.marketPrice) {
-      this.price = Number(
-        round({
-          value: this.marketPrice * BuyLimitOrderMultipliers[option],
-          decimals: this.exponent ?? 0,
-        }),
-      );
+      this.priceInput = this.marketPrice * BuyLimitOrderMultipliers[option];
     }
   };
 
   setSellLimitPriceOption = (option: SellLimitOrderOptions) => {
     if (this.marketPrice) {
-      this.price = Number(
-        round({
-          value: this.marketPrice * SellLimitOrderMultipliers[option],
-          decimals: this.exponent ?? 0,
-        }),
-      );
+      this.priceInput = this.marketPrice * SellLimitOrderMultipliers[option];
     }
   };
 
