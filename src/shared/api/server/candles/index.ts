@@ -4,7 +4,6 @@ import { pindexer } from '@/shared/database';
 import { CandleApiResponse } from '@/shared/api/server/candles/types.ts';
 import { dbCandleToOhlc, insertEmptyCandles } from '@/shared/api/server/candles/utils.ts';
 import { durationWindows, isDurationWindow } from '@/shared/utils/duration.ts';
-import { OhlcData } from 'lightweight-charts';
 
 export async function GET(req: NextRequest): Promise<NextResponse<CandleApiResponse>> {
   const grpcEndpoint = process.env['PENUMBRA_GRPC_ENDPOINT'];
