@@ -10,11 +10,11 @@ import { removeTrailingZeros } from '@penumbra-zone/types/shortify';
  * pnum (penumbra number)
  *
  * In Penumbra a number can be in the form of a base unit (bigint, LoHi, Amount, ValueView)
- * or a number in decimals for display purposes (string, number)
+ * or a number with decimals for display purposes (string, number)
  *
- * This constructor handles all these cases and automatically converts them to a BigNumber
- * - when the input is a bigint, LoHi, Amount, or ValueView, it is assumed to be in base units
- * - when the input is a string or number, it is multiplied by 10^exponent and converted to base units
+ * This function handles all these cases automatically internally
+ * - when input is a bigint, LoHi, Amount, or ValueView, it is assumed to be in base units
+ * - when input is a string or number, it is multiplied by 10^exponent and converted to base units
  *
  * Likewise for all methods, the outputs are
  * - in base units for bigint, LoHi, Amount and ValueView
