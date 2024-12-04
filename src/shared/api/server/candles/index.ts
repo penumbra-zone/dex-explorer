@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ChainRegistryClient } from '@penumbra-labs/registry';
 import { pindexer } from '@/shared/database';
 import { CandleApiResponse } from '@/shared/api/server/candles/types.ts';
-import { dbCandleToOhlc } from '@/shared/api/server/candles/utils.ts';
+import { dbCandleToOhlc, insertEmptyCandles } from '@/shared/api/server/candles/utils.ts';
 import { durationWindows, isDurationWindow } from '@/shared/utils/duration.ts';
+import { OhlcData } from 'lightweight-charts';
 
 export async function GET(req: NextRequest): Promise<NextResponse<CandleApiResponse>> {
   const grpcEndpoint = process.env['PENUMBRA_GRPC_ENDPOINT'];
@@ -58,7 +59,9 @@ export async function GET(req: NextRequest): Promise<NextResponse<CandleApiRespo
     chainId,
   });
 
-  const response = candles.map(dbCandleToOhlc);
+  const response = insertEmptyCandles(durationWindow, candles.map(dbCandleToOhlc));
+
+  // console.log(isSortedAscending(response));
 
   return NextResponse.json(response);
 }

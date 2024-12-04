@@ -120,9 +120,11 @@ const ChartLoadingState = () => {
 };
 
 const ChartData = observer(({ candles }: { candles: OhlcData[] }) => {
-  const chartElRef = useRef<HTMLInputElement>(null);
-  const chartRef = useRef<IChartApi | null>(null);
+  const chartElRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi>();
+  const seriesRef = useRef<ReturnType<IChartApi['addCandlestickSeries']>>();
 
+  // Initialize the chart once when the component mounts
   useEffect(() => {
     if (chartElRef.current && !chartRef.current) {
       chartRef.current = createChart(chartElRef.current, {
@@ -142,31 +144,34 @@ const ChartData = observer(({ candles }: { candles: OhlcData[] }) => {
           },
         },
       });
+
+      // Initialize the series
+      seriesRef.current = chartRef.current.addCandlestickSeries({
+        upColor: theme.color.success.light,
+        downColor: theme.color.destructive.light,
+        borderVisible: false,
+        wickUpColor: theme.color.success.light,
+        wickDownColor: theme.color.destructive.light,
+      });
+
+      chartRef.current.timeScale().fitContent();
     }
 
     return () => {
       if (chartRef.current) {
         chartRef.current.remove();
-        chartRef.current = null;
+        chartRef.current = undefined;
       }
     };
   }, [chartElRef]);
 
+  // Update chart when candles change
   useEffect(() => {
-    if (chartRef.current) {
-      chartRef.current
-        .addCandlestickSeries({
-          upColor: theme.color.success.light,
-          downColor: theme.color.destructive.light,
-          borderVisible: false,
-          wickUpColor: theme.color.success.light,
-          wickDownColor: theme.color.destructive.light,
-        })
-        .setData(candles);
-
-      chartRef.current.timeScale().fitContent();
+    if (seriesRef.current) {
+      seriesRef.current.setData(candles);
+      chartRef.current?.timeScale().fitContent();
     }
-  }, [chartRef, candles]);
+  }, [candles]);
 
   return <div className='h-full w-full' ref={chartElRef} />;
 });
