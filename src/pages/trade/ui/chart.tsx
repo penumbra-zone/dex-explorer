@@ -182,14 +182,14 @@ export const Chart = observer(() => {
 
   return (
     <div className='flex flex-col grow h-full'>
-      <div className='flex gap-3 py-3 px-4 border-b border-b-other-solidStroke'>
+      <div className='flex px-3 border-b border-b-other-solidStroke'>
         {durationWindows.map(w => (
           <button
             key={w}
             type='button'
             className={cn(
-              'flex items-center h-4 hover:text-text-primary transition-colors',
-              w === duration ? 'text-text-primary' : 'text-text-secondary',
+              'flex items-center px-1.5 py-3 rounded hover:text-text-primary hover:bg-other-hover transition-colors',
+              w === duration ? 'text-text-primary bg-other-active' : 'text-text-secondary',
             )}
             onClick={() => setDuration(w)}
           >
