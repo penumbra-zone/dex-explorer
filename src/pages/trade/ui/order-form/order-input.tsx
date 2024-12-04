@@ -9,7 +9,7 @@ import cn from 'clsx';
 export interface OrderInputProps {
   id?: string;
   label: string;
-  value?: number | null;
+  value?: number | string | null;
   placeholder?: string;
   isEstimating?: boolean;
   isApproximately?: boolean;
