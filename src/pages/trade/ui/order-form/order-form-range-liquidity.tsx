@@ -11,7 +11,13 @@ import { SelectGroup } from './select-group';
 import { InfoRow } from './info-row';
 import { InfoRowGasFee } from './info-row-gas-fee';
 import { useOrderFormStore, FormType } from './store';
-import { UpperBoundOptions, LowerBoundOptions, FeeTierOptions } from './store/range-liquidity';
+import {
+  UpperBoundOptions,
+  LowerBoundOptions,
+  FeeTierOptions,
+  MIN_POSITIONS,
+  MAX_POSITIONS,
+} from './store/range-liquidity';
 
 export const RangeLiquidityOrderForm = observer(() => {
   const { connected } = connectionStore;
@@ -37,7 +43,7 @@ export const RangeLiquidityOrderForm = observer(() => {
       <div className='mb-4'>
         <div className='mb-1'>
           <OrderInput
-            label='Liquidity Amount'
+            label='Liquidity Target'
             value={quoteAsset.amount}
             onChange={amount => quoteAsset.setAmount(amount)}
             denominator={quoteAsset.symbol}
@@ -61,7 +67,7 @@ export const RangeLiquidityOrderForm = observer(() => {
       <div className='mb-4'>
         <div className='mb-2'>
           <OrderInput
-            label='Upper bound'
+            label='Upper Price Bound"'
             value={rangeLiquidity.upperBound}
             onChange={rangeLiquidity.setUpperBound}
             denominator={quoteAsset.symbol}
@@ -75,7 +81,7 @@ export const RangeLiquidityOrderForm = observer(() => {
       <div className='mb-4'>
         <div className='mb-2'>
           <OrderInput
-            label='Lower bound'
+            label='Lower Price Bound'
             value={rangeLiquidity.lowerBound}
             onChange={rangeLiquidity.setLowerBound}
             denominator={quoteAsset.symbol}
@@ -104,12 +110,12 @@ export const RangeLiquidityOrderForm = observer(() => {
       <div className='mb-4'>
         <OrderInput
           label='Number of positions'
-          value={rangeLiquidity.positions}
+          value={rangeLiquidity.positions || ''}
           onChange={rangeLiquidity.setPositions}
         />
         <PenumbraSlider
-          min={5}
-          max={15}
+          min={MIN_POSITIONS}
+          max={MAX_POSITIONS}
           step={1}
           value={rangeLiquidity.positions}
           showValue={false}
