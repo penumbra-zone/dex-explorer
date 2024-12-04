@@ -6,11 +6,12 @@ import { DurationWindow } from '@/shared/utils/duration.ts';
  * Please do not edit it manually.
  */
 
-import type { ColumnType } from "kysely";
+import type { ColumnType } from 'kysely';
 
-export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
-  ? ColumnType<S, I | undefined, U>
-  : ColumnType<T, T | undefined, T>;
+export type Generated<T> =
+  T extends ColumnType<infer S, infer I, infer U>
+    ? ColumnType<S, I | undefined, U>
+    : ColumnType<T, T | undefined, T>;
 
 export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
 
@@ -64,6 +65,11 @@ export interface DexExAggregateSummary {
   top_price_mover_end: Buffer;
   top_price_mover_start: Buffer;
   trades: number;
+}
+
+export interface DexExMetadata {
+  id: number;
+  quote_asset_id: Buffer;
 }
 
 export interface DexExPairsBlockSnapshot {
@@ -301,6 +307,7 @@ interface RawDB {
   _insights_validators: _InsightsValidators;
   block_details: BlockDetails;
   dex_ex_aggregate_summary: DexExAggregateSummary;
+  dex_ex_metadata: DexExMetadata;
   dex_ex_pairs_block_snapshot: DexExPairsBlockSnapshot;
   dex_ex_pairs_summary: DexExPairsSummary;
   dex_ex_position_executions: DexExPositionExecutions;
@@ -325,5 +332,15 @@ interface RawDB {
   supply_validators: SupplyValidators;
 }
 
-
-export type DB = Pick<RawDB, 'dex_ex_aggregate_summary' | 'dex_ex_pairs_block_snapshot' | 'dex_ex_pairs_summary' | 'dex_ex_price_charts' | 'dex_ex_position_executions' | 'dex_ex_position_state' | 'dex_ex_position_reserves' | 'dex_ex_position_withdrawals'>;
+export type DB = Pick<
+  RawDB,
+  | 'dex_ex_aggregate_summary'
+  | 'dex_ex_pairs_block_snapshot'
+  | 'dex_ex_pairs_summary'
+  | 'dex_ex_price_charts'
+  | 'dex_ex_position_executions'
+  | 'dex_ex_position_state'
+  | 'dex_ex_position_reserves'
+  | 'dex_ex_position_withdrawals'
+  | 'dex_ex_metadata'
+>;

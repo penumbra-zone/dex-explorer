@@ -22,16 +22,16 @@ export const getValueView = (registry: Registry, { amount, assetId }: Value) => 
   return new ValueView({
     valueView: metadata
       ? {
-        case: 'knownAssetId',
-        value: { amount, metadata },
-      }
+          case: 'knownAssetId',
+          value: { amount, metadata },
+        }
       : {
-        case: 'unknownAssetId',
-        value: {
-          amount,
-          assetId,
+          case: 'unknownAssetId',
+          value: {
+            amount,
+            assetId,
+          },
         },
-      },
   });
 };
 
@@ -63,13 +63,13 @@ export const getPriceForTrace = (
 
   const price = invertPrice
     ? // For sell-side, price should be in terms of quote asset
-    new BigNumber(formattedBaseAmount)
-      .dividedBy(formattedQuoteAmount)
-      .toFormat(baseDisplayDenomExponent)
+      new BigNumber(formattedBaseAmount)
+        .dividedBy(formattedQuoteAmount)
+        .toFormat(baseDisplayDenomExponent)
     : // For buy-side, price remains in terms of base asset
-    new BigNumber(formattedQuoteAmount)
-      .dividedBy(formattedBaseAmount)
-      .toFormat(quoteDisplayDenomExponent);
+      new BigNumber(formattedQuoteAmount)
+        .dividedBy(formattedBaseAmount)
+        .toFormat(quoteDisplayDenomExponent);
 
   return {
     price: removeTrailingZeros(price),
@@ -121,20 +121,20 @@ export const processSimulation = ({
   let cumulativeTotal = new BigNumber(0);
   return invertPrice
     ? traces
-      .toReversed()
-      .map(trace => {
+        .toReversed()
+        .map(trace => {
+          cumulativeTotal = cumulativeTotal.plus(trace.amount);
+          return {
+            ...trace,
+            total: removeTrailingZeros(cumulativeTotal.toString()),
+          };
+        })
+        .toReversed()
+    : traces.map(trace => {
         cumulativeTotal = cumulativeTotal.plus(trace.amount);
         return {
           ...trace,
           total: removeTrailingZeros(cumulativeTotal.toString()),
         };
-      })
-      .toReversed()
-    : traces.map(trace => {
-      cumulativeTotal = cumulativeTotal.plus(trace.amount);
-      return {
-        ...trace,
-        total: removeTrailingZeros(cumulativeTotal.toString()),
-      };
-    });
+      });
 };

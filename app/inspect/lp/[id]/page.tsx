@@ -1,3 +1,3 @@
-import { LpInspectPage } from '@/pages/inspect/lp';
+import { LpInspectResult } from '@/pages/inspect/ui/result.tsx';
 
-export default LpInspectPage; 
+export default LpInspectResult;

@@ -1,36 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pindexer } from '@/shared/database';
-import { bech32m } from 'bech32';
-import { TimelineApiResponse } from './types';
+import { PositionTimelineResponse, TimelineApiResponse } from './types';
+import { positionIdFromBech32 } from '@penumbra-zone/bech32m/plpid';
+import { PositionId } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
+import { serialize } from '@/shared/utils/serializer.ts';
+import { getPositionState } from '@/shared/api/server/position/timeline/state.ts';
+import { addValueViewsToVolume } from '@/shared/api/server/position/timeline/volume.ts';
+import { addValueViewsToWithdrawals } from '@/shared/api/server/position/timeline/withdraws.ts';
+import { addValueViewsToExecutions } from '@/shared/api/server/position/timeline/executions.ts';
 
 export async function GET(req: NextRequest): Promise<NextResponse<TimelineApiResponse>> {
+  try {
     const { searchParams } = new URL(req.url);
-    const positionId = searchParams.get('positionId');
+    const positionIdStr = searchParams.get('positionId');
 
-    if (!positionId) {
-        return NextResponse.json({ error: 'Missing required positionId' }, { status: 400 });
+    if (!positionIdStr) {
+      return NextResponse.json({ error: 'Missing required positionId' }, { status: 400 });
     }
 
-    try {
-        const decoded = bech32m.decode(positionId);
-        if (decoded.prefix !== 'plpid') {
-            return NextResponse.json({ error: 'Invalid position ID format' }, { status: 400 });
-        }
-        const positionIdBytes = Buffer.from(bech32m.fromWords(decoded.words));
+    const id = new PositionId(positionIdFromBech32(positionIdStr));
 
-        const [executions, state, withdrawals, volumeAndFees] = await Promise.all([
-            pindexer.getPositionExecutionsWithReserves(positionIdBytes),
-            pindexer.getPositionState(positionIdBytes),
-            pindexer.getPositionWithdrawals(positionIdBytes),
-            pindexer.getPositionVolumeAndFees(positionIdBytes),
-        ]);
+    const [state, executionsRaw, withdrawalsRaw, volumeAndFeesRaw] = await Promise.all([
+      getPositionState(id),
+      pindexer.getPositionExecutionsWithReserves(id),
+      pindexer.getPositionWithdrawals(id),
+      pindexer.getPositionVolumeAndFees(id),
+    ]);
 
-        if (!state) {
-            return NextResponse.json({ error: 'Position state not found' }, { status: 404 });
-        }
+    const [executions, withdrawals, volumeAndFees] = await Promise.all([
+      addValueViewsToExecutions(state, executionsRaw),
+      addValueViewsToWithdrawals(state, withdrawalsRaw),
+      addValueViewsToVolume(state, volumeAndFeesRaw),
+    ]);
 
-        return NextResponse.json({ executions: executions.items, skippedExecutions: executions.skippedRows, state, withdrawals, volumeAndFees });
-    } catch (error) {
-        return NextResponse.json({ error: String(error) }, { status: 500 });
-    }
-} 
+    const response = serialize({
+      state,
+      executions,
+      volumeAndFees,
+      withdrawals,
+    } satisfies PositionTimelineResponse);
+    return NextResponse.json(response);
+  } catch (error) {
+    return NextResponse.json({ error: String(error) }, { status: 500 });
+  }
+}
