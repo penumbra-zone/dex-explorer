@@ -8,13 +8,13 @@ import {
 import { getAssetId, getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { getAddressIndex, getAddress } from '@penumbra-zone/getters/address-view';
 import { getFormattedAmtFromValueView } from '@penumbra-zone/types/value-view';
+import { pnum } from '@penumbra-zone/types/pnum';
 import { LoHi } from '@penumbra-zone/types/lo-hi';
 import {
   AddressView,
   Address,
   AddressIndex,
 } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
-import { pnum } from '../pnum';
 
 export class OrderFormAsset {
   metadata?: Metadata;

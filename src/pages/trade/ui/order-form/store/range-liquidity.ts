@@ -1,5 +1,5 @@
 import { makeAutoObservable } from 'mobx';
-import { pnum } from '../pnum';
+import { pnum } from '@penumbra-zone/types/pnum';
 
 export enum UpperBoundOptions {
   Market = 'Market',
