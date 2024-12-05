@@ -3,11 +3,22 @@ import { getSymbolFromValueView } from '@penumbra-zone/getters/value-view';
 import React from 'react';
 import { ChevronRight } from 'lucide-react';
 
-function padPrice(price: string): string {
-  const [whole, decimal = ''] = price.split('.');
-  const maxDigits = 8; // Maximum decimals commonly used for crypto prices
-  const paddedDecimal = decimal.padEnd(maxDigits, '0');
-  return `${whole}.${paddedDecimal}`;
+function formatPrice(price: string): string {
+  const num = parseFloat(price);
+  const parts = num.toString().split('.');
+  const whole = parts[0] ?? '0';
+  const totalDigits = 7;
+  const availableDecimals = Math.max(0, totalDigits - whole.length);
+  return num.toFixed(availableDecimals);
+}
+
+function formatNumber(value: string): string {
+  const num = parseFloat(value);
+  const parts = num.toString().split('.');
+  const whole = parts[0] ?? '0';
+  const totalDigits = 6;
+  const availableDecimals = Math.max(0, totalDigits - whole.length);
+  return num.toFixed(availableDecimals);
 }
 
 const SELL_BG_COLOR = 'rgba(175, 38, 38, 0.24)';
@@ -21,7 +32,6 @@ export const TradeRow = ({
   relativeSize: number;
 }) => {
   const bgColor = isSell ? SELL_BG_COLOR : 'rgba(28, 121, 63, 0.24)';
-  const paddedPrice = padPrice(trace.price);
 
   return (
     <tr
@@ -31,10 +41,10 @@ export const TradeRow = ({
       }}
     >
       <td className={`${isSell ? 'text-red-400' : 'text-green-400'} px-4 text-xs`}>
-        {paddedPrice}
+        {formatPrice(trace.price)}
       </td>
-      <td className='text-xs px-4 text-right text-white'>{trace.amount}</td>
-      <td className='text-xs px-4 text-right text-white'>{trace.total}</td>
+      <td className='text-xs px-4 text-right text-white'>{formatNumber(trace.amount)}</td>
+      <td className='text-xs px-4 text-right text-white'>{formatNumber(trace.total)}</td>
       <td className='text-xs px-4 text-right'>
         <HopCount count={trace.hops.length} />
       </td>

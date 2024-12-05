@@ -5,35 +5,49 @@ import { RouteBookResponse, Trace } from '@/shared/api/server/book/types';
 import { usePathSymbols } from '@/pages/trade/model/use-path.ts';
 import { calculateSpread } from '@/pages/trade/model/trace.ts';
 import { TradeRow } from '@/pages/trade/ui/trade-row.tsx';
+import { Skeleton } from '@/shared/ui/skeleton';
 
 const SkeletonRow = (props: { isSpread: boolean }) =>
   props.isSpread ? (
     <tr>
       <td colSpan={4} className='border-y border-l-other-solidStroke'>
         <div className='flex items-center justify-center gap-2 px-3 py-3 text-xs'>
-          <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
-
-          <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
-
-          <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
-
-          <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+          <div className='w-[78px] h-[16px]'>
+            <Skeleton />
+          </div>
+          <div className='w-[54px] h-[16px]'>
+            <Skeleton />
+          </div>
+          <div className='w-[69px] h-[16px]'>
+            <Skeleton />
+          </div>
+          <div className='w-[39px] h-[16px]'>
+            <Skeleton />
+          </div>
         </div>
       </td>
     </tr>
   ) : (
     <tr className={`group relative h-[33px] border-b border-b-other-tonalStroke`}>
-      <td>
-        <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+      <td className='pl-4'>
+        <div className='w-[56px] h-[16px]'>
+          <Skeleton />
+        </div>
       </td>
-      <td className='relative text-xs text-right text-white'>
-        <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+      <td className='relative text-xs text-right pl-4'>
+        <div className='w-[56px] h-[16px] ml-auto'>
+          <Skeleton />
+        </div>
       </td>
-      <td className='relative text-xs text-right text-white'>
-        <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+      <td className='relative text-xs text-right pl-4'>
+        <div className='w-[56px] h-[16px] ml-auto'>
+          <Skeleton />
+        </div>
       </td>
-      <td className='relative text-xs text-right'>
-        <div className='w-full h-[22px] bg-neutral-800 rounded animate-pulse ml-auto'></div>
+      <td className='relative text-xs text-right pl-4'>
+        <div className='w-[24px] h-[16px] ml-auto'>
+          <Skeleton />
+        </div>
       </td>
     </tr>
   );
@@ -49,10 +63,10 @@ const RouteBookData = observer(({ bookData }: { bookData?: RouteBookResponse }) 
     <table className='w-full'>
       <thead>
         <tr className='text-xs text-gray-400'>
-          <th className='px-4 py-2 font-normal text-left'>Price({pair.quoteSymbol})</th>
-          <th className='px-4 py-2 font-normal text-right'>Amount({pair.baseSymbol})</th>
-          <th className='px-4 py-2 font-normal text-right'>Total</th>
-          <th className='px-4 py-2 font-normal text-right'>Route</th>
+          <th className='pl-4 py-2 font-normal text-left'>Price({pair.quoteSymbol})</th>
+          <th className='pl-4 py-2 font-normal text-right'>Amount({pair.baseSymbol})</th>
+          <th className='pl-4 py-2 font-normal text-right'>Total</th>
+          <th className='pl-4 py-2 font-normal text-right'>Route</th>
         </tr>
       </thead>
 
@@ -99,6 +113,22 @@ export const RouteBook = observer(() => {
   return <RouteBookData bookData={data} />;
 });
 
+function formatPrice(price: string): string {
+  const num = parseFloat(price);
+  const [whole] = num.toString().split('.');
+  const totalDigits = 7;
+  const availableDecimals = Math.max(0, totalDigits - (whole?.length ?? 0));
+  return num.toFixed(availableDecimals);
+}
+
+function formatNumber(value: string): string {
+  const num = parseFloat(value);
+  const [whole] = num.toString().split('.');
+  const totalDigits = 6;
+  const availableDecimals = Math.max(0, totalDigits - (whole?.length ?? 0));
+  return num.toFixed(availableDecimals);
+}
+
 const SpreadRow = ({ sellOrders, buyOrders }: { sellOrders: Trace[]; buyOrders: Trace[] }) => {
   const spreadInfo = calculateSpread(sellOrders, buyOrders);
   const pair = usePathSymbols();
@@ -111,12 +141,12 @@ const SpreadRow = ({ sellOrders, buyOrders }: { sellOrders: Trace[]; buyOrders: 
     <tr>
       <td colSpan={4} className='border-y border-y-other-solidStroke'>
         <div className='flex items-center justify-center gap-2 px-3 py-3 text-xs'>
-          <span className='text-green-400'>{parseFloat(spreadInfo.midPrice)}</span>
+          <span className='text-green-400'>{formatPrice(spreadInfo.midPrice)}</span>
           <span className='text-gray-400'>Spread:</span>
           <span className='text-white'>
-            {parseFloat(spreadInfo.amount)} {pair.quoteSymbol}
+            {formatNumber(spreadInfo.amount)} {pair.quoteSymbol}
           </span>
-          <span className='text-gray-400'>({spreadInfo.percentage}%)</span>
+          <span className='text-gray-400'>({parseFloat(spreadInfo.percentage).toFixed(2)}%)</span>
         </div>
       </td>
     </tr>
