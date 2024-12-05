@@ -20,15 +20,7 @@ export interface StatsData extends StatsDataBase {
   largestPairLiquidity?: ValueView;
 }
 
-export interface StatsDataJSON extends StatsDataBase {
-  directVolume: JsonValue;
-  liquidity: JsonValue;
-  largestPairLiquidity?: JsonValue;
-}
-
 export type StatsResponse = StatsData | { error: string };
-
-export type StatsResponseJSON = StatsDataJSON | { error: string };
 
 const STATS_DURATION_WINDOW: DurationWindow = '1d';
 
