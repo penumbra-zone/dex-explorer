@@ -19,6 +19,7 @@ import { getAssetId } from '@penumbra-zone/getters/metadata';
 import { getSwapCommitmentFromTx } from '@penumbra-zone/getters/transaction';
 import { getAssetIdFromValueView } from '@penumbra-zone/getters/value-view';
 import { getFormattedAmtFromValueView } from '@penumbra-zone/types/value-view';
+import { pnum } from '@penumbra-zone/types/pnum';
 import { openToast } from '@penumbra-zone/ui/Toast';
 import { penumbra } from '@/shared/const/penumbra';
 import { useBalances } from '@/shared/api/balances';
@@ -27,7 +28,6 @@ import { usePathToMetadata } from '../../../model/use-path';
 import { OrderFormAsset } from './asset';
 import { RangeLiquidity } from './range-liquidity';
 import { LimitOrder } from './limit-order';
-import { pnum } from '../pnum';
 
 export enum Direction {
   Buy = 'Buy',
@@ -178,7 +178,7 @@ class OrderFormStore {
         return;
       }
 
-      assetOut.setAmount(pnum(output).toFormattedNumber(), false);
+      assetOut.setAmount(pnum(output).toFormattedString(), false);
     } finally {
       assetOut.setIsEstimating(false);
     }
