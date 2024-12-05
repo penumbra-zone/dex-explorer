@@ -5,6 +5,7 @@ import { ChainRegistryClient } from '@penumbra-labs/registry';
 import { pindexer } from '@/shared/database';
 import { DurationWindow } from '@/shared/utils/duration';
 import { toValueView } from '@/shared/utils/value-view';
+import { Serialized, serialize } from '@/shared/utils/serializer';
 
 interface StatsDataBase {
   activePairs: number;
@@ -31,9 +32,8 @@ export type StatsResponseJSON = StatsDataJSON | { error: string };
 
 const STATS_DURATION_WINDOW: DurationWindow = '1d';
 
-export const getStats = async (): Promise<StatsResponseJSON> => {
+export const getStats = async (): Promise<Serialized<StatsResponse>> => {
   try {
-    console.log('REQUEST');
     const chainId = process.env['PENUMBRA_CHAIN_ID'];
     if (!chainId) {
       return { error: 'PENUMBRA_CHAIN_ID is not set' };
@@ -88,7 +88,7 @@ export const getStats = async (): Promise<StatsResponseJSON> => {
         end: largestPairEnd.symbol,
       };
 
-    return {
+    return serialize({
       activePairs: stats.active_pairs,
       trades: stats.trades,
       largestPair,
@@ -99,19 +99,19 @@ export const getStats = async (): Promise<StatsResponseJSON> => {
         toValueView({
           amount: stats.largest_dv_trading_pair_volume,
           metadata: largestPairEnd,
-        }).toJson(),
+        }),
       liquidity: toValueView({
         amount: parseInt(`${stats.liquidity}`),
         metadata: usdcMetadata,
-      }).toJson(),
-      directVolume: toValueView({ amount: stats.direct_volume, metadata: usdcMetadata }).toJson(),
-    };
+      }),
+      directVolume: toValueView({ amount: stats.direct_volume, metadata: usdcMetadata }),
+    });
   } catch (error) {
     return { error: (error as Error).message };
   }
 };
 
-export const GET = async (): Promise<NextResponse<StatsResponseJSON>> => {
+export const GET = async (): Promise<NextResponse<Serialized<StatsResponse>>> => {
   const result = await getStats();
 
   if ('error' in result) {

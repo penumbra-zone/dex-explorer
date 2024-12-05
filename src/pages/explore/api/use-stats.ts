@@ -1,33 +1,14 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import type { StatsDataJSON, StatsData, StatsResponseJSON } from '@/shared/api/server/stats';
-import { ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import type { StatsData } from '@/shared/api/server/stats';
+import { innerFetch } from '@/shared/utils/inner-fetch';
 
 export const useStats = () => {
-  const { data, ...rest } = useQuery<StatsDataJSON>({
+  return useQuery<StatsData>({
     queryKey: ['stats'],
     queryFn: async () => {
-      const baseUrl = '/api/stats';
-      const fetchRes = await fetch(baseUrl);
-      const jsonRes = (await fetchRes.json()) as StatsResponseJSON;
-      if ('error' in jsonRes) {
-        throw new Error(jsonRes.error);
-      }
-
-      return jsonRes;
+      return innerFetch<StatsData>('/api/stats');
     },
   });
-
-  const stats = data && {
-    ...data,
-    largestPairLiquidity: data.largestPairLiquidity ? ValueView.fromJson(data.largestPairLiquidity) : undefined,
-    liquidity: ValueView.fromJson(data.liquidity),
-    directVolume: ValueView.fromJson(data.directVolume),
-  } satisfies StatsData;
-
-  return {
-    ...rest,
-    data: stats,
-  };
 };

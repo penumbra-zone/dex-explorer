@@ -18,7 +18,9 @@ export const InfoCard = ({ title, children, loading }: InfoCardProps) => {
         {title}
       </Text>
       <div ref={parent} className='flex items-baseline justify-start gap-2 max-h-7 overflow-hidden'>
-        {!loading ? children : (
+        {!loading ? (
+          children
+        ) : (
           <div className='w-24 h-7 py-[2px]'>
             <Skeleton />
           </div>
