@@ -2,13 +2,13 @@
 
 import { useQuery } from '@tanstack/react-query';
 import type { StatsData } from '@/shared/api/server/stats';
-import { innerFetch } from '@/shared/utils/inner-fetch';
+import { apiFetch } from '@/shared/utils/api-fetch';
 
 export const useStats = () => {
   return useQuery<StatsData>({
     queryKey: ['stats'],
     queryFn: async () => {
-      return innerFetch<StatsData>('/api/stats');
+      return apiFetch<StatsData>('/api/stats');
     },
   });
 };

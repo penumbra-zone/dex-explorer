@@ -6,7 +6,7 @@ import { deserialize, Serialized } from './serializer';
  * 2. Throws if the response contains an error object
  * 3. Deserializes the response object, if it contains protobuf messages
  */
-export const innerFetch = async <RES extends object>(
+export const apiFetch = async <RES extends object>(
   url: string,
   searchParams: Record<string, string> = {},
 ): Promise<RES> => {
