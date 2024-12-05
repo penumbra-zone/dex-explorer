@@ -1,5 +1,5 @@
 import { makeAutoObservable } from 'mobx';
-import { round } from '@penumbra-zone/types/round';
+import { pnum } from '../pnum';
 
 export enum UpperBoundOptions {
   Market = 'Market',
@@ -47,11 +47,15 @@ const FeeTierValues: Record<FeeTierOptions, number> = {
   '1.00%': 1,
 };
 
+export const DEFAULT_POSITIONS = 10;
+export const MIN_POSITIONS = 5;
+export const MAX_POSITIONS = 15;
+
 export class RangeLiquidity {
-  upperBound?: number;
-  lowerBound?: number;
+  upperBoundInput?: string | number;
+  lowerBoundInput?: string | number;
+  positionsInput?: string | number;
   feeTier?: number;
-  positions?: number;
   marketPrice?: number;
   exponent?: number;
   onFieldChangeCallback?: () => Promise<void>;
@@ -60,23 +64,41 @@ export class RangeLiquidity {
     makeAutoObservable(this);
   }
 
+  get upperBound(): string {
+    return pnum(this.upperBoundInput, this.exponent).toRoundedString();
+  }
+
+  get lowerBound(): string {
+    return pnum(this.lowerBoundInput, this.exponent).toRoundedString();
+  }
+
+  get positions(): number | undefined {
+    return this.positionsInput === ''
+      ? undefined
+      : Math.max(
+          MIN_POSITIONS,
+          Math.min(MAX_POSITIONS, Number(this.positionsInput ?? DEFAULT_POSITIONS)),
+        );
+  }
+
   setUpperBound = (amount: string) => {
-    this.upperBound = Number(round({ value: Number(amount), decimals: this.exponent ?? 0 }));
+    this.upperBoundInput = amount;
+    if (this.onFieldChangeCallback) {
+      void this.onFieldChangeCallback();
+    }
   };
 
   setUpperBoundOption = (option: UpperBoundOptions) => {
     if (this.marketPrice) {
-      this.upperBound = Number(
-        round({
-          value: this.marketPrice * UpperBoundMultipliers[option],
-          decimals: this.exponent ?? 0,
-        }),
-      );
+      this.upperBoundInput = this.marketPrice * UpperBoundMultipliers[option];
+      if (this.onFieldChangeCallback) {
+        void this.onFieldChangeCallback();
+      }
     }
   };
 
   setLowerBound = (amount: string) => {
-    this.lowerBound = Number(round({ value: Number(amount), decimals: this.exponent ?? 0 }));
+    this.lowerBoundInput = amount;
     if (this.onFieldChangeCallback) {
       void this.onFieldChangeCallback();
     }
@@ -84,15 +106,10 @@ export class RangeLiquidity {
 
   setLowerBoundOption = (option: LowerBoundOptions) => {
     if (this.marketPrice) {
-      this.lowerBound = Number(
-        round({
-          value: this.marketPrice * LowerBoundMultipliers[option],
-          decimals: this.exponent ?? 0,
-        }),
-      );
-    }
-    if (this.onFieldChangeCallback) {
-      void this.onFieldChangeCallback();
+      this.lowerBoundInput = this.marketPrice * LowerBoundMultipliers[option];
+      if (this.onFieldChangeCallback) {
+        void this.onFieldChangeCallback();
+      }
     }
   };
 
@@ -111,7 +128,7 @@ export class RangeLiquidity {
   };
 
   setPositions = (positions: number | string) => {
-    this.positions = Number(positions);
+    this.positionsInput = positions;
     if (this.onFieldChangeCallback) {
       void this.onFieldChangeCallback();
     }

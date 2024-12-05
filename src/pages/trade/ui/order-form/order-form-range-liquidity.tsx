@@ -9,8 +9,15 @@ import { useSummary } from '../../model/useSummary';
 import { OrderInput } from './order-input';
 import { SelectGroup } from './select-group';
 import { InfoRow } from './info-row';
+import { InfoRowGasFee } from './info-row-gas-fee';
 import { useOrderFormStore, FormType } from './store';
-import { UpperBoundOptions, LowerBoundOptions, FeeTierOptions } from './store/range-liquidity';
+import {
+  UpperBoundOptions,
+  LowerBoundOptions,
+  FeeTierOptions,
+  MIN_POSITIONS,
+  MAX_POSITIONS,
+} from './store/range-liquidity';
 
 export const RangeLiquidityOrderForm = observer(() => {
   const { connected } = connectionStore;
@@ -36,7 +43,7 @@ export const RangeLiquidityOrderForm = observer(() => {
       <div className='mb-4'>
         <div className='mb-1'>
           <OrderInput
-            label='Liquidity Amount'
+            label='Liquidity Target'
             value={quoteAsset.amount}
             onChange={amount => quoteAsset.setAmount(amount)}
             denominator={quoteAsset.symbol}
@@ -60,7 +67,7 @@ export const RangeLiquidityOrderForm = observer(() => {
       <div className='mb-4'>
         <div className='mb-2'>
           <OrderInput
-            label='Upper bound'
+            label='Upper Price Bound"'
             value={rangeLiquidity.upperBound}
             onChange={rangeLiquidity.setUpperBound}
             denominator={quoteAsset.symbol}
@@ -74,7 +81,7 @@ export const RangeLiquidityOrderForm = observer(() => {
       <div className='mb-4'>
         <div className='mb-2'>
           <OrderInput
-            label='Lower bound'
+            label='Lower Price Bound'
             value={rangeLiquidity.lowerBound}
             onChange={rangeLiquidity.setLowerBound}
             denominator={quoteAsset.symbol}
@@ -103,12 +110,12 @@ export const RangeLiquidityOrderForm = observer(() => {
       <div className='mb-4'>
         <OrderInput
           label='Number of positions'
-          value={rangeLiquidity.positions}
+          value={rangeLiquidity.positions || ''}
           onChange={rangeLiquidity.setPositions}
         />
         <PenumbraSlider
-          min={5}
-          max={15}
+          min={MIN_POSITIONS}
+          max={MAX_POSITIONS}
           step={1}
           value={rangeLiquidity.positions}
           showValue={false}
@@ -122,13 +129,7 @@ export const RangeLiquidityOrderForm = observer(() => {
         <InfoRow label='Number of positions' value={rangeLiquidity.positions} toolTip='' />
         <InfoRow label='Base asset amount' value={baseAsset.amount} toolTip='' />
         <InfoRow label='Quote asset amount' value={quoteAsset.amount} toolTip='' />
-        <InfoRow
-          label='Gas Fee'
-          isLoading={gasFee === null}
-          value={`${gasFee} ${baseAsset.symbol}`}
-          valueColor='success'
-          toolTip='Gas fees tooltip here.'
-        />
+        <InfoRowGasFee gasFee={gasFee} symbol={baseAsset.symbol} />
       </div>
       <div className='mb-4'>
         {connected ? (
