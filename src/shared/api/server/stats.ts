@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { JsonValue } from '@bufbuild/protobuf';
 import { ValueView, AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { ChainRegistryClient } from '@penumbra-labs/registry';
 import { pindexer } from '@/shared/database';
@@ -20,15 +19,7 @@ export interface StatsData extends StatsDataBase {
   largestPairLiquidity?: ValueView;
 }
 
-export interface StatsDataJSON extends StatsDataBase {
-  directVolume: JsonValue;
-  liquidity: JsonValue;
-  largestPairLiquidity?: JsonValue;
-}
-
 export type StatsResponse = StatsData | { error: string };
-
-export type StatsResponseJSON = StatsDataJSON | { error: string };
 
 const STATS_DURATION_WINDOW: DurationWindow = '1d';
 
