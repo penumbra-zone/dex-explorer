@@ -110,7 +110,7 @@ export const RangeLiquidityOrderForm = observer(() => {
       <div className='mb-4'>
         <OrderInput
           label='Number of positions'
-          value={rangeLiquidity.positions || ''}
+          value={rangeLiquidity.positions === 0 ? '' : rangeLiquidity.positions}
           onChange={rangeLiquidity.setPositions}
         />
         <PenumbraSlider
