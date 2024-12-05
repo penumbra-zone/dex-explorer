@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { JsonValue } from '@bufbuild/protobuf';
 import { ValueView, AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { ChainRegistryClient } from '@penumbra-labs/registry';
 import { pindexer } from '@/shared/database';
