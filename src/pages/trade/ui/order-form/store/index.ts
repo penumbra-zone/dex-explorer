@@ -95,7 +95,7 @@ class OrderFormStore {
         return;
       }
 
-      const baseAssetBalance = this.balances?.find(resp =>
+      const baseAssetBalance = this.balances.find(resp =>
         getAssetIdFromValueView(resp.balanceView).equals(getAssetId(this.baseAsset.metadata)),
       );
       if (baseAssetBalance?.balanceView) {
@@ -105,7 +105,7 @@ class OrderFormStore {
         this.baseAsset.setAccountAddress(baseAssetBalance.accountAddress);
       }
 
-      const quoteAssetBalance = this.balances?.find(resp =>
+      const quoteAssetBalance = this.balances.find(resp =>
         getAssetIdFromValueView(resp.balanceView).equals(getAssetId(this.quoteAsset.metadata)),
       );
       if (quoteAssetBalance?.balanceView) {
@@ -328,7 +328,8 @@ class OrderFormStore {
     const quoteAssetBaseUnits = this.quoteAsset.toBaseUnits();
 
     const { price, marketPrice } = this.limitOrder as Required<typeof this.limitOrder>;
-    const priceUnitAmount = pnum(price, this.quoteAsset.exponent ?? 0).toBigInt();
+    const priceNumber = Number(price);
+    const priceUnitAmount = pnum(priceNumber, this.quoteAsset.exponent ?? 0).toBigInt();
 
     // Cross-multiply exponents and prices for trading function coefficients
     //
@@ -346,13 +347,13 @@ class OrderFormStore {
     // matching the target per-position amount of asset 2. Otherwise, fund with
     // asset 2 to avoid immediate arbitrage.
     const reserves =
-      price < marketPrice
+      priceNumber < marketPrice
         ? {
             r1: pnum(0n).toAmount(),
             r2: pnum(quoteAssetBaseUnits).toAmount(),
           }
         : {
-            r1: pnum(Number(quoteAssetBaseUnits) / price).toAmount(),
+            r1: pnum(Number(quoteAssetBaseUnits) / priceNumber).toAmount(),
             r2: pnum(0n).toAmount(),
           };
 
