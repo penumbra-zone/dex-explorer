@@ -1,25 +1,39 @@
+import { NextResponse } from 'next/server';
+import { JsonValue } from '@bufbuild/protobuf';
 import { ValueView, AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { ChainRegistryClient } from '@penumbra-labs/registry';
 import { pindexer } from '@/shared/database';
 import { DurationWindow } from '@/shared/utils/duration';
 import { toValueView } from '@/shared/utils/value-view';
 
-export interface StatsData {
+interface StatsDataBase {
   activePairs: number;
   trades: number;
   largestPair?: { start: string; end: string };
   topPriceMover?: { start: string; end: string; percent: number };
+}
+
+export interface StatsData extends StatsDataBase {
   directVolume: ValueView;
   liquidity: ValueView;
   largestPairLiquidity?: ValueView;
 }
 
+export interface StatsDataJSON extends StatsDataBase {
+  directVolume: JsonValue;
+  liquidity: JsonValue;
+  largestPairLiquidity?: JsonValue;
+}
+
 export type StatsResponse = StatsData | { error: string };
+
+export type StatsResponseJSON = StatsDataJSON | { error: string };
 
 const STATS_DURATION_WINDOW: DurationWindow = '1d';
 
-export const getStats = async (): Promise<StatsResponse> => {
+export const getStats = async (): Promise<StatsResponseJSON> => {
   try {
+    console.log('REQUEST');
     const chainId = process.env['PENUMBRA_CHAIN_ID'];
     if (!chainId) {
       return { error: 'PENUMBRA_CHAIN_ID is not set' };
@@ -79,19 +93,30 @@ export const getStats = async (): Promise<StatsResponse> => {
       trades: stats.trades,
       largestPair,
       topPriceMover,
+      time: new Date(),
       largestPairLiquidity:
         largestPairEnd &&
         toValueView({
           amount: stats.largest_dv_trading_pair_volume,
           metadata: largestPairEnd,
-        }),
+        }).toJson(),
       liquidity: toValueView({
         amount: parseInt(`${stats.liquidity}`),
         metadata: usdcMetadata,
-      }),
-      directVolume: toValueView({ amount: stats.direct_volume, metadata: usdcMetadata }),
+      }).toJson(),
+      directVolume: toValueView({ amount: stats.direct_volume, metadata: usdcMetadata }).toJson(),
     };
   } catch (error) {
     return { error: (error as Error).message };
   }
+};
+
+export const GET = async (): Promise<NextResponse<StatsResponseJSON>> => {
+  const result = await getStats();
+
+  if ('error' in result) {
+    return NextResponse.json({ error: result.error }, { status: 500 });
+  }
+
+  return NextResponse.json(result);
 };
