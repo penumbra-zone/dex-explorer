@@ -10,6 +10,7 @@ interface GetPairsParams {
   window: DurationWindow;
   limit: number;
   offset: number;
+  search: string;
 }
 
 const getAssetById = (allAssets: Metadata[], id: Buffer): Metadata | undefined => {
@@ -71,6 +72,7 @@ export const GET = async (req: NextRequest): Promise<NextResponse<SummariesRespo
     const { searchParams } = new URL(req.url);
     const limit = Number(searchParams.get('limit')) || 15;
     const offset = Number(searchParams.get('offset')) || 0;
+    const search = searchParams.get('search') ?? '';
     const window = searchParams.get('durationWindow');
 
     if (!window || !isDurationWindow(window)) {
@@ -86,6 +88,7 @@ export const GET = async (req: NextRequest): Promise<NextResponse<SummariesRespo
       window,
       limit,
       offset,
+      search,
     });
 
     return NextResponse.json(result);
