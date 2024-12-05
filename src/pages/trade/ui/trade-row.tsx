@@ -30,10 +30,12 @@ export const TradeRow = ({
         backgroundImage: `linear-gradient(to right, ${bgColor} ${relativeSize}%, transparent ${relativeSize}%)`,
       }}
     >
-      <td className={`${isSell ? 'text-red-400' : 'text-green-400'} text-xs`}>{paddedPrice}</td>
-      <td className='text-xs text-right text-white'>{trace.amount}</td>
-      <td className='text-xs text-right text-white'>{trace.total}</td>
-      <td className='text-xs text-right'>
+      <td className={`${isSell ? 'text-red-400' : 'text-green-400'} px-4 text-xs`}>
+        {paddedPrice}
+      </td>
+      <td className='text-xs px-4 text-right text-white'>{trace.amount}</td>
+      <td className='text-xs px-4 text-right text-white'>{trace.total}</td>
+      <td className='text-xs px-4 text-right'>
         <HopCount count={trace.hops.length} />
       </td>
 
