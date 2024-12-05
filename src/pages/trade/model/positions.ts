@@ -87,7 +87,7 @@ class PositionsStore {
       const newPositionData = await getPositionData(positionId, data);
       queryClient.setQueryData<PositionData[]>(['positions'], oldData => {
         if (!oldData) {
-          return undefined;
+          throw new Error('Trying to update position data cache when none is present');
         }
         // Finding matching positionId and swap out the position data with latest
         return oldData.map(p => (p.positionId === positionId ? newPositionData : p));

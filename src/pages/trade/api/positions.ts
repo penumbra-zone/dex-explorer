@@ -143,6 +143,7 @@ export const usePositions = () => {
   return useQuery({
     queryKey: ['positions'],
     queryFn: fetchQuery,
+    retry: 1,
     enabled: connectionStore.connected,
   });
 };

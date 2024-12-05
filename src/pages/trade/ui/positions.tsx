@@ -14,7 +14,7 @@ import {
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { bech32mPositionId } from '@penumbra-zone/bech32m/plpid';
 import { Button } from '@penumbra-zone/ui/Button';
-import { positionsStore } from '@/pages/trade/store/positions.ts';
+import { positionsStore } from '@/pages/trade/model/positions';
 
 const LoadingRow = () => {
   return (
@@ -154,7 +154,7 @@ const HeaderActionButton = observer(() => {
         actionType='destructive'
         disabled={loading}
         onClick={() =>
-          void closePositions(openedPositions.map(p => p.positionId).slice(0, MAX_ACTION_COUNT))
+          void closePositions(openedPositions.slice(0, MAX_ACTION_COUNT).map(p => p.positionId))
         }
       >
         Close Batch
