@@ -42,8 +42,11 @@ export class LimitOrder {
     makeAutoObservable(this);
   }
 
-  get price(): string {
-    return pnum(this.priceInput, this.exponent).toRoundedString();
+  get price(): number {
+    if (this.priceInput === undefined || this.priceInput === '') {
+      return '';
+    }
+    return pnum(this.priceInput, this.exponent).toRoundedNumber();
   }
 
   setPrice = (price: string) => {
