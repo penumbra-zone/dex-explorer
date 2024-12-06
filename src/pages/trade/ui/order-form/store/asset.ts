@@ -7,7 +7,6 @@ import {
 } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { getAssetId, getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { getAddressIndex, getAddress } from '@penumbra-zone/getters/address-view';
-import { getFormattedAmtFromValueView } from '@penumbra-zone/types/value-view';
 import { pnum } from '@penumbra-zone/types/pnum';
 import { LoHi } from '@penumbra-zone/types/lo-hi';
 import {
@@ -54,13 +53,12 @@ export class OrderFormAsset {
     return this.metadata ? getDisplayDenomExponent(this.metadata) : undefined;
   }
 
-  get balance(): number | undefined {
+  get balance(): string | undefined {
     if (!this.balanceView) {
       return undefined;
     }
 
-    const balance = getFormattedAmtFromValueView(this.balanceView, true);
-    return parseFloat(balance.replace(/,/g, ''));
+    return pnum(this.balanceView).toFormattedString();
   }
 
   get symbol(): string {

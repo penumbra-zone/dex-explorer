@@ -64,12 +64,18 @@ export class RangeLiquidity {
     makeAutoObservable(this);
   }
 
-  get upperBound(): string {
-    return pnum(this.upperBoundInput, this.exponent).toRoundedString();
+  get upperBound(): string | number {
+    if (this.upperBoundInput === undefined || this.upperBoundInput === '') {
+      return '';
+    }
+    return pnum(this.upperBoundInput, this.exponent).toRoundedNumber();
   }
 
-  get lowerBound(): string {
-    return pnum(this.lowerBoundInput, this.exponent).toRoundedString();
+  get lowerBound(): string | number {
+    if (this.lowerBoundInput === undefined || this.lowerBoundInput === '') {
+      return '';
+    }
+    return pnum(this.lowerBoundInput, this.exponent).toRoundedNumber();
   }
 
   get positions(): number | undefined {
