@@ -67,7 +67,7 @@ export const RangeLiquidityOrderForm = observer(() => {
       <div className='mb-4'>
         <div className='mb-2'>
           <OrderInput
-            label='Upper Price Bound"'
+            label='Upper Price Bound'
             value={rangeLiquidity.upperBound}
             onChange={rangeLiquidity.setUpperBound}
             denominator={quoteAsset.symbol}
