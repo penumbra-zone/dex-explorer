@@ -9,47 +9,45 @@ import { Skeleton } from '@/shared/ui/skeleton';
 
 const SkeletonRow = (props: { isSpread: boolean }) =>
   props.isSpread ? (
-    <tr>
-      <td colSpan={4} className='border-y border-l-other-solidStroke'>
-        <div className='flex items-center justify-center gap-2 px-3 py-3 text-xs'>
-          <div className='w-[78px] h-[16px]'>
-            <Skeleton />
-          </div>
-          <div className='w-[54px] h-[16px]'>
-            <Skeleton />
-          </div>
-          <div className='w-[69px] h-[16px]'>
-            <Skeleton />
-          </div>
-          <div className='w-[39px] h-[16px]'>
-            <Skeleton />
-          </div>
+    <div className='border-y border-l-other-solidStroke'>
+      <div className='flex items-center justify-center gap-2 px-3 py-3 text-xs'>
+        <div className='w-[78px] h-[16px]'>
+          <Skeleton />
         </div>
-      </td>
-    </tr>
+        <div className='w-[54px] h-[16px]'>
+          <Skeleton />
+        </div>
+        <div className='w-[69px] h-[16px]'>
+          <Skeleton />
+        </div>
+        <div className='w-[39px] h-[16px]'>
+          <Skeleton />
+        </div>
+      </div>
+    </div>
   ) : (
-    <tr className={`group relative h-[33px] border-b border-b-other-tonalStroke`}>
-      <td className='pl-4'>
+    <div className='group relative h-[33px] border-b border-b-other-tonalStroke grid grid-cols-[1fr_1fr_1fr_1fr] items-center'>
+      <div className='pl-4'>
         <div className='w-[56px] h-[16px]'>
           <Skeleton />
         </div>
-      </td>
-      <td className='relative text-xs text-right pl-4'>
+      </div>
+      <div className='relative text-xs text-right pl-4'>
         <div className='w-[56px] h-[16px] ml-auto'>
           <Skeleton />
         </div>
-      </td>
-      <td className='relative text-xs text-right pl-4'>
+      </div>
+      <div className='relative text-xs text-right pl-4'>
         <div className='w-[56px] h-[16px] ml-auto'>
           <Skeleton />
         </div>
-      </td>
-      <td className='relative text-xs text-right pl-4'>
+      </div>
+      <div className='relative text-xs text-right pl-4'>
         <div className='w-[24px] h-[16px] ml-auto'>
           <Skeleton />
         </div>
-      </td>
-    </tr>
+      </div>
+    </div>
   );
 
 const RouteBookData = observer(({ bookData }: { bookData?: RouteBookResponse }) => {
@@ -60,21 +58,21 @@ const RouteBookData = observer(({ bookData }: { bookData?: RouteBookResponse }) 
   const buyRelativeSizes = calculateRelativeSizes(multiHops?.buy ?? []);
 
   return (
-    <table className='w-full'>
-      <thead>
-        <tr className='text-xs text-gray-400'>
-          <th className='pl-4 py-2 font-normal text-left w-[1%] whitespace-nowrap'>
-            Price({pair.quoteSymbol})
-          </th>
-          <th className='py-2 font-normal text-right w-[1%] whitespace-nowrap'>
-            Amount({pair.baseSymbol})
-          </th>
-          <th className='py-2 font-normal text-right w-[1%] whitespace-nowrap'>Total</th>
-          <th className='py-2 font-normal text-right w-[1%] whitespace-nowrap'>Route</th>
-        </tr>
-      </thead>
+    <div className='w-full'>
+      {/* Header */}
+      <div className='grid grid-cols-[1fr_1fr_1fr_1fr] h-[33px] mt-1 text-xs text-gray-400 px-4'>
+        <div className='py-2 font-normal text-left'>
+          Price({pair.quoteSymbol})
+        </div>
+        <div className='py-2 font-normal text-right'>
+          Amount({pair.baseSymbol})
+        </div>
+        <div className='py-2 font-normal text-right'>Total</div>
+        <div className='py-2 font-normal text-right'>Route</div>
+      </div>
 
-      <tbody className='relative'>
+      {/* Body */}
+      <div className='relative'>
         {multiHops ? (
           <>
             {multiHops.sell.map((trace, idx) => (
@@ -102,8 +100,8 @@ const RouteBookData = observer(({ bookData }: { bookData?: RouteBookResponse }) 
             .fill(1)
             .map((_, i) => <SkeletonRow isSpread={i === 8} key={i} />)
         )}
-      </tbody>
-    </table>
+      </div>
+    </div>
   );
 });
 
@@ -138,22 +136,20 @@ const SpreadRow = ({ sellOrders, buyOrders }: { sellOrders: Trace[]; buyOrders: 
   const pair = usePathSymbols();
 
   if (!spreadInfo) {
-    return;
+    return null;
   }
 
   return (
-    <tr>
-      <td colSpan={4} className='border-y border-y-other-solidStroke'>
-        <div className='flex items-center justify-center gap-2 px-3 py-3 text-xs'>
-          <span className='text-green-400'>{formatPrice(spreadInfo.midPrice)}</span>
-          <span className='text-gray-400'>Spread:</span>
-          <span className='text-white'>
-            {formatNumber(spreadInfo.amount)} {pair.quoteSymbol}
-          </span>
-          <span className='text-gray-400'>({parseFloat(spreadInfo.percentage).toFixed(2)}%)</span>
-        </div>
-      </td>
-    </tr>
+    <div className='border-b border-y-other-solidStroke'>
+      <div className='flex items-center justify-center gap-2 px-3 py-3 text-xs'>
+        <span className='text-green-400'>{formatPrice(spreadInfo.midPrice)}</span>
+        <span className='text-gray-400'>Spread:</span>
+        <span className='text-white'>
+          {formatNumber(spreadInfo.amount)} {pair.quoteSymbol}
+        </span>
+        <span className='text-gray-400'>({parseFloat(spreadInfo.percentage).toFixed(2)}%)</span>
+      </div>
+    </div>
   );
 };
 

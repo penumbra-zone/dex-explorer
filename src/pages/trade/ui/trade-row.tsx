@@ -2,6 +2,7 @@ import { Trace } from '@/shared/api/server/book/types.ts';
 import { getSymbolFromValueView } from '@penumbra-zone/getters/value-view';
 import React from 'react';
 import { ChevronRight } from 'lucide-react';
+import { Text } from '@penumbra-zone/ui/Text';
 
 function formatPrice(price: string): string {
   const num = parseFloat(price);
@@ -34,28 +35,27 @@ export const TradeRow = ({
   const bgColor = isSell ? SELL_BG_COLOR : 'rgba(28, 121, 63, 0.24)';
 
   return (
-    <tr
-      className='h-[33px] border-b border-border-faded group text-[12px]'
+    <div
+      className='px-4 group relative h-[33px] border-b border-border-faded text-xs grid grid-cols-[1fr_1fr_1fr_1fr] items-center'
       style={{
         backgroundImage: `linear-gradient(to right, ${bgColor} ${relativeSize}%, transparent ${relativeSize}%)`,
       }}
     >
-      <td className={`${isSell ? 'text-red-400' : 'text-green-400'} px-4`}>
+      <div className={`${isSell ? 'text-red-400' : 'text-green-400'}`}>
         {formatPrice(trace.price)}
-      </td>
-      <td className='text-right text-white '>{formatNumber(trace.amount)}</td>
-      <td className='text-right text-white'>{formatNumber(trace.total)}</td>
-      <td className='text-right'>
+      </div>
+      <div className='text-right text-white'>{formatNumber(trace.amount)}</div>
+      <div className='text-right text-white'>{formatNumber(trace.total)}</div>
+      <div className='text-right'>
         <HopCount count={trace.hops.length} />
-      </td>
+      </div>
 
-      {/* Overlay row that appears on hover */}
-      {/* eslint-disable-next-line react/no-unknown-property -- JSX style is valid in nextjs */}
+      {/* Overlay that appears on hover */}
       <style jsx>{`
-        tr:hover td {
+        .group:hover > div:not(:last-child) {
           visibility: hidden;
         }
-        tr:hover::after {
+        .group:hover::after {
           content: '';
           position: absolute;
           left: 0;
@@ -66,14 +66,13 @@ export const TradeRow = ({
       `}</style>
 
       {/* Route display that shows on hover */}
-      <td
+      <div
         className='hidden group-hover:flex justify-center absolute left-0 right-0 px-4 select-none z-30'
-        colSpan={4}
         style={{ visibility: 'visible' }}
       >
         <RouteDisplay tokens={trace.hops.map(valueView => getSymbolFromValueView(valueView))} />
-      </td>
-    </tr>
+      </div>
+    </div>
   );
 };
 
