@@ -63,10 +63,14 @@ const RouteBookData = observer(({ bookData }: { bookData?: RouteBookResponse }) 
     <table className='w-full'>
       <thead>
         <tr className='text-xs text-gray-400'>
-          <th className='pl-4 py-2 font-normal text-left'>Price({pair.quoteSymbol})</th>
-          <th className='pl-4 py-2 font-normal text-right'>Amount({pair.baseSymbol})</th>
-          <th className='pl-4 py-2 font-normal text-right'>Total</th>
-          <th className='pl-4 py-2 font-normal text-right'>Route</th>
+          <th className='pl-4 py-2 font-normal text-left w-[1%] whitespace-nowrap'>
+            Price({pair.quoteSymbol})
+          </th>
+          <th className='py-2 font-normal text-right w-[1%] whitespace-nowrap'>
+            Amount({pair.baseSymbol})
+          </th>
+          <th className='py-2 font-normal text-right w-[1%] whitespace-nowrap'>Total</th>
+          <th className='py-2 font-normal text-right w-[1%] whitespace-nowrap'>Route</th>
         </tr>
       </thead>
 
