@@ -2,7 +2,6 @@ import { Trace } from '@/shared/api/server/book/types.ts';
 import { getSymbolFromValueView } from '@penumbra-zone/getters/value-view';
 import React from 'react';
 import { ChevronRight } from 'lucide-react';
-import { Text } from '@penumbra-zone/ui/Text';
 
 function formatPrice(price: string): string {
   const num = parseFloat(price);
@@ -41,9 +40,7 @@ export const TradeRow = ({
         backgroundImage: `linear-gradient(to right, ${bgColor} ${relativeSize}%, transparent ${relativeSize}%)`,
       }}
     >
-      <div className={`${isSell ? 'text-red-400' : 'text-green-400'}`}>
-        {formatPrice(trace.price)}
-      </div>
+      <div className={isSell ? 'text-red-400' : 'text-green-400'}>{formatPrice(trace.price)}</div>
       <div className='text-right text-white'>{formatNumber(trace.amount)}</div>
       <div className='text-right text-white'>{formatNumber(trace.total)}</div>
       <div className='text-right'>
@@ -51,6 +48,7 @@ export const TradeRow = ({
       </div>
 
       {/* Overlay that appears on hover */}
+      {/* eslint-disable-next-line react/no-unknown-property -- jsx is, in fact, a property */}
       <style jsx>{`
         .group:hover > div:not(:last-child) {
           visibility: hidden;
