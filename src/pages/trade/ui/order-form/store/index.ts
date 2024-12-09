@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { makeAutoObservable } from 'mobx';
 import debounce from 'lodash/debounce';
-import times from 'lodash/times';
+import BigNumber from 'bignumber.js';
 import { SimulationService } from '@penumbra-zone/protobuf';
 import {
   BalancesResponse,
@@ -18,7 +18,6 @@ import {
 import { getAssetId } from '@penumbra-zone/getters/metadata';
 import { getSwapCommitmentFromTx } from '@penumbra-zone/getters/transaction';
 import { getAssetIdFromValueView } from '@penumbra-zone/getters/value-view';
-import { getFormattedAmtFromValueView } from '@penumbra-zone/types/value-view';
 import { pnum } from '@penumbra-zone/types/pnum';
 import { openToast } from '@penumbra-zone/ui/Toast';
 import { penumbra } from '@/shared/const/penumbra';
@@ -154,9 +153,6 @@ class OrderFormStore {
     this.baseAsset.onAmountChange(debouncedHandleAmountChange);
     this.quoteAsset.onAmountChange(debouncedHandleAmountChange);
 
-    const debouncedCalculateGasFee = debounce(this.calculateGasFee, 500) as () => Promise<void>;
-    this.rangeLiquidity.onFieldChange(debouncedCalculateGasFee);
-
     this.setBalancesOfAssets();
     void this.calculateGasFee();
     void this.calculateExchangeRate();
@@ -199,8 +195,7 @@ class OrderFormStore {
       return;
     }
 
-    const outputAmount = getFormattedAmtFromValueView(output, true);
-    this.exchangeRate = Number(outputAmount);
+    this.exchangeRate = pnum(output).toRoundedNumber();
   };
 
   calculateMarketGasFee = async (): Promise<void> => {
@@ -241,77 +236,16 @@ class OrderFormStore {
       },
     });
 
-    const feeAmount = getFormattedAmtFromValueView(feeValueView, true);
-    this.gasFee = Number(feeAmount);
+    this.gasFee = pnum(feeValueView).toRoundedNumber();
   };
 
-  constructRangePosition = ({
-    positionIndex,
-    positionUnitAmount,
-  }: {
-    positionIndex: number;
-    positionUnitAmount: bigint;
-  }) => {
-    const baseAssetBaseUnits = this.baseAsset.toBaseUnits();
-    const quoteAssetBaseUnits = this.quoteAsset.toBaseUnits();
-    const { lowerBound, upperBound, positions, marketPrice, feeTier } = this
-      .rangeLiquidity as Required<typeof this.rangeLiquidity>;
-
-    const price =
-      Number(lowerBound) +
-      (positionIndex * (Number(upperBound) - Number(lowerBound))) / (positions ?? 1 - 1);
-    const priceBaseUnits = pnum(price, this.quoteAsset.exponent ?? 0).toBigInt();
-
-    // Cross-multiply exponents and prices for trading function coefficients
-    //
-    // We want to write
-    // p = EndUnit * price
-    // q = StartUnit
-    // However, if EndUnit is too small, it might not round correctly after multiplying by price
-    // To handle this, conditionally apply a scaling factor if the EndUnit amount is too small.
-    const scale = quoteAssetBaseUnits < 1_000_000n ? 1_000_000n : 1n;
-    const p = pnum(quoteAssetBaseUnits * scale * priceBaseUnits).toAmount();
-    const q = pnum(baseAssetBaseUnits * scale).toAmount();
-
-    // Compute reserves
-    // Fund the position with asset 1 if its price exceeds the current price,
-    // matching the target per-position amount of asset 2. Otherwise, fund with
-    // asset 2 to avoid immediate arbitrage.
-    const reserves =
-      price < marketPrice
-        ? {
-            r1: pnum(0n).toAmount(),
-            r2: pnum(positionUnitAmount).toAmount(),
-          }
-        : {
-            r1: pnum(Number(positionUnitAmount) / price).toAmount(),
-            r2: pnum(0n).toAmount(),
-          };
-
-    return {
-      position: new Position({
-        phi: {
-          component: { fee: feeTier * 100, p, q },
-          pair: new TradingPair({
-            asset1: this.baseAsset.assetId,
-            asset2: this.quoteAsset.assetId,
-          }),
-        },
-        nonce: crypto.getRandomValues(new Uint8Array(32)),
-        state: new PositionState({ state: PositionState_PositionStateEnum.OPENED }),
-        reserves,
-        closeOnFill: false,
-      }),
-    };
-  };
-
-  constructLimitPosition = () => {
-    const baseAssetBaseUnits = this.baseAsset.toBaseUnits();
-    const quoteAssetBaseUnits = this.quoteAsset.toBaseUnits();
+  // ref: https://github.com/penumbra-zone/penumbra/blob/main/crates/bin/pcli/src/command/tx/replicate/linear.rs
+  buildLimitPosition = (): Position => {
+    const baseAssetExponentUnits = BigInt(10) ** BigInt(this.baseAsset.exponent ?? 0);
+    const quoteAssetExponentUnits = BigInt(10) ** BigInt(this.quoteAsset.exponent ?? 0);
 
     const { price, marketPrice } = this.limitOrder as Required<typeof this.limitOrder>;
-    const priceNumber = Number(price);
-    const priceUnitAmount = pnum(priceNumber, this.quoteAsset.exponent ?? 0).toBigInt();
+    const positionPrice = Number(price);
 
     // Cross-multiply exponents and prices for trading function coefficients
     //
@@ -320,88 +254,43 @@ class OrderFormStore {
     // q = StartUnit
     // However, if EndUnit is too small, it might not round correctly after multiplying by price
     // To handle this, conditionally apply a scaling factor if the EndUnit amount is too small.
-    const scale = quoteAssetBaseUnits < 1_000_000n ? 1_000_000n : 1n;
-    const p = pnum(quoteAssetBaseUnits * scale * priceUnitAmount).toAmount();
-    const q = pnum(baseAssetBaseUnits * scale).toAmount();
+    const scale = quoteAssetExponentUnits < 1_000_000n ? 1_000_000n : 1n;
+
+    const p = pnum(
+      BigNumber((quoteAssetExponentUnits * scale).toString())
+        .times(BigNumber(positionPrice))
+        .toFixed(0),
+    ).toAmount();
+    const q = pnum(baseAssetExponentUnits * scale).toAmount();
 
     // Compute reserves
     // Fund the position with asset 1 if its price exceeds the current price,
     // matching the target per-position amount of asset 2. Otherwise, fund with
     // asset 2 to avoid immediate arbitrage.
     const reserves =
-      priceNumber < marketPrice
+      positionPrice < marketPrice
         ? {
             r1: pnum(0n).toAmount(),
-            r2: pnum(quoteAssetBaseUnits).toAmount(),
+            r2: pnum(this.quoteAsset.amount).toAmount(),
           }
         : {
-            r1: pnum(Number(quoteAssetBaseUnits) / priceNumber).toAmount(),
+            r1: pnum(Number(this.quoteAsset.amount) / positionPrice).toAmount(),
             r2: pnum(0n).toAmount(),
           };
 
-    return {
-      position: new Position({
-        phi: {
-          component: { p, q },
-          pair: new TradingPair({
-            asset1: this.baseAsset.assetId,
-            asset2: this.quoteAsset.assetId,
-          }),
-        },
-        nonce: crypto.getRandomValues(new Uint8Array(32)),
-        state: new PositionState({ state: PositionState_PositionStateEnum.OPENED }),
-        reserves,
-        closeOnFill: true,
-      }),
-    };
-  };
-
-  calculateRangeLiquidityGasFee = async (): Promise<void> => {
-    this.gasFee = null;
-
-    const { lowerBound, upperBound, positions, marketPrice, feeTier } = this.rangeLiquidity;
-    if (
-      !this.quoteAsset.amount ||
-      !lowerBound ||
-      !upperBound ||
-      !positions ||
-      !marketPrice ||
-      !feeTier
-    ) {
-      this.gasFee = 0;
-      return;
-    }
-
-    if (lowerBound > upperBound) {
-      this.gasFee = 0;
-      return;
-    }
-
-    const positionUnitAmount = this.quoteAsset.toBaseUnits() / BigInt(positions);
-    const positionsReq = new TransactionPlannerRequest({
-      positionOpens: times(positions, index =>
-        this.constructRangePosition({
-          positionIndex: index,
-          positionUnitAmount,
+    return new Position({
+      phi: {
+        component: { p, q },
+        pair: new TradingPair({
+          asset1: this.baseAsset.assetId,
+          asset2: this.quoteAsset.assetId,
         }),
-      ),
-      source: this.quoteAsset.accountIndex,
-    });
-
-    const txPlan = await plan(positionsReq);
-    const fee = txPlan.transactionParameters?.fee;
-    const feeValueView = new ValueView({
-      valueView: {
-        case: 'knownAssetId',
-        value: {
-          amount: fee?.amount ?? { hi: 0n, lo: 0n },
-          metadata: this.baseAsset.metadata,
-        },
       },
+      nonce: crypto.getRandomValues(new Uint8Array(32)),
+      state: new PositionState({ state: PositionState_PositionStateEnum.OPENED }),
+      reserves,
+      closeOnFill: true,
     });
-
-    const feeAmount = getFormattedAmtFromValueView(feeValueView, true);
-    this.gasFee = Number(feeAmount);
   };
 
   calculateGasFee = async (): Promise<void> => {
@@ -409,9 +298,9 @@ class OrderFormStore {
       await this.calculateMarketGasFee();
     }
 
-    if (this.type === FormType.RangeLiquidity) {
-      await this.calculateRangeLiquidityGasFee();
-    }
+    // if (this.type === FormType.RangeLiquidity) {
+    //   await this.calculateRangeLiquidityGasFee();
+    // }
   };
 
   initiateSwapTx = async (): Promise<void> => {
@@ -475,7 +364,11 @@ class OrderFormStore {
       }
 
       const positionsReq = new TransactionPlannerRequest({
-        positionOpens: [this.constructLimitPosition()],
+        positionOpens: [
+          {
+            position: this.buildLimitPosition(),
+          },
+        ],
         source: this.quoteAsset.accountIndex,
       });
 
@@ -488,20 +381,14 @@ class OrderFormStore {
     }
   };
 
-  // ref: https://github.com/penumbra-zone/penumbra/blob/main/crates/bin/pcli/src/command/tx/replicate/linear.rs
   initiateRangePositionsTx = async (): Promise<void> => {
     try {
       this.isLoading = true;
 
-      const { lowerBound, upperBound, positions, marketPrice, feeTier } = this.rangeLiquidity;
-      if (
-        !this.quoteAsset.amount ||
-        !lowerBound ||
-        !upperBound ||
-        !positions ||
-        !marketPrice ||
-        !feeTier
-      ) {
+      const { target, lowerBound, upperBound, positions, marketPrice, feeTier } =
+        this.rangeLiquidity;
+
+      if (!target || !lowerBound || !upperBound || !positions || !marketPrice || !feeTier) {
         openToast({
           type: 'error',
           message: 'Please enter a valid range.',
@@ -517,14 +404,9 @@ class OrderFormStore {
         return;
       }
 
-      const positionUnitAmount = this.quoteAsset.toBaseUnits() / BigInt(positions);
+      const linearPositions = this.rangeLiquidity.buildPositions();
       const positionsReq = new TransactionPlannerRequest({
-        positionOpens: times(positions, i =>
-          this.constructRangePosition({
-            positionIndex: i,
-            positionUnitAmount,
-          }),
-        ),
+        positionOpens: linearPositions.map(position => ({ position })),
         source: this.quoteAsset.accountIndex,
       });
 
