@@ -24,7 +24,8 @@ export const RangeLiquidityOrderForm = observer(() => {
   const { baseAsset, quoteAsset, rangeLiquidity, submitOrder, isLoading, gasFee, exchangeRate } =
     useOrderFormStore(FormType.RangeLiquidity);
   const { data } = useSummary('1d');
-  const price = data && 'price' in data ? data.price : undefined;
+  // const price = data && 'price' in data ? data.price : undefined;
+  const price = 1;
 
   useEffect(() => {
     if (price) {
@@ -33,10 +34,10 @@ export const RangeLiquidityOrderForm = observer(() => {
   }, [price, rangeLiquidity]);
 
   useEffect(() => {
-    if (quoteAsset.exponent) {
-      rangeLiquidity.setExponent(quoteAsset.exponent);
+    if (baseAsset && quoteAsset) {
+      rangeLiquidity.setAssets(baseAsset, quoteAsset);
     }
-  }, [quoteAsset.exponent, rangeLiquidity]);
+  }, [baseAsset, quoteAsset, rangeLiquidity]);
 
   return (
     <div className='p-4'>
@@ -44,24 +45,35 @@ export const RangeLiquidityOrderForm = observer(() => {
         <div className='mb-1'>
           <OrderInput
             label='Liquidity Target'
-            value={quoteAsset.amount}
-            onChange={amount => quoteAsset.setAmount(amount)}
+            value={rangeLiquidity.target}
+            onChange={target => rangeLiquidity.setTarget(target)}
             denominator={quoteAsset.symbol}
           />
         </div>
-        <div className='flex flex-row items-center justify-between py-1'>
-          <Text small color='text.secondary'>
-            Available Balance
-          </Text>
-          <button
-            type='button'
-            className='text-primary'
-            onClick={connected ? () => quoteAsset.setAmount(quoteAsset.balance ?? 0) : undefined}
-          >
-            <Text small color='text.primary'>
-              {quoteAsset.balance} {quoteAsset.symbol}
+        <div className='w-full flex flex-row flex-wrap items-center justify-between py-1'>
+          <div className='leading-6'>
+            <Text small color='text.secondary'>
+              Available Balances
             </Text>
-          </button>
+          </div>
+          <div className='flex flex-wrap flex-col items-end'>
+            <div>
+              <Text small color='text.primary' whitespace='nowrap'>
+                {baseAsset.balance} {baseAsset.symbol}
+              </Text>
+            </div>
+            <button
+              type='button'
+              className='text-primary'
+              onClick={
+                connected ? () => rangeLiquidity.setTarget(quoteAsset.balance ?? 0) : undefined
+              }
+            >
+              <Text small color='text.primary' whitespace='nowrap'>
+                {quoteAsset.balance} {quoteAsset.symbol}
+              </Text>
+            </button>
+          </div>
         </div>
       </div>
       <div className='mb-4'>
@@ -127,9 +139,20 @@ export const RangeLiquidityOrderForm = observer(() => {
       </div>
       <div className='mb-4'>
         <InfoRow label='Number of positions' value={rangeLiquidity.positions} toolTip='' />
-        <InfoRow label='Base asset amount' value={baseAsset.amount} toolTip='' />
-        <InfoRow label='Quote asset amount' value={quoteAsset.amount} toolTip='' />
-        <InfoRowGasFee gasFee={gasFee} symbol={baseAsset.symbol} />
+        <InfoRow
+          label='Base asset amount'
+          value={`${rangeLiquidity.baseAsset?.amount ?? 0} ${rangeLiquidity.baseAsset?.symbol}`}
+          toolTip=''
+        />
+        <InfoRow
+          label='Quote asset amount'
+          value={`${rangeLiquidity.quoteAsset?.amount ?? 0} ${rangeLiquidity.quoteAsset?.symbol}`}
+          toolTip=''
+        />
+        <InfoRowGasFee
+          gasFee={rangeLiquidity.gasFee ?? 0}
+          symbol={rangeLiquidity.baseAsset?.symbol}
+        />
       </div>
       <div className='mb-4'>
         {connected ? (
