@@ -58,7 +58,9 @@ export class OrderFormAsset {
       return undefined;
     }
 
-    return pnum(this.balanceView).toFormattedString();
+    return pnum(this.balanceView).toFormattedString({
+      decimals: this.exponent,
+    });
   }
 
   get symbol(): string {
