@@ -128,8 +128,9 @@ export class RangeLiquidity {
 
     // We are treating quote asset as the numeraire and want to have an even spread
     // of quote asset value across all positions.
-    // const targetInput = pnum(this.target, this.quoteAsset.exponent).toBigInt();
-    const quoteAssetAmountPerPosition = Number(this.target) / this.positions;
+    const targetInput = pnum(this.target, this.quoteAsset.exponent).toBigInt();
+    // const quoteAssetAmountPerPosition = Number(this.target) / this.positions;
+    const quoteAssetAmountPerPosition = targetInput / BigInt(this.positions);
 
     const baseAssetExponentUnits = BigInt(10) ** BigInt(this.baseAsset.exponent);
     const quoteAssetExponentUnits = BigInt(10) ** BigInt(this.quoteAsset.exponent);
@@ -151,12 +152,6 @@ export class RangeLiquidity {
           .times(BigNumber(positionPrice))
           .toFixed(0),
       ).toAmount();
-      // const p = pnum(
-      //   BigNumber(positionPrice)
-      //     .shiftedBy(this.quoteAsset.exponent ?? 0)
-      //     .times(scale.toString())
-      //     .toFixed(0),
-      // ).toAmount();
 
       const q = pnum(baseAssetExponentUnits * scale).toAmount();
 
@@ -172,14 +167,18 @@ export class RangeLiquidity {
             // so the position isn't immediately arbitraged.
             {
               r1: pnum(0n).toAmount(),
-              r2: pnum(quoteAssetAmountPerPosition, this.quoteAsset?.exponent).toAmount(),
+              // r2: pnum(quoteAssetAmountPerPosition, this.quoteAsset?.exponent).toAmount(),
+              r2: pnum(quoteAssetAmountPerPosition).toAmount(),
             }
           : {
               // If the position's price is _greater_ than the current price, fund it with
               // an equivalent amount of asset 1 as the target per-position amount of asset 2.
+              // r1: pnum(
+              //   quoteAssetAmountPerPosition / positionPrice,
+              //   this.baseAsset?.exponent,
+              // ).toAmount(),
               r1: pnum(
-                quoteAssetAmountPerPosition / positionPrice,
-                this.baseAsset?.exponent,
+                BigNumber(quoteAssetAmountPerPosition.toString()).div(positionPrice).toFixed(0),
               ).toAmount(),
               r2: pnum(0n).toAmount(),
             };
@@ -228,10 +227,10 @@ export class RangeLiquidity {
 
     console.table(
       positions.map(position => ({
-        p: pnum(position.phi?.component?.p).toRoundedNumber(),
-        q: pnum(position.phi?.component?.q).toRoundedNumber(),
-        r1: pnum(position.reserves?.r1).toRoundedNumber(),
-        r2: pnum(position.reserves?.r2).toRoundedNumber(),
+        p: pnum(position.phi?.component?.p).toBigInt(),
+        q: pnum(position.phi?.component?.q).toBigInt(),
+        r1: pnum(position.reserves?.r1).toBigInt(),
+        r2: pnum(position.reserves?.r2).toBigInt(),
       })),
     );
 
