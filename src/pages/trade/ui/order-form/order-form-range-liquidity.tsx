@@ -160,12 +160,12 @@ export const RangeLiquidityOrderForm = observer(() => {
           <ConnectButton actionType='default' />
         )}
       </div>
-      {exchangeRate !== null && (
+      {price !== undefined && (
         <div className='flex justify-center p-1'>
           <Text small color='text.secondary'>
             1 {baseAsset.symbol} ={' '}
             <Text small color='text.primary'>
-              {exchangeRate} {quoteAsset.symbol}
+              {price} {quoteAsset.symbol}
             </Text>
           </Text>
         </div>

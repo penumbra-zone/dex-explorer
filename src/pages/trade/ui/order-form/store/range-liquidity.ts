@@ -148,8 +148,8 @@ export class RangeLiquidity {
       { baseAmount: 0n, quoteAmount: 0n },
     );
 
-    this.baseAsset?.setAmount(pnum(baseAmount, this.baseAsset.exponent).toRoundedNumber());
-    this.quoteAsset?.setAmount(pnum(quoteAmount, this.quoteAsset.exponent).toRoundedNumber());
+    this.baseAsset?.setAmount(Number(baseAmount));
+    this.quoteAsset?.setAmount(Number(quoteAmount));
 
     const positionsReq = new TransactionPlannerRequest({
       positionOpens: positions.map(position => ({ position })),
