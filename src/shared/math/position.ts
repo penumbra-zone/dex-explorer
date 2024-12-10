@@ -14,17 +14,37 @@ import BigNumber from 'bignumber.js';
 // In the year 202X, when 1 BTC = 1 million USD, then this is still only 1e12 < 2^50.
 const PRECISION_DECIMALS = 12;
 
+/**
+ * A slimmed-down representation for assets, restricted to what we need for math.
+ *
+ * We have an identifier for the kind of asset, which is needed to construct a position,
+ * and an exponent E, such that 10**E units of the base denom constitute a unit of the display denom.
+ *
+ * For example, 10**6 uUSD make up one USD.
+ */
 export interface Asset {
   id: AssetId;
   exponent: number;
 }
 
+/**
+ * A basic plan to create a position.
+ *
+ * This can then be passed to `planToPosition` to fill out the position.
+ */
 export interface PositionPlan {
   baseAsset: Asset;
   quoteAsset: Asset;
+  /** How much of the quote asset do you get for each unit of the base asset?
+   *
+   * This will be in terms of the *display* denoms, e.g. USD / UM.
+   */
   price: number;
+  /** The fee, in [0, 10_000]*/
   feeBps: number;
+  /** How much of the base asset we want to provide, in display units. */
   baseReserves: number;
+  /** How much of the quote asset we want to provide, in display units. */
   quoteReserves: number;
 }
 
@@ -42,6 +62,12 @@ const priceToPQ = (
   return { p: p.toNumber(), q: q.toNumber() };
 };
 
+/**
+ * Convert a plan into a position.
+ *
+ * Try using `rangeLiquidityPositions` or `limitOrderPosition` instead, with this method existing
+ * as an escape hatch in case any of those use cases aren't sufficient.
+ */
 export const planToPosition = (plan: PositionPlan): Position => {
   const { p, q } = priceToPQ(plan.price, plan.baseAsset.exponent, plan.quoteAsset.exponent);
 
@@ -67,6 +93,16 @@ export const planToPosition = (plan: PositionPlan): Position => {
   });
 };
 
+/**
+ * A range liquidity plan provides for creating multiple positions across a range of prices.
+ *
+ * This plan attempts to distribute reserves across equally spaced price points.
+ *
+ * It needs to know the market price, to know when to switch from positions that sell the quote
+ * asset, to positions that buy the quote asset.
+ *
+ * All prices are in terms of quoteAsset / baseAsset, in display units.
+ */
 interface RangeLiquidityPlan {
   baseAsset: Asset;
   quoteAsset: Asset;
@@ -78,6 +114,7 @@ interface RangeLiquidityPlan {
   positions: number;
 }
 
+/** Given a plan for providing range liquidity, create all the necessary positions to accomplish the plan. */
 export const rangeLiquidityPositions = (plan: RangeLiquidityPlan): Position[] => {
   // The step width is positions-1 because it's between the endpoints
   // |---|---|---|---|
@@ -112,6 +149,12 @@ export const rangeLiquidityPositions = (plan: RangeLiquidityPlan): Position[] =>
   });
 };
 
+/** A limit order plan attempts to buy or sell the baseAsset at a given price.
+ *
+ * This price is always in terms of quoteAsset / baseAsset.
+ *
+ * The input is the quote asset when buying, and the base asset when selling, and in display units.
+ */
 interface LimitOrderPlan {
   buy: 'buy' | 'sell';
   price: number;
