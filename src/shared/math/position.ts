@@ -37,7 +37,7 @@ const priceToPQ = (
   //      basePrice = Y uUM / uUSD = X USD / UM * uUSD / USD * UM / uUM
   //                = X * 10 ** qExponent * 10 ** -pExponent
   const basePrice = new BigNumber(price).times(new BigNumber(10).pow(qExponent - pExponent));
-  // USD / UM -> [USD, UM]
+  // USD / UM -> [USD, UM], with a given precision
   const [q, p] = basePrice.toFraction(10 ** PRECISION_DECIMALS);
   return { p: p.toNumber(), q: q.toNumber() };
 };
