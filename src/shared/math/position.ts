@@ -15,6 +15,20 @@ import BigNumber from 'bignumber.js';
 // In the year 202X, when 1 BTC = 1 million USD, then this is still only 1e12 < 2^50.
 const PRECISION_DECIMALS = 12;
 
+const compareAssetId = (a: AssetId, b: AssetId): number => {
+  for (let i = 0; i < 32; ++i) {
+    const a_i = a.inner[i] ?? -Infinity;
+    const b_i = b.inner[i] ?? -Infinity;
+    if (a_i < b_i) {
+      return -1;
+    }
+    if (b_i < a_i) {
+      return 1;
+    }
+  }
+  return 0;
+};
+
 /**
  * A slimmed-down representation for assets, restricted to what we need for math.
  *
@@ -53,14 +67,14 @@ const priceToPQ = (
   price: number,
   pExponent: number,
   qExponent: number,
-): { p: number; q: number } => {
+): { p: Amount; q: Amount } => {
   // e.g. price     = X USD / UM
   //      basePrice = Y uUM / uUSD = X USD / UM * uUSD / USD * UM / uUM
   //                = X * 10 ** qExponent * 10 ** -pExponent
   const basePrice = new BigNumber(price).times(new BigNumber(10).pow(qExponent - pExponent));
   // USD / UM -> [USD, UM], with a given precision
   const [q, p] = basePrice.toFraction(10 ** PRECISION_DECIMALS);
-  return { p: p.toNumber(), q: q.toNumber() };
+  return { p: pnum(BigInt(p.toFixed(0))).toAmount(), q: pnum(BigInt(q.toFixed(0))).toAmount() };
 };
 
 const priceToPQ2 = (
@@ -96,22 +110,34 @@ const priceToPQ2 = (
  */
 export const planToPosition = (plan: PositionPlan): Position => {
   console.log('TCL: plan', plan);
-  // const { p, q } = priceToPQ(plan.price, plan.baseAsset.exponent, plan.quoteAsset.exponent);
-  const { p, q } = priceToPQ2(plan.price, plan.baseAsset.exponent, plan.quoteAsset.exponent);
+  const { p: raw_p, q: raw_q } = priceToPQ(
+    plan.price,
+    plan.baseAsset.exponent,
+    plan.quoteAsset.exponent,
+  );
+  //const { p, q } = priceToPQ2(plan.price, plan.baseAsset.exponent, plan.quoteAsset.exponent);
 
   // const r1 = pnum(plan.baseReserves, plan.baseAsset.exponent).toAmount();
   // const r2 = pnum(plan.quoteReserves, plan.quoteAsset.exponent).toAmount();
-  const r1 = pnum(plan.baseReserves).toAmount();
-  const r2 = pnum(plan.quoteReserves).toAmount();
+  const raw_r1 = pnum(plan.baseReserves).toAmount();
+  const raw_r2 = pnum(plan.quoteReserves).toAmount();
 
+  const correctOrder = compareAssetId(plan.baseAsset.id, plan.quoteAsset.id) <= 0;
+  const [[p, q], [r1, r2]] = correctOrder
+    ? [
+        [raw_p, raw_q],
+        [raw_r1, raw_r2],
+      ]
+    : [
+        [raw_q, raw_p],
+        [raw_r2, raw_r1],
+      ];
   return new Position({
     phi: {
       component: {
         fee: plan.feeBps,
-        // p: pnum(p).toAmount(),
-        // q: pnum(q).toAmount(),
-        p,
-        q,
+        p: pnum(p).toAmount(),
+        q: pnum(q).toAmount(),
       },
       pair: new TradingPair({
         asset1: plan.baseAsset.id,
