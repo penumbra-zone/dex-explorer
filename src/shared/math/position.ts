@@ -90,8 +90,9 @@ export const planToPosition = (plan: PositionPlan): Position => {
     plan.baseAsset.exponent,
     plan.quoteAsset.exponent,
   );
-  const raw_r1 = pnum(plan.baseReserves, plan.baseAsset.exponent).toAmount();
-  const raw_r2 = pnum(plan.quoteReserves, plan.quoteAsset.exponent).toAmount();
+
+  const raw_r1 = pnum(plan.baseReserves).toAmount();
+  const raw_r2 = pnum(plan.quoteReserves).toAmount();
 
   const correctOrder = compareAssetId(plan.baseAsset.id, plan.quoteAsset.id) <= 0;
   const [[p, q], [r1, r2]] = correctOrder
