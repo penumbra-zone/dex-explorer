@@ -36,10 +36,10 @@ export const LimitOrderForm = observer(() => {
   }, [exchangeRate, limitOrder]);
 
   useEffect(() => {
-    if (quoteAsset.exponent) {
-      limitOrder.setExponent(quoteAsset.exponent);
+    if (quoteAsset.exponent && baseAsset.exponent) {
+      limitOrder.setExponent(quoteAsset.exponent - baseAsset.exponent);
     }
-  }, [quoteAsset.exponent, limitOrder]);
+  }, [baseAsset.exponent, quoteAsset.exponent, limitOrder]);
 
   return (
     <div className='p-4'>
