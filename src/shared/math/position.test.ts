@@ -23,7 +23,7 @@ describe('planToPosition', () => {
         exponent: 0,
       },
       price: 20.5,
-      fee_bps: 100,
+      feeBps: 100,
       baseReserves: 1000,
       quoteReserves: 2000,
     });
@@ -44,7 +44,7 @@ describe('planToPosition', () => {
         exponent: 6,
       },
       price: 12.34,
-      fee_bps: 100,
+      feeBps: 100,
       baseReserves: 5,
       quoteReserves: 7,
     });
@@ -65,7 +65,7 @@ describe('planToPosition', () => {
         exponent: 8,
       },
       price: 12.34,
-      fee_bps: 100,
+      feeBps: 100,
       baseReserves: 5,
       quoteReserves: 7,
     });
