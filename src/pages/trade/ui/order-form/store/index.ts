@@ -27,6 +27,7 @@ import { usePathToMetadata } from '../../../model/use-path';
 import { OrderFormAsset } from './asset';
 import { RangeLiquidity } from './range-liquidity';
 import { LimitOrder } from './limit-order';
+import { limitOrderPosition } from '@/shared/math/position';
 
 export enum Direction {
   Buy = 'Buy',
@@ -241,55 +242,31 @@ class OrderFormStore {
 
   // ref: https://github.com/penumbra-zone/penumbra/blob/main/crates/bin/pcli/src/command/tx/replicate/linear.rs
   buildLimitPosition = (): Position => {
-    const baseAssetExponentUnits = BigInt(10) ** BigInt(this.baseAsset.exponent ?? 0);
-    const quoteAssetExponentUnits = BigInt(10) ** BigInt(this.quoteAsset.exponent ?? 0);
-
-    const { price, marketPrice } = this.limitOrder as Required<typeof this.limitOrder>;
-    const positionPrice = Number(price);
-
-    // Cross-multiply exponents and prices for trading function coefficients
-    //
-    // We want to write
-    // p = EndUnit * price
-    // q = StartUnit
-    // However, if EndUnit is too small, it might not round correctly after multiplying by price
-    // To handle this, conditionally apply a scaling factor if the EndUnit amount is too small.
-    const scale = quoteAssetExponentUnits < 1_000_000n ? 1_000_000n : 1n;
-
-    const p = pnum(
-      BigNumber((quoteAssetExponentUnits * scale).toString())
-        .times(BigNumber(positionPrice))
-        .toFixed(0),
-    ).toAmount();
-    const q = pnum(baseAssetExponentUnits * scale).toAmount();
-
-    // Compute reserves
-    // Fund the position with asset 1 if its price exceeds the current price,
-    // matching the target per-position amount of asset 2. Otherwise, fund with
-    // asset 2 to avoid immediate arbitrage.
-    const reserves =
-      positionPrice < marketPrice
-        ? {
-            r1: pnum(0n).toAmount(),
-            r2: pnum(this.quoteAsset.amount).toAmount(),
-          }
-        : {
-            r1: pnum(Number(this.quoteAsset.amount) / positionPrice).toAmount(),
-            r2: pnum(0n).toAmount(),
-          };
-
-    return new Position({
-      phi: {
-        component: { p, q },
-        pair: new TradingPair({
-          asset1: this.baseAsset.assetId,
-          asset2: this.quoteAsset.assetId,
-        }),
+    const { price } = this.limitOrder as Required<typeof this.limitOrder>;
+    if (
+      !this.baseAsset.assetId ||
+      !this.quoteAsset.assetId ||
+      !this.quoteAsset.exponent ||
+      !this.baseAsset.exponent ||
+      !this.quoteAsset.amount
+    ) {
+      throw new Error('incomplete limit position form');
+    }
+    return limitOrderPosition({
+      buy: this.direction === 'Buy' ? 'buy' : 'sell',
+      price: Number(price),
+      baseAsset: {
+        id: this.baseAsset.assetId,
+        exponent: this.baseAsset.exponent,
       },
-      nonce: crypto.getRandomValues(new Uint8Array(32)),
-      state: new PositionState({ state: PositionState_PositionStateEnum.OPENED }),
-      reserves,
-      closeOnFill: true,
+      quoteAsset: {
+        id: this.quoteAsset.assetId,
+        exponent: this.quoteAsset.exponent,
+      },
+      input:
+        this.direction === 'Buy'
+          ? Number(this.quoteAsset.amount)
+          : Number(this.quoteAsset.amount) / Number(price),
     });
   };
 
