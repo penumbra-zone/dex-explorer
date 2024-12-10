@@ -10,6 +10,7 @@ import { TransactionPlannerRequest } from '@penumbra-zone/protobuf/penumbra/view
 import { OrderFormAsset } from './asset';
 import BigNumber from 'bignumber.js';
 import { plan } from '../helpers';
+import { rangeLiquidityPositions } from '@/shared/math/position';
 
 export enum UpperBoundOptions {
   Market = 'Market',
@@ -108,7 +109,9 @@ export class RangeLiquidity {
       !this.positions ||
       !this.target ||
       !this.baseAsset ||
+      !this.baseAsset.assetId ||
       !this.quoteAsset ||
+      !this.quoteAsset.assetId ||
       !this.baseAsset.exponent ||
       !this.quoteAsset.exponent ||
       !this.marketPrice
@@ -116,84 +119,21 @@ export class RangeLiquidity {
       return [];
     }
 
-    // The step width is positions-1 because it's between the endpoints
-    // |---|---|---|---|
-    // 0   1   2   3   4
-    //   0   1   2   3
-    const stepWidth = (Number(this.upperBound) - Number(this.lowerBound)) / (this.positions - 1);
-
-    // We are treating quote asset as the numeraire and want to have an even spread
-    // of quote asset value across all positions.
-    const targetInput = pnum(this.target, this.quoteAsset.exponent).toBigInt();
-    // const quoteAssetAmountPerPosition = Number(this.target) / this.positions;
-    const quoteAssetAmountPerPosition = targetInput / BigInt(this.positions);
-
-    const baseAssetExponentUnits = BigInt(10) ** BigInt(this.baseAsset.exponent);
-    const quoteAssetExponentUnits = BigInt(10) ** BigInt(this.quoteAsset.exponent);
-
-    const positions = Array.from({ length: this.positions }, (_, i) => {
-      const positionPrice = Number(this.lowerBound) + stepWidth * i;
-
-      // Cross-multiply exponents and prices for trading function coefficients
-      //
-      // We want to write
-      // p = EndUnit * price
-      // q = StartUnit
-      // However, if EndUnit is too small, it might not round correctly after multiplying by price
-      // To handle this, conditionally apply a scaling factor if the EndUnit amount is too small.
-      const scale = quoteAssetExponentUnits < 1_000_000n ? 1_000_000n : 1n;
-
-      const p = pnum(
-        BigNumber((quoteAssetExponentUnits * scale).toString())
-          .times(BigNumber(positionPrice))
-          .toFixed(0),
-      ).toAmount();
-
-      const q = pnum(baseAssetExponentUnits * scale).toAmount();
-
-      console.log(
-        'TCL: RangeLiquidity -> quoteAssetAmountPerPosition',
-        quoteAssetAmountPerPosition,
-      );
-
-      // Compute reserves
-      const reserves =
-        positionPrice < this.marketPrice
-          ? // If the position's price is _less_ than the current price, fund it with asset 2
-            // so the position isn't immediately arbitraged.
-            {
-              r1: pnum(0n).toAmount(),
-              // r2: pnum(quoteAssetAmountPerPosition, this.quoteAsset?.exponent).toAmount(),
-              r2: pnum(quoteAssetAmountPerPosition).toAmount(),
-            }
-          : {
-              // If the position's price is _greater_ than the current price, fund it with
-              // an equivalent amount of asset 1 as the target per-position amount of asset 2.
-              // r1: pnum(
-              //   quoteAssetAmountPerPosition / positionPrice,
-              //   this.baseAsset?.exponent,
-              // ).toAmount(),
-              r1: pnum(
-                BigNumber(quoteAssetAmountPerPosition.toString()).div(positionPrice).toFixed(0),
-              ).toAmount(),
-              r2: pnum(0n).toAmount(),
-            };
-
-      const fee = (this.feeTier ?? 0.1) * 100;
-
-      return new Position({
-        phi: {
-          component: { fee, p, q },
-          pair: new TradingPair({
-            asset1: this.baseAsset?.assetId,
-            asset2: this.quoteAsset?.assetId,
-          }),
-        },
-        nonce: crypto.getRandomValues(new Uint8Array(32)),
-        state: new PositionState({ state: PositionState_PositionStateEnum.OPENED }),
-        reserves,
-        closeOnFill: false,
-      });
+    const positions = rangeLiquidityPositions({
+      baseAsset: {
+        id: this.baseAsset.assetId,
+        exponent: this.baseAsset.exponent,
+      },
+      quoteAsset: {
+        id: this.quoteAsset.assetId,
+        exponent: this.quoteAsset.exponent,
+      },
+      targetLiquidity: Number(this.target),
+      upperPrice: Number(this.upperBound),
+      lowerPrice: Number(this.lowerBound),
+      marketPrice: this.marketPrice,
+      feeBps: (this.feeTier ?? 0.1) * 100,
+      positions: this.positions,
     });
 
     return positions;
@@ -241,11 +181,11 @@ export class RangeLiquidity {
     );
     console.log(
       'TCL: total baseAmount',
-      pnum(baseAmount, this.baseAsset.exponent).toRoundedNumber(),
+      pnum(baseAmount, this.baseAsset?.exponent).toRoundedNumber(),
     );
     console.log(
       'TCL: total quoteAmount',
-      pnum(quoteAmount, this.quoteAsset.exponent).toRoundedNumber(),
+      pnum(quoteAmount, this.quoteAsset?.exponent).toRoundedNumber(),
     );
 
     this.baseAsset?.setAmount(pnum(baseAmount, this.baseAsset.exponent).toRoundedNumber());
