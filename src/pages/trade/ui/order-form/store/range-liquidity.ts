@@ -108,10 +108,8 @@ export class RangeLiquidity {
     if (
       !this.positions ||
       !this.target ||
-      !this.baseAsset ||
-      !this.baseAsset.assetId ||
-      !this.quoteAsset ||
-      !this.quoteAsset.assetId ||
+      !this.baseAsset?.assetId ||
+      !this.quoteAsset?.assetId ||
       !this.baseAsset.exponent ||
       !this.quoteAsset.exponent ||
       !this.marketPrice

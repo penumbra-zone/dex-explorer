@@ -84,7 +84,6 @@ export const LimitOrderForm = observer(() => {
           denominator={quoteAsset.symbol}
         />
       </div>
-      <Slider steps={8} asset={isBuy ? quoteAsset : baseAsset} />
       <div className='mb-4'>
         <InfoRowTradingFee />
         <InfoRowGasFee gasFee={gasFee} symbol={baseAsset.symbol} />
