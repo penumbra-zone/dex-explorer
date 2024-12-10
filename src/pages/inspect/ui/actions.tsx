@@ -22,7 +22,6 @@ export const PositionClosed = ({
   return (
     <div className='grid grid-cols-6 items-center mb-4'>
       <div className='col-span-4'>
-
         <Card title='Position Closed'>
           <div className='flex justify-between items-center'>
             <div className='flex flex-col gap-2 flex-shrink min-w-0'>
@@ -33,8 +32,7 @@ export const PositionClosed = ({
               )}
             </div>
 
-            <div className='ml-4 flex-shrink-0'>
-            </div>
+            <div className='ml-4 flex-shrink-0'></div>
           </div>
         </Card>
       </div>
@@ -49,7 +47,6 @@ export const PositionWithdraw = ({ withdrawal }: { withdrawal: PositionWithdrawa
   return (
     <div className='grid grid-cols-6 items-center mb-4'>
       <div className='col-span-4'>
-
         <Card title='Position Withdraw'>
           <div className='flex justify-between items-center'>
             <div className='flex flex-col gap-2 flex-shrink min-w-0'>

@@ -47,11 +47,7 @@ const Execution = ({ execution: e }: ExecutionProps) => {
                   </Text>
                 </div>
                 <div className='flex flex-col items-start gap-1'>
-                  <ValueViewComponent
-                    valueView={e.fee}
-                    priority='secondary'
-                    abbreviate={false}
-                  />
+                  <ValueViewComponent valueView={e.fee} priority='secondary' abbreviate={false} />
                   <Text color='text.secondary' xxs>
                     LP Fee
                   </Text>
@@ -95,7 +91,7 @@ const Execution = ({ execution: e }: ExecutionProps) => {
 const DataBody = ({
   state,
   withdrawals,
-  executions
+  executions,
 }: {
   state: PositionStateResponse;
   withdrawals: PositionWithdrawal[];
@@ -235,11 +231,7 @@ export const Timeline = () => {
       </Text>
       {isLoading && <LoadingState />}
       {data && (
-        <DataBody
-          state={data.state}
-          withdrawals={data.withdrawals}
-          executions={data.executions}
-        />
+        <DataBody state={data.state} withdrawals={data.withdrawals} executions={data.executions} />
       )}
     </div>
   );
