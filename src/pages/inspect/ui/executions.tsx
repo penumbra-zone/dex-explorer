@@ -1,4 +1,3 @@
-import { PositionExecutions } from '@/shared/api/server/position/timeline/types.ts';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Card } from '@penumbra-zone/ui/Card';
 import { Density } from '@penumbra-zone/ui/Density';
@@ -11,6 +10,7 @@ import { useLpIdInUrl } from '@/pages/inspect/ui/result.tsx';
 import { useLpPosition } from '@/pages/inspect/lp/api/position.ts';
 import { Skeleton } from '@/shared/ui/skeleton.tsx';
 import {
+  PositionExecutions,
   PositionStateResponse,
   PositionWithdrawal,
 } from '@/shared/api/server/position/timeline/types.ts';
