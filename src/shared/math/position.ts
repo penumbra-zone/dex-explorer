@@ -111,3 +111,33 @@ export const rangeLiquidityPositions = (plan: RangeLiquidityPlan): Position[] =>
     });
   });
 };
+
+interface LimitOrderPlan {
+  buy: 'buy' | 'sell';
+  price: number;
+  input: number;
+  baseAsset: Asset;
+  quoteAsset: Asset;
+}
+
+export const limitOrderPosition = (plan: LimitOrderPlan): Position => {
+  let baseReserves: number;
+  let quoteReserves: number;
+  if (plan.buy === 'buy') {
+    baseReserves = 0;
+    quoteReserves = plan.input;
+  } else {
+    baseReserves = plan.input;
+    quoteReserves = 0;
+  }
+  const pos = planToPosition({
+    baseAsset: plan.baseAsset,
+    quoteAsset: plan.quoteAsset,
+    feeBps: 0,
+    price: plan.price,
+    baseReserves,
+    quoteReserves,
+  });
+  pos.closeOnFill = true;
+  return pos;
+};
