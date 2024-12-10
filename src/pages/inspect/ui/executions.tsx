@@ -22,66 +22,73 @@ interface ExecutionProps {
 
 const Execution = ({ execution: e }: ExecutionProps) => {
   return (
-    <Card>
-      <Density compact>
-        <div className='flex flex-col gap-2'>
-          <div className='flex items-end gap-2'>
-            <div className='flex flex-col items-start gap-1'>
-              <ValueViewComponent valueView={e.input} abbreviate={false} />
-              <Text color='text.secondary' xxs>
-                Trade Input
-              </Text>
-            </div>
-            <div className='flex items-center pb-5'>
-              <Icon IconComponent={ArrowRight} color='text.primary' size='sm' />
-            </div>
-            <div className='flex flex-col items-start gap-1'>
-              <ValueViewComponent valueView={e.output} abbreviate={false} />
-              <Text color='text.secondary' xxs>
-                Trade Output
-              </Text>
-            </div>
-            <div className='flex flex-col items-start gap-1'>
-              <ValueViewComponent
-                valueView={e.fee}
-                priority='secondary'
-                abbreviate={false}
-              />
-              <Text color='text.secondary' xxs>
-                LP Fee
-              </Text>
-            </div>
-          </div>
-          <div className='flex justify-between items-end gap-2'>
-            <div className='flex items-center gap-2'>
-              <Text color='text.secondary' small>
-                Routing
-              </Text>
-              <AssetIcon metadata={e.contextStart} />
-              <Icon IconComponent={ArrowRight} color='text.primary' size='sm' />
-              <AssetIcon metadata={e.contextEnd} />
-            </div>
-            <div className='flex flex-col items-end gap-1'>
-              <Text color='text.secondary' xxs>
-                New Reserves
-              </Text>
-              <div className='flex items-center gap-2'>
-                <ValueViewComponent
-                  valueView={e.reserves1}
-                  context='table'
-                  abbreviate={false}
-                />
-                <ValueViewComponent
-                  valueView={e.reserves2}
-                  context='table'
-                  abbreviate={false}
-                />
+    <div className='grid grid-cols-6 items-center mb-4'>
+      <div className='col-span-2'>
+        <TimeDisplay dateStr={e.time} height={e.height} />
+      </div>
+      <div className='col-span-4'>
+        <Card>
+          <Density compact>
+            <div className='flex flex-col gap-2'>
+              <div className='flex items-end gap-2'>
+                <div className='flex flex-col items-start gap-1'>
+                  <ValueViewComponent valueView={e.input} abbreviate={false} />
+                  <Text color='text.secondary' xxs>
+                    Trade Input
+                  </Text>
+                </div>
+                <div className='flex items-center pb-5'>
+                  <Icon IconComponent={ArrowRight} color='text.primary' size='sm' />
+                </div>
+                <div className='flex flex-col items-start gap-1'>
+                  <ValueViewComponent valueView={e.output} abbreviate={false} />
+                  <Text color='text.secondary' xxs>
+                    Trade Output
+                  </Text>
+                </div>
+                <div className='flex flex-col items-start gap-1'>
+                  <ValueViewComponent
+                    valueView={e.fee}
+                    priority='secondary'
+                    abbreviate={false}
+                  />
+                  <Text color='text.secondary' xxs>
+                    LP Fee
+                  </Text>
+                </div>
+              </div>
+              <div className='flex justify-between items-end gap-2'>
+                <div className='flex items-center gap-2'>
+                  <Text color='text.secondary' small>
+                    Routing
+                  </Text>
+                  <AssetIcon metadata={e.contextStart} />
+                  <Icon IconComponent={ArrowRight} color='text.primary' size='sm' />
+                  <AssetIcon metadata={e.contextEnd} />
+                </div>
+                <div className='flex flex-col items-end gap-1'>
+                  <Text color='text.secondary' xxs>
+                    New Reserves
+                  </Text>
+                  <div className='flex items-center gap-2'>
+                    <ValueViewComponent
+                      valueView={e.reserves1}
+                      context='table'
+                      abbreviate={false}
+                    />
+                    <ValueViewComponent
+                      valueView={e.reserves2}
+                      context='table'
+                      abbreviate={false}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </Density>
-    </Card>
+          </Density>
+        </Card>
+      </div>
+    </div>
   );
 };
 
@@ -112,13 +119,8 @@ const DataBody = ({
         </Text>
       )}
       {executions.items.map((e, i) => (
-        <div key={i} className='grid grid-cols-6 items-center mb-4'>
-          <div className='col-span-2'>
-            <TimeDisplay dateStr={e.time} height={e.height} />
-          </div>
-          <div className='col-span-4'>
-            <Execution execution={e} />
-          </div>
+        <div key={i}>
+          <Execution execution={e} />
         </div>
       ))}
       {executions.skipped > 0 && (
@@ -222,14 +224,14 @@ const LoadingState = () => {
   );
 };
 
-export const Executions = () => {
+export const Timeline = () => {
   const id = useLpIdInUrl();
   const { data, isLoading } = useLpPosition(id);
 
   return (
     <div className='flex flex-col gap-2'>
       <Text xxl color='base.white'>
-        Executions
+        Position Timeline
       </Text>
       {isLoading && <LoadingState />}
       {data && (

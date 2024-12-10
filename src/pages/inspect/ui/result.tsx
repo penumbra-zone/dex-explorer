@@ -7,7 +7,7 @@ import { StateDetails } from '@/pages/inspect/ui/state-details.tsx';
 import { VolumeAndFeesTable } from '@/pages/inspect/ui/volume.tsx';
 import { Actions } from '@/pages/inspect/ui/actions.tsx';
 import { DebugView } from '@/pages/inspect/ui/debug.tsx';
-import { Executions } from '@/pages/inspect/ui/executions.tsx';
+import { Timeline } from '@/pages/inspect/ui/executions.tsx';
 
 const ErrorState = ({ error }: { error: unknown }) => {
   return <Text color='destructive.main'>{String(error)}</Text>;
@@ -55,7 +55,7 @@ export const LpInspectResult = () => {
         {/* Second Column */}
         <div className='flex flex-col divide-y divide-other-solidStroke'>
           <div className='p-4 w-full'>
-            <Executions />
+            <Timeline />
           </div>
         </div>
       </div>
