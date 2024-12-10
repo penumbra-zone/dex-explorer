@@ -2,7 +2,6 @@ import { makeAutoObservable } from 'mobx';
 import { pnum } from '@penumbra-zone/types/pnum';
 import {
   Position,
-  PositionOpen,
   PositionState,
   PositionState_PositionStateEnum,
   TradingPair,
@@ -11,9 +10,6 @@ import { TransactionPlannerRequest } from '@penumbra-zone/protobuf/penumbra/view
 import { OrderFormAsset } from './asset';
 import BigNumber from 'bignumber.js';
 import { plan } from '../helpers';
-import { ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
-
-window.BigNumber = BigNumber;
 
 export enum UpperBoundOptions {
   Market = 'Market',
