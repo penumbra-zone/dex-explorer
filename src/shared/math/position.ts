@@ -109,18 +109,13 @@ const priceToPQ2 = (
  * as an escape hatch in case any of those use cases aren't sufficient.
  */
 export const planToPosition = (plan: PositionPlan): Position => {
-  console.log('TCL: plan', plan);
   const { p: raw_p, q: raw_q } = priceToPQ(
     plan.price,
     plan.baseAsset.exponent,
     plan.quoteAsset.exponent,
   );
-  //const { p, q } = priceToPQ2(plan.price, plan.baseAsset.exponent, plan.quoteAsset.exponent);
-
-  // const r1 = pnum(plan.baseReserves, plan.baseAsset.exponent).toAmount();
-  // const r2 = pnum(plan.quoteReserves, plan.quoteAsset.exponent).toAmount();
-  const raw_r1 = pnum(plan.baseReserves).toAmount();
-  const raw_r2 = pnum(plan.quoteReserves).toAmount();
+  const raw_r1 = pnum(plan.baseReserves, plan.baseAsset.exponent).toAmount();
+  const raw_r2 = pnum(plan.quoteReserves, plan.quoteAsset.exponent).toAmount();
 
   const correctOrder = compareAssetId(plan.baseAsset.id, plan.quoteAsset.id) <= 0;
   const [[p, q], [r1, r2]] = correctOrder
