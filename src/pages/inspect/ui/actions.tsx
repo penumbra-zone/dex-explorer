@@ -10,7 +10,7 @@ import { useLpIdInUrl } from '@/pages/inspect/ui/result.tsx';
 import { useLpPosition } from '@/pages/inspect/lp/api/position.ts';
 import { Skeleton } from '@/shared/ui/skeleton.tsx';
 
-const PositionClosed = ({
+export const PositionClosed = ({
   closingTx,
   closingTime,
   closingHeight,
@@ -38,7 +38,7 @@ const PositionClosed = ({
   );
 };
 
-const PositionWithdraw = ({ withdrawal }: { withdrawal: PositionWithdrawal }) => {
+export const PositionWithdraw = ({ withdrawal }: { withdrawal: PositionWithdrawal }) => {
   return (
     <Card title='Position Withdraw'>
       <div className='flex justify-between items-center'>
@@ -61,7 +61,7 @@ const PositionWithdraw = ({ withdrawal }: { withdrawal: PositionWithdrawal }) =>
   );
 };
 
-const PositionOpen = ({ state }: { state: PositionStateResponse }) => {
+export const PositionOpen = ({ state }: { state: PositionStateResponse }) => {
   return (
     <Card title='Position Open'>
       <div className='flex justify-between items-center'>
