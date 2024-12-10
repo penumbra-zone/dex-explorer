@@ -61,12 +61,8 @@ const RouteBookData = observer(({ bookData }: { bookData?: RouteBookResponse }) 
     <div className='w-full'>
       {/* Header */}
       <div className='grid grid-cols-[1fr_1fr_1fr_1fr] h-[33px] mt-1 text-xs text-gray-400 px-4'>
-        <div className='py-2 font-normal text-left'>
-          Price({pair.quoteSymbol})
-        </div>
-        <div className='py-2 font-normal text-right'>
-          Amount({pair.baseSymbol})
-        </div>
+        <div className='py-2 font-normal text-left'>Price({pair.quoteSymbol})</div>
+        <div className='py-2 font-normal text-right'>Amount({pair.baseSymbol})</div>
         <div className='py-2 font-normal text-right'>Total</div>
         <div className='py-2 font-normal text-right'>Route</div>
       </div>
