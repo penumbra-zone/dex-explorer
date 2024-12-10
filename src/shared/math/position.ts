@@ -5,6 +5,7 @@ import {
   PositionState_PositionStateEnum,
   TradingPair,
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
+import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
 import { pnum } from '@penumbra-zone/types/pnum';
 import BigNumber from 'bignumber.js';
 
@@ -62,6 +63,31 @@ const priceToPQ = (
   return { p: p.toNumber(), q: q.toNumber() };
 };
 
+const priceToPQ2 = (
+  price: number,
+  pExponent: number,
+  qExponent: number,
+): { p: Amount; q: Amount } => {
+  const pExponentUnits = BigInt(10) ** BigInt(pExponent);
+  const qExponentUnits = BigInt(10) ** BigInt(qExponent);
+
+  const scale = qExponentUnits < 1_000_000n ? 1_000_000n : 1n;
+
+  const p = pnum(
+    BigInt(
+      BigNumber((qExponentUnits * scale).toString())
+        .times(BigNumber(price))
+        .shiftedBy(-(qExponent - pExponent))
+        .toFixed(0),
+    ),
+    qExponent,
+  ).toAmount();
+
+  const q = pnum(pExponentUnits * scale, pExponent).toAmount();
+
+  return { p, q };
+};
+
 /**
  * Convert a plan into a position.
  *
@@ -69,17 +95,23 @@ const priceToPQ = (
  * as an escape hatch in case any of those use cases aren't sufficient.
  */
 export const planToPosition = (plan: PositionPlan): Position => {
-  const { p, q } = priceToPQ(plan.price, plan.baseAsset.exponent, plan.quoteAsset.exponent);
+  console.log('TCL: plan', plan);
+  // const { p, q } = priceToPQ(plan.price, plan.baseAsset.exponent, plan.quoteAsset.exponent);
+  const { p, q } = priceToPQ2(plan.price, plan.baseAsset.exponent, plan.quoteAsset.exponent);
 
-  const r1 = pnum(plan.baseReserves, plan.baseAsset.exponent).toAmount();
-  const r2 = pnum(plan.quoteReserves, plan.quoteAsset.exponent).toAmount();
+  // const r1 = pnum(plan.baseReserves, plan.baseAsset.exponent).toAmount();
+  // const r2 = pnum(plan.quoteReserves, plan.quoteAsset.exponent).toAmount();
+  const r1 = pnum(plan.baseReserves).toAmount();
+  const r2 = pnum(plan.quoteReserves).toAmount();
 
   return new Position({
     phi: {
       component: {
         fee: plan.feeBps,
-        p: pnum(p).toAmount(),
-        q: pnum(q).toAmount(),
+        // p: pnum(p).toAmount(),
+        // q: pnum(q).toAmount(),
+        p,
+        q,
       },
       pair: new TradingPair({
         asset1: plan.baseAsset.id,
