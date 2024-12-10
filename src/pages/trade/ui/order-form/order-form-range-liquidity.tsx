@@ -21,11 +21,10 @@ import {
 
 export const RangeLiquidityOrderForm = observer(() => {
   const { connected } = connectionStore;
-  const { baseAsset, quoteAsset, rangeLiquidity, submitOrder, isLoading, gasFee, exchangeRate } =
+  const { baseAsset, quoteAsset, rangeLiquidity, submitOrder, isLoading, exchangeRate } =
     useOrderFormStore(FormType.RangeLiquidity);
   const { data } = useSummary('1d');
-  // const price = data && 'price' in data ? data.price : undefined;
-  const price = 1;
+  const price = data && 'price' in data ? data.price : undefined;
 
   useEffect(() => {
     if (price) {
@@ -34,9 +33,7 @@ export const RangeLiquidityOrderForm = observer(() => {
   }, [price, rangeLiquidity]);
 
   useEffect(() => {
-    if (baseAsset && quoteAsset) {
-      rangeLiquidity.setAssets(baseAsset, quoteAsset);
-    }
+    rangeLiquidity.setAssets(baseAsset, quoteAsset);
   }, [baseAsset, quoteAsset, rangeLiquidity]);
 
   return (
@@ -50,7 +47,7 @@ export const RangeLiquidityOrderForm = observer(() => {
             denominator={quoteAsset.symbol}
           />
         </div>
-        <div className='w-full flex flex-row flex-wrap items-center justify-between py-1'>
+        <div className='w-full flex flex-row flex-wrap items-start justify-between py-1'>
           <div className='leading-6'>
             <Text small color='text.secondary'>
               Available Balances
