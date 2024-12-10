@@ -40,10 +40,7 @@ export const LpInspectResult = () => {
             <StateDetails />
           </div>
           <div className='p-4 w-full'>
-            <VolumeAndFeesTable />
-          </div>
-          <div className='p-4 w-full'>
-            <Actions />
+            <Timeline />
           </div>
 
           {/* DebugView only on larger screens */}
@@ -55,7 +52,7 @@ export const LpInspectResult = () => {
         {/* Second Column */}
         <div className='flex flex-col divide-y divide-other-solidStroke'>
           <div className='p-4 w-full'>
-            <Timeline />
+            <VolumeAndFeesTable />
           </div>
         </div>
       </div>
