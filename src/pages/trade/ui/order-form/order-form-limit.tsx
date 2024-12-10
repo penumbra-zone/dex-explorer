@@ -6,12 +6,12 @@ import { connectionStore } from '@/shared/model/connection';
 import { OrderInput } from './order-input';
 import { SegmentedControl } from './segmented-control';
 import { ConnectButton } from '@/features/connect/connect-button';
-import { Slider } from './slider';
 import { InfoRowTradingFee } from './info-row-trading-fee';
 import { InfoRowGasFee } from './info-row-gas-fee';
 import { SelectGroup } from './select-group';
 import { useOrderFormStore, FormType, Direction } from './store';
 import { BuyLimitOrderOptions, SellLimitOrderOptions } from './store/limit-order';
+import { useSummary } from '../../model/useSummary';
 
 export const LimitOrderForm = observer(() => {
   const { connected } = connectionStore;
@@ -26,14 +26,16 @@ export const LimitOrderForm = observer(() => {
     gasFee,
     exchangeRate,
   } = useOrderFormStore(FormType.Limit);
+  const { data } = useSummary('1d');
+  const price = data && 'price' in data ? data.price : undefined;
 
   const isBuy = direction === Direction.Buy;
 
   useEffect(() => {
-    if (exchangeRate) {
-      limitOrder.setMarketPrice(exchangeRate);
+    if (price) {
+      limitOrder.setMarketPrice(price);
     }
-  }, [exchangeRate, limitOrder]);
+  }, [price, limitOrder]);
 
   useEffect(() => {
     if (quoteAsset.exponent && baseAsset.exponent) {
