@@ -128,9 +128,9 @@ export class RangeLiquidity {
 
     // We are treating quote asset as the numeraire and want to have an even spread
     // of quote asset value across all positions.
-    const targetInput = pnum(this.target, this.quoteAsset.exponent).toBigInt();
-    // const quoteAssetAmountPerPosition = Number(this.target) / this.positions;
-    const quoteAssetAmountPerPosition = targetInput / BigInt(this.positions);
+    // const targetInput = pnum(this.target, this.quoteAsset.exponent).toBigInt();
+    const quoteAssetAmountPerPosition = Number(this.target) / this.positions;
+    // const quoteAssetAmountPerPosition = targetInput / BigInt(this.positions);
 
     const baseAssetExponentUnits = BigInt(10) ** BigInt(this.baseAsset.exponent);
     const quoteAssetExponentUnits = BigInt(10) ** BigInt(this.quoteAsset.exponent);
@@ -148,12 +148,16 @@ export class RangeLiquidity {
       const scale = quoteAssetExponentUnits < 1_000_000n ? 1_000_000n : 1n;
 
       const p = pnum(
-        BigNumber((quoteAssetExponentUnits * scale).toString())
-          .times(BigNumber(positionPrice))
-          .toFixed(0),
+        BigInt(
+          BigNumber((quoteAssetExponentUnits * scale).toString())
+            .times(BigNumber(positionPrice))
+            .shiftedBy(-(this.quoteAsset.exponent - this.baseAsset.exponent))
+            .toFixed(0),
+        ),
+        this.quoteAsset?.exponent,
       ).toAmount();
 
-      const q = pnum(baseAssetExponentUnits * scale).toAmount();
+      const q = pnum(baseAssetExponentUnits * scale, this.baseAsset?.exponent).toAmount();
 
       console.log(
         'TCL: RangeLiquidity -> quoteAssetAmountPerPosition',
@@ -167,8 +171,8 @@ export class RangeLiquidity {
             // so the position isn't immediately arbitraged.
             {
               r1: pnum(0n).toAmount(),
-              // r2: pnum(quoteAssetAmountPerPosition, this.quoteAsset?.exponent).toAmount(),
               r2: pnum(quoteAssetAmountPerPosition).toAmount(),
+              // r2: pnum(quoteAssetAmountPerPosition, this.quoteAsset.exponent).toAmount(),
             }
           : {
               // If the position's price is _greater_ than the current price, fund it with
@@ -178,7 +182,9 @@ export class RangeLiquidity {
               //   this.baseAsset?.exponent,
               // ).toAmount(),
               r1: pnum(
-                BigNumber(quoteAssetAmountPerPosition.toString()).div(positionPrice).toFixed(0),
+                BigInt(
+                  BigNumber(quoteAssetAmountPerPosition.toString()).div(positionPrice).toFixed(0),
+                ),
               ).toAmount(),
               r2: pnum(0n).toAmount(),
             };
@@ -243,17 +249,23 @@ export class RangeLiquidity {
       },
       { baseAmount: 0n, quoteAmount: 0n },
     );
+
     console.log(
       'TCL: total baseAmount',
+      baseAmount,
       pnum(baseAmount, this.baseAsset.exponent).toRoundedNumber(),
     );
+
     console.log(
       'TCL: total quoteAmount',
+      quoteAmount,
       pnum(quoteAmount, this.quoteAsset.exponent).toRoundedNumber(),
     );
 
-    this.baseAsset?.setAmount(pnum(baseAmount, this.baseAsset.exponent).toRoundedNumber());
-    this.quoteAsset?.setAmount(pnum(quoteAmount, this.quoteAsset.exponent).toRoundedNumber());
+    this.baseAsset?.setAmount(Number(baseAmount));
+    this.quoteAsset?.setAmount(Number(quoteAmount));
+    // this.baseAsset?.setAmount(pnum(baseAmount, this.baseAsset.exponent).toRoundedNumber());
+    // this.quoteAsset?.setAmount(pnum(quoteAmount, this.quoteAsset.exponent).toRoundedNumber());
 
     const positionsReq = new TransactionPlannerRequest({
       positionOpens: positions.map(position => ({ position })),
