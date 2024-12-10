@@ -72,34 +72,10 @@ const priceToPQ = (
   //      basePrice = Y uUM / uUSD = X USD / UM * uUSD / USD * UM / uUM
   //                = X * 10 ** qExponent * 10 ** -pExponent
   const basePrice = new BigNumber(price).times(new BigNumber(10).pow(qExponent - pExponent));
+
   // USD / UM -> [USD, UM], with a given precision
   const [q, p] = basePrice.toFraction(10 ** PRECISION_DECIMALS);
   return { p: pnum(BigInt(p.toFixed(0))).toAmount(), q: pnum(BigInt(q.toFixed(0))).toAmount() };
-};
-
-const priceToPQ2 = (
-  price: number,
-  pExponent: number,
-  qExponent: number,
-): { p: Amount; q: Amount } => {
-  const pExponentUnits = BigInt(10) ** BigInt(pExponent);
-  const qExponentUnits = BigInt(10) ** BigInt(qExponent);
-
-  const scale = qExponentUnits < 1_000_000n ? 1_000_000n : 1n;
-
-  const p = pnum(
-    BigInt(
-      BigNumber((qExponentUnits * scale).toString())
-        .times(BigNumber(price))
-        .shiftedBy(-(qExponent - pExponent))
-        .toFixed(0),
-    ),
-    qExponent,
-  ).toAmount();
-
-  const q = pnum(pExponentUnits * scale, pExponent).toAmount();
-
-  return { p, q };
 };
 
 /**
@@ -127,6 +103,7 @@ export const planToPosition = (plan: PositionPlan): Position => {
         [raw_q, raw_p],
         [raw_r2, raw_r1],
       ];
+
   return new Position({
     phi: {
       component: {

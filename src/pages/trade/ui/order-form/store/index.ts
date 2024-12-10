@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { makeAutoObservable } from 'mobx';
 import debounce from 'lodash/debounce';
-import BigNumber from 'bignumber.js';
 import { SimulationService } from '@penumbra-zone/protobuf';
 import {
   BalancesResponse,
@@ -191,19 +190,45 @@ class OrderFormStore {
     const assetIn = assetIsBaseAsset ? this.baseAsset : this.quoteAsset;
     const assetOut = assetIsBaseAsset ? this.quoteAsset : this.baseAsset;
 
-    try {
-      void this.calculateGasFee();
+    if (this.type === FormType.Market) {
+      try {
+        void this.calculateGasFee();
 
-      assetOut.setIsEstimating(true);
+        assetOut.setIsEstimating(true);
 
-      const output = await this.simulateSwapTx(assetIn, assetOut);
-      if (!output) {
-        return;
+        const output = await this.simulateSwapTx(assetIn, assetOut);
+        if (!output) {
+          return;
+        }
+
+        assetOut.setAmount(pnum(output).toFormattedString(), false);
+      } finally {
+        assetOut.setIsEstimating(false);
       }
+    }
 
-      assetOut.setAmount(pnum(output).toFormattedString(), false);
-    } finally {
-      assetOut.setIsEstimating(false);
+    if (this.type === FormType.Limit) {
+      try {
+        void this.calculateGasFee();
+
+        assetOut.setIsEstimating(true);
+
+        if (assetIsBaseAsset) {
+          const amount = Number(this.baseAsset.amount) * this.limitOrder.price;
+
+          if (amount !== this.quoteAsset.amount) {
+            this.quoteAsset.setAmount(amount, true);
+          }
+        } else {
+          const amount = Number(this.quoteAsset.amount) / this.limitOrder.price;
+
+          if (amount !== this.baseAsset.amount) {
+            this.baseAsset.setAmount(amount, true);
+          }
+        }
+      } finally {
+        assetOut.setIsEstimating(false);
+      }
     }
   };
 
@@ -249,17 +274,41 @@ class OrderFormStore {
 
     const txPlan = await plan(req);
     const fee = txPlan.transactionParameters?.fee;
-    const feeValueView = new ValueView({
-      valueView: {
-        case: 'knownAssetId',
-        value: {
-          amount: fee?.amount ?? { hi: 0n, lo: 0n },
-          metadata: this.baseAsset.metadata,
+    console.log('TCL: OrderFormStore -> fee', fee);
+
+    this.gasFee = pnum(fee?.amount, this.baseAsset.exponent).toRoundedNumber();
+  };
+
+  calculateLimitGasFee = async (): Promise<void> => {
+    console.log('called');
+    this.gasFee = null;
+
+    const isBuy = this.direction === Direction.Buy;
+    const assetIn = isBuy ? this.quoteAsset : this.baseAsset;
+    console.log('TCL: OrderFormStore -> assetIn', assetIn, assetIn.amount);
+    const assetOut = isBuy ? this.baseAsset : this.quoteAsset;
+    console.log('TCL: OrderFormStore -> assetOut', assetOut, assetOut.amount);
+
+    if (!assetIn.amount || !assetOut.amount) {
+      this.gasFee = 0;
+      return;
+    }
+
+    const positionsReq = new TransactionPlannerRequest({
+      positionOpens: [
+        {
+          position: this.buildLimitPosition(),
         },
-      },
+      ],
+      source: this.quoteAsset.accountIndex,
     });
 
-    this.gasFee = pnum(feeValueView).toRoundedNumber();
+    console.log('TCL: OrderFormStore -> positionsReq', positionsReq);
+    const txPlan = await plan(positionsReq);
+    const fee = txPlan.transactionParameters?.fee;
+    console.log('TCL: OrderFormStore -> fee', fee);
+
+    this.gasFee = pnum(fee?.amount, this.baseAsset.exponent).toRoundedNumber();
   };
 
   // ref: https://github.com/penumbra-zone/penumbra/blob/main/crates/bin/pcli/src/command/tx/replicate/linear.rs
@@ -274,8 +323,9 @@ class OrderFormStore {
     ) {
       throw new Error('incomplete limit position form');
     }
+
     return limitOrderPosition({
-      buy: this.direction === 'Buy' ? 'buy' : 'sell',
+      buy: this.direction === Direction.Buy ? 'buy' : 'sell',
       price: Number(price),
       baseAsset: {
         id: this.baseAsset.assetId,
@@ -286,7 +336,7 @@ class OrderFormStore {
         exponent: this.quoteAsset.exponent,
       },
       input:
-        this.direction === 'Buy'
+        this.direction === Direction.Buy
           ? Number(this.quoteAsset.amount)
           : Number(this.quoteAsset.amount) / Number(price),
     });
@@ -297,9 +347,9 @@ class OrderFormStore {
       await this.calculateMarketGasFee();
     }
 
-    // if (this.type === FormType.RangeLiquidity) {
-    //   await this.calculateRangeLiquidityGasFee();
-    // }
+    if (this.type === FormType.Limit) {
+      await this.calculateLimitGasFee();
+    }
   };
 
   initiateSwapTx = async (): Promise<void> => {

@@ -1,14 +1,8 @@
 import { makeAutoObservable } from 'mobx';
 import { pnum } from '@penumbra-zone/types/pnum';
-import {
-  Position,
-  PositionState,
-  PositionState_PositionStateEnum,
-  TradingPair,
-} from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
+import { Position } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { TransactionPlannerRequest } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
 import { OrderFormAsset } from './asset';
-import BigNumber from 'bignumber.js';
 import { plan } from '../helpers';
 import { rangeLiquidityPositions } from '@/shared/math/position';
 
@@ -144,30 +138,6 @@ export class RangeLiquidity {
       return;
     }
 
-    // const baseAssetExponentUnits = BigInt(10) ** BigInt(this.baseAsset.exponent);
-    // const quoteAssetExponentUnits = BigInt(10) ** BigInt(this.quoteAsset.exponent);
-
-    console.table({
-      baseAsset: this.baseAsset?.symbol,
-      quoteAsset: this.quoteAsset?.symbol,
-      baseAssetExponent: this.baseAsset?.exponent,
-      quoteAssetExponent: this.quoteAsset?.exponent,
-      positions: this.positions,
-      target: this.target,
-      upperBound: this.upperBound,
-      lowerBound: this.lowerBound,
-      feeTier: this.feeTier,
-    });
-
-    console.table(
-      positions.map(position => ({
-        p: pnum(position.phi?.component?.p).toBigInt(),
-        q: pnum(position.phi?.component?.q).toBigInt(),
-        r1: pnum(position.reserves?.r1).toBigInt(),
-        r2: pnum(position.reserves?.r2).toBigInt(),
-      })),
-    );
-
     const { baseAmount, quoteAmount } = positions.reduce(
       (amounts, position: Position) => {
         return {
@@ -176,14 +146,6 @@ export class RangeLiquidity {
         };
       },
       { baseAmount: 0n, quoteAmount: 0n },
-    );
-    console.log(
-      'TCL: total baseAmount',
-      pnum(baseAmount, this.baseAsset?.exponent).toRoundedNumber(),
-    );
-    console.log(
-      'TCL: total quoteAmount',
-      pnum(quoteAmount, this.quoteAsset?.exponent).toRoundedNumber(),
     );
 
     this.baseAsset?.setAmount(pnum(baseAmount, this.baseAsset.exponent).toRoundedNumber());
@@ -268,8 +230,4 @@ export class RangeLiquidity {
     this.baseAsset = baseAsset;
     this.quoteAsset = quoteAsset;
   };
-
-  // onFieldChange = (callback: () => Promise<void>): void => {
-  //   this.onFieldChangeCallback = callback;
-  // };
 }
