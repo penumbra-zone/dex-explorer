@@ -1,12 +1,7 @@
+import { parseNumber } from '@/shared/utils/num';
 import { makeAutoObservable } from 'mobx';
 
 type LastEdited = 'A' | 'B';
-
-/** Attempt to parse a string into a number, returning `undefined` on failure. */
-const parseNumber = (x: string): number | undefined => {
-  const out = Number(x);
-  return isNaN(out) ? undefined : out;
-};
 
 /** Compute one input from the other, given the price.
  *
