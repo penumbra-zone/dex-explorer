@@ -1,4 +1,4 @@
-import { PairSelector } from './pair-selector-new';
+import { PairSelector } from './pair-selector';
 import { Summary } from './summary';
 
 export const PairInfo = () => {

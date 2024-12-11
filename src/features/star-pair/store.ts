@@ -15,20 +15,22 @@ class StarStateStore {
   star = (pair: Pair) => {
     this.pairs = [...this.pairs, pair];
     setStarredPairs(this.pairs);
-  }
+  };
 
   unstar = (pair: Pair) => {
-    this.pairs = this.pairs.filter((value) => !value.base.equals(pair.base) || !value.quote.equals(pair.quote));
+    this.pairs = this.pairs.filter(
+      value => !value.base.equals(pair.base) || !value.quote.equals(pair.quote),
+    );
     setStarredPairs(this.pairs);
-  }
+  };
 
-  setup () {
+  setup() {
     this.pairs = getStarredPairs();
   }
 
   isStarred = (pair: Pair): boolean => {
-    return this.pairs.some((value) => value.base.equals(pair.base) && value.quote.equals(pair.quote));
-  }
+    return this.pairs.some(value => value.base.equals(pair.base) && value.quote.equals(pair.quote));
+  };
 }
 
 export const starStore = new StarStateStore();

@@ -1,3 +1,4 @@
+import { MouseEventHandler } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Star } from 'lucide-react';
 import { Button } from '@penumbra-zone/ui/Button';
@@ -8,13 +9,15 @@ import { starStore } from './store';
 
 export interface StarButtonProps {
   pair: Pair;
+  adornment?: boolean;
 }
 
-export const StarButton = observer(({ pair }: StarButtonProps) => {
+export const StarButton = observer(({ pair, adornment }: StarButtonProps) => {
   const { star, unstar, isStarred } = starStore;
   const starred = isStarred(pair);
 
-  const onClick = () => {
+  const onClick: MouseEventHandler<HTMLButtonElement> = event => {
+    event.stopPropagation();
     if (starred) {
       unstar(pair);
     } else {
@@ -24,7 +27,12 @@ export const StarButton = observer(({ pair }: StarButtonProps) => {
 
   return (
     <Density compact>
-      <Button icon={starred ? StarFilled : Star} priority='secondary' iconOnly onClick={onClick}>
+      <Button
+        icon={starred ? StarFilled : Star}
+        priority={adornment ? 'primary' : 'secondary'}
+        iconOnly={adornment ? 'adornment' : true}
+        onClick={onClick}
+      >
         Favorite
       </Button>
     </Density>
