@@ -72,7 +72,7 @@ export const OrderInput = forwardRef<HTMLInputElement, OrderInputProps>(
           <>
             <div
               ref={textRef}
-              className='font-default text-textLg font-medium leading-textLg visibility:hidden absolute'
+              className='font-default text-textLg font-medium leading-textLg invisible absolute'
             >
               {value}
             </div>
