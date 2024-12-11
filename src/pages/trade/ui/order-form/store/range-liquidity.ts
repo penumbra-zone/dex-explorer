@@ -1,5 +1,10 @@
 import { makeAutoObservable } from 'mobx';
-import { round } from '@penumbra-zone/types/round';
+import { pnum } from '@penumbra-zone/types/pnum';
+import { Position } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
+import { TransactionPlannerRequest } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
+import { OrderFormAsset } from './asset';
+import { plan } from '../helpers';
+import { rangeLiquidityPositions } from '@/shared/math/position';
 
 export enum UpperBoundOptions {
   Market = 'Market',
@@ -47,36 +52,141 @@ const FeeTierValues: Record<FeeTierOptions, number> = {
   '1.00%': 1,
 };
 
+export const DEFAULT_POSITIONS = 10;
+export const MIN_POSITIONS = 5;
+export const MAX_POSITIONS = 15;
+
 export class RangeLiquidity {
-  upperBound?: number;
-  lowerBound?: number;
+  target?: number | string = '';
+  upperBoundInput?: string | number;
+  lowerBoundInput?: string | number;
+  positionsInput?: string | number;
   feeTier?: number;
-  positions?: number;
   marketPrice?: number;
-  exponent?: number;
+  baseAsset?: OrderFormAsset;
+  quoteAsset?: OrderFormAsset;
+  gasFee?: number;
   onFieldChangeCallback?: () => Promise<void>;
 
   constructor() {
     makeAutoObservable(this);
+
+    this.onFieldChangeCallback = this.calculateFeesAndAmounts;
   }
 
+  get upperBound(): string | number {
+    if (this.upperBoundInput === undefined || this.upperBoundInput === '' || !this.quoteAsset) {
+      return '';
+    }
+    return pnum(this.upperBoundInput, this.quoteAsset.exponent).toRoundedNumber();
+  }
+
+  get lowerBound(): string | number {
+    if (this.lowerBoundInput === undefined || this.lowerBoundInput === '' || !this.quoteAsset) {
+      return '';
+    }
+    return pnum(this.lowerBoundInput, this.quoteAsset.exponent).toRoundedNumber();
+  }
+
+  get positions(): number | undefined {
+    return this.positionsInput === ''
+      ? undefined
+      : Math.max(
+          MIN_POSITIONS,
+          Math.min(MAX_POSITIONS, Number(this.positionsInput ?? DEFAULT_POSITIONS)),
+        );
+  }
+
+  // logic from: /penumbra/core/crates/bin/pcli/src/command/tx/replicate/linear.rs
+  buildPositions = (): Position[] => {
+    if (
+      !this.positions ||
+      !this.target ||
+      !this.baseAsset?.assetId ||
+      !this.quoteAsset?.assetId ||
+      !this.baseAsset.exponent ||
+      !this.quoteAsset.exponent ||
+      !this.marketPrice
+    ) {
+      return [];
+    }
+
+    const positions = rangeLiquidityPositions({
+      baseAsset: {
+        id: this.baseAsset.assetId,
+        exponent: this.baseAsset.exponent,
+      },
+      quoteAsset: {
+        id: this.quoteAsset.assetId,
+        exponent: this.quoteAsset.exponent,
+      },
+      targetLiquidity: Number(this.target),
+      upperPrice: Number(this.upperBound),
+      lowerPrice: Number(this.lowerBound),
+      marketPrice: this.marketPrice,
+      feeBps: (this.feeTier ?? 0.1) * 100,
+      positions: this.positions,
+    });
+
+    return positions;
+  };
+
+  calculateFeesAndAmounts = async (): Promise<void> => {
+    const positions = this.buildPositions();
+
+    if (!positions.length) {
+      return;
+    }
+
+    const { baseAmount, quoteAmount } = positions.reduce(
+      (amounts, position: Position) => {
+        return {
+          baseAmount: amounts.baseAmount + pnum(position.reserves?.r1).toBigInt(),
+          quoteAmount: amounts.quoteAmount + pnum(position.reserves?.r2).toBigInt(),
+        };
+      },
+      { baseAmount: 0n, quoteAmount: 0n },
+    );
+
+    this.baseAsset?.setAmount(Number(baseAmount));
+    this.quoteAsset?.setAmount(Number(quoteAmount));
+
+    const positionsReq = new TransactionPlannerRequest({
+      positionOpens: positions.map(position => ({ position })),
+      source: this.quoteAsset?.accountIndex,
+    });
+
+    const txPlan = await plan(positionsReq);
+    const fee = txPlan.transactionParameters?.fee;
+
+    this.gasFee = pnum(fee?.amount, this.baseAsset?.exponent).toRoundedNumber();
+  };
+
+  setTarget = (target: string | number): void => {
+    this.target = target;
+    if (this.onFieldChangeCallback) {
+      void this.onFieldChangeCallback();
+    }
+  };
+
   setUpperBound = (amount: string) => {
-    this.upperBound = Number(round({ value: Number(amount), decimals: this.exponent ?? 0 }));
+    this.upperBoundInput = amount;
+    if (this.onFieldChangeCallback) {
+      void this.onFieldChangeCallback();
+    }
   };
 
   setUpperBoundOption = (option: UpperBoundOptions) => {
     if (this.marketPrice) {
-      this.upperBound = Number(
-        round({
-          value: this.marketPrice * UpperBoundMultipliers[option],
-          decimals: this.exponent ?? 0,
-        }),
-      );
+      this.upperBoundInput = this.marketPrice * UpperBoundMultipliers[option];
+      if (this.onFieldChangeCallback) {
+        void this.onFieldChangeCallback();
+      }
     }
   };
 
   setLowerBound = (amount: string) => {
-    this.lowerBound = Number(round({ value: Number(amount), decimals: this.exponent ?? 0 }));
+    this.lowerBoundInput = amount;
     if (this.onFieldChangeCallback) {
       void this.onFieldChangeCallback();
     }
@@ -84,15 +194,10 @@ export class RangeLiquidity {
 
   setLowerBoundOption = (option: LowerBoundOptions) => {
     if (this.marketPrice) {
-      this.lowerBound = Number(
-        round({
-          value: this.marketPrice * LowerBoundMultipliers[option],
-          decimals: this.exponent ?? 0,
-        }),
-      );
-    }
-    if (this.onFieldChangeCallback) {
-      void this.onFieldChangeCallback();
+      this.lowerBoundInput = this.marketPrice * LowerBoundMultipliers[option];
+      if (this.onFieldChangeCallback) {
+        void this.onFieldChangeCallback();
+      }
     }
   };
 
@@ -111,7 +216,7 @@ export class RangeLiquidity {
   };
 
   setPositions = (positions: number | string) => {
-    this.positions = Number(positions);
+    this.positionsInput = positions;
     if (this.onFieldChangeCallback) {
       void this.onFieldChangeCallback();
     }
@@ -121,11 +226,8 @@ export class RangeLiquidity {
     this.marketPrice = price;
   };
 
-  setExponent = (exponent: number) => {
-    this.exponent = exponent;
-  };
-
-  onFieldChange = (callback: () => Promise<void>): void => {
-    this.onFieldChangeCallback = callback;
+  setAssets = (baseAsset: OrderFormAsset, quoteAsset: OrderFormAsset): void => {
+    this.baseAsset = baseAsset;
+    this.quoteAsset = quoteAsset;
   };
 }

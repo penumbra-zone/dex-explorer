@@ -9,12 +9,19 @@ import { useSummary } from '../../model/useSummary';
 import { OrderInput } from './order-input';
 import { SelectGroup } from './select-group';
 import { InfoRow } from './info-row';
+import { InfoRowGasFee } from './info-row-gas-fee';
 import { useOrderFormStore, FormType } from './store';
-import { UpperBoundOptions, LowerBoundOptions, FeeTierOptions } from './store/range-liquidity';
+import {
+  UpperBoundOptions,
+  LowerBoundOptions,
+  FeeTierOptions,
+  MIN_POSITIONS,
+  MAX_POSITIONS,
+} from './store/range-liquidity';
 
 export const RangeLiquidityOrderForm = observer(() => {
   const { connected } = connectionStore;
-  const { baseAsset, quoteAsset, rangeLiquidity, submitOrder, isLoading, gasFee, exchangeRate } =
+  const { baseAsset, quoteAsset, rangeLiquidity, submitOrder, isLoading, exchangeRate } =
     useOrderFormStore(FormType.RangeLiquidity);
   const { data } = useSummary('1d');
   const price = data && 'price' in data ? data.price : undefined;
@@ -26,41 +33,50 @@ export const RangeLiquidityOrderForm = observer(() => {
   }, [price, rangeLiquidity]);
 
   useEffect(() => {
-    if (quoteAsset.exponent) {
-      rangeLiquidity.setExponent(quoteAsset.exponent);
-    }
-  }, [quoteAsset.exponent, rangeLiquidity]);
+    rangeLiquidity.setAssets(baseAsset, quoteAsset);
+  }, [baseAsset, quoteAsset, rangeLiquidity]);
 
   return (
     <div className='p-4'>
       <div className='mb-4'>
         <div className='mb-1'>
           <OrderInput
-            label='Liquidity Amount'
-            value={quoteAsset.amount}
-            onChange={amount => quoteAsset.setAmount(amount)}
+            label='Liquidity Target'
+            value={rangeLiquidity.target}
+            onChange={target => rangeLiquidity.setTarget(target)}
             denominator={quoteAsset.symbol}
           />
         </div>
-        <div className='flex flex-row items-center justify-between py-1'>
-          <Text small color='text.secondary'>
-            Available Balance
-          </Text>
-          <button
-            type='button'
-            className='text-primary'
-            onClick={connected ? () => quoteAsset.setAmount(quoteAsset.balance ?? 0) : undefined}
-          >
-            <Text small color='text.primary'>
-              {quoteAsset.balance} {quoteAsset.symbol}
+        <div className='w-full flex flex-row flex-wrap items-start justify-between py-1'>
+          <div className='leading-6'>
+            <Text small color='text.secondary'>
+              Available Balances
             </Text>
-          </button>
+          </div>
+          <div className='flex flex-wrap flex-col items-end'>
+            <div>
+              <Text small color='text.primary' whitespace='nowrap'>
+                {baseAsset.balance} {baseAsset.symbol}
+              </Text>
+            </div>
+            <button
+              type='button'
+              className='text-primary'
+              onClick={
+                connected ? () => rangeLiquidity.setTarget(quoteAsset.balance ?? 0) : undefined
+              }
+            >
+              <Text small color='text.primary' whitespace='nowrap'>
+                {quoteAsset.balance} {quoteAsset.symbol}
+              </Text>
+            </button>
+          </div>
         </div>
       </div>
       <div className='mb-4'>
         <div className='mb-2'>
           <OrderInput
-            label='Upper bound'
+            label='Upper Price Bound'
             value={rangeLiquidity.upperBound}
             onChange={rangeLiquidity.setUpperBound}
             denominator={quoteAsset.symbol}
@@ -74,7 +90,7 @@ export const RangeLiquidityOrderForm = observer(() => {
       <div className='mb-4'>
         <div className='mb-2'>
           <OrderInput
-            label='Lower bound'
+            label='Lower Price Bound'
             value={rangeLiquidity.lowerBound}
             onChange={rangeLiquidity.setLowerBound}
             denominator={quoteAsset.symbol}
@@ -103,12 +119,12 @@ export const RangeLiquidityOrderForm = observer(() => {
       <div className='mb-4'>
         <OrderInput
           label='Number of positions'
-          value={rangeLiquidity.positions}
+          value={rangeLiquidity.positions === 0 ? '' : rangeLiquidity.positions}
           onChange={rangeLiquidity.setPositions}
         />
         <PenumbraSlider
-          min={5}
-          max={15}
+          min={MIN_POSITIONS}
+          max={MAX_POSITIONS}
           step={1}
           value={rangeLiquidity.positions}
           showValue={false}
@@ -120,14 +136,19 @@ export const RangeLiquidityOrderForm = observer(() => {
       </div>
       <div className='mb-4'>
         <InfoRow label='Number of positions' value={rangeLiquidity.positions} toolTip='' />
-        <InfoRow label='Base asset amount' value={baseAsset.amount} toolTip='' />
-        <InfoRow label='Quote asset amount' value={quoteAsset.amount} toolTip='' />
         <InfoRow
-          label='Gas Fee'
-          isLoading={gasFee === null}
-          value={`${gasFee} ${baseAsset.symbol}`}
-          valueColor='success'
-          toolTip='Gas fees tooltip here.'
+          label='Base asset amount'
+          value={`${rangeLiquidity.baseAsset?.amount ?? 0} ${rangeLiquidity.baseAsset?.symbol}`}
+          toolTip=''
+        />
+        <InfoRow
+          label='Quote asset amount'
+          value={`${rangeLiquidity.quoteAsset?.amount ?? 0} ${rangeLiquidity.quoteAsset?.symbol}`}
+          toolTip=''
+        />
+        <InfoRowGasFee
+          gasFee={rangeLiquidity.gasFee ?? 0}
+          symbol={rangeLiquidity.baseAsset?.symbol}
         />
       </div>
       <div className='mb-4'>
@@ -139,12 +160,12 @@ export const RangeLiquidityOrderForm = observer(() => {
           <ConnectButton actionType='default' />
         )}
       </div>
-      {exchangeRate !== null && (
+      {price !== undefined && (
         <div className='flex justify-center p-1'>
           <Text small color='text.secondary'>
             1 {baseAsset.symbol} ={' '}
             <Text small color='text.primary'>
-              {exchangeRate} {quoteAsset.symbol}
+              {price} {quoteAsset.symbol}
             </Text>
           </Text>
         </div>

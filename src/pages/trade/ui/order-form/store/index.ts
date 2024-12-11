@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { makeAutoObservable } from 'mobx';
 import debounce from 'lodash/debounce';
-import times from 'lodash/times';
 import { SimulationService } from '@penumbra-zone/protobuf';
 import {
   BalancesResponse,
@@ -15,13 +14,10 @@ import {
   Position,
   PositionState,
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
-import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
-import { splitLoHi } from '@penumbra-zone/types/lo-hi';
 import { getAssetId } from '@penumbra-zone/getters/metadata';
 import { getSwapCommitmentFromTx } from '@penumbra-zone/getters/transaction';
 import { getAssetIdFromValueView } from '@penumbra-zone/getters/value-view';
-import { getFormattedAmtFromValueView } from '@penumbra-zone/types/value-view';
-import { round } from '@penumbra-zone/types/round';
+import { pnum } from '@penumbra-zone/types/pnum';
 import { openToast } from '@penumbra-zone/ui/Toast';
 import { penumbra } from '@/shared/const/penumbra';
 import { useBalances } from '@/shared/api/balances';
@@ -29,7 +25,8 @@ import { plan, planBuildBroadcast } from '../helpers';
 import { usePathToMetadata } from '../../../model/use-path';
 import { OrderFormAsset } from './asset';
 import { RangeLiquidity } from './range-liquidity';
-import BigNumber from 'bignumber.js';
+import { LimitOrder } from './limit-order';
+import { limitOrderPosition } from '@/shared/math/position';
 
 export enum Direction {
   Buy = 'Buy',
@@ -48,6 +45,7 @@ class OrderFormStore {
   baseAsset = new OrderFormAsset();
   quoteAsset = new OrderFormAsset();
   rangeLiquidity = new RangeLiquidity();
+  limitOrder = new LimitOrder();
   balances: BalancesResponse[] | undefined;
   exchangeRate: number | null = null;
   gasFee: number | null = null;
@@ -69,24 +67,36 @@ class OrderFormStore {
   };
 
   private setBalancesOfAssets = (): void => {
-    const baseAssetBalance = this.balances?.find(resp =>
-      getAssetIdFromValueView(resp.balanceView).equals(getAssetId(this.baseAsset.metadata)),
-    );
-    if (baseAssetBalance?.balanceView) {
-      this.baseAsset.setBalanceView(baseAssetBalance.balanceView);
-    }
-    if (baseAssetBalance?.accountAddress) {
-      this.baseAsset.setAccountAddress(baseAssetBalance.accountAddress);
-    }
+    try {
+      if (!this.balances?.length) {
+        return;
+      }
 
-    const quoteAssetBalance = this.balances?.find(resp =>
-      getAssetIdFromValueView(resp.balanceView).equals(getAssetId(this.quoteAsset.metadata)),
-    );
-    if (quoteAssetBalance?.balanceView) {
-      this.quoteAsset.setBalanceView(quoteAssetBalance.balanceView);
-    }
-    if (quoteAssetBalance?.accountAddress) {
-      this.quoteAsset.setAccountAddress(quoteAssetBalance.accountAddress);
+      const baseAssetBalance = this.balances.find(resp =>
+        getAssetIdFromValueView(resp.balanceView).equals(getAssetId(this.baseAsset.metadata)),
+      );
+      if (baseAssetBalance?.balanceView) {
+        this.baseAsset.setBalanceView(baseAssetBalance.balanceView);
+      }
+      if (baseAssetBalance?.accountAddress) {
+        this.baseAsset.setAccountAddress(baseAssetBalance.accountAddress);
+      }
+
+      const quoteAssetBalance = this.balances.find(resp =>
+        getAssetIdFromValueView(resp.balanceView).equals(getAssetId(this.quoteAsset.metadata)),
+      );
+      if (quoteAssetBalance?.balanceView) {
+        this.quoteAsset.setBalanceView(quoteAssetBalance.balanceView);
+      }
+      if (quoteAssetBalance?.accountAddress) {
+        this.quoteAsset.setAccountAddress(quoteAssetBalance.accountAddress);
+      }
+    } catch (e) {
+      openToast({
+        type: 'error',
+        message: 'Error setting form balances',
+        description: JSON.stringify(e),
+      });
     }
   };
 
@@ -116,8 +126,12 @@ class OrderFormStore {
     } catch (e) {
       if (
         e instanceof Error &&
-        e.name !== 'PenumbraProviderNotAvailableError' &&
-        e.name !== 'PenumbraProviderNotConnectedError'
+        ![
+          'ConnectError',
+          'PenumbraNotInstalledError',
+          'PenumbraProviderNotAvailableError',
+          'PenumbraProviderNotConnectedError',
+        ].includes(e.name)
       ) {
         openToast({
           type: 'error',
@@ -139,9 +153,6 @@ class OrderFormStore {
     this.baseAsset.onAmountChange(debouncedHandleAmountChange);
     this.quoteAsset.onAmountChange(debouncedHandleAmountChange);
 
-    const debouncedCalculateGasFee = debounce(this.calculateGasFee, 500) as () => Promise<void>;
-    this.rangeLiquidity.onFieldChange(debouncedCalculateGasFee);
-
     this.setBalancesOfAssets();
     void this.calculateGasFee();
     void this.calculateExchangeRate();
@@ -157,21 +168,45 @@ class OrderFormStore {
     const assetIn = assetIsBaseAsset ? this.baseAsset : this.quoteAsset;
     const assetOut = assetIsBaseAsset ? this.quoteAsset : this.baseAsset;
 
-    try {
-      void this.calculateGasFee();
+    if (this.type === FormType.Market) {
+      try {
+        void this.calculateGasFee();
 
-      assetOut.setIsEstimating(true);
+        assetOut.setIsEstimating(true);
 
-      const output = await this.simulateSwapTx(assetIn, assetOut);
-      if (!output) {
-        return;
+        const output = await this.simulateSwapTx(assetIn, assetOut);
+        if (!output) {
+          return;
+        }
+
+        assetOut.setAmount(pnum(output).toFormattedString(), false);
+      } finally {
+        assetOut.setIsEstimating(false);
       }
+    }
 
-      const outputAmount = getFormattedAmtFromValueView(output, true);
+    if (this.type === FormType.Limit) {
+      try {
+        void this.calculateGasFee();
 
-      assetOut.setAmount(Number(outputAmount), false);
-    } finally {
-      assetOut.setIsEstimating(false);
+        assetOut.setIsEstimating(true);
+
+        if (assetIsBaseAsset) {
+          const amount = Number(this.baseAsset.amount) * this.limitOrder.price;
+
+          if (amount !== this.quoteAsset.amount) {
+            this.quoteAsset.setAmount(amount, true);
+          }
+        } else {
+          const amount = Number(this.quoteAsset.amount) / this.limitOrder.price;
+
+          if (amount !== this.baseAsset.amount) {
+            this.baseAsset.setAmount(amount, true);
+          }
+        }
+      } finally {
+        assetOut.setIsEstimating(false);
+      }
     }
   };
 
@@ -186,8 +221,7 @@ class OrderFormStore {
       return;
     }
 
-    const outputAmount = getFormattedAmtFromValueView(output, true);
-    this.exchangeRate = Number(outputAmount);
+    this.exchangeRate = pnum(output).toRoundedNumber();
   };
 
   calculateMarketGasFee = async (): Promise<void> => {
@@ -207,7 +241,7 @@ class OrderFormStore {
         {
           targetAsset: assetOut.assetId,
           value: {
-            amount: assetIn.toAmount(),
+            amount: assetIn.toLoHi(),
             assetId: assetIn.assetId,
           },
           claimAddress: assetIn.accountAddress,
@@ -218,137 +252,72 @@ class OrderFormStore {
 
     const txPlan = await plan(req);
     const fee = txPlan.transactionParameters?.fee;
-    const feeValueView = new ValueView({
-      valueView: {
-        case: 'knownAssetId',
-        value: {
-          amount: fee?.amount ?? { hi: 0n, lo: 0n },
-          metadata: this.baseAsset.metadata,
-        },
-      },
-    });
+    console.log('TCL: OrderFormStore -> fee', fee);
 
-    const feeAmount = getFormattedAmtFromValueView(feeValueView, true);
-    this.gasFee = Number(feeAmount);
+    this.gasFee = pnum(fee?.amount, this.baseAsset.exponent).toRoundedNumber();
   };
 
-  constructRangePosition = ({
-    positionIndex,
-    quoteAssetUnitAmount,
-    baseAssetUnitAmount,
-    positionUnitAmount,
-  }: {
-    positionIndex: number;
-    quoteAssetUnitAmount: bigint;
-    baseAssetUnitAmount: bigint;
-    positionUnitAmount: bigint;
-  }) => {
-    const { lowerBound, upperBound, positions, marketPrice, feeTier } = this
-      .rangeLiquidity as Required<typeof this.rangeLiquidity>;
-
-    const i = positionIndex;
-    const price = lowerBound + (i * (upperBound - lowerBound)) / (positions - 1);
-    const priceValue = BigNumber(price).multipliedBy(
-      new BigNumber(10).pow(this.quoteAsset.exponent ?? 0),
-    );
-    const priceUnit = BigInt(priceValue.toFixed(0));
-
-    // Cross-multiply exponents and prices for trading function coefficients
-    //
-    // We want to write
-    // p = EndUnit * price
-    // q = StartUnit
-    // However, if EndUnit is too small, it might not round correctly after multiplying by price
-    // To handle this, conditionally apply a scaling factor if the EndUnit amount is too small.
-    const scale = quoteAssetUnitAmount < 1_000_000n ? 1_000_000n : 1n;
-    const p = new Amount(splitLoHi(quoteAssetUnitAmount * scale * priceUnit));
-    const q = new Amount(splitLoHi(baseAssetUnitAmount * scale));
-
-    // Compute reserves
-    // Fund the position with asset 1 if its price exceeds the current price,
-    // matching the target per-position amount of asset 2. Otherwise, fund with
-    // asset 2 to avoid immediate arbitrage.
-    const reserves =
-      price < marketPrice
-        ? {
-            r1: new Amount(splitLoHi(0n)),
-            r2: new Amount(splitLoHi(positionUnitAmount)),
-          }
-        : {
-            r1: new Amount(
-              splitLoHi(BigInt(round({ value: Number(positionUnitAmount) / price, decimals: 0 }))),
-            ),
-            r2: new Amount(splitLoHi(0n)),
-          };
-
-    return {
-      position: new Position({
-        phi: {
-          component: { fee: feeTier * 100, p, q },
-          pair: new TradingPair({
-            asset1: this.baseAsset.assetId,
-            asset2: this.quoteAsset.assetId,
-          }),
-        },
-        nonce: crypto.getRandomValues(new Uint8Array(32)),
-        state: new PositionState({ state: PositionState_PositionStateEnum.OPENED }),
-        reserves,
-        closeOnFill: false,
-      }),
-    };
-  };
-
-  calculateRangeLiquidityGasFee = async (): Promise<void> => {
+  calculateLimitGasFee = async (): Promise<void> => {
+    console.log('called');
     this.gasFee = null;
 
-    const { lowerBound, upperBound, positions, marketPrice, feeTier } = this.rangeLiquidity;
-    if (
-      !this.quoteAsset.amount ||
-      !lowerBound ||
-      !upperBound ||
-      !positions ||
-      !marketPrice ||
-      !feeTier
-    ) {
+    const isBuy = this.direction === Direction.Buy;
+    const assetIn = isBuy ? this.quoteAsset : this.baseAsset;
+    console.log('TCL: OrderFormStore -> assetIn', assetIn, assetIn.amount);
+    const assetOut = isBuy ? this.baseAsset : this.quoteAsset;
+    console.log('TCL: OrderFormStore -> assetOut', assetOut, assetOut.amount);
+
+    if (!assetIn.amount || !assetOut.amount) {
       this.gasFee = 0;
       return;
     }
-
-    if (lowerBound > upperBound) {
-      this.gasFee = 0;
-      return;
-    }
-
-    const baseAssetUnitAmount = this.baseAsset.toUnitAmount();
-    const quoteAssetUnitAmount = this.quoteAsset.toUnitAmount();
-    const positionUnitAmount = quoteAssetUnitAmount / BigInt(positions);
 
     const positionsReq = new TransactionPlannerRequest({
-      positionOpens: times(positions, i =>
-        this.constructRangePosition({
-          positionIndex: i,
-          quoteAssetUnitAmount,
-          baseAssetUnitAmount,
-          positionUnitAmount,
-        }),
-      ),
+      positionOpens: [
+        {
+          position: this.buildLimitPosition(),
+        },
+      ],
       source: this.quoteAsset.accountIndex,
     });
 
+    console.log('TCL: OrderFormStore -> positionsReq', positionsReq);
     const txPlan = await plan(positionsReq);
     const fee = txPlan.transactionParameters?.fee;
-    const feeValueView = new ValueView({
-      valueView: {
-        case: 'knownAssetId',
-        value: {
-          amount: fee?.amount ?? { hi: 0n, lo: 0n },
-          metadata: this.baseAsset.metadata,
-        },
-      },
-    });
+    console.log('TCL: OrderFormStore -> fee', fee);
 
-    const feeAmount = getFormattedAmtFromValueView(feeValueView, true);
-    this.gasFee = Number(feeAmount);
+    this.gasFee = pnum(fee?.amount, this.baseAsset.exponent).toRoundedNumber();
+  };
+
+  // ref: https://github.com/penumbra-zone/penumbra/blob/main/crates/bin/pcli/src/command/tx/replicate/linear.rs
+  buildLimitPosition = (): Position => {
+    const { price } = this.limitOrder as Required<typeof this.limitOrder>;
+    if (
+      !this.baseAsset.assetId ||
+      !this.quoteAsset.assetId ||
+      !this.quoteAsset.exponent ||
+      !this.baseAsset.exponent ||
+      !this.quoteAsset.amount
+    ) {
+      throw new Error('incomplete limit position form');
+    }
+
+    return limitOrderPosition({
+      buy: this.direction === Direction.Buy ? 'buy' : 'sell',
+      price: Number(price),
+      baseAsset: {
+        id: this.baseAsset.assetId,
+        exponent: this.baseAsset.exponent,
+      },
+      quoteAsset: {
+        id: this.quoteAsset.assetId,
+        exponent: this.quoteAsset.exponent,
+      },
+      input:
+        this.direction === Direction.Buy
+          ? Number(this.quoteAsset.amount)
+          : Number(this.quoteAsset.amount) / Number(price),
+    });
   };
 
   calculateGasFee = async (): Promise<void> => {
@@ -356,8 +325,8 @@ class OrderFormStore {
       await this.calculateMarketGasFee();
     }
 
-    if (this.type === FormType.RangeLiquidity) {
-      await this.calculateRangeLiquidityGasFee();
+    if (this.type === FormType.Limit) {
+      await this.calculateLimitGasFee();
     }
   };
 
@@ -382,7 +351,7 @@ class OrderFormStore {
           {
             targetAsset: assetOut.assetId,
             value: {
-              amount: assetIn.toAmount(),
+              amount: assetIn.toLoHi(),
               assetId: assetIn.assetId,
             },
             claimAddress: assetIn.accountAddress,
@@ -408,20 +377,51 @@ class OrderFormStore {
     }
   };
 
-  // ref: https://github.com/penumbra-zone/penumbra/blob/main/crates/bin/pcli/src/command/tx/replicate/linear.rs
-  initiatePositionsTx = async (): Promise<void> => {
+  initiateLimitPositionTx = async (): Promise<void> => {
     try {
       this.isLoading = true;
 
-      const { lowerBound, upperBound, positions, marketPrice, feeTier } = this.rangeLiquidity;
-      if (
-        !this.quoteAsset.amount ||
-        !lowerBound ||
-        !upperBound ||
-        !positions ||
-        !marketPrice ||
-        !feeTier
-      ) {
+      const { price } = this.limitOrder;
+      if (!price) {
+        openToast({
+          type: 'error',
+          message: 'Please enter a valid limit price.',
+        });
+        return;
+      }
+
+      // not sure this is correct but at least it's something
+      // shouldn't this be coming from some kind of global state
+      // of which account is selected, rather than having to re-select
+      // in various places?
+      const accountIndex = this.quoteAsset.accountIndex || this.baseAsset.accountIndex;
+
+      const positionsReq = new TransactionPlannerRequest({
+        positionOpens: [
+          {
+            position: this.buildLimitPosition(),
+          },
+        ],
+        source: accountIndex,
+      });
+
+      await planBuildBroadcast('positionOpen', positionsReq);
+
+      this.baseAsset.unsetAmount();
+      this.quoteAsset.unsetAmount();
+    } finally {
+      this.isLoading = false;
+    }
+  };
+
+  initiateRangePositionsTx = async (): Promise<void> => {
+    try {
+      this.isLoading = true;
+
+      const { target, lowerBound, upperBound, positions, marketPrice, feeTier } =
+        this.rangeLiquidity;
+
+      if (!target || !lowerBound || !upperBound || !positions || !marketPrice || !feeTier) {
         openToast({
           type: 'error',
           message: 'Please enter a valid range.',
@@ -437,19 +437,9 @@ class OrderFormStore {
         return;
       }
 
-      const baseAssetUnitAmount = this.baseAsset.toUnitAmount();
-      const quoteAssetUnitAmount = this.quoteAsset.toUnitAmount();
-      const positionUnitAmount = quoteAssetUnitAmount / BigInt(positions);
-
+      const linearPositions = this.rangeLiquidity.buildPositions();
       const positionsReq = new TransactionPlannerRequest({
-        positionOpens: times(positions, i =>
-          this.constructRangePosition({
-            positionIndex: i,
-            quoteAssetUnitAmount,
-            baseAssetUnitAmount,
-            positionUnitAmount,
-          }),
-        ),
+        positionOpens: linearPositions.map(position => ({ position })),
         source: this.quoteAsset.accountIndex,
       });
 
@@ -467,8 +457,12 @@ class OrderFormStore {
       void this.initiateSwapTx();
     }
 
+    if (this.type === FormType.Limit) {
+      void this.initiateLimitPositionTx();
+    }
+
     if (this.type === FormType.RangeLiquidity) {
-      void this.initiatePositionsTx();
+      void this.initiateRangePositionsTx();
     }
   };
 }
