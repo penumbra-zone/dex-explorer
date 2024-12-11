@@ -25,7 +25,9 @@ export const SubaccountSelector = observer(() => {
         <DropdownMenu.Trigger>
           <Button>
             {isLoading ? (
-              <SpinnerIcon className='animate-spin' />
+              <div className='min-w-[170px] flex justify-center'>
+                <SpinnerIcon className='animate-spin' />
+              </div>
             ) : (
               <AddressViewComponent copyable={false} addressView={valueAddress} />
             )}
