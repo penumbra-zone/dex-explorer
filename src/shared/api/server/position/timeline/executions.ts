@@ -81,8 +81,8 @@ export const getExecutions = async (
 ): Promise<PositionExecutions> => {
   const result = await pindexer.getPositionExecutionsWithReserves(id);
 
-  const asset1Id = getAssetIdFromValue(state.reserves1);
-  const asset2Id = getAssetIdFromValue(state.reserves2);
+  const asset1Id = getAssetIdFromValue(state.currentReserves1);
+  const asset2Id = getAssetIdFromValue(state.currentReserves1);
 
   return {
     skipped: result.skippedRows,
