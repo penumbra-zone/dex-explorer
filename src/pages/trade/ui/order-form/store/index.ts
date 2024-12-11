@@ -390,13 +390,19 @@ class OrderFormStore {
         return;
       }
 
+      // not sure this is correct but at least it's something
+      // shouldn't this be coming from some kind of global state
+      // of which account is selected, rather than having to re-select
+      // in various places?
+      const accountIndex = this.quoteAsset.accountIndex || this.baseAsset.accountIndex;
+
       const positionsReq = new TransactionPlannerRequest({
         positionOpens: [
           {
             position: this.buildLimitPosition(),
           },
         ],
-        source: this.quoteAsset.accountIndex,
+        source: accountIndex,
       });
 
       await planBuildBroadcast('positionOpen', positionsReq);
