@@ -46,12 +46,26 @@ const fetchQuery = async (balances: BalancesResponse[]): Promise<AddressView[]> 
 
 export const useSubaccounts = () => {
   // Query account balances from view service
-  const { data: balances } = useBalances();
+  const { data: balances, isLoading: balanceLoading } = useBalances();
 
-  return useQuery({
-    queryKey: ['view-service-accounts'],
+  const query = useQuery({
+    // 'balances' cache query to enable refecthing balances
+    queryKey: ['view-service-accounts', balances],
     queryFn: () => {
-      return fetchQuery(balances!);
+      if (!balances) {
+        return [];
+      }
+      return fetchQuery(balances);
     },
+    enabled: !balanceLoading,
   });
+
+  // Combines loading states from balances and subaccounts to prevent
+  // flickering during balance refetches
+  const isLoading = balanceLoading || query.isLoading;
+
+  return {
+    ...query,
+    isLoading,
+  };
 };
