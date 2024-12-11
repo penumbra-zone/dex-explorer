@@ -9,30 +9,26 @@ import { penumbra } from '@/shared/const/penumbra';
 import { useBalances } from '@/shared/api/balances';
 import { BalancesResponse } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
 
-const ACCOUNT_INDEXES: number[] = [];
-
 const fetchQuery = async (balances: BalancesResponse[]): Promise<AddressView[]> => {
   const service = penumbra.service(ViewService);
 
   // Include main account for fresh wallets to display address view
-  ACCOUNT_INDEXES.push(0);
+  let accountIndexes: number[] = [0];
 
   for (const balance of balances) {
     if (
       balance.accountAddress?.addressView.case === 'decoded' &&
       balance.accountAddress.addressView.value.index?.account !== undefined
     ) {
-      ACCOUNT_INDEXES.push(balance.accountAddress.addressView.value.index.account);
+      accountIndexes.push(balance.accountAddress.addressView.value.index.account);
     }
   }
 
   // Filter by unique account indices
-  const unique_account_indices = ACCOUNT_INDEXES.filter(
-    (value, index, self) => self.indexOf(value) === index,
-  );
+  accountIndexes = accountIndexes.filter((value, index, self) => self.indexOf(value) === index);
 
   return Promise.all(
-    unique_account_indices.map(async index => {
+    accountIndexes.map(async index => {
       const response = await service.addressByIndex({ addressIndex: { account: index } });
 
       return new AddressView({
