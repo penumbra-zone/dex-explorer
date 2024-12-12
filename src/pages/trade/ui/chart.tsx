@@ -158,28 +158,39 @@ const ChartData = observer(({ candles }: { candles: CandleWithVolume[] }) => {
 
       // Set the price scale margins for the candlestick series
       seriesRef.current.priceScale().applyOptions({
-        scaleMargins: {
-          top: 0.1,
-          bottom: 0.4,
-        },
+        autoScale: true,
       });
 
       // Initialize the volume series
       volumeSeriesRef.current = chartRef.current.addHistogramSeries({
-        color: theme.color.success.light,
+        color: theme.color.success.light + '80',
         priceFormat: {
           type: 'volume',
         },
-        priceScaleId: '', // Set as overlay
+        priceScaleId: '',
+        lastValueVisible: false,
+        priceLineVisible: false,
       });
 
-      // Set the price scale margins for the volume series
+      // Set the price scale margins for the candlestick series
       volumeSeriesRef.current.priceScale().applyOptions({
         scaleMargins: {
-          top: 0.7,
+          top: 0.8, // highest point of the series will be 70% away from the top
           bottom: 0,
         },
       });
+
+      // Update volume colors based on price movement
+      volumeSeriesRef.current.setData(
+        candles.map(candle => ({
+          time: candle.ohlc.time,
+          value: candle.volume,
+          color:
+            candle.ohlc.close >= candle.ohlc.open
+              ? theme.color.success.light + '80'
+              : theme.color.destructive.light + '80',
+        })),
+      );
 
       chartRef.current.timeScale().fitContent();
     }
@@ -205,8 +216,8 @@ const ChartData = observer(({ candles }: { candles: CandleWithVolume[] }) => {
           value: candle.volume,
           color:
             candle.ohlc.close >= candle.ohlc.open
-              ? theme.color.success.light
-              : theme.color.destructive.light,
+              ? theme.color.success.light + '80'
+              : theme.color.destructive.light + '80',
         })),
       );
       chartRef.current?.timeScale().fitContent();
