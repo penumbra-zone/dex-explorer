@@ -4,23 +4,26 @@ import { StatusPopover } from './status-popover';
 import { MobileNav } from './mobile-nav';
 import { DesktopNav } from './desktop-nav';
 import { Connection } from './connection';
+import { TestnetBanner } from './banner';
 
 export const Header = () => {
   return (
-    <header className='flex items-center justify-between p-4'>
-      <HeaderLogo />
+    <>
+      <TestnetBanner />
+      <header className='flex items-center justify-between p-4'>
+        <HeaderLogo />
+        <DesktopNav />
 
-      <DesktopNav />
-
-      <Density compact>
-        <div className='hidden gap-2 lg:flex'>
-          <StatusPopover />
-          <Connection />
-        </div>
-        <div className='block lg:hidden'>
-          <MobileNav />
-        </div>
-      </Density>
-    </header>
+        <Density compact>
+          <div className='hidden gap-2 lg:flex'>
+            <StatusPopover />
+            <Connection />
+          </div>
+          <div className='block lg:hidden'>
+            <MobileNav />
+          </div>
+        </Density>
+      </header>
+    </>
   );
 };
