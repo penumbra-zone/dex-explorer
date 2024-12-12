@@ -57,7 +57,6 @@ class OrderFormStore {
     makeAutoObservable(this);
 
     void this.calculateGasFee();
-    void this.calculateExchangeRate();
   }
 
   setType = (type: FormType): void => {
