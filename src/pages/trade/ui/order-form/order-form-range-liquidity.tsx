@@ -167,7 +167,11 @@ export const RangeLiquidityOrderForm = observer(() => {
           value={store.quoteAssetAmount}
           toolTip={`The amount of ${store.quoteAsset?.symbol} provided as liquidity`}
         />
-        <InfoRowGasFee gasFee={0} symbol={'UM'} />
+        <InfoRowGasFee
+          gasFee={parentStore.gasFee.display}
+          symbol={parentStore.gasFee.symbol}
+          isLoading={parentStore.gasFeeLoading}
+        />
       </div>
       <div className='mb-4'>
         {connected ? (

@@ -1,4 +1,4 @@
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, reaction } from 'mobx';
 import { LimitOrderFormStore } from './LimitOrderFormStore';
 import { MarketOrderFormStore } from './MarketOrderFormStore';
 import { RangeOrderFormStore } from './RangeOrderFormStore';
@@ -15,14 +15,19 @@ import { connectionStore } from '@/shared/model/connection';
 import { useSubaccounts } from '@/widgets/header/api/subaccounts';
 import { useEffect } from 'react';
 import { useMarketPrice } from '@/pages/trade/model/useMarketPrice';
-import { planBuildBroadcast } from '../helpers';
+import { plan, planBuildBroadcast } from '../helpers';
 import { getSwapCommitmentFromTx } from '@penumbra-zone/getters/transaction';
+import { pnum } from '@penumbra-zone/types/pnum';
+import debounce from 'lodash/debounce';
+import { useRegistryAssets } from '@/shared/api/registry';
 
 export type WhichForm = 'Market' | 'Limit' | 'Range';
 
 export const isWhichForm = (x: string): x is WhichForm => {
   return x === 'Market' || x === 'Limit' || x === 'Range';
 };
+
+const GAS_DEBOUNCE_MS = 320;
 
 export class OrderFormStore {
   private _market = new MarketOrderFormStore();
@@ -33,9 +38,67 @@ export class OrderFormStore {
   private _marketPrice: number | undefined = undefined;
   address?: Address;
   subAccountIndex?: AddressIndex;
+  private _umAsset?: AssetInfo;
+  private _gasFee: { symbol: string; display: string } = { symbol: 'UM', display: '--' };
+  private _gasFeeLoading = false;
 
   constructor() {
     makeAutoObservable(this);
+
+    reaction(
+      () => this.plan,
+      debounce(async () => {
+        if (!this.plan || !this._umAsset) {
+          return;
+        }
+        this._gasFeeLoading = true;
+        try {
+          const res = await plan(this.plan);
+          const fee = res.transactionParameters?.fee;
+          if (!fee) {
+            return;
+          }
+          this._gasFee = {
+            symbol: this._umAsset.symbol,
+            display: pnum(fee.amount, this._umAsset.exponent).toNumber().toString(),
+          };
+        } finally {
+          this._gasFeeLoading = false;
+        }
+      }, GAS_DEBOUNCE_MS),
+    );
+  }
+
+  async calculateGasFee() {
+    if (!this.plan || !this._umAsset) {
+      return;
+    }
+    this._gasFeeLoading = true;
+    try {
+      const res = await plan(this.plan);
+      const fee = res.transactionParameters?.fee;
+      if (!fee) {
+        return;
+      }
+      this._gasFee = {
+        symbol: this._umAsset.symbol,
+        display: pnum(fee.amount, this._umAsset.exponent).toNumber().toString(),
+      };
+    } finally {
+      this._gasFeeLoading = false;
+    }
+  }
+
+  set umAsset(x: AssetInfo) {
+    this._umAsset = x;
+  }
+
+  get gasFee(): { symbol: string; display: string } {
+    return this._gasFee;
+  }
+
+  get gasFeeLoading(): boolean {
+    return this._gasFeeLoading;
   }
 
   assetChange(base: AssetInfo, quote: AssetInfo) {
@@ -146,8 +209,8 @@ const pluckAssetBalance = (symbol: string, balances: BalancesResponse[]): undefi
     if (!balance.balanceView?.valueView || balance.balanceView.valueView.case !== 'knownAssetId') {
       continue;
     }
-    if (balance.balanceView?.valueView.value.metadata?.symbol === symbol) {
-      const amount = balance.balanceView?.valueView.value.amount;
+    if (balance.balanceView.valueView.value.metadata?.symbol === symbol) {
+      const amount = balance.balanceView.valueView.value.amount;
       if (amount) {
         return amount;
       }
@@ -159,6 +222,14 @@ const pluckAssetBalance = (symbol: string, balances: BalancesResponse[]): undefi
 const orderFormStore = new OrderFormStore();
 
 export const useOrderFormStore = () => {
+  const { data: assets } = useRegistryAssets();
+  let umAsset: AssetInfo | undefined;
+  if (assets) {
+    const meta = assets.find(x => x.symbol === 'UM');
+    if (meta) {
+      umAsset = AssetInfo.fromMetadata(meta);
+    }
+  }
   const { baseAsset, quoteAsset } = usePathToMetadata();
   const { data: subAccounts } = useSubaccounts();
   const subAccount = subAccounts ? subAccounts[connectionStore.subaccount] : undefined;
@@ -175,9 +246,9 @@ export const useOrderFormStore = () => {
     orderFormStore.address = address;
     if (
       !baseAsset?.symbol ||
-      !baseAsset?.penumbraAssetId ||
+      !baseAsset.penumbraAssetId ||
       !quoteAsset?.symbol ||
-      !quoteAsset?.penumbraAssetId
+      !quoteAsset.penumbraAssetId
     ) {
       return;
     }
@@ -200,5 +271,11 @@ export const useOrderFormStore = () => {
     }
     orderFormStore.marketPrice = marketPrice;
   }, [orderFormStore, marketPrice]);
+
+  useEffect(() => {
+    if (umAsset) {
+      orderFormStore.umAsset = umAsset;
+    }
+  }, [umAsset]);
   return orderFormStore;
 };

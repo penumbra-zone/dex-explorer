@@ -10,10 +10,10 @@ const extractAmount = (positions: Position[], asset: AssetInfo): number => {
   for (const position of positions) {
     const asset1 = position.phi?.pair?.asset1;
     const asset2 = position.phi?.pair?.asset2;
-    if (asset1 && asset1.equals(asset.id)) {
+    if (asset1?.equals(asset.id)) {
       out += pnum(position.reserves?.r1, asset.exponent).toNumber();
     }
-    if (asset2 && asset2.equals(asset.id)) {
+    if (asset2?.equals(asset.id)) {
       out += pnum(position.reserves?.r2, asset.exponent).toNumber();
     }
   }
@@ -60,7 +60,7 @@ export class RangeOrderFormStore {
 
   // Treat fees that don't parse as 0
   get feeTierPercent(): number {
-    return Math.max(0, Math.min(parseNumber(this.feeTierPercentInput) ?? 0, 100));
+    return Math.max(0, Math.min(parseNumber(this.feeTierPercentInput) ?? 0, 50));
   }
 
   get positionCountInput(): string {

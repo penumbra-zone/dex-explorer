@@ -13,7 +13,7 @@ export class LimitOrderFormStore {
   private _input = new PriceLinkedInputs();
   buySell: BuySell = 'buy';
   marketPrice = 1.0;
-  private _priceInput: string = '';
+  private _priceInput = '';
 
   constructor() {
     makeAutoObservable(this);

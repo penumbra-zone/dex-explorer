@@ -51,7 +51,7 @@ export class AssetInfo {
   }
 
   /** Format the balance of this asset as a simple string. */
-  formatBalance(): string {
-    return this.formatDisplayAmount(this.balance);
+  formatBalance(): undefined | string {
+    return this.balance !== undefined ? this.formatDisplayAmount(this.balance) : undefined;
   }
 }

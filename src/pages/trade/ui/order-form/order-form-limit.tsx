@@ -71,7 +71,11 @@ export const LimitOrderForm = observer(() => {
       </div>
       <div className='mb-4'>
         <InfoRowTradingFee />
-        <InfoRowGasFee gasFee={0} symbol={'UM'} />
+        <InfoRowGasFee
+          gasFee={parentStore.gasFee.display}
+          symbol={parentStore.gasFee.symbol}
+          isLoading={parentStore.gasFeeLoading}
+        />
       </div>
       <div className='mb-4'>
         {connected ? (

@@ -27,10 +27,10 @@ const computeBFromA = (price: number, a: string): string | undefined => {
  * or if they adjust the limit price.
  */
 export class PriceLinkedInputs {
-  private _inputA: string = '';
-  private _inputB: string = '';
+  private _inputA = '';
+  private _inputB = '';
   private _lastEdited: LastEdited = 'A';
-  private _price: number = 1;
+  private _price = 1;
 
   constructor() {
     makeAutoObservable(this);

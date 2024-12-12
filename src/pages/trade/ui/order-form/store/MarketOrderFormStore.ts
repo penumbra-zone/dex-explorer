@@ -63,10 +63,10 @@ export interface MarketOrderPlan {
 export class MarketOrderFormStore {
   private _baseAsset?: AssetInfo;
   private _quoteAsset?: AssetInfo;
-  private _baseAssetInput: string = '';
-  private _quoteAssetInput: string = '';
-  private _baseEstimating: boolean = false;
-  private _quoteEstimating: boolean = false;
+  private _baseAssetInput = '';
+  private _quoteAssetInput = '';
+  private _baseEstimating = false;
+  private _quoteEstimating = false;
   buySell: BuySell = 'buy';
   private _lastEdited: LastEdited = 'Base';
 
