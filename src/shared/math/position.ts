@@ -9,12 +9,6 @@ import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
 import { pnum } from '@penumbra-zone/types/pnum';
 import BigNumber from 'bignumber.js';
 
-// This should be set so that we can still represent prices as numbers even multiplied by 10 ** this.
-//
-// For example, if this is set to 6, we should be able to represent PRICE * 10**6 as a number.
-// In the year 202X, when 1 BTC = 1 million USD, then this is still only 1e12 < 2^50.
-const PRECISION_DECIMALS = 12;
-
 export const compareAssetId = (a: AssetId, b: AssetId): number => {
   for (let i = 31; i >= 0; --i) {
     const a_i = a.inner[i] ?? -Infinity;
@@ -75,7 +69,15 @@ const priceToPQ = (
 
   // USD / UM -> [USD, UM], with a given precision.
   // Then, we want the invariant that p * UM + q * USD = constant, so
-  const [p, q] = basePrice.toFraction(10 ** PRECISION_DECIMALS);
+  let [p, q] = basePrice.toFraction();
+  // These can be higher, but this gives us some leg room.
+  const max_p_or_q = new BigNumber(10).pow(20);
+  while (p.isGreaterThanOrEqualTo(max_p_or_q) || q.isGreaterThanOrEqualTo(max_p_or_q)) {
+    p = p.shiftedBy(-1);
+    q = q.shiftedBy(-1);
+  }
+  p = p.plus(Number(p.isEqualTo(0)));
+  q = q.plus(Number(p.isEqualTo(0)));
   return { p: pnum(BigInt(p.toFixed(0))).toAmount(), q: pnum(BigInt(q.toFixed(0))).toAmount() };
 };
 
