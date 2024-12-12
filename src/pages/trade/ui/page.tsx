@@ -10,21 +10,28 @@ import { FormTabs } from './form-tabs';
 
 const sharedStyle = 'w-full border-t border-t-other-solidStroke overflow-x-hidden';
 
+// border-b border-b-other-solidStroke desktop:border-r desktop:border-r-other-solidStroke
 // extra large grid (>1600px)
 const XlLayout = () => {
   return (
     <div className={cn(sharedStyle, 'hidden xl:grid xl:grid-cols-[1fr,320px]')}>
-      <div className='flex flex-col gap-2'>
+      <div className='flex flex-col'>
         <div className='grid grid-cols-[1fr,1fr,320px]'>
           <div className='col-span-2 grid grid-rows-[auto,1fr]'>
-            <PairInfo />
-            <Chart />
+            <div className='border-b border-b-other-solidStroke border-r border-r-other-solidStroke'>
+              <PairInfo />
+            </div>
+            <div className='border-r border-r-other-solidStroke'>
+              <Chart />
+            </div>
           </div>
           <RouteTabs />
         </div>
-        <HistoryTabs />
+        <div className='border-t border-t-other-solidStroke'>
+          <HistoryTabs />
+        </div>
       </div>
-      <div className='flex flex-col gap-4'>
+      <div className='flex flex-col gap-4 border-l border-l-other-solidStroke'>
         <FormTabs />
         <TradesTabs />
       </div>
@@ -36,19 +43,21 @@ const XlLayout = () => {
 const LLayout = () => {
   return (
     <div className={cn(sharedStyle, 'hidden lg:grid xl:hidden lg:grid-cols-[1fr,320px]')}>
-      <div className='col-span-2'>
+      <div className='col-span-2 border-b border-b-other-solidStroke border-r border-r-other-solidStroke'>
         <PairInfo />
       </div>
       <div className='flex flex-col gap-2'>
         <div className='grid grid-cols-[1fr,1fr,320px]'>
-          <div className='col-span-2'>
+          <div className='col-span-2 border-r border-r-other-solidStroke'>
             <Chart />
           </div>
           <RouteTabs />
         </div>
-        <HistoryTabs />
+        <div className='border-t border-t-other-solidStroke'>
+          <HistoryTabs />
+        </div>
       </div>
-      <div className='flex flex-col gap-4'>
+      <div className='flex flex-col gap-4 border-l border-l-other-solidStroke'>
         <FormTabs />
         <TradesTabs />
       </div>
@@ -62,20 +71,24 @@ const DesktopLayout = () => {
     <div
       className={cn(sharedStyle, 'hidden desktop:grid lg:hidden desktop:grid-cols-[1fr,1fr,320px]')}
     >
-      <div className='col-span-3'>
+      <div className='col-span-3 border-b border-b-other-solidStroke border-r border-r-other-solidStroke'>
         <PairInfo />
       </div>
       <div className='flex flex-col gap-2 col-span-2'>
         <div className='grid grid-cols-[1fr,1fr] grid-rows-[auto,1fr]'>
-          <div className='col-span-2 h-[650px]'>
+          <div className='col-span-2 h-[650px] border-b border-b-other-solidStroke'>
             <Chart />
           </div>
           <RouteTabs />
-          <TradesTabs />
+          <div className='border-l border-l-other-solidStroke'>
+            <TradesTabs />
+          </div>
         </div>
       </div>
-      <FormTabs />
-      <div className='col-span-3'>
+      <div className='border-l border-l-other-solidStroke'>
+        <FormTabs />
+      </div>
+      <div className='col-span-3 border-t border-t-other-solidStroke'>
         <HistoryTabs />
       </div>
     </div>
@@ -88,15 +101,17 @@ const TabletLayout = () => {
     <div
       className={cn(sharedStyle, 'hidden tablet:grid desktop:hidden tablet:grid-cols-[1fr,1fr]')}
     >
-      <div className='col-span-2'>
+      <div className='col-span-2 border-b border-b-other-solidStroke'>
         <PairInfo />
       </div>
-      <div className='col-span-2'>
+      <div className='col-span-2 border-b border-b-other-solidStroke'>
         <TradesTabs withChart />
       </div>
       <RouteTabs />
-      <FormTabs />
-      <div className='col-span-2'>
+      <div className='border-l border-l-other-solidStroke'>
+        <FormTabs />
+      </div>
+      <div className='col-span-2 border-t border-t-other-solidStroke'>
         <HistoryTabs />
       </div>
     </div>
@@ -107,10 +122,18 @@ const TabletLayout = () => {
 const MobileLayout = () => {
   return (
     <div className={cn(sharedStyle, 'hidden mobile:grid tablet:hidden mobile:grid-cols-[1fr]')}>
-      <PairInfo />
-      <TradesTabs withChart />
-      <FormTabs />
-      <RouteTabs />
+      <div className='border-b border-b-other-solidStroke'>
+        <PairInfo />
+      </div>
+      <div className='border-b border-b-other-solidStroke'>
+        <TradesTabs withChart />
+      </div>
+      <div className='border-b border-b-other-solidStroke'>
+        <FormTabs />
+      </div>
+      <div className='border-b border-b-other-solidStroke'>
+        <RouteTabs />
+      </div>
       <HistoryTabs />
     </div>
   );
