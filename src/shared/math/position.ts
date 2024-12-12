@@ -59,7 +59,7 @@ export interface PositionPlan {
    * This will be in terms of the *display* denoms, e.g. USD / UM.
    */
   price: number;
-  /** The fee, in [0, 10_000]*/
+  /** The fee, in basis points [0, 5_000]*/
   feeBps: number;
   /** How much of the base asset we want to provide, in display units. */
   baseReserves: number;
