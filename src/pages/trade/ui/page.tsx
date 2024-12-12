@@ -10,7 +10,6 @@ import { FormTabs } from './form-tabs';
 
 const sharedStyle = 'w-full border-t border-t-other-solidStroke overflow-x-hidden';
 
-// border-b border-b-other-solidStroke desktop:border-r desktop:border-r-other-solidStroke
 // extra large grid (>1600px)
 const XlLayout = () => {
   return (
@@ -33,7 +32,9 @@ const XlLayout = () => {
       </div>
       <div className='flex flex-col gap-4 border-l border-l-other-solidStroke'>
         <FormTabs />
-        <TradesTabs />
+        <div className='border-t border-t-other-solidStroke'>
+          <TradesTabs />
+        </div>
       </div>
     </div>
   );
@@ -59,7 +60,9 @@ const LLayout = () => {
       </div>
       <div className='flex flex-col gap-4 border-l border-l-other-solidStroke'>
         <FormTabs />
-        <TradesTabs />
+        <div className='border-t border-t-other-solidStroke'>
+          <TradesTabs />
+        </div>
       </div>
     </div>
   );
