@@ -47,7 +47,7 @@ const estimateAmount = async (
   }
 };
 
-export type BuySell = 'Buy' | 'Sell';
+export type BuySell = 'buy' | 'sell';
 
 export type LastEdited = 'Base' | 'Quote';
 
@@ -67,7 +67,7 @@ export class MarketOrderFormStore {
   private _quoteAssetInput: string = '';
   private _baseEstimating: boolean = false;
   private _quoteEstimating: boolean = false;
-  private _buySell: BuySell = 'Buy';
+  private _buySell: BuySell = 'buy';
   private _lastEdited: LastEdited = 'Base';
 
   constructor() {
@@ -149,7 +149,7 @@ export class MarketOrderFormStore {
   }
 
   get balance(): undefined | string {
-    if (this._buySell === 'Buy') {
+    if (this._buySell === 'buy') {
       if (!this._quoteAsset) {
         return undefined;
       }
@@ -189,7 +189,7 @@ export class MarketOrderFormStore {
       return;
     }
     const { inputAsset, inputAmount, output } =
-      this._buySell === 'Buy'
+      this._buySell === 'buy'
         ? {
             inputAsset: this._quoteAsset,
             inputAmount: this.quoteInputAmount,
