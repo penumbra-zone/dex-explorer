@@ -69,16 +69,16 @@ export interface PositionPlan {
 
 const priceToPQ = (
   price: number,
-  pExponent: number,
-  qExponent: number,
+  baseExponent: number,
+  quoteExponent: number,
 ): { p: Amount; q: Amount } => {
   // e.g. price     = X USD / UM
   //      basePrice = Y uUM / uUSD = X USD / UM * uUSD / USD * UM / uUM
   //                = X * 10 ** qExponent * 10 ** -pExponent
-  const basePrice = new BigNumber(price).times(new BigNumber(10).pow(qExponent - pExponent));
+  const basePrice = new BigNumber(price).times(new BigNumber(10).pow(quoteExponent - baseExponent));
 
   // USD / UM -> [USD, UM], with a given precision
-  const [q, p] = basePrice.toFraction(10 ** PRECISION_DECIMALS);
+  const [p, q] = basePrice.toFraction(10 ** PRECISION_DECIMALS);
   return { p: pnum(BigInt(p.toFixed(0))).toAmount(), q: pnum(BigInt(q.toFixed(0))).toAmount() };
 };
 
