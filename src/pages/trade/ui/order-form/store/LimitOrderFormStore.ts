@@ -2,6 +2,8 @@ import { Position } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1
 import { PriceLinkedInputs } from './PriceLinkedInputs';
 import { limitOrderPosition } from '@/shared/math/position';
 import { makeAutoObservable } from 'mobx';
+import { AssetInfo } from '@/pages/trade/model/AssetInfo';
+import { parseNumber } from '@/shared/utils/num';
 
 export type BuySell = 'buy' | 'sell';
 
@@ -10,7 +12,8 @@ export class LimitOrderFormStore {
   private _quoteAsset?: AssetInfo;
   private _input = new PriceLinkedInputs();
   buySell: BuySell = 'buy';
-  priceInput: string = '';
+  marketPrice = 1.0;
+  private _priceInput: string = '';
 
   constructor() {
     makeAutoObservable(this);
@@ -25,21 +28,25 @@ export class LimitOrderFormStore {
   }
 
   get baseInput(): string {
-    this._input.inputA;
+    return this._input.inputA;
   }
 
   get quoteInput(): string {
-    this._input.inputB;
+    return this._input.inputB;
+  }
+
+  get priceInput(): string {
+    return this._priceInput;
   }
 
   get price(): number | undefined {
-    return parseNumber(this._input);
+    return parseNumber(this._priceInput);
   }
 
   get plan(): Position | undefined {
     const input =
       this.buySell === 'buy' ? parseNumber(this.quoteInput) : parseNumber(this.baseInput);
-    if (!input || !this._baseAsset || !this._quoteAsset) {
+    if (!input || !this._baseAsset || !this._quoteAsset || !this.price) {
       return undefined;
     }
     return limitOrderPosition({
@@ -70,7 +77,7 @@ export class LimitOrderFormStore {
   set priceInput(x: string) {
     this._priceInput = x;
     const price = this.price;
-    if (this.price !== undefined) {
+    if (price !== undefined) {
       this._input.price = price;
     }
   }

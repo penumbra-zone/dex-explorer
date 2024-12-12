@@ -53,7 +53,7 @@ export type LastEdited = 'Base' | 'Quote';
 
 // When we need to use an estimate call, avoid triggering it for this many milliseconds
 // to avoid jitter as the user types.
-const ESTIMATE_DEBOUNCE_MS = 200;
+const ESTIMATE_DEBOUNCE_MS = 160;
 
 export interface MarketOrderPlan {
   targetAsset: AssetId;
@@ -67,48 +67,54 @@ export class MarketOrderFormStore {
   private _quoteAssetInput: string = '';
   private _baseEstimating: boolean = false;
   private _quoteEstimating: boolean = false;
-  private _buySell: BuySell = 'buy';
+  buySell: BuySell = 'buy';
   private _lastEdited: LastEdited = 'Base';
 
   constructor() {
     makeAutoObservable(this);
 
+    // Two reactions to avoid a double trigger.
     reaction(
-      () => [this._baseAssetInput, this._quoteAssetInput, this._baseAsset, this._quoteAsset],
+      () => [this._lastEdited, this._baseAssetInput, this._baseAsset, this._quoteAsset],
       debounce(async () => {
-        if (!this._baseAsset || !this._quoteAsset) {
+        if (!this._baseAsset || !this._quoteAsset || this._lastEdited !== 'Base') {
           return;
         }
-        if (this._lastEdited === 'Base') {
-          const input = this.baseInputAmount;
-          if (input === undefined) {
+        const input = this.baseInputAmount;
+        if (input === undefined) {
+          return;
+        }
+        this._quoteEstimating = true;
+        try {
+          const res = await estimateAmount(this._quoteAsset, this._baseAsset, input);
+          if (res === undefined) {
             return;
           }
-          this._quoteEstimating = true;
-          try {
-            const res = await estimateAmount(this._quoteAsset, this._baseAsset, input);
-            if (res === undefined) {
-              return;
-            }
-            this._quoteAssetInput = res.toString();
-          } finally {
-            this._quoteEstimating = false;
-          }
-        } else {
-          const input = this.quoteInputAmount;
-          if (input === undefined) {
+          this._quoteAssetInput = res.toString();
+        } finally {
+          this._quoteEstimating = false;
+        }
+      }, ESTIMATE_DEBOUNCE_MS),
+    );
+    reaction(
+      () => [this._lastEdited, this._quoteAssetInput, this._baseAsset, this._quoteAsset],
+      debounce(async () => {
+        if (!this._baseAsset || !this._quoteAsset || this._lastEdited !== 'Quote') {
+          return;
+        }
+        const input = this.quoteInputAmount;
+        if (input === undefined) {
+          return;
+        }
+        this._baseEstimating = true;
+        try {
+          const res = await estimateAmount(this._baseAsset, this._quoteAsset, input);
+          if (res === undefined) {
             return;
           }
-          this._baseEstimating = true;
-          try {
-            const res = await estimateAmount(this._baseAsset, this._quoteAsset, input);
-            if (res === undefined) {
-              return;
-            }
-            this._baseAssetInput = res.toString();
-          } finally {
-            this._baseEstimating = false;
-          }
+          this._baseAssetInput = res.toString();
+        } finally {
+          this._baseEstimating = false;
         }
       }, ESTIMATE_DEBOUNCE_MS),
     );
@@ -149,20 +155,26 @@ export class MarketOrderFormStore {
   }
 
   get balance(): undefined | string {
-    if (this._buySell === 'buy') {
-      if (!this._quoteAsset) {
+    if (this.buySell === 'buy') {
+      if (!this._quoteAsset?.balance) {
         return undefined;
       }
       return this._quoteAsset.formatDisplayAmount(this._quoteAsset.balance);
     }
-    if (!this._baseAsset) {
+    if (!this._baseAsset?.balance) {
       return undefined;
     }
     return this._baseAsset.formatDisplayAmount(this._baseAsset.balance);
   }
 
-  set buySell(x: BuySell) {
-    this._buySell = x;
+  setBalanceFraction(x: number) {
+    x = Math.max(0.0, Math.min(1.0, x));
+    if (this.buySell === 'buy' && this._quoteAsset?.balance) {
+      this.quoteInput = (x * this._quoteAsset.balance).toString();
+    }
+    if (this.buySell === 'sell' && this._baseAsset?.balance) {
+      this.baseInput = (x * this._baseAsset.balance).toString();
+    }
   }
 
   get lastEdited(): LastEdited {
@@ -189,7 +201,7 @@ export class MarketOrderFormStore {
       return;
     }
     const { inputAsset, inputAmount, output } =
-      this._buySell === 'buy'
+      this.buySell === 'buy'
         ? {
             inputAsset: this._quoteAsset,
             inputAmount: this.quoteInputAmount,

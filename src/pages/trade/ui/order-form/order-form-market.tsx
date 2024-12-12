@@ -5,75 +5,99 @@ import { connectionStore } from '@/shared/model/connection';
 import { OrderInput } from './order-input';
 import { SegmentedControl } from './segmented-control';
 import { ConnectButton } from '@/features/connect/connect-button';
-import { Slider } from './slider';
 import { InfoRowGasFee } from './info-row-gas-fee';
 import { InfoRowTradingFee } from './info-row-trading-fee';
-import { useOrderFormStore, FormType, Direction } from './store';
+import { useOrderFormStore } from './store/OrderFormStore';
+import { Slider as PenumbraSlider } from '@penumbra-zone/ui/Slider';
+
+interface SliderProps {
+  balance?: string;
+  setBalanceFraction: (fraction: number) => void;
+}
+const Slider = observer(({ balance, setBalanceFraction }: SliderProps) => {
+  return (
+    <div className='mb-4'>
+      <div className='mb-1'>
+        <PenumbraSlider
+          min={0}
+          max={10}
+          step={1}
+          value={0}
+          showValue={false}
+          onChange={x => setBalanceFraction(x / 10)}
+          showTrackGaps={true}
+          trackGapBackground='base.black'
+          showFill={true}
+        />
+      </div>
+      <div className='flex flex-row items-center justify-between py-1'>
+        <Text small color='text.secondary'>
+          Available Balance
+        </Text>
+        <button type='button' className='text-primary' onClick={() => setBalanceFraction(1.0)}>
+          <Text small color='text.primary'>
+            {balance ?? '--'}
+          </Text>
+        </button>
+      </div>
+    </div>
+  );
+});
 
 export const MarketOrderForm = observer(() => {
   const { connected } = connectionStore;
-  const {
-    baseAsset,
-    quoteAsset,
-    direction,
-    setDirection,
-    submitOrder,
-    isLoading,
-    gasFee,
-    exchangeRate,
-  } = useOrderFormStore(FormType.Market);
+  const parentStore = useOrderFormStore();
+  const store = parentStore.marketForm;
 
-  const isBuy = direction === Direction.Buy;
+  const isBuy = store.buySell === 'buy';
 
   return (
     <div className='p-4'>
-      <SegmentedControl direction={direction} setDirection={setDirection} />
+      <SegmentedControl direction={store.buySell} setDirection={x => (store.buySell = x)} />
       <div className='mb-4'>
         <OrderInput
-          label={direction}
-          value={baseAsset.amount}
-          onChange={amount => baseAsset.setAmount(amount)}
-          min={0}
-          max={1000}
-          isEstimating={isBuy ? baseAsset.isEstimating : false}
+          label={isBuy ? 'Buy' : 'Sell'}
+          value={store.baseInput}
+          onChange={x => (store.baseInput = x)}
+          isEstimating={store.baseEstimating}
           isApproximately={isBuy}
-          denominator={baseAsset.symbol}
+          denominator={store.baseAsset?.symbol}
         />
       </div>
       <div className='mb-4'>
         <OrderInput
           label={isBuy ? 'Pay with' : 'Receive'}
-          value={quoteAsset.amount}
-          onChange={amount => quoteAsset.setAmount(amount)}
-          isEstimating={isBuy ? false : quoteAsset.isEstimating}
+          value={store.quoteInput}
+          onChange={x => (store.quoteInput = x)}
+          isEstimating={store.quoteEstimating}
           isApproximately={!isBuy}
-          denominator={quoteAsset.symbol}
+          denominator={store.quoteAsset?.symbol}
         />
       </div>
-      <Slider steps={8} asset={isBuy ? quoteAsset : baseAsset} />
+      <Slider balance={store.balance} setBalanceFraction={x => store.setBalanceFraction(x)} />
       <div className='mb-4'>
         <InfoRowTradingFee />
-        <InfoRowGasFee gasFee={gasFee} symbol={baseAsset.symbol} />
+        <InfoRowGasFee gasFee={0} symbol={'UM'} />
       </div>
       <div className='mb-4'>
         {connected ? (
           <Button
             actionType='accent'
-            disabled={isLoading || !baseAsset.amount || !quoteAsset.amount}
-            onClick={submitOrder}
+            disabled={!connected || !parentStore.canSubmit}
+            onClick={() => {}}
           >
-            {direction} {baseAsset.symbol}
+            {isBuy ? 'Buy' : 'Sell'} {store.baseAsset?.symbol}
           </Button>
         ) : (
           <ConnectButton actionType='default' />
         )}
       </div>
-      {exchangeRate !== null && (
+      {parentStore.marketPrice && (
         <div className='flex justify-center p-1'>
           <Text small color='text.secondary'>
-            1 {baseAsset.symbol} ={' '}
+            1 {store.baseAsset?.symbol} ={' '}
             <Text small color='text.primary'>
-              {exchangeRate} {quoteAsset.symbol}
+              {store.quoteAsset?.formatDisplayAmount(parentStore.marketPrice)}
             </Text>
           </Text>
         </div>

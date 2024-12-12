@@ -9,7 +9,7 @@ import cn from 'clsx';
 export interface OrderInputProps {
   id?: string;
   label: string;
-  value?: number | string | null;
+  value: string;
   placeholder?: string;
   isEstimating?: boolean;
   isApproximately?: boolean;
@@ -88,7 +88,7 @@ export const OrderInput = forwardRef<HTMLInputElement, OrderInputProps>(
                 "[&[type='number']]:[-moz-appearance:textfield]",
               )}
               style={{ paddingRight: denomWidth + 20 }}
-              value={value !== 0 ? value : ''}
+              value={value}
               onChange={e => onChange?.(e.target.value)}
               placeholder={placeholder}
               type='number'

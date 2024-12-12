@@ -1,4 +1,5 @@
-import { AssetId, Value } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { AssetId, Metadata, Value } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
 import { pnum } from '@penumbra-zone/types/pnum';
 
 /** A basic utility class containing information we need about an asset.
@@ -13,10 +14,23 @@ export class AssetInfo {
    */
   constructor(
     public id: AssetId,
-    public balance: number,
     public exponent: number,
     public symbol: string,
+    public balance?: number,
   ) {}
+
+  static fromMetadata(metadata: Metadata, balance?: Amount): undefined | AssetInfo {
+    const displayDenom = metadata.denomUnits.find(x => x.denom === metadata.display);
+    if (!displayDenom || !metadata.penumbraAssetId) {
+      return undefined;
+    }
+    return new AssetInfo(
+      metadata.penumbraAssetId,
+      displayDenom.exponent,
+      metadata.symbol,
+      balance && pnum(balance, displayDenom.exponent).toNumber(),
+    );
+  }
 
   /** Convert an amount, in display units, into a Value (of this asset). */
   value(display: number): Value {

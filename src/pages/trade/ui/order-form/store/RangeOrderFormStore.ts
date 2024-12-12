@@ -98,22 +98,22 @@ export class RangeOrderFormStore {
     });
   }
 
-  get baseAssetAmount(): undefined | number {
+  get baseAssetAmount(): string | undefined {
     const baseAsset = this._baseAsset;
     const plan = this.plan;
     if (!plan || !baseAsset) {
       return undefined;
     }
-    return extractAmount(plan, baseAsset);
+    return baseAsset.formatDisplayAmount(extractAmount(plan, baseAsset));
   }
 
-  get quoteAssetAmount(): undefined | number {
+  get quoteAssetAmount(): string | undefined {
     const quoteAsset = this._quoteAsset;
     const plan = this.plan;
     if (!plan || !quoteAsset) {
       return undefined;
     }
-    return extractAmount(plan, quoteAsset);
+    return quoteAsset.formatDisplayAmount(extractAmount(plan, quoteAsset));
   }
 
   assetChange(base: AssetInfo, quote: AssetInfo) {

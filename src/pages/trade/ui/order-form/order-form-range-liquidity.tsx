@@ -1,40 +1,43 @@
 import { observer } from 'mobx-react-lite';
-import { useEffect } from 'react';
 import { Button } from '@penumbra-zone/ui/Button';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Slider as PenumbraSlider } from '@penumbra-zone/ui/Slider';
 import { connectionStore } from '@/shared/model/connection';
 import { ConnectButton } from '@/features/connect/connect-button';
-import { useSummary } from '../../model/useSummary';
 import { OrderInput } from './order-input';
 import { SelectGroup } from './select-group';
 import { InfoRow } from './info-row';
 import { InfoRowGasFee } from './info-row-gas-fee';
-import { useOrderFormStore, FormType } from './store';
-import {
-  UpperBoundOptions,
-  LowerBoundOptions,
-  FeeTierOptions,
-  MIN_POSITIONS,
-  MAX_POSITIONS,
-} from './store/range-liquidity';
+import { useOrderFormStore } from './store/OrderFormStore';
+import { MAX_POSITION_COUNT, MIN_POSITION_COUNT } from './store/RangeOrderFormStore';
+
+const LOWER_PRICE_OPTIONS: Record<string, (mp: number) => number> = {
+  Market: (mp: number) => mp,
+  '-2%': mp => 0.98 * mp,
+  '-5%': mp => 0.95 * mp,
+  '-10%': mp => 0.9 * mp,
+  '-15%': mp => 0.85 * mp,
+};
+
+const UPPER_PRICE_OPTIONS: Record<string, (mp: number) => number> = {
+  Market: (mp: number) => mp,
+  '+2%': mp => 1.02 * mp,
+  '+5%': mp => 1.05 * mp,
+  '+10%': mp => 1.1 * mp,
+  '+15%': mp => 1.15 * mp,
+};
+
+const FEE_TIERS: Record<string, number> = {
+  '0.1%': 0.1,
+  '0.25%': 0.25,
+  '0.5%': 0.5,
+  '1.00%': 1,
+};
 
 export const RangeLiquidityOrderForm = observer(() => {
   const { connected } = connectionStore;
-  const { baseAsset, quoteAsset, rangeLiquidity, submitOrder, isLoading, exchangeRate } =
-    useOrderFormStore(FormType.RangeLiquidity);
-  const { data } = useSummary('1d');
-  const price = data && 'price' in data ? data.price : undefined;
-
-  useEffect(() => {
-    if (price) {
-      rangeLiquidity.setMarketPrice(price);
-    }
-  }, [price, rangeLiquidity]);
-
-  useEffect(() => {
-    rangeLiquidity.setAssets(baseAsset, quoteAsset);
-  }, [baseAsset, quoteAsset, rangeLiquidity]);
+  const parentStore = useOrderFormStore();
+  const store = parentStore.rangeForm;
 
   return (
     <div className='p-4'>
@@ -42,9 +45,9 @@ export const RangeLiquidityOrderForm = observer(() => {
         <div className='mb-1'>
           <OrderInput
             label='Liquidity Target'
-            value={rangeLiquidity.target}
-            onChange={target => rangeLiquidity.setTarget(target)}
-            denominator={quoteAsset.symbol}
+            value={store.liquidityTargetInput}
+            onChange={x => (store.liquidityTargetInput = x)}
+            denominator={store.quoteAsset?.symbol}
           />
         </div>
         <div className='w-full flex flex-row flex-wrap items-start justify-between py-1'>
@@ -56,18 +59,21 @@ export const RangeLiquidityOrderForm = observer(() => {
           <div className='flex flex-wrap flex-col items-end'>
             <div>
               <Text small color='text.primary' whitespace='nowrap'>
-                {baseAsset.balance} {baseAsset.symbol}
+                {store.baseAsset?.formatBalance() ?? `-- ${store.baseAsset?.symbol}`}
               </Text>
             </div>
             <button
               type='button'
               className='text-primary'
-              onClick={
-                connected ? () => rangeLiquidity.setTarget(quoteAsset.balance ?? 0) : undefined
-              }
+              onClick={() => {
+                const target = store.quoteAsset?.balance?.toString();
+                if (target) {
+                  store.liquidityTargetInput = target;
+                }
+              }}
             >
               <Text small color='text.primary' whitespace='nowrap'>
-                {quoteAsset.balance} {quoteAsset.symbol}
+                {store.quoteAsset?.formatBalance() ?? `-- ${store.quoteAsset?.symbol}`}
               </Text>
             </button>
           </div>
@@ -77,95 +83,107 @@ export const RangeLiquidityOrderForm = observer(() => {
         <div className='mb-2'>
           <OrderInput
             label='Upper Price Bound'
-            value={rangeLiquidity.upperBound}
-            onChange={rangeLiquidity.setUpperBound}
-            denominator={quoteAsset.symbol}
+            value={store.upperPriceInput}
+            onChange={x => (store.upperPriceInput = x)}
+            denominator={store.quoteAsset?.symbol}
           />
         </div>
         <SelectGroup
-          options={Object.values(UpperBoundOptions)}
-          onChange={option => rangeLiquidity.setUpperBoundOption(option as UpperBoundOptions)}
+          options={Object.keys(UPPER_PRICE_OPTIONS)}
+          onChange={o =>
+            (store.upperPriceInput = (UPPER_PRICE_OPTIONS[o] ?? (x => x))(
+              store.marketPrice,
+            ).toString())
+          }
         />
       </div>
       <div className='mb-4'>
         <div className='mb-2'>
           <OrderInput
             label='Lower Price Bound'
-            value={rangeLiquidity.lowerBound}
-            onChange={rangeLiquidity.setLowerBound}
-            denominator={quoteAsset.symbol}
+            value={store.lowerPriceInput}
+            onChange={x => (store.lowerPriceInput = x)}
+            denominator={store.quoteAsset?.symbol}
           />
         </div>
         <SelectGroup
-          options={Object.values(LowerBoundOptions)}
-          onChange={option => rangeLiquidity.setLowerBoundOption(option as LowerBoundOptions)}
+          options={Object.keys(LOWER_PRICE_OPTIONS)}
+          onChange={o =>
+            (store.lowerPriceInput = (LOWER_PRICE_OPTIONS[o] ?? (x => x))(
+              store.marketPrice,
+            ).toString())
+          }
         />
       </div>
       <div className='mb-4'>
         <div className='mb-2'>
           <OrderInput
             label='Fee tier'
-            value={rangeLiquidity.feeTier}
-            onChange={rangeLiquidity.setFeeTier}
+            value={store.feeTierPercentInput}
+            onChange={x => (store.feeTierPercentInput = x)}
             denominator='%'
           />
         </div>
         <SelectGroup
-          value={rangeLiquidity.feeTier}
-          options={Object.values(FeeTierOptions)}
-          onChange={rangeLiquidity.setFeeTierOption as (option: string) => void}
+          options={Object.keys(FEE_TIERS)}
+          onChange={o => {
+            if (o in FEE_TIERS) {
+              store.feeTierPercentInput = o.toString();
+            }
+          }}
         />
       </div>
       <div className='mb-4'>
         <OrderInput
           label='Number of positions'
-          value={rangeLiquidity.positions === 0 ? '' : rangeLiquidity.positions}
-          onChange={rangeLiquidity.setPositions}
+          value={store.positionCountInput}
+          onChange={x => (store.positionCountInput = x)}
         />
         <PenumbraSlider
-          min={MIN_POSITIONS}
-          max={MAX_POSITIONS}
+          min={MIN_POSITION_COUNT}
+          max={MAX_POSITION_COUNT}
           step={1}
-          value={rangeLiquidity.positions}
+          value={store.positionCountSlider}
           showValue={false}
-          onChange={rangeLiquidity.setPositions}
+          onChange={x => (store.positionCountSlider = x)}
           showTrackGaps={true}
           trackGapBackground='base.black'
           showFill={true}
         />
       </div>
       <div className='mb-4'>
-        <InfoRow label='Number of positions' value={rangeLiquidity.positions} toolTip='' />
+        <InfoRow
+          label='Number of positions'
+          value={store.positionCount}
+          toolTip='Each position will have an equal amount of liquidity allocated to it, as the price varies.'
+        />
         <InfoRow
           label='Base asset amount'
-          value={`${rangeLiquidity.baseAsset?.amount ?? 0} ${rangeLiquidity.baseAsset?.symbol}`}
-          toolTip=''
+          value={store.baseAssetAmount}
+          toolTip={`The amount of ${store.baseAsset?.symbol} provided as liquidity.`}
         />
         <InfoRow
           label='Quote asset amount'
-          value={`${rangeLiquidity.quoteAsset?.amount ?? 0} ${rangeLiquidity.quoteAsset?.symbol}`}
-          toolTip=''
+          value={store.quoteAssetAmount}
+          toolTip={`The amount of ${store.quoteAsset?.symbol} provided as liquidity`}
         />
-        <InfoRowGasFee
-          gasFee={rangeLiquidity.gasFee ?? 0}
-          symbol={rangeLiquidity.baseAsset?.symbol}
-        />
+        <InfoRowGasFee gasFee={0} symbol={'UM'} />
       </div>
       <div className='mb-4'>
         {connected ? (
-          <Button actionType='accent' disabled={isLoading} onClick={submitOrder}>
-            Open {rangeLiquidity.positions} Positions
+          <Button actionType='accent' disabled={!parentStore.canSubmit} onClick={() => {}}>
+            Open {store.positionCount ?? 'Several'} Positions
           </Button>
         ) : (
           <ConnectButton actionType='default' />
         )}
       </div>
-      {price !== undefined && (
+      {parentStore.marketPrice && (
         <div className='flex justify-center p-1'>
           <Text small color='text.secondary'>
-            1 {baseAsset.symbol} ={' '}
+            1 {store.baseAsset?.symbol} ={' '}
             <Text small color='text.primary'>
-              {price} {quoteAsset.symbol}
+              {store.quoteAsset?.formatDisplayAmount(parentStore.marketPrice)}
             </Text>
           </Text>
         </div>

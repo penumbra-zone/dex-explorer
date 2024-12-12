@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Button } from '@penumbra-zone/ui/Button';
 import { Text } from '@penumbra-zone/ui/Text';
@@ -9,106 +8,86 @@ import { ConnectButton } from '@/features/connect/connect-button';
 import { InfoRowTradingFee } from './info-row-trading-fee';
 import { InfoRowGasFee } from './info-row-gas-fee';
 import { SelectGroup } from './select-group';
-import { useOrderFormStore, FormType, Direction } from './store';
-import { BuyLimitOrderOptions, SellLimitOrderOptions } from './store/limit-order';
-import { useSummary } from '../../model/useSummary';
+import { useOrderFormStore } from './store/OrderFormStore';
+
+const BUY_PRICE_OPTIONS: Record<string, (mp: number) => number> = {
+  Market: (mp: number) => mp,
+  '-2%': mp => 0.98 * mp,
+  '-5%': mp => 0.95 * mp,
+  '-10%': mp => 0.9 * mp,
+  '-15%': mp => 0.85 * mp,
+};
+
+const SELL_PRICE_OPTIONS: Record<string, (mp: number) => number> = {
+  Market: (mp: number) => mp,
+  '+2%': mp => 1.02 * mp,
+  '+5%': mp => 1.05 * mp,
+  '+10%': mp => 1.1 * mp,
+  '+15%': mp => 1.15 * mp,
+};
 
 export const LimitOrderForm = observer(() => {
   const { connected } = connectionStore;
-  const {
-    baseAsset,
-    quoteAsset,
-    direction,
-    setDirection,
-    submitOrder,
-    limitOrder,
-    isLoading,
-    gasFee,
-    exchangeRate,
-  } = useOrderFormStore(FormType.Limit);
-  const { data } = useSummary('1d');
-  const price = data && 'price' in data ? data.price : undefined;
+  const parentStore = useOrderFormStore();
+  const store = parentStore.limitForm;
 
-  const isBuy = direction === Direction.Buy;
-
-  useEffect(() => {
-    if (price) {
-      limitOrder.setMarketPrice(price);
-    }
-  }, [price, limitOrder]);
-
-  useEffect(() => {
-    if (quoteAsset.exponent && baseAsset.exponent) {
-      limitOrder.setExponent(quoteAsset.exponent - baseAsset.exponent);
-    }
-  }, [baseAsset.exponent, quoteAsset.exponent, limitOrder]);
+  const isBuy = store.buySell === 'buy';
+  const priceOptions = isBuy ? BUY_PRICE_OPTIONS : SELL_PRICE_OPTIONS;
 
   return (
     <div className='p-4'>
-      <SegmentedControl direction={direction} setDirection={setDirection} />
+      <SegmentedControl direction={store.buySell} setDirection={x => (store.buySell = x)} />
       <div className='mb-4'>
         <div className='mb-2'>
           <OrderInput
-            label={`When ${baseAsset.symbol} is`}
-            value={limitOrder.price}
-            onChange={limitOrder.setPrice}
-            denominator={quoteAsset.symbol}
+            label={`When ${store.baseAsset?.symbol} is`}
+            value={store.priceInput}
+            onChange={x => (store.priceInput = x)}
+            denominator={store.quoteAsset?.symbol}
           />
         </div>
         <SelectGroup
-          options={Object.values(isBuy ? BuyLimitOrderOptions : SellLimitOrderOptions)}
-          onChange={option =>
-            isBuy
-              ? limitOrder.setBuyLimitPriceOption(option as BuyLimitOrderOptions)
-              : limitOrder.setSellLimitPriceOption(option as SellLimitOrderOptions)
+          options={Object.keys(priceOptions)}
+          onChange={o =>
+            (store.priceInput = (priceOptions[o] ?? (x => x))(store.marketPrice).toString())
           }
         />
       </div>
       <div className='mb-4'>
         <OrderInput
-          label={direction}
-          value={baseAsset.amount}
-          onChange={amount => baseAsset.setAmount(amount)}
-          min={0}
-          max={1000}
-          isEstimating={isBuy ? baseAsset.isEstimating : false}
-          isApproximately={isBuy}
-          denominator={baseAsset.symbol}
+          label={isBuy ? 'Buy' : 'Sell'}
+          value={store.baseInput}
+          onChange={x => (store.baseInput = x)}
+          denominator={store.baseAsset?.symbol}
         />
       </div>
       <div className='mb-4'>
         <OrderInput
           label={isBuy ? 'Pay with' : 'Receive'}
-          value={quoteAsset.amount}
-          onChange={amount => quoteAsset.setAmount(amount)}
-          isEstimating={isBuy ? false : quoteAsset.isEstimating}
-          isApproximately={!isBuy}
-          denominator={quoteAsset.symbol}
+          value={store.quoteInput}
+          onChange={x => (store.quoteInput = x)}
+          denominator={store.quoteAsset?.symbol}
         />
       </div>
       <div className='mb-4'>
         <InfoRowTradingFee />
-        <InfoRowGasFee gasFee={gasFee} symbol={baseAsset.symbol} />
+        <InfoRowGasFee gasFee={0} symbol={'UM'} />
       </div>
       <div className='mb-4'>
         {connected ? (
-          <Button
-            actionType='accent'
-            disabled={isLoading || !baseAsset.amount || !quoteAsset.amount}
-            onClick={submitOrder}
-          >
-            {direction} {baseAsset.symbol}
+          <Button actionType='accent' disabled={!parentStore.canSubmit} onClick={() => {}}>
+            {isBuy ? 'Buy' : 'Sell'} {store.baseAsset?.symbol}
           </Button>
         ) : (
           <ConnectButton actionType='default' />
         )}
       </div>
-      {exchangeRate !== null && (
+      {parentStore.marketPrice && (
         <div className='flex justify-center p-1'>
           <Text small color='text.secondary'>
-            1 {baseAsset.symbol} ={' '}
+            1 {store.baseAsset?.symbol} ={' '}
             <Text small color='text.primary'>
-              {exchangeRate} {quoteAsset.symbol}
+              {store.quoteAsset?.formatDisplayAmount(parentStore.marketPrice)}
             </Text>
           </Text>
         </div>
