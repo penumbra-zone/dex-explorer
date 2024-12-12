@@ -43,7 +43,7 @@ export const Banner = ({ type, title, content, className, ...props }: BannerProp
   </div>
 );
 
-export const TestnetBanner = () => (
+export const AlphaDevelopmentBanner = () => (
   <Banner
     type='warning'
     title='Pre-Alpha Development Preview'

@@ -4,12 +4,12 @@ import { StatusPopover } from './status-popover';
 import { MobileNav } from './mobile-nav';
 import { DesktopNav } from './desktop-nav';
 import { Connection } from './connection';
-import { TestnetBanner } from './banner';
+import { AlphaDevelopmentBanner } from './banner';
 
 export const Header = () => {
   return (
     <>
-      <TestnetBanner />
+      <AlphaDevelopmentBanner />
       <header className='flex items-center justify-between p-4'>
         <HeaderLogo />
         <DesktopNav />
