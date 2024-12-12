@@ -75,7 +75,11 @@ export const LimitOrderForm = observer(() => {
       </div>
       <div className='mb-4'>
         {connected ? (
-          <Button actionType='accent' disabled={!parentStore.canSubmit} onClick={() => {}}>
+          <Button
+            actionType='accent'
+            disabled={!parentStore.canSubmit}
+            onClick={() => parentStore.submit()}
+          >
             {isBuy ? 'Buy' : 'Sell'} {store.baseAsset?.symbol}
           </Button>
         ) : (

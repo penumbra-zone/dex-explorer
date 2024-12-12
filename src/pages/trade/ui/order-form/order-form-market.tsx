@@ -84,7 +84,7 @@ export const MarketOrderForm = observer(() => {
           <Button
             actionType='accent'
             disabled={!connected || !parentStore.canSubmit}
-            onClick={() => {}}
+            onClick={() => parentStore.submit()}
           >
             {isBuy ? 'Buy' : 'Sell'} {store.baseAsset?.symbol}
           </Button>

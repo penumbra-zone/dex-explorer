@@ -16,7 +16,7 @@ import BigNumber from 'bignumber.js';
 const PRECISION_DECIMALS = 12;
 
 const compareAssetId = (a: AssetId, b: AssetId): number => {
-  for (let i = 0; i < 32; ++i) {
+  for (let i = 31; i >= 0; --i) {
     const a_i = a.inner[i] ?? -Infinity;
     const b_i = b.inner[i] ?? -Infinity;
     if (a_i < b_i) {
@@ -85,6 +85,7 @@ const priceToPQ = (
  * as an escape hatch in case any of those use cases aren't sufficient.
  */
 export const planToPosition = (plan: PositionPlan): Position => {
+  console.log(plan);
   const { p: raw_p, q: raw_q } = priceToPQ(
     plan.price,
     plan.baseAsset.exponent,
@@ -94,6 +95,7 @@ export const planToPosition = (plan: PositionPlan): Position => {
   const raw_r2 = pnum(plan.quoteReserves, plan.quoteAsset.exponent).toAmount();
 
   const correctOrder = compareAssetId(plan.baseAsset.id, plan.quoteAsset.id) <= 0;
+  console.table({ correctOrder, raw_p, raw_q, raw_r1, raw_r2 });
   const [[p, q], [r1, r2]] = correctOrder
     ? [
         [raw_p, raw_q],

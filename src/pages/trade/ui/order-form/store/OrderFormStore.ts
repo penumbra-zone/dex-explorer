@@ -15,6 +15,8 @@ import { connectionStore } from '@/shared/model/connection';
 import { useSubaccounts } from '@/widgets/header/api/subaccounts';
 import { useEffect } from 'react';
 import { useMarketPrice } from '@/pages/trade/model/useMarketPrice';
+import { planBuildBroadcast } from '../helpers';
+import { getSwapCommitmentFromTx } from '@penumbra-zone/getters/transaction';
 
 export type WhichForm = 'Market' | 'Limit' | 'Range';
 
@@ -111,6 +113,31 @@ export class OrderFormStore {
 
   get canSubmit(): boolean {
     return !this._submitting && this.plan !== undefined;
+  }
+
+  async submit() {
+    const plan = this.plan;
+    const wasSwap = this.whichForm === 'Market';
+    const source = this.subAccountIndex;
+    // Redundant, but makes typescript happier.
+    if (!plan || !source) {
+      return;
+    }
+    this._submitting = true;
+    try {
+      const tx = await planBuildBroadcast(wasSwap ? 'swap' : 'positionOpen', plan);
+      if (!wasSwap || !tx) {
+        return;
+      }
+      const swapCommitment = getSwapCommitmentFromTx(tx);
+      const req = new TransactionPlannerRequest({
+        swapClaims: [{ swapCommitment }],
+        source,
+      });
+      await planBuildBroadcast('swapClaim', req, { skipAuth: true });
+    } finally {
+      this._submitting = false;
+    }
   }
 }
 
