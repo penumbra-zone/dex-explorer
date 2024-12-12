@@ -201,7 +201,7 @@ const ChartData = observer(({ candles }: { candles: CandleWithVolume[] }) => {
         chartRef.current = undefined;
       }
     };
-  }, [chartElRef]);
+  }, [chartElRef, candles]);
 
   // Update chart when candles change
   useEffect(() => {
