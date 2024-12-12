@@ -7,31 +7,7 @@ import { penumbra } from '@/shared/const/penumbra';
 import { SimulationService } from '@penumbra-zone/protobuf';
 import { SimulateTradeRequest } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { openToast } from '@penumbra-zone/ui/Toast';
-
-class AssetInfo {
-  constructor(
-    public id: AssetId,
-    public balance: number,
-    public exponent: number,
-    public symbol: string,
-  ) {}
-
-  value(display: number): Value {
-    return new Value({
-      amount: pnum(display, this.exponent).toAmount(),
-      assetId: this.id,
-    });
-  }
-
-  formatDisplayAmount(amount: number): string {
-    const amountString = pnum(amount, this.exponent).toFormattedString({
-      commas: true,
-      decimals: 4,
-      trailingZeros: false,
-    });
-    return `${amountString} ${this.symbol}`;
-  }
-}
+import { AssetInfo } from '@/pages/trade/model/AssetInfo';
 
 const estimateAmount = async (
   from: AssetInfo,
@@ -198,6 +174,14 @@ export class MarketOrderFormStore {
     this._quoteAsset = quote;
     this._baseAssetInput = '';
     this._quoteAssetInput = '';
+  }
+
+  get baseAsset(): undefined | AssetInfo {
+    return this._baseAsset;
+  }
+
+  get quoteAsset(): undefined | AssetInfo {
+    return this._quoteAsset;
   }
 
   get plan(): undefined | MarketOrderPlan {
