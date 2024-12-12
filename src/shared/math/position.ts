@@ -15,7 +15,7 @@ import BigNumber from 'bignumber.js';
 // In the year 202X, when 1 BTC = 1 million USD, then this is still only 1e12 < 2^50.
 const PRECISION_DECIMALS = 12;
 
-const compareAssetId = (a: AssetId, b: AssetId): number => {
+export const compareAssetId = (a: AssetId, b: AssetId): number => {
   for (let i = 31; i >= 0; --i) {
     const a_i = a.inner[i] ?? -Infinity;
     const b_i = b.inner[i] ?? -Infinity;
@@ -85,25 +85,27 @@ const priceToPQ = (
  * as an escape hatch in case any of those use cases aren't sufficient.
  */
 export const planToPosition = (plan: PositionPlan): Position => {
-  console.log(plan);
-  const { p: raw_p, q: raw_q } = priceToPQ(
+  const { p: rawP, q: rawQ } = priceToPQ(
     plan.price,
     plan.baseAsset.exponent,
     plan.quoteAsset.exponent,
   );
-  const raw_r1 = pnum(plan.baseReserves, plan.baseAsset.exponent).toAmount();
-  const raw_r2 = pnum(plan.quoteReserves, plan.quoteAsset.exponent).toAmount();
+  const rawA1 = plan.baseAsset;
+  const rawA2 = plan.quoteAsset;
+  const rawR1 = pnum(plan.baseReserves, plan.baseAsset.exponent).toAmount();
+  const rawR2 = pnum(plan.quoteReserves, plan.quoteAsset.exponent).toAmount();
 
   const correctOrder = compareAssetId(plan.baseAsset.id, plan.quoteAsset.id) <= 0;
-  console.table({ correctOrder, raw_p, raw_q, raw_r1, raw_r2 });
-  const [[p, q], [r1, r2]] = correctOrder
+  const [[p, q], [r1, r2], [a1, a2]] = correctOrder
     ? [
-        [raw_p, raw_q],
-        [raw_r1, raw_r2],
+        [rawP, rawQ],
+        [rawR1, rawR2],
+        [rawA1, rawA2],
       ]
     : [
-        [raw_q, raw_p],
-        [raw_r2, raw_r1],
+        [rawQ, rawP],
+        [rawR2, rawR1],
+        [rawA2, rawA1],
       ];
 
   return new Position({
@@ -114,8 +116,8 @@ export const planToPosition = (plan: PositionPlan): Position => {
         q: pnum(q).toAmount(),
       },
       pair: new TradingPair({
-        asset1: plan.baseAsset.id,
-        asset2: plan.quoteAsset.id,
+        asset1: a1.id,
+        asset2: a2.id,
       }),
     },
     nonce: crypto.getRandomValues(new Uint8Array(32)),
