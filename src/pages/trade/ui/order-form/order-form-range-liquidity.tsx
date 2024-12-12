@@ -128,7 +128,7 @@ export const RangeLiquidityOrderForm = observer(() => {
           options={Object.keys(FEE_TIERS)}
           onChange={o => {
             if (o in FEE_TIERS) {
-              store.feeTierPercentInput = o.toString();
+              store.feeTierPercentInput = (FEE_TIERS[o] ?? 0).toString();
             }
           }}
         />
