@@ -15,8 +15,12 @@ import BigNumber from 'bignumber.js';
 // In the year 202X, when 1 BTC = 1 million USD, then this is still only 1e12 < 2^50.
 const PRECISION_DECIMALS = 12;
 
+// This is a helper function to compare two AssetIds.
+// It returns -1 if a < b, 0 if a == b, and 1 if a > b.
 const compareAssetId = (a: AssetId, b: AssetId): number => {
-  for (let i = 0; i < 32; ++i) {
+  // Asset ids are LE encoded, so the MSB is at the end of the array.
+  // We start there and work our way down, comparing each byte.
+  for (let i = 31; i >= 0; i--) {
     const a_i = a.inner[i] ?? -Infinity;
     const b_i = b.inner[i] ?? -Infinity;
     if (a_i < b_i) {
