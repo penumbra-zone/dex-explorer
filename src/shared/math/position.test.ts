@@ -8,7 +8,7 @@ const ASSET_A = new AssetId({ inner: new Uint8Array(Array(32).fill(0xaa)) });
 const ASSET_B = new AssetId({ inner: new Uint8Array(Array(32).fill(0xbb)) });
 
 const getPrice = (position: Position): number => {
-  return pnum(position.phi?.component?.q).toNumber() / pnum(position.phi?.component?.p).toNumber();
+  return pnum(position.phi?.component?.p).toNumber() / pnum(position.phi?.component?.q).toNumber();
 };
 
 describe('planToPosition', () => {

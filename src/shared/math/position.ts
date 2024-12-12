@@ -73,8 +73,9 @@ const priceToPQ = (
   //                = X * 10 ** qExponent * 10 ** -pExponent
   const basePrice = new BigNumber(price).times(new BigNumber(10).pow(qExponent - pExponent));
 
-  // USD / UM -> [USD, UM], with a given precision
-  const [q, p] = basePrice.toFraction(10 ** PRECISION_DECIMALS);
+  // USD / UM -> [USD, UM], with a given precision.
+  // Then, we want the invariant that p * UM + q * USD = constant, so
+  const [p, q] = basePrice.toFraction(10 ** PRECISION_DECIMALS);
   return { p: pnum(BigInt(p.toFixed(0))).toAmount(), q: pnum(BigInt(q.toFixed(0))).toAmount() };
 };
 
