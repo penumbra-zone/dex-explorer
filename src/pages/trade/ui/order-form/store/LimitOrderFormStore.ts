@@ -31,12 +31,28 @@ export class LimitOrderFormStore {
     return this._input.inputA;
   }
 
+  set baseInput(x: string) {
+    this._input.inputA = x;
+  }
+
   get quoteInput(): string {
     return this._input.inputB;
   }
 
+  set quoteInput(x: string) {
+    this._input.inputB = x;
+  }
+
   get priceInput(): string {
     return this._priceInput;
+  }
+
+  set priceInput(x: string) {
+    this._priceInput = x;
+    const price = this.price;
+    if (price !== undefined) {
+      this._input.price = price;
+    }
   }
 
   get price(): number | undefined {
@@ -64,21 +80,5 @@ export class LimitOrderFormStore {
     this._input.inputA = '';
     this._input.inputB = '';
     this._priceInput = '';
-  }
-
-  set baseInput(x: string) {
-    this._input.inputA = x;
-  }
-
-  set quoteInput(x: string) {
-    this._input.inputB = x;
-  }
-
-  set priceInput(x: string) {
-    this._priceInput = x;
-    const price = this.price;
-    if (price !== undefined) {
-      this._input.price = price;
-    }
   }
 }

@@ -178,7 +178,7 @@ export const RangeLiquidityOrderForm = observer(() => {
           <Button
             actionType='accent'
             disabled={!parentStore.canSubmit}
-            onClick={() => parentStore.submit()}
+            onClick={() => void parentStore.submit()}
           >
             Open {store.positionCount ?? 'Several'} Positions
           </Button>

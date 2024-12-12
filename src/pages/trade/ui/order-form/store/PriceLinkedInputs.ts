@@ -48,14 +48,14 @@ export class PriceLinkedInputs {
     return this._inputA;
   }
 
-  get inputB(): string {
-    return this._inputB;
-  }
-
   set inputA(x: string) {
     this._lastEdited = 'A';
     this._inputA = x;
     this.computeBFromA();
+  }
+
+  get inputB(): string {
+    return this._inputB;
   }
 
   set inputB(x: string) {
@@ -68,7 +68,7 @@ export class PriceLinkedInputs {
     this._price = x;
     if (this._lastEdited === 'A') {
       this.computeBFromA();
-    } else if (this._lastEdited === 'B') {
+    } else {
       this.computeAFromB();
     }
   }

@@ -67,8 +67,21 @@ export class RangeOrderFormStore {
     return this._positionCountInput;
   }
 
+  set positionCountInput(x: string) {
+    this._positionCountInput = x;
+    const count = this.positionCount;
+    if (count !== undefined) {
+      this._positionCountSlider = Math.max(MIN_POSITION_COUNT, Math.min(count, MAX_POSITION_COUNT));
+    }
+  }
+
   get positionCountSlider(): number {
     return this._positionCountSlider;
+  }
+
+  set positionCountSlider(x: number) {
+    this._positionCountSlider = x;
+    this._positionCountInput = x.toString();
   }
 
   get positionCount(): undefined | number {
@@ -125,18 +138,5 @@ export class RangeOrderFormStore {
     this.feeTierPercentInput = '';
     this._positionCountInput = '5';
     this._positionCountSlider = 5;
-  }
-
-  set positionCountInput(x: string) {
-    this._positionCountInput = x;
-    const count = this.positionCount;
-    if (count !== undefined) {
-      this._positionCountSlider = Math.max(MIN_POSITION_COUNT, Math.min(count, MAX_POSITION_COUNT));
-    }
-  }
-
-  set positionCountSlider(x: number) {
-    this._positionCountSlider = x;
-    this._positionCountInput = x.toString();
   }
 }

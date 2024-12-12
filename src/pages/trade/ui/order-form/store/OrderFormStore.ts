@@ -47,25 +47,30 @@ export class OrderFormStore {
 
     reaction(
       () => this.plan,
-      debounce(async () => {
-        if (!this.plan || !this._umAsset) {
-          return;
-        }
-        this._gasFeeLoading = true;
-        try {
-          const res = await plan(this.plan);
-          const fee = res.transactionParameters?.fee;
-          if (!fee) {
-            return;
-          }
-          this._gasFee = {
-            symbol: this._umAsset.symbol,
-            display: pnum(fee.amount, this._umAsset.exponent).toNumber().toString(),
-          };
-        } finally {
-          this._gasFeeLoading = false;
-        }
-      }, GAS_DEBOUNCE_MS),
+      debounce(
+        // To please the linter
+        () =>
+          void (async () => {
+            if (!this.plan || !this._umAsset) {
+              return;
+            }
+            this._gasFeeLoading = true;
+            try {
+              const res = await plan(this.plan);
+              const fee = res.transactionParameters?.fee;
+              if (!fee) {
+                return;
+              }
+              this._gasFee = {
+                symbol: this._umAsset.symbol,
+                display: pnum(fee.amount, this._umAsset.exponent).toNumber().toString(),
+              };
+            } finally {
+              this._gasFeeLoading = false;
+            }
+          })(),
+        GAS_DEBOUNCE_MS,
+      ),
     );
   }
 
@@ -161,17 +166,14 @@ export class OrderFormStore {
         source: this.subAccountIndex,
       });
     }
-    if (this._whichForm === 'Range') {
-      const plan = this._range.plan;
-      if (plan === undefined) {
-        return undefined;
-      }
-      return new TransactionPlannerRequest({
-        positionOpens: plan.map(x => ({ position: x })),
-        source: this.subAccountIndex,
-      });
+    const plan = this._range.plan;
+    if (plan === undefined) {
+      return undefined;
     }
-    return undefined;
+    return new TransactionPlannerRequest({
+      positionOpens: plan.map(x => ({ position: x })),
+      source: this.subAccountIndex,
+    });
   }
 
   get canSubmit(): boolean {
@@ -261,7 +263,7 @@ export const useOrderFormStore = () => {
       orderFormStore.assetChange(baseAssetInfo, quoteAssetInfo);
       orderFormStore.subAccountIndex = addressIndex;
     }
-  }, [orderFormStore, baseAsset, quoteAsset, balances, address, addressIndex]);
+  }, [baseAsset, quoteAsset, balances, address, addressIndex]);
 
   const marketPrice = useMarketPrice();
 
@@ -270,7 +272,7 @@ export const useOrderFormStore = () => {
       return;
     }
     orderFormStore.marketPrice = marketPrice;
-  }, [orderFormStore, marketPrice]);
+  }, [marketPrice]);
 
   useEffect(() => {
     if (umAsset) {

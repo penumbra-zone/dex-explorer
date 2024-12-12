@@ -82,7 +82,7 @@ export const LimitOrderForm = observer(() => {
           <Button
             actionType='accent'
             disabled={!parentStore.canSubmit}
-            onClick={() => parentStore.submit()}
+            onClick={() => void parentStore.submit()}
           >
             {isBuy ? 'Buy' : 'Sell'} {store.baseAsset?.symbol}
           </Button>

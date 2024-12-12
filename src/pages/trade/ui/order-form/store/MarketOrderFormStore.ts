@@ -76,47 +76,56 @@ export class MarketOrderFormStore {
     // Two reactions to avoid a double trigger.
     reaction(
       () => [this._lastEdited, this._baseAssetInput, this._baseAsset, this._quoteAsset],
-      debounce(async () => {
-        if (!this._baseAsset || !this._quoteAsset || this._lastEdited !== 'Base') {
-          return;
-        }
-        const input = this.baseInputAmount;
-        if (input === undefined) {
-          return;
-        }
-        this._quoteEstimating = true;
-        try {
-          const res = await estimateAmount(this._quoteAsset, this._baseAsset, input);
-          if (res === undefined) {
-            return;
-          }
-          this._quoteAssetInput = res.toString();
-        } finally {
-          this._quoteEstimating = false;
-        }
-      }, ESTIMATE_DEBOUNCE_MS),
+      debounce(
+        () =>
+          void (async () => {
+            if (!this._baseAsset || !this._quoteAsset || this._lastEdited !== 'Base') {
+              return;
+            }
+            const input = this.baseInputAmount;
+            if (input === undefined) {
+              return;
+            }
+            this._quoteEstimating = true;
+            try {
+              const res = await estimateAmount(this._quoteAsset, this._baseAsset, input);
+              if (res === undefined) {
+                return;
+              }
+              this._quoteAssetInput = res.toString();
+            } finally {
+              this._quoteEstimating = false;
+            }
+          })(),
+        ESTIMATE_DEBOUNCE_MS,
+      ),
     );
     reaction(
       () => [this._lastEdited, this._quoteAssetInput, this._baseAsset, this._quoteAsset],
-      debounce(async () => {
-        if (!this._baseAsset || !this._quoteAsset || this._lastEdited !== 'Quote') {
-          return;
-        }
-        const input = this.quoteInputAmount;
-        if (input === undefined) {
-          return;
-        }
-        this._baseEstimating = true;
-        try {
-          const res = await estimateAmount(this._baseAsset, this._quoteAsset, input);
-          if (res === undefined) {
-            return;
-          }
-          this._baseAssetInput = res.toString();
-        } finally {
-          this._baseEstimating = false;
-        }
-      }, ESTIMATE_DEBOUNCE_MS),
+      // linter pleasing
+      debounce(
+        () =>
+          void (async () => {
+            if (!this._baseAsset || !this._quoteAsset || this._lastEdited !== 'Quote') {
+              return;
+            }
+            const input = this.quoteInputAmount;
+            if (input === undefined) {
+              return;
+            }
+            this._baseEstimating = true;
+            try {
+              const res = await estimateAmount(this._baseAsset, this._quoteAsset, input);
+              if (res === undefined) {
+                return;
+              }
+              this._baseAssetInput = res.toString();
+            } finally {
+              this._baseEstimating = false;
+            }
+          })(),
+        ESTIMATE_DEBOUNCE_MS,
+      ),
     );
   }
 
@@ -124,13 +133,13 @@ export class MarketOrderFormStore {
     return this._baseAssetInput;
   }
 
-  get quoteInput(): string {
-    return this._quoteAssetInput;
-  }
-
   set baseInput(x: string) {
     this._lastEdited = 'Base';
     this._baseAssetInput = x;
+  }
+
+  get quoteInput(): string {
+    return this._quoteAssetInput;
   }
 
   set quoteInput(x: string) {
@@ -168,12 +177,12 @@ export class MarketOrderFormStore {
   }
 
   setBalanceFraction(x: number) {
-    x = Math.max(0.0, Math.min(1.0, x));
+    const clamped = Math.max(0.0, Math.min(1.0, x));
     if (this.buySell === 'buy' && this._quoteAsset?.balance) {
-      this.quoteInput = (x * this._quoteAsset.balance).toString();
+      this.quoteInput = (clamped * this._quoteAsset.balance).toString();
     }
     if (this.buySell === 'sell' && this._baseAsset?.balance) {
-      this.baseInput = (x * this._baseAsset.balance).toString();
+      this.baseInput = (clamped * this._baseAsset.balance).toString();
     }
   }
 
