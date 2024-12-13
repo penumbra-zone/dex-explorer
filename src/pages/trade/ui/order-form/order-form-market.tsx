@@ -11,38 +11,45 @@ import { useOrderFormStore } from './store/OrderFormStore';
 import { Slider as PenumbraSlider } from '@penumbra-zone/ui/Slider';
 
 interface SliderProps {
-  balance?: string;
+  inputValue: string;
+  balance?: number;
+  balanceDisplay?: string;
   setBalanceFraction: (fraction: number) => void;
 }
-const Slider = observer(({ balance, setBalanceFraction }: SliderProps) => {
-  return (
-    <div className='mb-4'>
-      <div className='mb-1'>
-        <PenumbraSlider
-          min={0}
-          max={10}
-          step={1}
-          value={0}
-          showValue={false}
-          onChange={x => setBalanceFraction(x / 10)}
-          showTrackGaps={true}
-          trackGapBackground='base.black'
-          showFill={true}
-        />
-      </div>
-      <div className='flex flex-row items-center justify-between py-1'>
-        <Text small color='text.secondary'>
-          Available Balance
-        </Text>
-        <button type='button' className='text-primary' onClick={() => setBalanceFraction(1.0)}>
-          <Text small color='text.primary'>
-            {balance ?? '--'}
+const Slider = observer(
+  ({ inputValue, balance, balanceDisplay, setBalanceFraction }: SliderProps) => {
+    const value =
+      inputValue && balance ? Math.round((Number(inputValue) / Number(balance)) * 10) : 0;
+
+    return (
+      <div className='mb-4'>
+        <div className='mb-1'>
+          <PenumbraSlider
+            min={0}
+            max={10}
+            step={1}
+            value={value}
+            showValue={false}
+            onChange={x => setBalanceFraction(x / 10)}
+            showTrackGaps={true}
+            trackGapBackground='base.black'
+            showFill={true}
+          />
+        </div>
+        <div className='flex flex-row items-center justify-between py-1'>
+          <Text small color='text.secondary'>
+            Available Balance
           </Text>
-        </button>
+          <button type='button' className='text-primary' onClick={() => setBalanceFraction(1.0)}>
+            <Text small color='text.primary'>
+              {balanceDisplay ?? '--'}
+            </Text>
+          </button>
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  },
+);
 
 export const MarketOrderForm = observer(() => {
   const { connected } = connectionStore;
@@ -74,7 +81,12 @@ export const MarketOrderForm = observer(() => {
           denominator={store.quoteAsset?.symbol}
         />
       </div>
-      <Slider balance={store.balance} setBalanceFraction={x => store.setBalanceFraction(x)} />
+      <Slider
+        inputValue={store.quoteInput}
+        balance={store.quoteBalance}
+        balanceDisplay={store.balance}
+        setBalanceFraction={x => store.setBalanceFraction(x)}
+      />
       <div className='mb-4'>
         <InfoRowTradingFee />
         <InfoRowGasFee

@@ -176,6 +176,13 @@ export class MarketOrderFormStore {
     return this._baseAsset.formatDisplayAmount(this._baseAsset.balance);
   }
 
+  get quoteBalance(): undefined | number {
+    if (!this._quoteAsset?.balance) {
+      return undefined;
+    }
+    return pnum(this._quoteAsset.balance, this._quoteAsset.exponent).toNumber();
+  }
+
   setBalanceFraction(x: number) {
     const clamped = Math.max(0.0, Math.min(1.0, x));
     if (this.buySell === 'buy' && this._quoteAsset?.balance) {
