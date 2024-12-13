@@ -50,39 +50,55 @@ export class RangeOrderFormStore {
     return parseNumber(this.liquidityTargetInput);
   }
 
+  setLiquidityTargetInput = (x: string) => {
+    this.liquidityTargetInput = x;
+  };
+
   get upperPrice(): number | undefined {
     return parseNumber(this.upperPriceInput);
   }
 
+  setUpperPriceInput = (x: string) => {
+    this.upperPriceInput = x;
+  };
+
   get lowerPrice(): number | undefined {
     return parseNumber(this.lowerPriceInput);
   }
+
+  setLowerPriceInput = (x: string) => {
+    this.lowerPriceInput = x;
+  };
 
   // Treat fees that don't parse as 0
   get feeTierPercent(): number {
     return Math.max(0, Math.min(parseNumber(this.feeTierPercentInput) ?? 0, 50));
   }
 
+  setFeeTierPercentInput = (x: string) => {
+    this.feeTierPercentInput = x;
+  };
+
   get positionCountInput(): string {
     return this._positionCountInput;
   }
 
-  set positionCountInput(x: string) {
+  setPositionCountInput = (x: string) => {
     this._positionCountInput = x;
     const count = this.positionCount;
     if (count !== undefined) {
       this._positionCountSlider = Math.max(MIN_POSITION_COUNT, Math.min(count, MAX_POSITION_COUNT));
     }
-  }
+  };
 
   get positionCountSlider(): number {
     return this._positionCountSlider;
   }
 
-  set positionCountSlider(x: number) {
+  setPositionCountSlider = (x: number) => {
     this._positionCountSlider = x;
     this._positionCountInput = x.toString();
-  }
+  };
 
   get positionCount(): undefined | number {
     return parseNumber(this._positionCountInput);

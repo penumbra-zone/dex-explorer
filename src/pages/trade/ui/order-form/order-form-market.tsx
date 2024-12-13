@@ -60,12 +60,12 @@ export const MarketOrderForm = observer(() => {
 
   return (
     <div className='p-4'>
-      <SegmentedControl direction={store.buySell} setDirection={x => (store.buySell = x)} />
+      <SegmentedControl direction={store.buySell} setDirection={store.setBuySell} />
       <div className='mb-4'>
         <OrderInput
           label={isBuy ? 'Buy' : 'Sell'}
           value={store.baseInput}
-          onChange={x => (store.baseInput = x)}
+          onChange={store.setBaseInput}
           isEstimating={store.baseEstimating}
           isApproximately={isBuy}
           denominator={store.baseAsset?.symbol}
@@ -75,7 +75,7 @@ export const MarketOrderForm = observer(() => {
         <OrderInput
           label={isBuy ? 'Pay with' : 'Receive'}
           value={store.quoteInput}
-          onChange={x => (store.quoteInput = x)}
+          onChange={store.setQuoteInput}
           isEstimating={store.quoteEstimating}
           isApproximately={!isBuy}
           denominator={store.quoteAsset?.symbol}

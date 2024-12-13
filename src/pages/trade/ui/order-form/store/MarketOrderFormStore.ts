@@ -129,23 +129,27 @@ export class MarketOrderFormStore {
     );
   }
 
+  setBuySell = (x: BuySell) => {
+    this.buySell = x;
+  };
+
   get baseInput(): string {
     return this._baseAssetInput;
   }
 
-  set baseInput(x: string) {
+  setBaseInput = (x: string) => {
     this._lastEdited = 'Base';
     this._baseAssetInput = x;
-  }
+  };
 
   get quoteInput(): string {
     return this._quoteAssetInput;
   }
 
-  set quoteInput(x: string) {
+  setQuoteInput = (x: string) => {
     this._lastEdited = 'Quote';
     this._quoteAssetInput = x;
-  }
+  };
 
   get baseInputAmount(): undefined | number {
     return parseNumber(this._baseAssetInput);
@@ -186,10 +190,10 @@ export class MarketOrderFormStore {
   setBalanceFraction(x: number) {
     const clamped = Math.max(0.0, Math.min(1.0, x));
     if (this.buySell === 'buy' && this._quoteAsset?.balance) {
-      this.quoteInput = (clamped * this._quoteAsset.balance).toString();
+      this.setQuoteInput((clamped * this._quoteAsset.balance).toString());
     }
     if (this.buySell === 'sell' && this._baseAsset?.balance) {
-      this.baseInput = (clamped * this._baseAsset.balance).toString();
+      this.setBaseInput((clamped * this._baseAsset.balance).toString());
     }
   }
 

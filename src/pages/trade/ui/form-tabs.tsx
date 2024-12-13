@@ -20,7 +20,7 @@ export const FormTabs = observer(() => {
             actionType='accent'
             onChange={value => {
               if (isWhichForm(value)) {
-                store.whichForm = value;
+                store.setWhichForm(value);
               }
             }}
             options={[

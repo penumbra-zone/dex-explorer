@@ -46,7 +46,7 @@ export const RangeLiquidityOrderForm = observer(() => {
           <OrderInput
             label='Liquidity Target'
             value={store.liquidityTargetInput}
-            onChange={x => (store.liquidityTargetInput = x)}
+            onChange={store.setLiquidityTargetInput}
             denominator={store.quoteAsset?.symbol}
           />
         </div>
@@ -84,7 +84,7 @@ export const RangeLiquidityOrderForm = observer(() => {
           <OrderInput
             label='Upper Price Bound'
             value={store.upperPriceInput}
-            onChange={x => (store.upperPriceInput = x)}
+            onChange={store.setUpperPriceInput}
             denominator={store.quoteAsset?.symbol}
           />
         </div>
@@ -102,7 +102,7 @@ export const RangeLiquidityOrderForm = observer(() => {
           <OrderInput
             label='Lower Price Bound'
             value={store.lowerPriceInput}
-            onChange={x => (store.lowerPriceInput = x)}
+            onChange={store.setLowerPriceInput}
             denominator={store.quoteAsset?.symbol}
           />
         </div>
@@ -120,7 +120,7 @@ export const RangeLiquidityOrderForm = observer(() => {
           <OrderInput
             label='Fee tier'
             value={store.feeTierPercentInput}
-            onChange={x => (store.feeTierPercentInput = x)}
+            onChange={store.setFeeTierPercentInput}
             denominator='%'
           />
         </div>
@@ -137,7 +137,7 @@ export const RangeLiquidityOrderForm = observer(() => {
         <OrderInput
           label='Number of positions'
           value={store.positionCountInput}
-          onChange={x => (store.positionCountInput = x)}
+          onChange={store.setPositionCountInput}
         />
         <PenumbraSlider
           min={MIN_POSITION_COUNT}
@@ -145,7 +145,7 @@ export const RangeLiquidityOrderForm = observer(() => {
           step={1}
           value={store.positionCountSlider}
           showValue={false}
-          onChange={x => (store.positionCountSlider = x)}
+          onChange={store.setPositionCountSlider}
           showTrackGaps={true}
           trackGapBackground='base.black'
           showFill={true}

@@ -36,20 +36,20 @@ export const LimitOrderForm = observer(() => {
 
   return (
     <div className='p-4'>
-      <SegmentedControl direction={store.buySell} setDirection={x => (store.buySell = x)} />
+      <SegmentedControl direction={store.buySell} setDirection={store.setBuySell} />
       <div className='mb-4'>
         <div className='mb-2'>
           <OrderInput
             label={`When ${store.baseAsset?.symbol} is`}
             value={store.priceInput}
-            onChange={x => (store.priceInput = x)}
+            onChange={store.setPriceInput}
             denominator={store.quoteAsset?.symbol}
           />
         </div>
         <SelectGroup
           options={Object.keys(priceOptions)}
           onChange={o =>
-            (store.priceInput = (priceOptions[o] ?? (x => x))(store.marketPrice).toString())
+            store.setPriceInput((priceOptions[o] ?? (x => x))(store.marketPrice).toString())
           }
         />
       </div>
@@ -57,7 +57,7 @@ export const LimitOrderForm = observer(() => {
         <OrderInput
           label={isBuy ? 'Buy' : 'Sell'}
           value={store.baseInput}
-          onChange={x => (store.baseInput = x)}
+          onChange={store.setBaseInput}
           denominator={store.baseAsset?.symbol}
         />
       </div>
@@ -65,7 +65,7 @@ export const LimitOrderForm = observer(() => {
         <OrderInput
           label={isBuy ? 'Pay with' : 'Receive'}
           value={store.quoteInput}
-          onChange={x => (store.quoteInput = x)}
+          onChange={store.setQuoteInput}
           denominator={store.quoteAsset?.symbol}
         />
       </div>

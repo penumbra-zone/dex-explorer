@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react';
 import { makeAutoObservable, reaction } from 'mobx';
 import { LimitOrderFormStore } from './LimitOrderFormStore';
 import { MarketOrderFormStore } from './MarketOrderFormStore';
@@ -7,19 +8,22 @@ import {
   BalancesResponse,
   TransactionPlannerRequest,
 } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
-import { Address, AddressIndex } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
+import {
+  Address,
+  AddressIndex,
+  AddressView,
+} from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
 import { usePathToMetadata } from '@/pages/trade/model/use-path';
 import { useBalances } from '@/shared/api/balances';
 import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
 import { connectionStore } from '@/shared/model/connection';
 import { useSubaccounts } from '@/widgets/header/api/subaccounts';
-import { useEffect } from 'react';
 import { useMarketPrice } from '@/pages/trade/model/useMarketPrice';
-import { plan, planBuildBroadcast } from '../helpers';
 import { getSwapCommitmentFromTx } from '@penumbra-zone/getters/transaction';
 import { pnum } from '@penumbra-zone/types/pnum';
 import debounce from 'lodash/debounce';
 import { useRegistryAssets } from '@/shared/api/registry';
+import { plan, planBuildBroadcast } from '../helpers';
 
 export type WhichForm = 'Market' | 'Limit' | 'Range';
 
@@ -94,8 +98,20 @@ export class OrderFormStore {
     }
   }
 
-  set umAsset(x: AssetInfo) {
+  setUmAsset = (x: AssetInfo) => {
     this._umAsset = x;
+  };
+
+  setSubAccountIndex = (x: AddressIndex) => {
+    this.subAccountIndex = x;
+  };
+
+  setAddress = (x: Address) => {
+    this.address = x;
+  };
+
+  get umAsset(): AssetInfo | undefined {
+    return this._umAsset;
   }
 
   get gasFee(): { symbol: string; display: string } {
@@ -112,7 +128,7 @@ export class OrderFormStore {
     this._range.assetChange(base, quote);
   }
 
-  set marketPrice(price: number) {
+  setMarketPrice(price: number) {
     this._marketPrice = price;
     this._range.marketPrice = price;
     this._limit.marketPrice = price;
@@ -122,7 +138,7 @@ export class OrderFormStore {
     return this._marketPrice;
   }
 
-  set whichForm(x: WhichForm) {
+  setWhichForm(x: WhichForm) {
     this._whichForm = x;
   }
 
@@ -221,19 +237,7 @@ const pluckAssetBalance = (symbol: string, balances: BalancesResponse[]): undefi
   return undefined;
 };
 
-const orderFormStore = new OrderFormStore();
-
-export const useOrderFormStore = () => {
-  const { data: assets } = useRegistryAssets();
-  let umAsset: AssetInfo | undefined;
-  if (assets) {
-    const meta = assets.find(x => x.symbol === 'UM');
-    if (meta) {
-      umAsset = AssetInfo.fromMetadata(meta);
-    }
-  }
-  const { baseAsset, quoteAsset } = usePathToMetadata();
-  const { data: subAccounts } = useSubaccounts();
+function getAccountAddress(subAccounts: AddressView[] | undefined) {
   const subAccount = subAccounts ? subAccounts[connectionStore.subaccount] : undefined;
   let addressIndex = undefined;
   let address = undefined;
@@ -242,42 +246,67 @@ export const useOrderFormStore = () => {
     address = addressView.value.address;
     addressIndex = addressView.value.index;
   }
+  return {
+    address,
+    addressIndex,
+  };
+}
+
+export const useOrderFormStore = () => {
+  const orderFormStoreRef = useRef(new OrderFormStore());
+  const orderFormStore = orderFormStoreRef.current;
+
+  const { data: assets } = useRegistryAssets();
+  const { data: subAccounts } = useSubaccounts();
+  const { address, addressIndex } = getAccountAddress(subAccounts);
   const { data: balances } = useBalances(addressIndex);
-  useEffect(() => {
-    orderFormStore.subAccountIndex = addressIndex;
-    orderFormStore.address = address;
-    if (
-      !baseAsset?.symbol ||
-      !baseAsset.penumbraAssetId ||
-      !quoteAsset?.symbol ||
-      !quoteAsset.penumbraAssetId
-    ) {
-      return;
-    }
-    const baseBalance = balances && pluckAssetBalance(baseAsset.symbol, balances);
-    const quoteBalance = balances && pluckAssetBalance(quoteAsset.symbol, balances);
-
-    const baseAssetInfo = AssetInfo.fromMetadata(baseAsset, baseBalance);
-    const quoteAssetInfo = AssetInfo.fromMetadata(quoteAsset, quoteBalance);
-    if (baseAssetInfo && quoteAssetInfo) {
-      orderFormStore.assetChange(baseAssetInfo, quoteAssetInfo);
-      orderFormStore.subAccountIndex = addressIndex;
-    }
-  }, [baseAsset, quoteAsset, balances, address, addressIndex]);
-
+  const { baseAsset, quoteAsset } = usePathToMetadata();
   const marketPrice = useMarketPrice();
 
   useEffect(() => {
-    if (!marketPrice) {
-      return;
+    if (
+      baseAsset?.symbol &&
+      baseAsset.penumbraAssetId &&
+      quoteAsset?.symbol &&
+      quoteAsset.penumbraAssetId
+    ) {
+      const baseBalance = balances && pluckAssetBalance(baseAsset.symbol, balances);
+      const quoteBalance = balances && pluckAssetBalance(quoteAsset.symbol, balances);
+
+      const baseAssetInfo = AssetInfo.fromMetadata(baseAsset, baseBalance);
+      const quoteAssetInfo = AssetInfo.fromMetadata(quoteAsset, quoteBalance);
+      if (baseAssetInfo && quoteAssetInfo) {
+        orderFormStore.assetChange(baseAssetInfo, quoteAssetInfo);
+      }
     }
-    orderFormStore.marketPrice = marketPrice;
-  }, [marketPrice]);
+  }, [baseAsset, quoteAsset, balances, orderFormStore]);
 
   useEffect(() => {
-    if (umAsset) {
-      orderFormStore.umAsset = umAsset;
+    if (address && addressIndex) {
+      orderFormStore.setSubAccountIndex(addressIndex);
+      orderFormStore.setAddress(address);
     }
-  }, [umAsset]);
+  }, [address, addressIndex, orderFormStore]);
+
+  useEffect(() => {
+    if (marketPrice) {
+      orderFormStore.setMarketPrice(marketPrice);
+    }
+  }, [marketPrice, orderFormStore]);
+
+  useEffect(() => {
+    let umAsset: AssetInfo | undefined;
+    if (assets) {
+      const meta = assets.find(x => x.symbol === 'UM');
+      if (meta) {
+        umAsset = AssetInfo.fromMetadata(meta);
+      }
+    }
+
+    if (umAsset && orderFormStore.umAsset?.symbol !== umAsset.symbol) {
+      orderFormStore.setUmAsset(umAsset);
+    }
+  }, [assets, orderFormStore]);
+
   return orderFormStore;
 };

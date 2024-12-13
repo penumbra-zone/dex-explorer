@@ -19,6 +19,10 @@ export class LimitOrderFormStore {
     makeAutoObservable(this);
   }
 
+  setBuySell = (x: BuySell) => {
+    this.buySell = x;
+  };
+
   get baseAsset(): undefined | AssetInfo {
     return this._baseAsset;
   }
@@ -31,29 +35,29 @@ export class LimitOrderFormStore {
     return this._input.inputA;
   }
 
-  set baseInput(x: string) {
+  setBaseInput = (x: string) => {
     this._input.inputA = x;
-  }
+  };
 
   get quoteInput(): string {
     return this._input.inputB;
   }
 
-  set quoteInput(x: string) {
+  setQuoteInput = (x: string) => {
     this._input.inputB = x;
-  }
+  };
 
   get priceInput(): string {
     return this._priceInput;
   }
 
-  set priceInput(x: string) {
+  setPriceInput = (x: string) => {
     this._priceInput = x;
     const price = this.price;
     if (price !== undefined) {
       this._input.price = price;
     }
-  }
+  };
 
   get price(): number | undefined {
     return parseNumber(this._priceInput);
