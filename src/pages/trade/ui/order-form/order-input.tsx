@@ -90,6 +90,10 @@ export const OrderInput = forwardRef<HTMLInputElement, OrderInputProps>(
               style={{ paddingRight: denomWidth + 20 }}
               value={value}
               onChange={e => onChange?.(e.target.value)}
+              onWheel={e => {
+                // Remove focus to prevent scroll changes
+                (e.target as HTMLInputElement).blur();
+              }}
               placeholder={placeholder}
               type='number'
               max={max}
