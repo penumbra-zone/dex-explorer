@@ -17,7 +17,7 @@ import { PagePath } from '@/shared/const/pages.ts';
 import { usePathToMetadata } from '../model/use-path.ts';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { Density } from '@penumbra-zone/ui/Density';
-
+import { Text } from '@penumbra-zone/ui/Text';
 const handleRouting = ({
   router,
   baseAsset,
@@ -66,7 +66,13 @@ export const PairSelector = observer(({ disabled, dialogTitle }: PairSelectorPro
   const { baseAsset, quoteAsset, error, isLoading } = usePathToMetadata();
 
   if (error) {
-    return <div>Error loading pair selector: ${String(error)}</div>;
+    return (
+      <div className='overflow-scroll max-w-[200px] whitespace-nowrap'>
+        <Text detail color='destructive.light'>
+          Error loading pair selector: {String(error)}
+        </Text>
+      </div>
+    );
   }
 
   if (isLoading || !baseAsset || !quoteAsset) {
