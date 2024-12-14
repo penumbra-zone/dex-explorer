@@ -67,7 +67,7 @@ export const PairSelector = observer(({ disabled, dialogTitle }: PairSelectorPro
 
   if (error) {
     return (
-      <div className='overflow-scroll max-w-[200px] whitespace-nowrap'>
+      <div className='overflow-scroll max-w-[400px] whitespace-nowrap'>
         <Text detail color='destructive.light'>
           Error loading pair selector: {String(error)}
         </Text>
