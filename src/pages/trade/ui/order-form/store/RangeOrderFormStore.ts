@@ -30,8 +30,8 @@ export class RangeOrderFormStore {
   upperPriceInput = '';
   lowerPriceInput = '';
   feeTierPercentInput = '';
-  private _positionCountInput = '5';
-  private _positionCountSlider = 5;
+  private _positionCountInput = '10';
+  private _positionCountSlider = 10;
   marketPrice = 1;
 
   constructor() {
@@ -145,14 +145,16 @@ export class RangeOrderFormStore {
     return quoteAsset.formatDisplayAmount(extractAmount(plan, quoteAsset));
   }
 
-  assetChange(base: AssetInfo, quote: AssetInfo) {
+  setAssets(base: AssetInfo, quote: AssetInfo, resetInputs = false) {
     this._baseAsset = base;
     this._quoteAsset = quote;
-    this.liquidityTargetInput = '';
-    this.upperPriceInput = '';
-    this.lowerPriceInput = '';
-    this.feeTierPercentInput = '';
-    this._positionCountInput = '5';
-    this._positionCountSlider = 5;
+    if (resetInputs) {
+      this.liquidityTargetInput = '';
+      this.upperPriceInput = '';
+      this.lowerPriceInput = '';
+      this.feeTierPercentInput = '';
+      this._positionCountInput = '10';
+      this._positionCountSlider = 10;
+    }
   }
 }

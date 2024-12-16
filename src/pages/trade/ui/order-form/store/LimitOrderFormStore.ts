@@ -1,11 +1,27 @@
 import { Position } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { PriceLinkedInputs } from './PriceLinkedInputs';
 import { limitOrderPosition } from '@/shared/math/position';
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, reaction } from 'mobx';
 import { AssetInfo } from '@/pages/trade/model/AssetInfo';
 import { parseNumber } from '@/shared/utils/num';
 
 export type BuySell = 'buy' | 'sell';
+
+export const BUY_PRICE_OPTIONS: Record<string, (mp: number) => number> = {
+  Market: (mp: number) => mp,
+  '-2%': mp => 0.98 * mp,
+  '-5%': mp => 0.95 * mp,
+  '-10%': mp => 0.9 * mp,
+  '-15%': mp => 0.85 * mp,
+};
+
+export const SELL_PRICE_OPTIONS: Record<string, (mp: number) => number> = {
+  Market: (mp: number) => mp,
+  '+2%': mp => 1.02 * mp,
+  '+5%': mp => 1.05 * mp,
+  '+10%': mp => 1.1 * mp,
+  '+15%': mp => 1.15 * mp,
+};
 
 export class LimitOrderFormStore {
   private _baseAsset?: AssetInfo;
@@ -17,7 +33,15 @@ export class LimitOrderFormStore {
 
   constructor() {
     makeAutoObservable(this);
+
+    reaction(() => [this.buySell], this._resetInputs);
   }
+
+  private _resetInputs = () => {
+    this._input.inputA = '';
+    this._input.inputB = '';
+    this._priceInput = '';
+  };
 
   setBuySell = (x: BuySell) => {
     this.buySell = x;
@@ -59,6 +83,11 @@ export class LimitOrderFormStore {
     }
   };
 
+  setPriceInputFromOption = (x: string) => {
+    const price = (BUY_PRICE_OPTIONS[x] ?? (x => x))(this.marketPrice);
+    this.setPriceInput(price.toString());
+  };
+
   get price(): number | undefined {
     return parseNumber(this._priceInput);
   }
@@ -78,11 +107,13 @@ export class LimitOrderFormStore {
     });
   }
 
-  assetChange(base: AssetInfo, quote: AssetInfo) {
+  setAssets(base: AssetInfo, quote: AssetInfo, resetInputs = false) {
     this._baseAsset = base;
     this._quoteAsset = quote;
-    this._input.inputA = '';
-    this._input.inputB = '';
-    this._priceInput = '';
+    if (resetInputs) {
+      this._input.inputA = '';
+      this._input.inputB = '';
+      this._priceInput = '';
+    }
   }
 }

@@ -8,7 +8,7 @@ import { OrderInput } from './order-input';
 import { SelectGroup } from './select-group';
 import { InfoRow } from './info-row';
 import { InfoRowGasFee } from './info-row-gas-fee';
-import { useOrderFormStore } from './store/OrderFormStore';
+import { OrderFormStore } from './store/OrderFormStore';
 import { MAX_POSITION_COUNT, MIN_POSITION_COUNT } from './store/RangeOrderFormStore';
 
 const LOWER_PRICE_OPTIONS: Record<string, (mp: number) => number> = {
@@ -34,168 +34,169 @@ const FEE_TIERS: Record<string, number> = {
   '1.00%': 1,
 };
 
-export const RangeLiquidityOrderForm = observer(() => {
-  const { connected } = connectionStore;
-  const parentStore = useOrderFormStore();
-  const store = parentStore.rangeForm;
+export const RangeLiquidityOrderForm = observer(
+  ({ parentStore }: { parentStore: OrderFormStore }) => {
+    const { connected } = connectionStore;
+    const store = parentStore.rangeForm;
 
-  return (
-    <div className='p-4'>
-      <div className='mb-4'>
-        <div className='mb-1'>
-          <OrderInput
-            label='Liquidity Target'
-            value={store.liquidityTargetInput}
-            onChange={store.setLiquidityTargetInput}
-            denominator={store.quoteAsset?.symbol}
-          />
-        </div>
-        <div className='w-full flex flex-row flex-wrap items-start justify-between py-1'>
-          <div className='leading-6'>
-            <Text small color='text.secondary'>
-              Available Balances
-            </Text>
+    return (
+      <div className='p-4'>
+        <div className='mb-4'>
+          <div className='mb-1'>
+            <OrderInput
+              label='Liquidity Target'
+              value={store.liquidityTargetInput}
+              onChange={store.setLiquidityTargetInput}
+              denominator={store.quoteAsset?.symbol}
+            />
           </div>
-          <div className='flex flex-wrap flex-col items-end'>
-            <div>
-              <Text small color='text.primary' whitespace='nowrap'>
-                {store.baseAsset?.formatBalance() ?? `-- ${store.baseAsset?.symbol}`}
+          <div className='w-full flex flex-row flex-wrap items-start justify-between py-1'>
+            <div className='leading-6'>
+              <Text small color='text.secondary'>
+                Available Balances
               </Text>
             </div>
-            <button
-              type='button'
-              className='text-primary'
-              onClick={() => {
-                const target = store.quoteAsset?.balance?.toString();
-                if (target) {
-                  store.liquidityTargetInput = target;
-                }
-              }}
-            >
-              <Text small color='text.primary' whitespace='nowrap'>
-                {store.quoteAsset?.formatBalance() ?? `-- ${store.quoteAsset?.symbol}`}
-              </Text>
-            </button>
+            <div className='flex flex-wrap flex-col items-end'>
+              <div>
+                <Text small color='text.primary' whitespace='nowrap'>
+                  {store.baseAsset?.formatBalance() ?? `-- ${store.baseAsset?.symbol}`}
+                </Text>
+              </div>
+              <button
+                type='button'
+                className='text-primary'
+                onClick={() => {
+                  const target = store.quoteAsset?.balance?.toString();
+                  if (target) {
+                    store.setLiquidityTargetInput(target);
+                  }
+                }}
+              >
+                <Text small color='text.primary' whitespace='nowrap'>
+                  {store.quoteAsset?.formatBalance() ?? `-- ${store.quoteAsset?.symbol}`}
+                </Text>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-      <div className='mb-4'>
-        <div className='mb-2'>
-          <OrderInput
-            label='Upper Price Bound'
-            value={store.upperPriceInput}
-            onChange={store.setUpperPriceInput}
-            denominator={store.quoteAsset?.symbol}
-          />
-        </div>
-        <SelectGroup
-          options={Object.keys(UPPER_PRICE_OPTIONS)}
-          onChange={o =>
-            (store.upperPriceInput = (UPPER_PRICE_OPTIONS[o] ?? (x => x))(
-              store.marketPrice,
-            ).toString())
-          }
-        />
-      </div>
-      <div className='mb-4'>
-        <div className='mb-2'>
-          <OrderInput
-            label='Lower Price Bound'
-            value={store.lowerPriceInput}
-            onChange={store.setLowerPriceInput}
-            denominator={store.quoteAsset?.symbol}
-          />
-        </div>
-        <SelectGroup
-          options={Object.keys(LOWER_PRICE_OPTIONS)}
-          onChange={o =>
-            (store.lowerPriceInput = (LOWER_PRICE_OPTIONS[o] ?? (x => x))(
-              store.marketPrice,
-            ).toString())
-          }
-        />
-      </div>
-      <div className='mb-4'>
-        <div className='mb-2'>
-          <OrderInput
-            label='Fee tier'
-            value={store.feeTierPercentInput}
-            onChange={store.setFeeTierPercentInput}
-            denominator='%'
-          />
-        </div>
-        <SelectGroup
-          options={Object.keys(FEE_TIERS)}
-          onChange={o => {
-            if (o in FEE_TIERS) {
-              store.feeTierPercentInput = (FEE_TIERS[o] ?? 0).toString();
+        <div className='mb-4'>
+          <div className='mb-2'>
+            <OrderInput
+              label='Upper Price Bound'
+              value={store.upperPriceInput}
+              onChange={store.setUpperPriceInput}
+              denominator={store.quoteAsset?.symbol}
+            />
+          </div>
+          <SelectGroup
+            options={Object.keys(UPPER_PRICE_OPTIONS)}
+            onChange={o =>
+              store.setUpperPriceInput(
+                (UPPER_PRICE_OPTIONS[o] ?? (x => x))(store.marketPrice).toString(),
+              )
             }
-          }}
-        />
-      </div>
-      <div className='mb-4'>
-        <OrderInput
-          label='Number of positions'
-          value={store.positionCountInput}
-          onChange={store.setPositionCountInput}
-        />
-        <PenumbraSlider
-          min={MIN_POSITION_COUNT}
-          max={MAX_POSITION_COUNT}
-          step={1}
-          value={store.positionCountSlider}
-          showValue={false}
-          onChange={store.setPositionCountSlider}
-          showTrackGaps={true}
-          trackGapBackground='base.black'
-          showFill={true}
-        />
-      </div>
-      <div className='mb-4'>
-        <InfoRow
-          label='Number of positions'
-          value={store.positionCount}
-          toolTip='Each position will have an equal amount of liquidity allocated to it, as the price varies.'
-        />
-        <InfoRow
-          label='Base asset amount'
-          value={store.baseAssetAmount}
-          toolTip={`The amount of ${store.baseAsset?.symbol} provided as liquidity.`}
-        />
-        <InfoRow
-          label='Quote asset amount'
-          value={store.quoteAssetAmount}
-          toolTip={`The amount of ${store.quoteAsset?.symbol} provided as liquidity`}
-        />
-        <InfoRowGasFee
-          gasFee={parentStore.gasFee.display}
-          symbol={parentStore.gasFee.symbol}
-          isLoading={parentStore.gasFeeLoading}
-        />
-      </div>
-      <div className='mb-4'>
-        {connected ? (
-          <Button
-            actionType='accent'
-            disabled={!parentStore.canSubmit}
-            onClick={() => void parentStore.submit()}
-          >
-            Open {store.positionCount ?? 'Several'} Positions
-          </Button>
-        ) : (
-          <ConnectButton actionType='default' />
+          />
+        </div>
+        <div className='mb-4'>
+          <div className='mb-2'>
+            <OrderInput
+              label='Lower Price Bound'
+              value={store.lowerPriceInput}
+              onChange={store.setLowerPriceInput}
+              denominator={store.quoteAsset?.symbol}
+            />
+          </div>
+          <SelectGroup
+            options={Object.keys(LOWER_PRICE_OPTIONS)}
+            onChange={o =>
+              store.setLowerPriceInput(
+                (LOWER_PRICE_OPTIONS[o] ?? (x => x))(store.marketPrice).toString(),
+              )
+            }
+          />
+        </div>
+        <div className='mb-4'>
+          <div className='mb-2'>
+            <OrderInput
+              label='Fee tier'
+              value={store.feeTierPercentInput}
+              onChange={store.setFeeTierPercentInput}
+              denominator='%'
+            />
+          </div>
+          <SelectGroup
+            options={Object.keys(FEE_TIERS)}
+            onChange={o => {
+              if (o in FEE_TIERS) {
+                store.setFeeTierPercentInput((FEE_TIERS[o] ?? 0).toString());
+              }
+            }}
+          />
+        </div>
+        <div className='mb-4'>
+          <OrderInput
+            label='Number of positions'
+            value={store.positionCountInput}
+            onChange={store.setPositionCountInput}
+          />
+          <PenumbraSlider
+            min={MIN_POSITION_COUNT}
+            max={MAX_POSITION_COUNT}
+            step={1}
+            value={store.positionCountSlider}
+            showValue={false}
+            onChange={store.setPositionCountSlider}
+            showTrackGaps={true}
+            trackGapBackground='base.black'
+            showFill={true}
+          />
+        </div>
+        <div className='mb-4'>
+          <InfoRow
+            label='Number of positions'
+            value={store.positionCount}
+            toolTip='Each position will have an equal amount of liquidity allocated to it, as the price varies.'
+          />
+          <InfoRow
+            label='Base asset amount'
+            value={store.baseAssetAmount}
+            toolTip={`The amount of ${store.baseAsset?.symbol} provided as liquidity.`}
+          />
+          <InfoRow
+            label='Quote asset amount'
+            value={store.quoteAssetAmount}
+            toolTip={`The amount of ${store.quoteAsset?.symbol} provided as liquidity`}
+          />
+          <InfoRowGasFee
+            gasFee={parentStore.gasFee.display}
+            symbol={parentStore.gasFee.symbol}
+            isLoading={parentStore.gasFeeLoading}
+          />
+        </div>
+        <div className='mb-4'>
+          {connected ? (
+            <Button
+              actionType='accent'
+              disabled={!parentStore.canSubmit}
+              onClick={() => void parentStore.submit()}
+            >
+              Open {store.positionCount ?? 'Several'} Positions
+            </Button>
+          ) : (
+            <ConnectButton actionType='default' />
+          )}
+        </div>
+        {parentStore.marketPrice && (
+          <div className='flex justify-center p-1'>
+            <Text small color='text.secondary'>
+              1 {store.baseAsset?.symbol} ={' '}
+              <Text small color='text.primary'>
+                {store.quoteAsset?.formatDisplayAmount(parentStore.marketPrice)}
+              </Text>
+            </Text>
+          </div>
         )}
       </div>
-      {parentStore.marketPrice && (
-        <div className='flex justify-center p-1'>
-          <Text small color='text.secondary'>
-            1 {store.baseAsset?.symbol} ={' '}
-            <Text small color='text.primary'>
-              {store.quoteAsset?.formatDisplayAmount(parentStore.marketPrice)}
-            </Text>
-          </Text>
-        </div>
-      )}
-    </div>
-  );
-});
+    );
+  },
+);

@@ -8,7 +8,7 @@ import { ConnectButton } from '@/features/connect/connect-button';
 import { InfoRowTradingFee } from './info-row-trading-fee';
 import { InfoRowGasFee } from './info-row-gas-fee';
 import { SelectGroup } from './select-group';
-import { useOrderFormStore } from './store/OrderFormStore';
+import { OrderFormStore } from './store/OrderFormStore';
 
 const BUY_PRICE_OPTIONS: Record<string, (mp: number) => number> = {
   Market: (mp: number) => mp,
@@ -26,9 +26,8 @@ const SELL_PRICE_OPTIONS: Record<string, (mp: number) => number> = {
   '+15%': mp => 1.15 * mp,
 };
 
-export const LimitOrderForm = observer(() => {
+export const LimitOrderForm = observer(({ parentStore }: { parentStore: OrderFormStore }) => {
   const { connected } = connectionStore;
-  const parentStore = useOrderFormStore();
   const store = parentStore.limitForm;
 
   const isBuy = store.buySell === 'buy';

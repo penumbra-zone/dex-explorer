@@ -32,9 +32,9 @@ export const FormTabs = observer(() => {
         </Density>
       </div>
       <div className='overflow-y-auto'>
-        {store.whichForm === 'Market' && <MarketOrderForm />}
-        {store.whichForm === 'Limit' && <LimitOrderForm />}
-        {store.whichForm === 'Range' && <RangeLiquidityOrderForm />}
+        {store.whichForm === 'Market' && <MarketOrderForm parentStore={store} />}
+        {store.whichForm === 'Limit' && <LimitOrderForm parentStore={store} />}
+        {store.whichForm === 'Range' && <RangeLiquidityOrderForm parentStore={store} />}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { makeAutoObservable, reaction } from 'mobx';
+import { makeAutoObservable, reaction, runInAction } from 'mobx';
 import { LimitOrderFormStore } from './LimitOrderFormStore';
 import { MarketOrderFormStore } from './MarketOrderFormStore';
 import { RangeOrderFormStore } from './RangeOrderFormStore';
@@ -24,6 +24,7 @@ import { pnum } from '@penumbra-zone/types/pnum';
 import debounce from 'lodash/debounce';
 import { useRegistryAssets } from '@/shared/api/registry';
 import { plan, planBuildBroadcast } from '../helpers';
+import { openToast } from '@penumbra-zone/ui/Toast';
 
 export type WhichForm = 'Market' | 'Limit' | 'Range';
 
@@ -51,52 +52,63 @@ export class OrderFormStore {
 
     reaction(
       () => this.plan,
-      debounce(
-        // To please the linter
-        () =>
-          void (async () => {
-            if (!this.plan || !this._umAsset) {
-              return;
-            }
-            this._gasFeeLoading = true;
-            try {
-              const res = await plan(this.plan);
-              const fee = res.transactionParameters?.fee;
-              if (!fee) {
-                return;
-              }
-              this._gasFee = {
-                symbol: this._umAsset.symbol,
-                display: pnum(fee.amount, this._umAsset.exponent).toNumber().toString(),
-              };
-            } finally {
-              this._gasFeeLoading = false;
-            }
-          })(),
-        GAS_DEBOUNCE_MS,
-      ),
+      debounce(() => void this.estimateGasFee(), GAS_DEBOUNCE_MS),
     );
   }
 
-  async calculateGasFee() {
+  private estimateGasFee = async (): Promise<void> => {
     if (!this.plan || !this._umAsset) {
       return;
     }
-    this._gasFeeLoading = true;
+    runInAction(() => {
+      this._gasFeeLoading = true;
+    });
     try {
       const res = await plan(this.plan);
       const fee = res.transactionParameters?.fee;
       if (!fee) {
         return;
       }
-      this._gasFee = {
-        symbol: this._umAsset.symbol,
-        display: pnum(fee.amount, this._umAsset.exponent).toNumber().toString(),
-      };
+      runInAction(() => {
+        if (!this._umAsset) {
+          return;
+        }
+
+        this._gasFee = {
+          symbol: this._umAsset.symbol,
+          display: pnum(fee.amount, this._umAsset.exponent).toNumber().toString(),
+        };
+      });
+    } catch (e) {
+      if (e instanceof Error && e.message.includes('insufficient funds')) {
+        openToast({
+          type: 'error',
+          message: 'Gas fee estimation failed',
+          description: 'The amount exceeds your balance',
+        });
+      }
+      if (
+        e instanceof Error &&
+        ![
+          'ConnectError',
+          'PenumbraNotInstalledError',
+          'PenumbraProviderNotAvailableError',
+          'PenumbraProviderNotConnectedError',
+        ].includes(e.name)
+      ) {
+        openToast({
+          type: 'error',
+          message: e.name,
+          description: e.message,
+        });
+      }
+      return undefined;
     } finally {
-      this._gasFeeLoading = false;
+      runInAction(() => {
+        this._gasFeeLoading = false;
+      });
     }
-  }
+  };
 
   setUmAsset = (x: AssetInfo) => {
     this._umAsset = x;
@@ -122,10 +134,10 @@ export class OrderFormStore {
     return this._gasFeeLoading;
   }
 
-  assetChange(base: AssetInfo, quote: AssetInfo) {
-    this._market.assetChange(base, quote);
-    this._limit.assetChange(base, quote);
-    this._range.assetChange(base, quote);
+  setAssets(base: AssetInfo, quote: AssetInfo, unsetInputs: boolean) {
+    this._market.setAssets(base, quote, unsetInputs);
+    this._limit.setAssets(base, quote, unsetInputs);
+    this._range.setAssets(base, quote, unsetInputs);
   }
 
   setMarketPrice(price: number) {
@@ -204,7 +216,10 @@ export class OrderFormStore {
     if (!plan || !source) {
       return;
     }
-    this._submitting = true;
+
+    runInAction(() => {
+      this._submitting = true;
+    });
     try {
       const tx = await planBuildBroadcast(wasSwap ? 'swap' : 'positionOpen', plan);
       if (!wasSwap || !tx) {
@@ -217,7 +232,9 @@ export class OrderFormStore {
       });
       await planBuildBroadcast('swapClaim', req, { skipAuth: true });
     } finally {
-      this._submitting = false;
+      runInAction(() => {
+        this._submitting = false;
+      });
     }
   }
 }
@@ -252,10 +269,9 @@ function getAccountAddress(subAccounts: AddressView[] | undefined) {
   };
 }
 
-export const useOrderFormStore = () => {
-  const orderFormStoreRef = useRef(new OrderFormStore());
-  const orderFormStore = orderFormStoreRef.current;
+const orderFormStore = new OrderFormStore();
 
+export const useOrderFormStore = () => {
   const { data: assets } = useRegistryAssets();
   const { data: subAccounts } = useSubaccounts();
   const { address, addressIndex } = getAccountAddress(subAccounts);
@@ -275,24 +291,41 @@ export const useOrderFormStore = () => {
 
       const baseAssetInfo = AssetInfo.fromMetadata(baseAsset, baseBalance);
       const quoteAssetInfo = AssetInfo.fromMetadata(quoteAsset, quoteBalance);
+
+      const storeMapping = {
+        Market: orderFormStore.marketForm,
+        Limit: orderFormStore.limitForm,
+        Range: orderFormStore.rangeForm,
+      };
+      const childStore = storeMapping[orderFormStore.whichForm];
+      const prevBaseAssetInfo = childStore.baseAsset;
+      const prevQuoteAssetInfo = childStore.quoteAsset;
+
+      const isChangingAssetPair = !!(
+        prevBaseAssetInfo?.symbol &&
+        prevQuoteAssetInfo?.symbol &&
+        (prevBaseAssetInfo.symbol !== baseAssetInfo?.symbol ||
+          prevQuoteAssetInfo.symbol !== quoteAssetInfo?.symbol)
+      );
+
       if (baseAssetInfo && quoteAssetInfo) {
-        orderFormStore.assetChange(baseAssetInfo, quoteAssetInfo);
+        orderFormStore.setAssets(baseAssetInfo, quoteAssetInfo, isChangingAssetPair);
       }
     }
-  }, [baseAsset, quoteAsset, balances, orderFormStore]);
+  }, [baseAsset, quoteAsset, balances]);
 
   useEffect(() => {
     if (address && addressIndex) {
       orderFormStore.setSubAccountIndex(addressIndex);
       orderFormStore.setAddress(address);
     }
-  }, [address, addressIndex, orderFormStore]);
+  }, [address, addressIndex]);
 
   useEffect(() => {
     if (marketPrice) {
       orderFormStore.setMarketPrice(marketPrice);
     }
-  }, [marketPrice, orderFormStore]);
+  }, [marketPrice]);
 
   useEffect(() => {
     let umAsset: AssetInfo | undefined;
@@ -306,7 +339,7 @@ export const useOrderFormStore = () => {
     if (umAsset && orderFormStore.umAsset?.symbol !== umAsset.symbol) {
       orderFormStore.setUmAsset(umAsset);
     }
-  }, [assets, orderFormStore]);
+  }, [assets]);
 
   return orderFormStore;
 };

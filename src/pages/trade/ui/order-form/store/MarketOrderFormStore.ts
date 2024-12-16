@@ -1,4 +1,4 @@
-import { makeAutoObservable, reaction } from 'mobx';
+import { makeAutoObservable, reaction, runInAction } from 'mobx';
 import { AssetId, Value } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { pnum } from '@penumbra-zone/types/pnum';
 import debounce from 'lodash/debounce';
@@ -76,58 +76,69 @@ export class MarketOrderFormStore {
     // Two reactions to avoid a double trigger.
     reaction(
       () => [this._lastEdited, this._baseAssetInput, this._baseAsset, this._quoteAsset],
-      debounce(
-        () =>
-          void (async () => {
-            if (!this._baseAsset || !this._quoteAsset || this._lastEdited !== 'Base') {
-              return;
-            }
-            const input = this.baseInputAmount;
-            if (input === undefined) {
-              return;
-            }
-            this._quoteEstimating = true;
-            try {
-              const res = await estimateAmount(this._quoteAsset, this._baseAsset, input);
-              if (res === undefined) {
-                return;
-              }
-              this._quoteAssetInput = res.toString();
-            } finally {
-              this._quoteEstimating = false;
-            }
-          })(),
-        ESTIMATE_DEBOUNCE_MS,
-      ),
+      debounce(() => {
+        void this.estimateQuote();
+      }, ESTIMATE_DEBOUNCE_MS),
     );
     reaction(
       () => [this._lastEdited, this._quoteAssetInput, this._baseAsset, this._quoteAsset],
-      // linter pleasing
-      debounce(
-        () =>
-          void (async () => {
-            if (!this._baseAsset || !this._quoteAsset || this._lastEdited !== 'Quote') {
-              return;
-            }
-            const input = this.quoteInputAmount;
-            if (input === undefined) {
-              return;
-            }
-            this._baseEstimating = true;
-            try {
-              const res = await estimateAmount(this._baseAsset, this._quoteAsset, input);
-              if (res === undefined) {
-                return;
-              }
-              this._baseAssetInput = res.toString();
-            } finally {
-              this._baseEstimating = false;
-            }
-          })(),
-        ESTIMATE_DEBOUNCE_MS,
-      ),
+      debounce(() => {
+        void this.estimateBase();
+      }, ESTIMATE_DEBOUNCE_MS),
     );
   }
+
+  private estimateQuote = async (): Promise<void> => {
+    if (!this._baseAsset || !this._quoteAsset || this._lastEdited !== 'Base') {
+      return;
+    }
+    const input = this.baseInputAmount;
+    if (input === undefined) {
+      return;
+    }
+    runInAction(() => {
+      this._quoteEstimating = true;
+    });
+    try {
+      const res = await estimateAmount(this._quoteAsset, this._baseAsset, input);
+      if (res === undefined) {
+        return;
+      }
+      runInAction(() => {
+        this._quoteAssetInput = res.toString();
+      });
+    } finally {
+      runInAction(() => {
+        this._quoteEstimating = false;
+      });
+    }
+  };
+
+  private estimateBase = async (): Promise<void> => {
+    if (!this._baseAsset || !this._quoteAsset || this._lastEdited !== 'Quote') {
+      return;
+    }
+    const input = this.quoteInputAmount;
+    if (input === undefined) {
+      return;
+    }
+    runInAction(() => {
+      this._baseEstimating = true;
+    });
+    try {
+      const res = await estimateAmount(this._baseAsset, this._quoteAsset, input);
+      if (res === undefined) {
+        return;
+      }
+      runInAction(() => {
+        this._baseAssetInput = res.toString();
+      });
+    } finally {
+      runInAction(() => {
+        this._baseEstimating = false;
+      });
+    }
+  };
 
   setBuySell = (x: BuySell) => {
     this.buySell = x;
@@ -201,11 +212,13 @@ export class MarketOrderFormStore {
     return this._lastEdited;
   }
 
-  assetChange(base: AssetInfo, quote: AssetInfo) {
+  setAssets(base: AssetInfo, quote: AssetInfo, resetInputs = false) {
     this._baseAsset = base;
     this._quoteAsset = quote;
-    this._baseAssetInput = '';
-    this._quoteAssetInput = '';
+    if (resetInputs) {
+      this._baseAssetInput = '';
+      this._quoteAssetInput = '';
+    }
   }
 
   get baseAsset(): undefined | AssetInfo {

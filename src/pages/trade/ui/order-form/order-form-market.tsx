@@ -7,7 +7,7 @@ import { SegmentedControl } from './segmented-control';
 import { ConnectButton } from '@/features/connect/connect-button';
 import { InfoRowGasFee } from './info-row-gas-fee';
 import { InfoRowTradingFee } from './info-row-trading-fee';
-import { useOrderFormStore } from './store/OrderFormStore';
+import { OrderFormStore } from './store/OrderFormStore';
 import { Slider as PenumbraSlider } from '@penumbra-zone/ui/Slider';
 
 interface SliderProps {
@@ -51,9 +51,8 @@ const Slider = observer(
   },
 );
 
-export const MarketOrderForm = observer(() => {
+export const MarketOrderForm = observer(({ parentStore }: { parentStore: OrderFormStore }) => {
   const { connected } = connectionStore;
-  const parentStore = useOrderFormStore();
   const store = parentStore.marketForm;
 
   const isBuy = store.buySell === 'buy';
