@@ -83,9 +83,10 @@ class ConnectionStateStore {
 
     try {
       await penumbra.disconnect();
-      window.location.reload();
     } catch (error) {
       console.error(error);
+    } finally {
+      window.location.reload();
     }
   }
 
