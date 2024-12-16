@@ -45,8 +45,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0))
       '@penumbra-zone/client':
-        specifier: ^21.0.0
-        version: 21.0.0(@bufbuild/protobuf@1.10.0)(@connectrpc/connect@1.6.1(@bufbuild/protobuf@1.10.0))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0))(@penumbra-zone/transport-dom@7.5.0)
+        specifier: ^21.1.0
+        version: 21.1.0(@bufbuild/protobuf@1.10.0)(@connectrpc/connect@1.6.1(@bufbuild/protobuf@1.10.0))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0))(@penumbra-zone/transport-dom@7.5.0)
       '@penumbra-zone/crypto-web':
         specifier: ^30.0.0
         version: 30.0.0(@penumbra-zone/types@26.3.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/getters@20.0.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))
@@ -66,8 +66,8 @@ importers:
         specifier: ^26.3.0
         version: 26.3.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/getters@20.0.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0))
       '@penumbra-zone/ui':
-        specifier: file:../web/packages/ui/penumbra-zone-ui-13.5.0.tgz
-        version: file:../web/packages/ui/penumbra-zone-ui-13.5.0.tgz(@bufbuild/protobuf@1.10.0)(@types/react-dom@18.3.2)(@types/react@18.3.14)
+        specifier: ^13.5.0
+        version: 13.5.0(@bufbuild/protobuf@1.10.0)(@types/react-dom@18.3.2)(@types/react@18.3.14)
       '@penumbra-zone/wasm':
         specifier: ^34.0.0
         version: 34.0.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0))(@penumbra-zone/types@26.3.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/getters@20.0.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))
@@ -92,12 +92,6 @@ importers:
       '@tsconfig/vite-react':
         specifier: ^3.4.0
         version: 3.4.0
-      '@vercel/analytics':
-        specifier: ^1.4.1
-        version: 1.4.1(next@14.2.20(@babel/core@7.26.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
-      '@vercel/speed-insights':
-        specifier: ^1.1.0
-        version: 1.1.0(next@14.2.20(@babel/core@7.26.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
       bech32:
         specifier: ^2.0.0
         version: 2.0.0
@@ -1727,8 +1721,8 @@ packages:
     peerDependencies:
       '@penumbra-zone/protobuf': 6.3.0
 
-  '@penumbra-zone/client@21.0.0':
-    resolution: {integrity: sha512-JORC4XaZHa9I7xqNd502qbGtpaL0GVkAigDjD2kARtAUl7zHHfg9KWQT/EV/copod9XqbbwJoSILhKfkRhz21A==}
+  '@penumbra-zone/client@21.1.0':
+    resolution: {integrity: sha512-QJ0TZblFvdiOf8dsW2Xp9ondXve924E9UJyYjQPRGXaHjBiu7R2YEzSHP8lwP4ipvMab1SKbsSJYQwZPhcoX3Q==}
     peerDependencies:
       '@bufbuild/protobuf': ^1.10.0
       '@connectrpc/connect': ^1.4.0
@@ -1776,9 +1770,8 @@ packages:
       '@penumbra-zone/getters': 20.0.0
       '@penumbra-zone/protobuf': 6.3.0
 
-  '@penumbra-zone/ui@file:../web/packages/ui/penumbra-zone-ui-13.5.0.tgz':
-    resolution: {integrity: sha512-GNLuPOZaCN+YwYS0ejMqSHihKcDd8HJSW8pquz0reku1hzn0GCgLUhf4mAXCMoE90hX4Js2PNQPZe6P0AmJbog==, tarball: file:../web/packages/ui/penumbra-zone-ui-13.5.0.tgz}
-    version: 13.5.0
+  '@penumbra-zone/ui@13.5.0':
+    resolution: {integrity: sha512-xeYpmEfB5HDvNBAV0EPI8bCeEQ0ZZmkDGkTc9kLq93J4nkI0VH+wmFJkxbLoPsaS2BcMpodAIG2+noAGU4ouSw==}
 
   '@penumbra-zone/wasm@34.0.0':
     resolution: {integrity: sha512-dHevSVkfUcW5uq/HCq/ShyP5Ta4/I1x4Fvz1BPuOT68jGECseamRS6RH4MiQrQPxKoUuxvfjTH7E/pE5M6+cOA==}
@@ -2817,55 +2810,6 @@ packages:
 
   '@ungap/structured-clone@1.2.0':
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
-
-  '@vercel/analytics@1.4.1':
-    resolution: {integrity: sha512-ekpL4ReX2TH3LnrRZTUKjHHNpNy9S1I7QmS+g/RQXoSUQ8ienzosuX7T9djZ/s8zPhBx1mpHP/Rw5875N+zQIQ==}
-    peerDependencies:
-      '@remix-run/react': ^2
-      '@sveltejs/kit': ^1 || ^2
-      next: '>= 13'
-      react: ^18 || ^19 || ^19.0.0-rc
-      svelte: '>= 4'
-      vue: ^3
-      vue-router: ^4
-    peerDependenciesMeta:
-      '@remix-run/react':
-        optional: true
-      '@sveltejs/kit':
-        optional: true
-      next:
-        optional: true
-      react:
-        optional: true
-      svelte:
-        optional: true
-      vue:
-        optional: true
-      vue-router:
-        optional: true
-
-  '@vercel/speed-insights@1.1.0':
-    resolution: {integrity: sha512-rAXxuhhO4mlRGC9noa5F7HLMtGg8YF1zAN6Pjd1Ny4pII4cerhtwSG4vympbCl+pWkH7nBS9kVXRD4FAn54dlg==}
-    peerDependencies:
-      '@sveltejs/kit': ^1 || ^2
-      next: '>= 13'
-      react: ^18 || ^19 || ^19.0.0-rc
-      svelte: '>= 4'
-      vue: ^3
-      vue-router: ^4
-    peerDependenciesMeta:
-      '@sveltejs/kit':
-        optional: true
-      next:
-        optional: true
-      react:
-        optional: true
-      svelte:
-        optional: true
-      vue:
-        optional: true
-      vue-router:
-        optional: true
 
   '@vitest/expect@2.1.8':
     resolution: {integrity: sha512-8ytZ/fFHq2g4PJVAtDX57mayemKgDR6X3Oa2Foro+EygiOJHUXhCqBAAKQYYajZpFoIfvBCF1j6R6IYRSIUFuw==}
@@ -7349,7 +7293,7 @@ snapshots:
       '@penumbra-zone/protobuf': 6.3.0(@bufbuild/protobuf@1.10.0)
       bech32: 2.0.0
 
-  '@penumbra-zone/client@21.0.0(@bufbuild/protobuf@1.10.0)(@connectrpc/connect@1.6.1(@bufbuild/protobuf@1.10.0))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0))(@penumbra-zone/transport-dom@7.5.0)':
+  '@penumbra-zone/client@21.1.0(@bufbuild/protobuf@1.10.0)(@connectrpc/connect@1.6.1(@bufbuild/protobuf@1.10.0))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0))(@penumbra-zone/transport-dom@7.5.0)':
     dependencies:
       '@bufbuild/protobuf': 1.10.0
       '@connectrpc/connect': 1.6.1(@bufbuild/protobuf@1.10.0)
@@ -7400,7 +7344,7 @@ snapshots:
       lodash: 4.17.21
       zod: 3.23.8
 
-  '@penumbra-zone/ui@file:../web/packages/ui/penumbra-zone-ui-13.5.0.tgz(@bufbuild/protobuf@1.10.0)(@types/react-dom@18.3.2)(@types/react@18.3.14)':
+  '@penumbra-zone/ui@13.5.0(@bufbuild/protobuf@1.10.0)(@types/react-dom@18.3.2)(@types/react@18.3.14)':
     dependencies:
       '@penumbra-zone/bech32m': 10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0))
       '@penumbra-zone/getters': 20.0.0(@bufbuild/protobuf@1.10.0)(@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0)))(@penumbra-zone/protobuf@6.3.0(@bufbuild/protobuf@1.10.0))
@@ -8472,16 +8416,6 @@ snapshots:
 
   '@ungap/structured-clone@1.2.0': {}
 
-  '@vercel/analytics@1.4.1(next@14.2.20(@babel/core@7.26.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)':
-    optionalDependencies:
-      next: 14.2.20(@babel/core@7.26.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react: 18.3.1
-
-  '@vercel/speed-insights@1.1.0(next@14.2.20(@babel/core@7.26.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)':
-    optionalDependencies:
-      next: 14.2.20(@babel/core@7.26.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react: 18.3.1
-
   '@vitest/expect@2.1.8':
     dependencies:
       '@vitest/spy': 2.1.8
@@ -9484,7 +9418,7 @@ snapshots:
       debug: 4.3.7
       enhanced-resolve: 5.17.1
       eslint: 9.10.0(jiti@1.21.6)
-      eslint-module-utils: 2.11.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-plugin-import-x@0.5.3(eslint@8.57.0)(typescript@5.7.2))(eslint-plugin-import@2.30.0)(eslint@9.10.0(jiti@1.21.6)))(eslint@9.10.0(jiti@1.21.6))
+      eslint-module-utils: 2.11.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-typescript@3.6.3)(eslint@9.10.0(jiti@1.21.6))
       fast-glob: 3.3.2
       get-tsconfig: 4.8.0
       is-bun-module: 1.2.1
@@ -9504,13 +9438,13 @@ snapshots:
       debug: 4.3.7
       enhanced-resolve: 5.17.1
       eslint: 8.57.0
-      eslint-module-utils: 2.11.0(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import-x@0.5.3(eslint@8.57.0)(typescript@5.7.2))(eslint-plugin-import@2.30.0)(eslint@8.57.0))(eslint@8.57.0)
+      eslint-module-utils: 2.11.0(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.57.0)
       fast-glob: 3.3.2
       get-tsconfig: 4.8.0
       is-bun-module: 1.2.1
       is-glob: 4.0.3
     optionalDependencies:
-      eslint-plugin-import: 2.30.0(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-typescript@3.6.3)(eslint@8.57.0)
+      eslint-plugin-import: 2.30.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint@8.57.0)
       eslint-plugin-import-x: 0.5.3(eslint@9.10.0(jiti@1.21.6))(typescript@5.7.2)
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
@@ -9518,7 +9452,7 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-module-utils@2.11.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-plugin-import-x@0.5.3(eslint@8.57.0)(typescript@5.7.2))(eslint-plugin-import@2.30.0)(eslint@9.10.0(jiti@1.21.6)))(eslint@9.10.0(jiti@1.21.6)):
+  eslint-module-utils@2.11.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@9.10.0(jiti@1.21.6)):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
@@ -9529,7 +9463,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.11.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-plugin-import-x@0.5.3(eslint@8.57.0)(typescript@5.7.2))(eslint-plugin-import@2.30.0)(eslint@9.10.0(jiti@1.21.6)))(eslint@9.10.0(jiti@1.21.6)):
+  eslint-module-utils@2.11.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-typescript@3.6.3)(eslint@9.10.0(jiti@1.21.6)):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
@@ -9539,7 +9473,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.11.0(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import-x@0.5.3(eslint@8.57.0)(typescript@5.7.2))(eslint-plugin-import@2.30.0)(eslint@8.57.0))(eslint@8.57.0):
+  eslint-module-utils@2.11.0(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.57.0):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
@@ -9578,7 +9512,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 8.57.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.11.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-plugin-import-x@0.5.3(eslint@8.57.0)(typescript@5.7.2))(eslint-plugin-import@2.30.0)(eslint@9.10.0(jiti@1.21.6)))(eslint@9.10.0(jiti@1.21.6))
+      eslint-module-utils: 2.11.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@9.10.0(jiti@1.21.6))
       hasown: 2.0.2
       is-core-module: 2.15.1
       is-glob: 4.0.3
@@ -9606,7 +9540,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 8.57.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.11.0(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import-x@0.5.3(eslint@8.57.0)(typescript@5.7.2))(eslint-plugin-import@2.30.0)(eslint@8.57.0))(eslint@8.57.0)
+      eslint-module-utils: 2.11.0(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.57.0)
       hasown: 2.0.2
       is-core-module: 2.15.1
       is-glob: 4.0.3
