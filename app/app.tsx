@@ -13,20 +13,16 @@ import { connectionStore } from '@/shared/model/connection';
 // and no garbage collection problems are introduced.
 enableStaticRendering(typeof window === 'undefined');
 
-const SetupConnection = observer(() => {
+export const App = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     connectionStore.setup();
   }, []);
-  return null;
-});
 
-export const App = ({ children }: { children: ReactNode }) => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <main className='relative z-0'>
           <SyncBar />
-          <SetupConnection />
           <Header />
           {children}
         </main>
