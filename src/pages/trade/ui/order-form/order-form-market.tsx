@@ -55,11 +55,11 @@ export const MarketOrderForm = observer(({ parentStore }: { parentStore: OrderFo
   const { connected } = connectionStore;
   const store = parentStore.marketForm;
 
-  const isBuy = store.buySell === 'buy';
+  const isBuy = store.direction === 'buy';
 
   return (
     <div className='p-4'>
-      <SegmentedControl direction={store.buySell} setDirection={store.setBuySell} />
+      <SegmentedControl direction={store.direction} setDirection={store.setDirection} />
       <div className='mb-4'>
         <OrderInput
           label={isBuy ? 'Buy' : 'Sell'}

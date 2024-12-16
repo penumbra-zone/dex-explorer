@@ -47,7 +47,7 @@ const estimateAmount = async (
   }
 };
 
-export type BuySell = 'buy' | 'sell';
+export type Direction = 'buy' | 'sell';
 
 export type LastEdited = 'Base' | 'Quote';
 
@@ -67,7 +67,7 @@ export class MarketOrderFormStore {
   private _quoteAssetInput = '';
   private _baseEstimating = false;
   private _quoteEstimating = false;
-  buySell: BuySell = 'buy';
+  direction: Direction = 'buy';
   private _lastEdited: LastEdited = 'Base';
 
   constructor() {
@@ -140,8 +140,8 @@ export class MarketOrderFormStore {
     }
   };
 
-  setBuySell = (x: BuySell) => {
-    this.buySell = x;
+  setDirection = (x: Direction) => {
+    this.direction = x;
   };
 
   get baseInput(): string {
@@ -179,7 +179,7 @@ export class MarketOrderFormStore {
   }
 
   get balance(): undefined | string {
-    if (this.buySell === 'buy') {
+    if (this.direction === 'buy') {
       if (!this._quoteAsset?.balance) {
         return undefined;
       }
@@ -200,10 +200,10 @@ export class MarketOrderFormStore {
 
   setBalanceFraction(x: number) {
     const clamped = Math.max(0.0, Math.min(1.0, x));
-    if (this.buySell === 'buy' && this._quoteAsset?.balance) {
+    if (this.direction === 'buy' && this._quoteAsset?.balance) {
       this.setQuoteInput((clamped * this._quoteAsset.balance).toString());
     }
-    if (this.buySell === 'sell' && this._baseAsset?.balance) {
+    if (this.direction === 'sell' && this._baseAsset?.balance) {
       this.setBaseInput((clamped * this._baseAsset.balance).toString());
     }
   }
@@ -234,7 +234,7 @@ export class MarketOrderFormStore {
       return;
     }
     const { inputAsset, inputAmount, output } =
-      this.buySell === 'buy'
+      this.direction === 'buy'
         ? {
             inputAsset: this._quoteAsset,
             inputAmount: this.quoteInputAmount,

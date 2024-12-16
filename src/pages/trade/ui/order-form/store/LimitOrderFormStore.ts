@@ -5,36 +5,53 @@ import { makeAutoObservable, reaction } from 'mobx';
 import { AssetInfo } from '@/pages/trade/model/AssetInfo';
 import { parseNumber } from '@/shared/utils/num';
 
-export type BuySell = 'buy' | 'sell';
+export type Direction = 'buy' | 'sell';
 
-export const BUY_PRICE_OPTIONS: Record<string, (mp: number) => number> = {
-  Market: (mp: number) => mp,
-  '-2%': mp => 0.98 * mp,
-  '-5%': mp => 0.95 * mp,
-  '-10%': mp => 0.9 * mp,
-  '-15%': mp => 0.85 * mp,
+export enum SellLimitOrderOptions {
+  Market = 'Market',
+  Plus2Percent = '+2%',
+  Plus5Percent = '+5%',
+  Plus10Percent = '+10%',
+  Plus15Percent = '+15%',
+}
+
+export enum BuyLimitOrderOptions {
+  Market = 'Market',
+  Minus2Percent = '-2%',
+  Minus5Percent = '-5%',
+  Minus10Percent = '-10%',
+  Minus15Percent = '-15%',
+}
+
+export const BuyLimitOrderMultipliers = {
+  [BuyLimitOrderOptions.Market]: 1,
+  [BuyLimitOrderOptions.Minus2Percent]: 0.98,
+  [BuyLimitOrderOptions.Minus5Percent]: 0.95,
+  [BuyLimitOrderOptions.Minus10Percent]: 0.9,
+  [BuyLimitOrderOptions.Minus15Percent]: 0.85,
 };
 
-export const SELL_PRICE_OPTIONS: Record<string, (mp: number) => number> = {
-  Market: (mp: number) => mp,
-  '+2%': mp => 1.02 * mp,
-  '+5%': mp => 1.05 * mp,
-  '+10%': mp => 1.1 * mp,
-  '+15%': mp => 1.15 * mp,
+export const SellLimitOrderMultipliers = {
+  [SellLimitOrderOptions.Market]: 1,
+  [SellLimitOrderOptions.Plus2Percent]: 1.02,
+  [SellLimitOrderOptions.Plus5Percent]: 1.05,
+  [SellLimitOrderOptions.Plus10Percent]: 1.1,
+  [SellLimitOrderOptions.Plus15Percent]: 1.15,
 };
 
 export class LimitOrderFormStore {
   private _baseAsset?: AssetInfo;
   private _quoteAsset?: AssetInfo;
   private _input = new PriceLinkedInputs();
-  buySell: BuySell = 'buy';
+  direction: Direction = 'buy';
   marketPrice = 1.0;
   private _priceInput = '';
+  private _priceInputOption: SellLimitOrderOptions | BuyLimitOrderOptions | undefined;
 
   constructor() {
     makeAutoObservable(this);
 
-    reaction(() => [this.buySell], this._resetInputs);
+    reaction(() => [this.direction], this._resetInputs);
   }
 
   private _resetInputs = () => {
@@ -43,8 +60,8 @@ export class LimitOrderFormStore {
     this._priceInput = '';
   };
 
-  setBuySell = (x: BuySell) => {
-    this.buySell = x;
+  setDirection = (x: Direction) => {
+    this.direction = x;
   };
 
   get baseAsset(): undefined | AssetInfo {
@@ -75,17 +92,34 @@ export class LimitOrderFormStore {
     return this._priceInput;
   }
 
-  setPriceInput = (x: string) => {
+  get priceInputOption(): SellLimitOrderOptions | BuyLimitOrderOptions | undefined {
+    return this._priceInputOption;
+  }
+
+  setPriceInput = (x: string, fromOption = false) => {
     this._priceInput = x;
     const price = this.price;
     if (price !== undefined) {
       this._input.price = price;
     }
+    if (!fromOption) {
+      this._priceInputOption = undefined;
+    }
   };
 
-  setPriceInputFromOption = (x: string) => {
-    const price = (BUY_PRICE_OPTIONS[x] ?? (x => x))(this.marketPrice);
-    this.setPriceInput(price.toString());
+  setPriceInputOption = (option: SellLimitOrderOptions | BuyLimitOrderOptions) => {
+    this._priceInputOption = option;
+    const multiplier =
+      this.direction === 'buy'
+        ? BuyLimitOrderMultipliers[option as BuyLimitOrderOptions]
+        : SellLimitOrderMultipliers[option as SellLimitOrderOptions];
+
+    if (!multiplier) {
+      return;
+    }
+
+    const price = multiplier * this.marketPrice;
+    this.setPriceInput(price.toString(), true);
   };
 
   get price(): number | undefined {
@@ -94,12 +128,12 @@ export class LimitOrderFormStore {
 
   get plan(): Position | undefined {
     const input =
-      this.buySell === 'buy' ? parseNumber(this.quoteInput) : parseNumber(this.baseInput);
+      this.direction === 'buy' ? parseNumber(this.quoteInput) : parseNumber(this.baseInput);
     if (!input || !this._baseAsset || !this._quoteAsset || !this.price) {
       return undefined;
     }
     return limitOrderPosition({
-      buy: this.buySell,
+      buy: this.direction,
       price: this.price,
       input,
       baseAsset: this._baseAsset,
@@ -114,6 +148,7 @@ export class LimitOrderFormStore {
       this._input.inputA = '';
       this._input.inputB = '';
       this._priceInput = '';
+      this._priceInputOption = undefined;
     }
   }
 }

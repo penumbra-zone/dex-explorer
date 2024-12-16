@@ -9,46 +9,31 @@ import { InfoRowTradingFee } from './info-row-trading-fee';
 import { InfoRowGasFee } from './info-row-gas-fee';
 import { SelectGroup } from './select-group';
 import { OrderFormStore } from './store/OrderFormStore';
-
-const BUY_PRICE_OPTIONS: Record<string, (mp: number) => number> = {
-  Market: (mp: number) => mp,
-  '-2%': mp => 0.98 * mp,
-  '-5%': mp => 0.95 * mp,
-  '-10%': mp => 0.9 * mp,
-  '-15%': mp => 0.85 * mp,
-};
-
-const SELL_PRICE_OPTIONS: Record<string, (mp: number) => number> = {
-  Market: (mp: number) => mp,
-  '+2%': mp => 1.02 * mp,
-  '+5%': mp => 1.05 * mp,
-  '+10%': mp => 1.1 * mp,
-  '+15%': mp => 1.15 * mp,
-};
+import { BuyLimitOrderOptions, SellLimitOrderOptions } from './store/LimitOrderFormStore';
 
 export const LimitOrderForm = observer(({ parentStore }: { parentStore: OrderFormStore }) => {
   const { connected } = connectionStore;
   const store = parentStore.limitForm;
 
-  const isBuy = store.buySell === 'buy';
-  const priceOptions = isBuy ? BUY_PRICE_OPTIONS : SELL_PRICE_OPTIONS;
+  const isBuy = store.direction === 'buy';
 
   return (
     <div className='p-4'>
-      <SegmentedControl direction={store.buySell} setDirection={store.setBuySell} />
+      <SegmentedControl direction={store.direction} setDirection={store.setDirection} />
       <div className='mb-4'>
         <div className='mb-2'>
           <OrderInput
             label={`When ${store.baseAsset?.symbol} is`}
             value={store.priceInput}
-            onChange={store.setPriceInput}
+            onChange={price => store.setPriceInput(price)}
             denominator={store.quoteAsset?.symbol}
           />
         </div>
         <SelectGroup
-          options={Object.keys(priceOptions)}
-          onChange={o =>
-            store.setPriceInput((priceOptions[o] ?? (x => x))(store.marketPrice).toString())
+          options={Object.values(isBuy ? BuyLimitOrderOptions : SellLimitOrderOptions)}
+          value={store.priceInputOption}
+          onChange={option =>
+            store.setPriceInputOption(option as BuyLimitOrderOptions | SellLimitOrderOptions)
           }
         />
       </div>

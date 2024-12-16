@@ -9,30 +9,13 @@ import { SelectGroup } from './select-group';
 import { InfoRow } from './info-row';
 import { InfoRowGasFee } from './info-row-gas-fee';
 import { OrderFormStore } from './store/OrderFormStore';
-import { MAX_POSITION_COUNT, MIN_POSITION_COUNT } from './store/RangeOrderFormStore';
-
-const LOWER_PRICE_OPTIONS: Record<string, (mp: number) => number> = {
-  Market: (mp: number) => mp,
-  '-2%': mp => 0.98 * mp,
-  '-5%': mp => 0.95 * mp,
-  '-10%': mp => 0.9 * mp,
-  '-15%': mp => 0.85 * mp,
-};
-
-const UPPER_PRICE_OPTIONS: Record<string, (mp: number) => number> = {
-  Market: (mp: number) => mp,
-  '+2%': mp => 1.02 * mp,
-  '+5%': mp => 1.05 * mp,
-  '+10%': mp => 1.1 * mp,
-  '+15%': mp => 1.15 * mp,
-};
-
-const FEE_TIERS: Record<string, number> = {
-  '0.1%': 0.1,
-  '0.25%': 0.25,
-  '0.5%': 0.5,
-  '1.00%': 1,
-};
+import {
+  MAX_POSITION_COUNT,
+  MIN_POSITION_COUNT,
+  UpperBoundOptions,
+  LowerBoundOptions,
+  FeeTierOptions,
+} from './store/RangeOrderFormStore';
 
 export const RangeLiquidityOrderForm = observer(
   ({ parentStore }: { parentStore: OrderFormStore }) => {
@@ -84,17 +67,14 @@ export const RangeLiquidityOrderForm = observer(
             <OrderInput
               label='Upper Price Bound'
               value={store.upperPriceInput}
-              onChange={store.setUpperPriceInput}
+              onChange={price => store.setUpperPriceInput(price)}
               denominator={store.quoteAsset?.symbol}
             />
           </div>
           <SelectGroup
-            options={Object.keys(UPPER_PRICE_OPTIONS)}
-            onChange={o =>
-              store.setUpperPriceInput(
-                (UPPER_PRICE_OPTIONS[o] ?? (x => x))(store.marketPrice).toString(),
-              )
-            }
+            options={Object.values(UpperBoundOptions)}
+            value={store.upperPriceInputOption}
+            onChange={option => store.setUpperPriceInputOption(option as UpperBoundOptions)}
           />
         </div>
         <div className='mb-4'>
@@ -102,17 +82,14 @@ export const RangeLiquidityOrderForm = observer(
             <OrderInput
               label='Lower Price Bound'
               value={store.lowerPriceInput}
-              onChange={store.setLowerPriceInput}
+              onChange={price => store.setLowerPriceInput(price)}
               denominator={store.quoteAsset?.symbol}
             />
           </div>
           <SelectGroup
-            options={Object.keys(LOWER_PRICE_OPTIONS)}
-            onChange={o =>
-              store.setLowerPriceInput(
-                (LOWER_PRICE_OPTIONS[o] ?? (x => x))(store.marketPrice).toString(),
-              )
-            }
+            options={Object.values(LowerBoundOptions)}
+            value={store.lowerPriceInputOption}
+            onChange={option => store.setLowerPriceInputOption(option as LowerBoundOptions)}
           />
         </div>
         <div className='mb-4'>
@@ -120,17 +97,14 @@ export const RangeLiquidityOrderForm = observer(
             <OrderInput
               label='Fee tier'
               value={store.feeTierPercentInput}
-              onChange={store.setFeeTierPercentInput}
+              onChange={amount => store.setFeeTierPercentInput(amount)}
               denominator='%'
             />
           </div>
           <SelectGroup
-            options={Object.keys(FEE_TIERS)}
-            onChange={o => {
-              if (o in FEE_TIERS) {
-                store.setFeeTierPercentInput((FEE_TIERS[o] ?? 0).toString());
-              }
-            }}
+            options={Object.values(FeeTierOptions)}
+            value={store.feeTierPercentInputOption}
+            onChange={option => store.setFeeTierPercentInputOption(option as FeeTierOptions)}
           />
         </div>
         <div className='mb-4'>

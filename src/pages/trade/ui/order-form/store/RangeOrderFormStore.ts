@@ -5,6 +5,45 @@ import { Position } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1
 import { pnum } from '@penumbra-zone/types/pnum';
 import { makeAutoObservable } from 'mobx';
 
+export enum UpperBoundOptions {
+  Market = 'Market',
+  Plus2Percent = '+2%',
+  Plus5Percent = '+5%',
+  Plus10Percent = '+10%',
+  Plus15Percent = '+15%',
+}
+
+export enum LowerBoundOptions {
+  Market = 'Market',
+  Minus2Percent = '-2%',
+  Minus5Percent = '-5%',
+  Minus10Percent = '-10%',
+  Minus15Percent = '-15%',
+}
+
+export enum FeeTierOptions {
+  '0.1%' = '0.1%',
+  '0.25%' = '0.25%',
+  '0.5%' = '0.5%',
+  '1.00%' = '1.00%',
+}
+
+const UpperBoundMultipliers = {
+  [UpperBoundOptions.Market]: 1,
+  [UpperBoundOptions.Plus2Percent]: 1.02,
+  [UpperBoundOptions.Plus5Percent]: 1.05,
+  [UpperBoundOptions.Plus10Percent]: 1.1,
+  [UpperBoundOptions.Plus15Percent]: 1.15,
+};
+
+const LowerBoundMultipliers = {
+  [LowerBoundOptions.Market]: 1,
+  [LowerBoundOptions.Minus2Percent]: 0.98,
+  [LowerBoundOptions.Minus5Percent]: 0.95,
+  [LowerBoundOptions.Minus10Percent]: 0.9,
+  [LowerBoundOptions.Minus15Percent]: 0.85,
+};
+
 const extractAmount = (positions: Position[], asset: AssetInfo): number => {
   let out = 0.0;
   for (const position of positions) {
@@ -29,7 +68,10 @@ export class RangeOrderFormStore {
   liquidityTargetInput = '';
   upperPriceInput = '';
   lowerPriceInput = '';
+  upperPriceInputOption: UpperBoundOptions | undefined;
+  lowerPriceInputOption: LowerBoundOptions | undefined;
   feeTierPercentInput = '';
+  feeTierPercentInputOption: FeeTierOptions | undefined;
   private _positionCountInput = '10';
   private _positionCountSlider = 10;
   marketPrice = 1;
@@ -58,16 +100,46 @@ export class RangeOrderFormStore {
     return parseNumber(this.upperPriceInput);
   }
 
-  setUpperPriceInput = (x: string) => {
+  setUpperPriceInput = (x: string, fromOption = false) => {
     this.upperPriceInput = x;
+    if (!fromOption) {
+      this.upperPriceInputOption = undefined;
+    }
+  };
+
+  setUpperPriceInputOption = (option: UpperBoundOptions) => {
+    this.upperPriceInputOption = option;
+    const multiplier = UpperBoundMultipliers[option];
+
+    if (!multiplier) {
+      return;
+    }
+
+    const price = multiplier * this.marketPrice;
+    this.setUpperPriceInput(price.toString(), true);
   };
 
   get lowerPrice(): number | undefined {
     return parseNumber(this.lowerPriceInput);
   }
 
-  setLowerPriceInput = (x: string) => {
+  setLowerPriceInput = (x: string, fromOption = false) => {
     this.lowerPriceInput = x;
+    if (!fromOption) {
+      this.lowerPriceInputOption = undefined;
+    }
+  };
+
+  setLowerPriceInputOption = (option: LowerBoundOptions) => {
+    this.lowerPriceInputOption = option;
+    const multiplier = LowerBoundMultipliers[option];
+
+    if (!multiplier) {
+      return;
+    }
+
+    const price = multiplier * this.marketPrice;
+    this.setLowerPriceInput(price.toString(), true);
   };
 
   // Treat fees that don't parse as 0
@@ -75,8 +147,16 @@ export class RangeOrderFormStore {
     return Math.max(0, Math.min(parseNumber(this.feeTierPercentInput) ?? 0, 50));
   }
 
-  setFeeTierPercentInput = (x: string) => {
+  setFeeTierPercentInput = (x: string, fromOption = false) => {
     this.feeTierPercentInput = x;
+    if (!fromOption) {
+      this.feeTierPercentInputOption = undefined;
+    }
+  };
+
+  setFeeTierPercentInputOption = (option: FeeTierOptions) => {
+    this.feeTierPercentInputOption = option;
+    this.setFeeTierPercentInput(option.replace('%', ''), true);
   };
 
   get positionCountInput(): string {
@@ -151,7 +231,9 @@ export class RangeOrderFormStore {
     if (resetInputs) {
       this.liquidityTargetInput = '';
       this.upperPriceInput = '';
+      this.upperPriceInputOption = undefined;
       this.lowerPriceInput = '';
+      this.lowerPriceInputOption = undefined;
       this.feeTierPercentInput = '';
       this._positionCountInput = '10';
       this._positionCountSlider = 10;
