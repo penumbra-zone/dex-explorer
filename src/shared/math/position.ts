@@ -81,6 +81,15 @@ const priceToPQ = (
   return { p: pnum(BigInt(p.toFixed(0))).toAmount(), q: pnum(BigInt(q.toFixed(0))).toAmount() };
 };
 
+export const pqToPrice = (p: Amount, q: Amount, pExponent: number, qExponent: number): number => {
+  console.log('TCL: qExponent', qExponent);
+  console.log('TCL: pExponent', pExponent);
+  console.log('TCL: q', q);
+  console.log('TCL: p', p);
+  const basePrice = pnum(p).toBigNumber().dividedBy(pnum(q).toBigNumber());
+  return basePrice.times(new BigNumber(10).pow(pExponent - qExponent)).toNumber();
+};
+
 /**
  * Convert a plan into a position.
  *

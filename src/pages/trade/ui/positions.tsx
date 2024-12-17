@@ -5,7 +5,6 @@ import { connectionStore } from '@/shared/model/connection';
 import { observer } from 'mobx-react-lite';
 import { Text, TextProps } from '@penumbra-zone/ui/Text';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
-import dynamic from 'next/dynamic';
 import { Density } from '@penumbra-zone/ui/Density';
 import { Order, PositionData, stateToString, usePositions } from '@/pages/trade/api/positions.ts';
 import {
@@ -17,6 +16,9 @@ import { Button } from '@penumbra-zone/ui/Button';
 import { positionsStore } from '@/pages/trade/model/positions';
 import Link from 'next/link';
 import { SquareArrowOutUpRight } from 'lucide-react';
+import { useEffect } from 'react';
+import { pnum } from '@penumbra-zone/types/pnum';
+import { useRegistryAssets } from '@/shared/api/registry';
 
 const LoadingRow = () => {
   return (
@@ -142,6 +144,15 @@ const AmountDisplay = ({
   ));
 };
 
+function getWeightedPrice(items: { amount: number; price: number }[]) {
+  console.log('TCL: getWeightedPrice -> items', items);
+  const totalAmount = items.reduce((acc, item) => acc + item.amount, 0);
+  console.log('TCL: getWeightedPrice -> totalAmount', totalAmount);
+  const weightedPrice = items.reduce((acc, item) => acc + item.amount * item.price, 0);
+  console.log('TCL: getWeightedPrice -> weightedPrice / totalAmount', weightedPrice / totalAmount);
+  return totalAmount ? weightedPrice / totalAmount : 0;
+}
+
 const MAX_ACTION_COUNT = 15;
 
 const HeaderActionButton = observer(() => {
@@ -183,9 +194,21 @@ const HeaderActionButton = observer(() => {
   return 'Actions';
 });
 
-const PositionsInner = observer(({ showInactive }: { showInactive: boolean }) => {
+const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
   const { connected } = connectionStore;
+  const { data: assets } = useRegistryAssets();
+  console.log('TCL: assets', assets);
   const { data, isLoading, error } = usePositions();
+  const { displayPositions, setPositions, setAssets } = positionsStore;
+  console.log('TCL: displayPositions', displayPositions);
+
+  useEffect(() => {
+    setPositions(data ?? {});
+  }, [data, setPositions]);
+
+  useEffect(() => {
+    setAssets(assets ?? []);
+  }, [assets, setAssets]);
 
   if (!connected) {
     return <NotConnectedNotice />;
@@ -195,7 +218,7 @@ const PositionsInner = observer(({ showInactive }: { showInactive: boolean }) =>
     return <ErrorNotice error={error} />;
   }
 
-  if (data?.length === 0) {
+  if (!displayPositions.length) {
     return <NoPositions />;
   }
 
@@ -210,22 +233,23 @@ const PositionsInner = observer(({ showInactive }: { showInactive: boolean }) =>
           <HeaderCell>Base Price</HeaderCell>
           <HeaderCell>Current Value</HeaderCell>
           <HeaderCell>Position ID</HeaderCell>
-          <HeaderCell>
-            <HeaderActionButton />
-          </HeaderCell>
+          <HeaderCell>{/* <HeaderActionButton /> */}-</HeaderCell>
         </div>
 
         {isLoading && Array.from({ length: 15 }).map((_, i) => <LoadingRow key={i} />)}
 
-        {data
-          ?.filter(p =>
-            showInactive ? true : p.positionState !== PositionState_PositionStateEnum.WITHDRAWN,
-          )
+        {/* {data
+          ?.map(p => ({
+            ...p,
+            displayFee: pnum(p.fee / 100).toFormattedString({ decimals: 2 }),
+            isActive: p.positionState !== PositionState_PositionStateEnum.WITHDRAWN,
+            positionIdString: bech32mPositionId(p.positionId),
+          }))
+          .filter(p => (showInactive ? true : p.isActive))
           .map(p => {
-            const bech32PositionId = bech32mPositionId(p.positionId);
             return (
               <div
-                key={bech32PositionId}
+                key={p.positionIdString}
                 className='grid grid-cols-8 border-b border-other-tonalStroke'
               >
                 <Cell>
@@ -244,13 +268,22 @@ const PositionsInner = observer(({ showInactive }: { showInactive: boolean }) =>
                   </div>
                 </Cell>
                 <Cell>
-                  <Text detail color='text.secondary'>
-                    {p.fee / 100}%
-                  </Text>
+                  <div className='tabular-nums'>
+                    <Text detail color='text.secondary'>
+                      {p.displayFee}%
+                    </Text>
+                  </div>
                 </Cell>
                 <Cell>
                   <Text detail color='text.secondary'>
-                    -
+                    {pnum(
+                      getWeightedPrice(
+                        p.orders.map(order => ({
+                          amount: pnum(order.tradeAmount).toNumber(),
+                          price: pnum(order.effectivePrice).toNumber(),
+                        })),
+                      ),
+                    ).toFormattedString({ decimals: 2 })}
                   </Text>
                 </Cell>
                 <Cell>
@@ -260,9 +293,9 @@ const PositionsInner = observer(({ showInactive }: { showInactive: boolean }) =>
                 </Cell>
                 <Cell>
                   <Text detail color='text.secondary' truncate>
-                    {bech32PositionId}
+                    {p.positionIdString}
                   </Text>
-                  <Link href={`/inspect/lp/${bech32PositionId}`}>
+                  <Link href={`/inspect/lp/${p.positionIdString}`}>
                     <SquareArrowOutUpRight className='w-4 h-4 text-text-secondary' />
                   </Link>
                 </Cell>
@@ -271,14 +304,10 @@ const PositionsInner = observer(({ showInactive }: { showInactive: boolean }) =>
                 </Cell>
               </div>
             );
-          })}
+          })} */}
       </div>
     </Density>
   );
-});
-
-const Positions = dynamic(() => Promise.resolve(PositionsInner), {
-  ssr: false,
 });
 
 export default Positions;
