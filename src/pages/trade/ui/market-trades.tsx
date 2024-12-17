@@ -2,7 +2,6 @@ import { Text } from '@penumbra-zone/ui/Text';
 import { ReactNode } from 'react';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { RecentExecutionVV, useRecentExecutions } from '@/pages/trade/api/recent-executions.ts';
-import cn from 'clsx';
 import { Density } from '@penumbra-zone/ui/Density';
 
 export const Cell = ({ children }: { children: ReactNode }) => {
@@ -62,11 +61,15 @@ const LoadedState = ({ data }: { data: RecentExecutionVV[] }) => {
         className='grid grid-cols-subgrid col-span-4 text-text-secondary border-b border-other-tonalStroke'
       >
         <Cell>
-          <span className={cn(e.kind === 'buy' ? 'text-success-light' : 'text-destructive-light')}>
+          <Text small color={e.kind === 'buy' ? 'success.light' : 'destructive.light'}>
             {e.price}
-          </span>
+          </Text>
         </Cell>
-        <Cell>{e.amount}</Cell>
+        <Cell>
+          <Text small color='text.primary'>
+            {e.amount}
+          </Text>
+        </Cell>
         <Cell>
           <Text small color='text.primary'>
             {formatLocalTime(e.timestamp)}
