@@ -333,6 +333,25 @@ class Pindexer {
       .execute();
   }
 
+  async recentExecutions(base: AssetId, quote: AssetId, amount: number) {
+    return await this.db
+      .selectFrom('dex_ex_position_executions')
+      .select([
+        'context_asset_end',
+        'context_asset_start',
+        'delta_1',
+        'delta_2',
+        'lambda_1',
+        'lambda_2',
+        'time',
+      ])
+      .where('context_asset_start', '=', Buffer.from(base.inner))
+      .where('context_asset_end', '=', Buffer.from(quote.inner))
+      .orderBy('time', 'desc')
+      .limit(amount)
+      .execute();
+  }
+
   async getPositionVolumeAndFees(positionId: PositionId): Promise<VolumeAndFees[]> {
     const results = await this.db
       .selectFrom('dex_ex_position_executions')
