@@ -344,10 +344,12 @@ class Pindexer {
         'lambda_1',
         'lambda_2',
         'time',
+        'rowid',
       ])
       .where('context_asset_start', '=', Buffer.from(base.inner))
       .where('context_asset_end', '=', Buffer.from(quote.inner))
       .orderBy('time', 'desc')
+      .orderBy('rowid', 'asc') // Secondary sort by ID to maintain order within the same time frame
       .limit(amount)
       .execute();
   }
