@@ -1,4 +1,4 @@
-import { MouseEventHandler } from 'react';
+import { FC, MouseEventHandler } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Star } from 'lucide-react';
 import { Button } from '@penumbra-zone/ui/Button';
@@ -28,7 +28,7 @@ export const StarButton = observer(({ pair, adornment }: StarButtonProps) => {
   return (
     <Density compact>
       <Button
-        icon={starred ? StarFilled : Star}
+        icon={starred ? (StarFilled as FC) : Star}
         priority={adornment ? 'primary' : 'secondary'}
         iconOnly={adornment ? 'adornment' : true}
         onClick={onClick}
