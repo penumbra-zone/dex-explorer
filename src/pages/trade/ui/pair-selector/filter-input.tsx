@@ -17,6 +17,11 @@ export interface FilterInputProps {
 
 export const FilterInput = forwardRef<HTMLInputElement, FilterInputProps>(
   ({ asset, onClear, onChange, value, placeholder }, ref) => {
+    const deselect = () => {
+      onChange('');
+      onClear();
+    };
+
     return (
       <>
         {asset && (
@@ -29,7 +34,7 @@ export const FilterInput = forwardRef<HTMLInputElement, FilterInputProps>(
               <AssetIcon metadata={asset} />
               <Text>{asset.symbol}</Text>
             </div>
-            <Button iconOnly='adornment' icon={X} onClick={onClear}>
+            <Button iconOnly='adornment' icon={X} onClick={deselect}>
               Deselect asset
             </Button>
           </div>

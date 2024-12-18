@@ -29,7 +29,9 @@ class StarStateStore {
   }
 
   isStarred = (pair: Pair): boolean => {
-    return this.pairs.some(value => value.base.equals(pair.base) && value.quote.equals(pair.quote));
+    return this.pairs.some(
+      value => value.base.symbol === pair.base.symbol && value.quote.symbol === pair.quote.symbol,
+    );
   };
 }
 

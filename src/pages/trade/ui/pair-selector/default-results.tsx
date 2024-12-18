@@ -56,39 +56,41 @@ export const DefaultResults = observer(({ onSelect }: DefaultResultsProps) => {
 
   return (
     <>
-      <div className='mt-4 flex flex-col gap-2 text-text-secondary'>
-        <Text small>Starred</Text>
+      {!!starred.length && (
+        <div className='mt-4 flex flex-col gap-2 text-text-secondary'>
+          <Text small>Starred</Text>
 
-        <Dialog.RadioGroup>
-          <div className='flex flex-col gap-1'>
-            {starred.map(({ base, quote }) => (
-              <Dialog.RadioItem
-                key={`${base.symbol}/${quote.symbol}`}
-                value={`${base.symbol}/${quote.symbol}`}
-                title={
-                  <div className='flex items-center h-10'>
-                    <Text color='text.primary'>
-                      {base.symbol}/{quote.symbol}
-                    </Text>
-                  </div>
-                }
-                endAdornment={<StarButton adornment pair={{ base, quote }} />}
-                startAdornment={
-                  <>
-                    <div className='z-10'>
-                      <AssetIcon metadata={base} size='lg' />
+          <Dialog.RadioGroup>
+            <div className='flex flex-col gap-1'>
+              {starred.map(({ base, quote }) => (
+                <Dialog.RadioItem
+                  key={`starred-${base.symbol}/${quote.symbol}`}
+                  value={`${base.symbol}/${quote.symbol}`}
+                  title={
+                    <div className='flex items-center h-10'>
+                      <Text color='text.primary'>
+                        {base.symbol}/{quote.symbol}
+                      </Text>
                     </div>
-                    <div className='-ml-4'>
-                      <AssetIcon metadata={quote} size='lg' />
-                    </div>
-                  </>
-                }
-                onSelect={() => onSelect({ base, quote })}
-              />
-            ))}
-          </div>
-        </Dialog.RadioGroup>
-      </div>
+                  }
+                  endAdornment={<StarButton adornment pair={{ base, quote }} />}
+                  startAdornment={
+                    <>
+                      <div className='z-10'>
+                        <AssetIcon metadata={base} size='lg' />
+                      </div>
+                      <div className='-ml-4'>
+                        <AssetIcon metadata={quote} size='lg' />
+                      </div>
+                    </>
+                  }
+                  onSelect={() => onSelect({ base, quote })}
+                />
+              ))}
+            </div>
+          </Dialog.RadioGroup>
+        </div>
+      )}
 
       <div className='mt-4 flex flex-col gap-2 text-text-secondary'>
         <Text small>Suggested</Text>
@@ -97,7 +99,7 @@ export const DefaultResults = observer(({ onSelect }: DefaultResultsProps) => {
           <div className='flex flex-col gap-1'>
             {suggested?.map(({ baseAsset: base, quoteAsset: quote, volume }) => (
               <Dialog.RadioItem
-                key={`${base.symbol}/${quote.symbol}`}
+                key={`suggested-${base.symbol}/${quote.symbol}`}
                 value={`${base.symbol}/${quote.symbol}`}
                 title={
                   <Text color='text.primary'>
