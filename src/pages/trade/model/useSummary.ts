@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { usePathSymbols } from '@/pages/trade/model/use-path.ts';
 import { DurationWindow } from '@/shared/utils/duration.ts';
 import { NoSummaryData, SummaryData } from '@/shared/api/server/summary/types.ts';
@@ -23,4 +23,25 @@ export const useSummary = (window: DurationWindow) => {
   useRefetchOnNewBlock('summary', query);
 
   return query;
+};
+
+// Fetch USDC-denominated prices for each quote asset to enable cross-pair comparisons.
+// Uses 'useQueries' hook for handling multiple dynamic numbers of queries
+export const useMultipleSummaries = (quoteAssets: string[]) => {
+  const queries = useQueries<Array<{ data: SummaryData | NoSummaryData | undefined }>>({
+    queries: quoteAssets.map(asset => ({
+      queryKey: ['multipleSummaries', asset, 'USDC'] as const,
+      queryFn: async () => {
+        return apiFetch<SummaryData | NoSummaryData>('/api/summary', {
+          durationWindow: '1d' as DurationWindow,
+          baseAsset: asset,
+          quoteAsset: 'USDC',
+        });
+      },
+    })),
+  });
+
+  // TODO: add block-based fetching
+
+  return queries;
 };
