@@ -1,0 +1,51 @@
+import cn from 'clsx';
+import { Search, X } from 'lucide-react';
+import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { AssetIcon } from '@penumbra-zone/ui/AssetIcon';
+import { Text } from '@penumbra-zone/ui/Text';
+import { Button } from '@penumbra-zone/ui/Button';
+import { TextInput } from '@penumbra-zone/ui/TextInput';
+import { forwardRef } from 'react';
+
+export interface FilterInputProps {
+  asset?: Metadata;
+  onClear: VoidFunction;
+  value: string;
+  placeholder: string;
+  onChange: (value: string) => void;
+}
+
+export const FilterInput = forwardRef<HTMLInputElement, FilterInputProps>(
+  ({ asset, onClear, onChange, value, placeholder }, ref) => {
+    return (
+      <>
+        {asset && (
+          <div
+            className={cn(
+              'grow h-14 flex gap-2 items-center text-text-primary px-3 rounded-sm bg-other-tonalFill5',
+            )}
+          >
+            <div className='grow flex items-center gap-2'>
+              <AssetIcon metadata={asset} />
+              <Text>{asset.symbol}</Text>
+            </div>
+            <Button iconOnly='adornment' icon={X} onClick={onClear}>
+              Deselect asset
+            </Button>
+          </div>
+        )}
+
+        <div className={cn(asset && 'hidden')}>
+          <TextInput
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            endAdornment={<Search />}
+            ref={ref}
+          />
+        </div>
+      </>
+    );
+  },
+);
+FilterInput.displayName = 'FilterInput';

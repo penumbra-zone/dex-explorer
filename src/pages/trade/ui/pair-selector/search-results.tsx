@@ -8,10 +8,22 @@ import { useAssets } from '@/shared/api/assets';
 export interface SearchResultsProps {
   onSelect: (asset: Metadata) => void;
   onClear: VoidFunction;
+  search?: string;
 }
 
-export const SearchResults = ({ onSelect, onClear }: SearchResultsProps) => {
+const useFilteredAssets = (assets: Metadata[], search: string) => {
+  const sortedAssets = assets.sort((a, b) => Number(b.priorityScore - a.priorityScore));
+  return sortedAssets.filter(asset => {
+    return (
+      asset.symbol.toLowerCase().includes(search.toLowerCase()) ||
+      asset.description.toLowerCase().includes(search.toLowerCase())
+    );
+  });
+};
+
+export const SearchResults = ({ onSelect, onClear, search }: SearchResultsProps) => {
   const { data: assets } = useAssets();
+  const filtered = useFilteredAssets(assets ?? [], search ?? '');
 
   return (
     <>
@@ -19,7 +31,7 @@ export const SearchResults = ({ onSelect, onClear }: SearchResultsProps) => {
         <Text small>Recent</Text>
         <Dialog.RadioGroup>
           <div className='flex flex-col gap-1'>
-            {assets?.map(asset => (
+            {filtered.map(asset => (
               <Dialog.RadioItem
                 key={asset.symbol}
                 value={asset.symbol}
