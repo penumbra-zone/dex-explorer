@@ -119,7 +119,7 @@ export const PairCard = ({ loading, summary }: PairCardProps) => {
               {shortify(Number(getFormattedAmtFromValueView(summary.liquidity)))}
             </Text>
             <Text detail color='text.secondary'>
-              {summary.quoteAsset.symbol}
+              {'USDC'}
             </Text>
           </>
         )}
@@ -134,7 +134,7 @@ export const PairCard = ({ loading, summary }: PairCardProps) => {
               {shortify(Number(getFormattedAmtFromValueView(summary.directVolume)))}
             </Text>
             <Text detail color='text.secondary'>
-              {summary.quoteAsset.symbol}
+              {'USDC'}
             </Text>
           </>
         )}
