@@ -12,7 +12,13 @@ import { useProviderManifests } from '@/shared/api/providerManifests';
 import dynamic from 'next/dynamic';
 
 const ConnectButtonInner = observer(
-  ({ actionType = 'accent' }: { actionType?: ButtonProps['actionType'] }) => {
+  ({
+    actionType = 'accent',
+    variant = 'default',
+  }: {
+    actionType?: ButtonProps['actionType'];
+    variant?: 'default' | 'minimal';
+  }) => {
     const [isOpen, setIsOpen] = useState(false);
     const { data: providerManifests } = useProviderManifests();
 
@@ -32,23 +38,43 @@ const ConnectButtonInner = observer(
 
     return (
       <>
-        <Density sparse>
-          {providerOrigins.length === 0 ? (
-            <Button
-              icon={Wallet2}
-              actionType={actionType}
-              onClick={() =>
-                window.open('https://praxwallet.com/', '_blank', 'noopener,noreferrer')
-              }
-            >
-              Install Prax
-            </Button>
-          ) : (
-            <Button icon={Wallet2} actionType={actionType} onClick={onConnectClick}>
-              Connect wallet
-            </Button>
-          )}
-        </Density>
+        {variant === 'default' ? (
+          <Density sparse>
+            {providerOrigins.length === 0 ? (
+              <Button
+                icon={Wallet2}
+                actionType={actionType}
+                onClick={() =>
+                  window.open('https://praxwallet.com/', '_blank', 'noopener,noreferrer')
+                }
+              >
+                Install Prax
+              </Button>
+            ) : (
+              <Button icon={Wallet2} actionType={actionType} onClick={onConnectClick}>
+                Connect wallet
+              </Button>
+            )}
+          </Density>
+        ) : (
+          <Density compact>
+            {providerOrigins.length === 0 ? (
+              <Button
+                icon={Wallet2}
+                actionType={actionType}
+                onClick={() =>
+                  window.open('https://praxwallet.com/', '_blank', 'noopener,noreferrer')
+                }
+              >
+                Install Prax
+              </Button>
+            ) : (
+              <Button actionType={actionType} onClick={onConnectClick}>
+                Connect wallet
+              </Button>
+            )}
+          </Density>
+        )}
 
         <Dialog isOpen={isOpen} onClose={() => setIsOpen(false)}>
           <Dialog.Content title='Choose wallet'>
