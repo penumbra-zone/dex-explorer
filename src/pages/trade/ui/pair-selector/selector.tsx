@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
@@ -29,13 +29,34 @@ export const PairSelector = observer(() => {
 
   const { baseRef, quoteRef, focusedType, clearFocus } = useFocus(isOpen);
 
+  const onSelect = useCallback(
+    (base: Metadata, quote: Metadata) => {
+      handleRouting({ router, baseAsset: base, quoteAsset: quote });
+      setIsOpen(false);
+      clearFocus();
+      setQuoteFilter('');
+      setBaseFilter('');
+      setSelectedQuote(undefined);
+      setSelectedBase(undefined);
+    },
+    [clearFocus, router],
+  );
+
   useEffect(() => {
     if (selectedBase && selectedQuote) {
-      handleRouting({ router, baseAsset: selectedBase, quoteAsset: selectedQuote });
+      onSelect(selectedBase, selectedQuote);
     }
-  }, [selectedBase, selectedQuote, router]);
+  }, [selectedBase, selectedQuote, onSelect]);
 
-  if (error) {
+  if (
+    error instanceof Error &&
+    ![
+      'ConnectError',
+      'PenumbraNotInstalledError',
+      'PenumbraProviderNotAvailableError',
+      'PenumbraProviderNotConnectedError',
+    ].includes(error.name)
+  ) {
     return <div>Error loading pair selector: ${String(error)}</div>;
   }
 
@@ -110,13 +131,7 @@ export const PairSelector = observer(() => {
             />
           )}
 
-          {!focusedType && (
-            <DefaultResults
-              onSelect={pair =>
-                handleRouting({ router, baseAsset: pair.base, quoteAsset: pair.quote })
-              }
-            />
-          )}
+          {!focusedType && <DefaultResults onSelect={pair => onSelect(pair.base, pair.quote)} />}
         </Dialog.Content>
       </Dialog>
     </div>
