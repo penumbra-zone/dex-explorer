@@ -1,4 +1,4 @@
-import { Search } from 'lucide-react';
+import { Search, Ban } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Dialog } from '@penumbra-zone/ui/Dialog';
@@ -7,6 +7,7 @@ import { Pair, StarButton, starStore } from '@/features/star-pair';
 import { usePairs } from '@/pages/trade/api/use-pairs';
 import { shortify } from '@penumbra-zone/types/shortify';
 import { getFormattedAmtFromValueView } from '@penumbra-zone/types/value-view';
+import { Skeleton } from '@/shared/ui/skeleton';
 
 export interface DefaultResultsProps {
   onSelect: (pair: Pair) => void;
@@ -14,9 +15,37 @@ export interface DefaultResultsProps {
 
 export const DefaultResults = observer(({ onSelect }: DefaultResultsProps) => {
   const { pairs: starred } = starStore;
-  const { data: suggested } = usePairs();
+  const { data: suggested, isLoading, error } = usePairs();
 
-  if (!starred.length) {
+  if (isLoading) {
+    return (
+      <>
+        <div className='mt-4 mb-2 w-24 h-4'>
+          <Skeleton />
+        </div>
+
+        <div className='flex flex-col gap-1'>
+          {new Array(5).fill(null).map((_, i) => (
+            <div key={i} className='w-full h-16'>
+              <Skeleton />
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className='grow flex flex-col items-center justify-center gap-2 py-4 text-text-secondary'>
+        <Ban className='text-destructive-light size-8' />
+        <Text small>An error occurred when loading data from the blockchain</Text>
+        {/* TODO: add details button  */}
+      </div>
+    );
+  }
+
+  if (!starred.length && !suggested?.length) {
     return (
       <div className='grow flex flex-col items-center justify-center gap-2 py-4 text-text-secondary'>
         <Search className='size-8' />
