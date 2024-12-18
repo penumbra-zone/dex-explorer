@@ -3,19 +3,19 @@
 import { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
+import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { Dialog } from '@penumbra-zone/ui/Dialog';
-import { usePathToMetadata } from '../../model/use-path.ts';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { Density } from '@penumbra-zone/ui/Density';
 import { Text } from '@penumbra-zone/ui/Text';
 import { StarButton } from '@/features/star-pair';
+import { usePathToMetadata } from '../../model/use-path.ts';
 import { handleRouting } from './handle-routing.ts';
 import { useFocus } from './use-focus.ts';
-import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { Trigger } from './trigger';
-import { SearchResults } from '@/pages/trade/ui/pair-selector/search-results';
-import { DefaultResults } from '@/pages/trade/ui/pair-selector/default-results';
-import { FilterInput } from '@/pages/trade/ui/pair-selector/filter-input';
+import { SearchResults } from './search-results';
+import { DefaultResults } from './default-results';
+import { FilterInput } from './filter-input';
 
 export const PairSelector = observer(() => {
   const router = useRouter();
