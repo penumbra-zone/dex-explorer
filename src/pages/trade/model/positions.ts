@@ -1,27 +1,31 @@
-import { makeAutoObservable } from 'mobx';
+import { get, makeAutoObservable } from 'mobx';
 import { TransactionPlannerRequest } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
 import {
   Position,
   PositionId,
   PositionState_PositionStateEnum,
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
+import { Metadata, ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
 import { planBuildBroadcast } from '@/pages/trade/ui/order-form/helpers.tsx';
 import { connectionStore } from '@/shared/model/connection';
 import { AddressIndex } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
 import { queryClient } from '@/shared/const/queryClient.ts';
-import { getPositionData, PositionData } from '@/pages/trade/api/positions.ts';
+import { getPositionData, PositionData, stateToString } from '@/pages/trade/api/positions.ts';
 import { penumbra } from '@/shared/const/penumbra.ts';
 import { DexService } from '@penumbra-zone/protobuf';
 import { openToast } from '@penumbra-zone/ui/Toast';
+import { toValueView } from '@/shared/utils/value-view';
 import { bech32mPositionId } from '@penumbra-zone/bech32m/plpid';
 import { pnum } from '@penumbra-zone/types/pnum';
-import { compareAssetId, pqToPrice } from '@/shared/math/position';
+import { compareAssetId, getBaseQuoteAssets, pqToPrice } from '@/shared/math/position';
 import { registryQueryFn } from '@/shared/api/registry';
 
 class PositionsStore {
   public loading = false;
   public positionsById: Record<string, Position> = {};
-  private assets: Metadata[];
+  private assets: Metadata[] = [];
+  private currentPair: [Metadata, Metadata] | null = null;
 
   constructor() {
     makeAutoObservable(this);
@@ -110,51 +114,211 @@ class PositionsStore {
   };
 
   setAssets = (assets: Metadata[]) => {
-    console.log('TCL: PositionsStore -> setAssets -> assets', assets);
     this.assets = assets;
   };
 
+  setCurrentPair = (baseAsset: Metadata, quoteAsset: Metadata) => {
+    this.currentPair = [baseAsset, quoteAsset];
+  };
+
+  getDirection = (baseReserves: Amount, quoteReserves: Amount) => {
+    if (pnum(baseReserves).toBigInt() !== 0n && pnum(quoteReserves).toBigInt() !== 0n) {
+      return 'Sell';
+    }
+
+    if (pnum(baseReserves).toBigInt() !== 0n) {
+      return 'Sell';
+    }
+
+    // else quoteReserves !== 0n
+    return 'Buy';
+  };
+
+  getDirectionalPositionInfo = ({
+    asset1,
+    asset2,
+  }: {
+    asset1: {
+      asset: Metadata;
+      exponent: number;
+      amount: number;
+      price: number;
+      effectivePrice: number;
+      reserves: Amount;
+    };
+    asset2: {
+      asset: Metadata;
+      exponent: number;
+      amount: number;
+      price: number;
+      effectivePrice: number;
+      reserves: Amount;
+    };
+  }) => {
+    if (!this.currentPair || !asset1.asset.penumbraAssetId || !asset2.asset.penumbraAssetId) {
+      throw new Error('No current pair or assets');
+    }
+
+    const [currentBaseAsset, currentQuoteAsset] = this.currentPair;
+    const asset1IsBaseAsset = asset1.asset.penumbraAssetId.equals(currentBaseAsset.penumbraAssetId);
+    const asset1IsQuoteAsset = asset1.asset.penumbraAssetId.equals(
+      currentQuoteAsset.penumbraAssetId,
+    );
+    const asset2IsBaseAsset = asset2.asset.penumbraAssetId.equals(currentBaseAsset.penumbraAssetId);
+    const asset2IsQuoteAsset = asset2.asset.penumbraAssetId.equals(
+      currentQuoteAsset.penumbraAssetId,
+    );
+
+    // - if position in current pair, use the current orientation
+    if (asset1IsBaseAsset && asset2IsQuoteAsset) {
+      return {
+        direction: this.getDirection(asset1.reserves, asset2.reserves),
+        baseAsset: asset1,
+        quoteAsset: asset2,
+      };
+    }
+
+    if (asset1IsQuoteAsset && asset2IsBaseAsset) {
+      return {
+        direction: this.getDirection(asset2.reserves, asset1.reserves),
+        baseAsset: asset2,
+        quoteAsset: asset1,
+      };
+    }
+
+    // - if position not in current pair, and one asset in position
+    //   pair is the current view’s quote asset, use that asset as
+    //   the quote asset
+    if (asset1IsQuoteAsset) {
+      return {
+        direction: this.getDirection(asset2.reserves, asset1.reserves),
+        baseAsset: asset2,
+        quoteAsset: asset1,
+      };
+    }
+
+    if (asset2IsQuoteAsset) {
+      return {
+        direction: this.getDirection(asset1.reserves, asset2.reserves),
+        baseAsset: asset1,
+        quoteAsset: asset2,
+      };
+    }
+
+    // - otherwise use whatever ordering
+    return {
+      direction: this.getDirection(asset1.reserves, asset2.reserves),
+      baseAsset: asset1,
+      quoteAsset: asset2,
+    };
+  };
+
   get displayPositions() {
-    if (!this.assets) {
+    if (!this.assets.length || !this.currentPair) {
       return [];
     }
 
-    return Object.entries(this.positionsById).map(([id, position]) => {
-      console.log('TCL: PositionsStore -> getdisplayPositions -> position', position);
+    return (
+      Object.entries(this.positionsById)
+        // .filter(([id, position]) => {
+        //   return id === 'plpid1lr87eu7khtu2zhqraw9gq3trtltvgyzahuen59rqxkm3qutrzvsquf9qr6';
+        // })
+        .map(([id, position]) => {
+          /* eslint-disable curly -- makes code more concise */
+          const { phi, reserves, state } = position;
+          if (!phi || !reserves?.r1 || !reserves.r2 || !state) return;
 
-      const { pair, component } = position.phi;
-      const asset1 = this.assets.find(x => x.penumbraAssetId.equals(pair?.asset1));
-      console.log('TCL: PositionsStore -> getdisplayPositions -> asset1', asset1);
-      const asset2 = this.assets.find(x => x.penumbraAssetId.equals(pair?.asset2));
-      console.log('TCL: PositionsStore -> getdisplayPositions -> asset2', asset2);
+          const { pair, component } = phi;
+          if (!pair || !component?.p || !component.q) return;
 
-      const correctOrder = compareAssetId(pair?.asset1, pair?.asset2) <= 0;
-      const [[p, q], [r1, r2], [a1, a2]] = correctOrder
-        ? [
-            [component?.p, component?.q],
-            [component?.r1, component?.r2],
-            [pair?.asset1, pair?.asset2],
-          ]
-        : [
-            [component?.q, component?.p],
-            [component?.r2, component?.r1],
-            [pair?.asset2, pair?.asset1],
-          ];
+          const asset1 = this.assets.find(asset => asset.penumbraAssetId?.equals(pair.asset1));
+          const asset2 = this.assets.find(asset => asset.penumbraAssetId?.equals(pair.asset2));
+          if (!asset1?.penumbraAssetId || !asset2?.penumbraAssetId) return;
 
-      const a1Exponent = a1.denomUnits?.find(x => x.denom === a1.display)?.exponent;
-      const a2Exponent = a2.denomUnits?.find(x => x.denom === a2.display)?.exponent;
+          const asset1Exponent = asset1.denomUnits.find(
+            denumUnit => denumUnit.denom === asset1.display,
+          )?.exponent;
+          const asset2Exponent = asset2.denomUnits.find(
+            denumUnit => denumUnit.denom === asset2.display,
+          )?.exponent;
+          if (!asset1Exponent || !asset2Exponent) return;
 
-      return {
-        id,
-        type: 'buy',
-        amount: '',
-        basePrice: pqToPrice(p, q, a1Exponent, a2Exponent),
-        effectivePrice: pqToPrice(p, q, a1Exponent, a2Exponent),
-        fee: `${pnum(component?.fee).toFormattedString()}%`,
-        currentValue: '',
-        // isActive: position.positionState !== PositionState_PositionStateEnum.WITHDRAWN,
-      };
-    });
+          const { p, q } = component;
+          const { r1, r2 } = reserves;
+          const asset1Price = pnum(p).toBigNumber().dividedBy(pnum(q).toBigNumber()).toNumber();
+          const asset2Price = pnum(q).toBigNumber().dividedBy(pnum(p).toBigNumber()).toNumber();
+          const asset1Amount = pnum(r1, asset1Exponent).toNumber();
+          const asset2Amount = pnum(r2, asset2Exponent).toNumber();
+
+          // but clearly, this measure of price is insufficient because if two
+          // positions have the same coefficients but one quote a 100% fee and
+          // the other a 0% fee, they have in fact very different prices. how do
+          // we get a measure of price that includes this information?
+
+          // this is what the effective price is for:
+          // effective exchange rate between asset 1 and asset 2: (p_1/p_2)*gamma
+          // asset 2 to asset 1: (p_2 * gamma)/p_1
+          const gamma = (10_000 - component.fee) / 10_000;
+          const asset1EffectivePrice = pnum(p)
+            .toBigNumber()
+            .dividedBy(pnum(q).toBigNumber())
+            .times(pnum(gamma).toBigNumber())
+            .toNumber();
+
+          const asset2EffectivePrice = pnum(q)
+            .toBigNumber()
+            .times(pnum(gamma).toBigNumber())
+            .dividedBy(pnum(p).toBigNumber())
+            .toNumber();
+
+          const { direction, baseAsset, quoteAsset } = this.getDirectionalPositionInfo({
+            asset1: {
+              asset: asset1,
+              exponent: asset1Exponent,
+              amount: asset1Amount,
+              price: asset1Price,
+              effectivePrice: asset1EffectivePrice,
+              reserves: reserves.r1,
+            },
+            asset2: {
+              asset: asset2,
+              exponent: asset2Exponent,
+              amount: asset2Amount,
+              price: asset2Price,
+              effectivePrice: asset2EffectivePrice,
+              reserves: reserves.r2,
+            },
+          });
+
+          return {
+            id,
+            position,
+            direction,
+            amount:
+              direction === 'Sell'
+                ? pnum(baseAsset.amount, baseAsset.exponent).toValueView(baseAsset.asset)
+                : pnum(quoteAsset.amount, quoteAsset.exponent).toValueView(quoteAsset.asset),
+            basePrice: pnum(quoteAsset.price, quoteAsset.exponent).toValueView(quoteAsset.asset),
+            effectivePrice: pnum(quoteAsset.effectivePrice, quoteAsset.exponent).toValueView(
+              quoteAsset.asset,
+            ),
+            baseAsset,
+            quoteAsset,
+            fee: component?.fee
+              ? `${pnum(component.fee / 100).toFormattedString({ decimals: 2 })}%`
+              : '',
+            currentValue: '',
+            isActive: state.state !== PositionState_PositionStateEnum.WITHDRAWN,
+            state: state.state,
+            stateString: stateToString(state.state),
+          };
+        })
+        .filter(Boolean)
+        .map(p => {
+          console.log('TCL: PositionsStore -> getdisplayPositions -> p', p);
+          return p;
+        })
+    );
   }
 }
 

@@ -1,4 +1,4 @@
-import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { AssetId, Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import {
   Position,
   PositionState,
@@ -21,6 +21,14 @@ export const compareAssetId = (a: AssetId, b: AssetId): number => {
     }
   }
   return 0;
+};
+
+export const getBaseQuoteAssets = (asset1: Metadata, asset2: Metadata): [Metadata, Metadata] => {
+  if (!asset1.penumbraAssetId || !asset2.penumbraAssetId) {
+    throw new Error('Asset must have a penumbraAssetId');
+  }
+  const correctOrder = compareAssetId(asset1.penumbraAssetId, asset2.penumbraAssetId) <= 0;
+  return correctOrder ? [asset1, asset2] : [asset2, asset1];
 };
 
 /**
@@ -79,15 +87,6 @@ const priceToPQ = (
   p = p.plus(Number(p.isEqualTo(0)));
   q = q.plus(Number(p.isEqualTo(0)));
   return { p: pnum(BigInt(p.toFixed(0))).toAmount(), q: pnum(BigInt(q.toFixed(0))).toAmount() };
-};
-
-export const pqToPrice = (p: Amount, q: Amount, pExponent: number, qExponent: number): number => {
-  console.log('TCL: qExponent', qExponent);
-  console.log('TCL: pExponent', pExponent);
-  console.log('TCL: q', q);
-  console.log('TCL: p', p);
-  const basePrice = pnum(p).toBigNumber().dividedBy(pnum(q).toBigNumber());
-  return basePrice.times(new BigNumber(10).pow(pExponent - qExponent)).toNumber();
 };
 
 /**

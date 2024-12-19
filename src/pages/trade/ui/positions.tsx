@@ -6,6 +6,8 @@ import { observer } from 'mobx-react-lite';
 import { Text, TextProps } from '@penumbra-zone/ui/Text';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
 import { Density } from '@penumbra-zone/ui/Density';
+import { TooltipProvider } from '@penumbra-zone/ui/Tooltip';
+import { Tooltip } from '@penumbra-zone/ui/Tooltip';
 import { Order, PositionData, stateToString, usePositions } from '@/pages/trade/api/positions.ts';
 import {
   PositionId,
@@ -19,6 +21,7 @@ import { SquareArrowOutUpRight } from 'lucide-react';
 import { useEffect } from 'react';
 import { pnum } from '@penumbra-zone/types/pnum';
 import { useRegistryAssets } from '@/shared/api/registry';
+import { usePathToMetadata } from '../model/use-path';
 
 const LoadingRow = () => {
   return (
@@ -101,25 +104,37 @@ const ActionButton = observer(
   },
 );
 
-const RowLabel = ({ p }: { p: PositionData }) => {
+const RowLabel = ({
+  state,
+  direction,
+}: {
+  state: PositionState_PositionStateEnum;
+  direction: Order['side'];
+}) => {
+  const { label, color } = getStateLabel(state, direction);
+  return (
+    <Text detail color={color}>
+      {label}
+    </Text>
+  );
   // A withdrawn position has no orders
-  if (!p.orders.length) {
-    const { label, color } = getStateLabel(p.positionState);
-    return (
-      <Text detail color={color}>
-        {label}
-      </Text>
-    );
-  }
-  // For opened or closed positions
-  return p.orders.map((o, i) => {
-    const { label, color } = getStateLabel(p.positionState, o.side);
-    return (
-      <Text detail color={color} key={i}>
-        {label}
-      </Text>
-    );
-  });
+  // if (!p.orders.length) {
+  //   const { label, color } = getStateLabel(p.positionState);
+  //   return (
+  //     <Text detail color={color}>
+  //       {label}
+  //     </Text>
+  //   );
+  // }
+  // // For opened or closed positions
+  // return p.orders.map((o, i) => {
+  //   const { label, color } = getStateLabel(p.positionState, o.side);
+  //   return (
+  //     <Text detail color={color} key={i}>
+  //       {label}
+  //     </Text>
+  //   );
+  // });
 };
 
 const AmountDisplay = ({
@@ -196,8 +211,8 @@ const HeaderActionButton = observer(() => {
 
 const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
   const { connected } = connectionStore;
+  const { baseAsset, quoteAsset } = usePathToMetadata();
   const { data: assets } = useRegistryAssets();
-  console.log('TCL: assets', assets);
   const { data, isLoading, error } = usePositions();
   const { displayPositions, setPositions, setAssets } = positionsStore;
   console.log('TCL: displayPositions', displayPositions);
@@ -209,6 +224,12 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
   useEffect(() => {
     setAssets(assets ?? []);
   }, [assets, setAssets]);
+
+  useEffect(() => {
+    if (baseAsset && quoteAsset) {
+      positionsStore.setCurrentPair(baseAsset, quoteAsset);
+    }
+  }, [baseAsset, quoteAsset]);
 
   if (!connected) {
     return <NotConnectedNotice />;
@@ -223,90 +244,112 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
   }
 
   return (
-    <Density compact>
-      <div className='pt-4 px-4 pb-0 overflow-x-auto'>
-        <div className='sticky top-0 z-10 grid grid-cols-8 text-text-secondary border-b border-other-tonalStroke bg-app-main'>
-          <HeaderCell>Side</HeaderCell>
-          <HeaderCell>Trade Amount</HeaderCell>
-          <HeaderCell>Effective Price</HeaderCell>
-          <HeaderCell>Fee Tier</HeaderCell>
-          <HeaderCell>Base Price</HeaderCell>
-          <HeaderCell>Current Value</HeaderCell>
-          <HeaderCell>Position ID</HeaderCell>
-          <HeaderCell>{/* <HeaderActionButton /> */}-</HeaderCell>
-        </div>
+    <TooltipProvider>
+      <Density compact>
+        <div className='pt-4 px-4 pb-0 overflow-x-auto'>
+          <div className='sticky top-0 z-10 grid grid-cols-8 text-text-secondary border-b border-other-tonalStroke bg-app-main'>
+            <HeaderCell>Type</HeaderCell>
+            <HeaderCell>Trade Amount</HeaderCell>
+            <HeaderCell>Effective Price</HeaderCell>
+            <HeaderCell>Fee Tier</HeaderCell>
+            <HeaderCell>Base Price</HeaderCell>
+            <HeaderCell>Current Value</HeaderCell>
+            <HeaderCell>Position ID</HeaderCell>
+            <HeaderCell>{/* <HeaderActionButton /> */}-</HeaderCell>
+          </div>
 
-        {isLoading && Array.from({ length: 15 }).map((_, i) => <LoadingRow key={i} />)}
+          {isLoading && Array.from({ length: 15 }).map((_, i) => <LoadingRow key={i} />)}
 
-        {/* {data
-          ?.map(p => ({
-            ...p,
-            displayFee: pnum(p.fee / 100).toFormattedString({ decimals: 2 }),
-            isActive: p.positionState !== PositionState_PositionStateEnum.WITHDRAWN,
-            positionIdString: bech32mPositionId(p.positionId),
-          }))
-          .filter(p => (showInactive ? true : p.isActive))
-          .map(p => {
-            return (
-              <div
-                key={p.positionIdString}
-                className='grid grid-cols-8 border-b border-other-tonalStroke'
-              >
-                <Cell>
-                  <div className='flex flex-col gap-2'>
-                    <RowLabel p={p} />
-                  </div>
-                </Cell>
-                <Cell>
-                  <div className='flex flex-col gap-2'>
-                    <AmountDisplay p={p} kind='tradeAmount' />
-                  </div>
-                </Cell>
-                <Cell>
-                  <div className='flex flex-col gap-2'>
-                    <AmountDisplay p={p} kind='effectivePrice' />
-                  </div>
-                </Cell>
-                <Cell>
-                  <div className='tabular-nums'>
+          {displayPositions
+            .filter(p => (showInactive ? true : p.isActive))
+            .map(p => {
+              return (
+                <div
+                  key={p.positionIdString}
+                  className='grid grid-cols-8 border-b border-other-tonalStroke'
+                >
+                  <Cell>
+                    <div className='flex flex-col gap-2'>
+                      <Text detail color='text.secondary'>
+                        <RowLabel state={p.state} direction={p.direction} />
+                      </Text>
+                    </div>
+                  </Cell>
+                  <Cell>
+                    <div className='flex flex-col gap-2'>
+                      <Text detail color='text.secondary'>
+                        <ValueViewComponent valueView={p.amount} trailingZeros={true} />
+                      </Text>
+                    </div>
+                  </Cell>
+                  <Cell>
+                    <div className='flex flex-col gap-2'>
+                      <Text detail color='text.secondary'>
+                        <Tooltip
+                          message={
+                            <div>
+                              <div>
+                                <Text detail color='text.primary'>
+                                  Base price: {pnum(p.basePrice).toFormattedString()}
+                                </Text>
+                              </div>
+                              <div>
+                                <Text detail color='text.primary'>
+                                  Fee:{' '}
+                                  {pnum(p.effectivePrice)
+                                    .toBigNumber()
+                                    .minus(pnum(p.basePrice).toBigNumber())
+                                    .toString()}{' '}
+                                  ({p.fee})
+                                </Text>
+                              </div>
+                              <div>
+                                <Text detail color='text.primary'>
+                                  Effective price: {pnum(p.effectivePrice).toFormattedString()}
+                                </Text>
+                              </div>
+                            </div>
+                          }
+                        >
+                          <ValueViewComponent valueView={p.effectivePrice} trailingZeros={true} />
+                        </Tooltip>
+                      </Text>
+                    </div>
+                  </Cell>
+                  <Cell>
+                    <div className='tabular-nums'>
+                      <Text detailTechnical color='text.primary'>
+                        {p.fee}
+                      </Text>
+                    </div>
+                  </Cell>
+                  <Cell>
                     <Text detail color='text.secondary'>
-                      {p.displayFee}%
+                      <ValueViewComponent valueView={p.basePrice} trailingZeros={true} />
                     </Text>
-                  </div>
-                </Cell>
-                <Cell>
-                  <Text detail color='text.secondary'>
-                    {pnum(
-                      getWeightedPrice(
-                        p.orders.map(order => ({
-                          amount: pnum(order.tradeAmount).toNumber(),
-                          price: pnum(order.effectivePrice).toNumber(),
-                        })),
-                      ),
-                    ).toFormattedString({ decimals: 2 })}
-                  </Text>
-                </Cell>
-                <Cell>
-                  <Text detail color='text.secondary'>
-                    -
-                  </Text>
-                </Cell>
-                <Cell>
-                  <Text detail color='text.secondary' truncate>
-                    {p.positionIdString}
-                  </Text>
-                  <Link href={`/inspect/lp/${p.positionIdString}`}>
-                    <SquareArrowOutUpRight className='w-4 h-4 text-text-secondary' />
-                  </Link>
-                </Cell>
-                <Cell>
-                  <ActionButton state={p.positionState} id={p.positionId} />
-                </Cell>
-              </div>
-            );
-          })} */}
-      </div>
-    </Density>
+                  </Cell>
+                  <Cell>
+                    <Text detail color='text.secondary'>
+                      {p.currentValue}
+                    </Text>
+                  </Cell>
+                  <Cell>
+                    <Text detail color='text.secondary' truncate>
+                      {p.id}
+                    </Text>
+                    <Link href={`/inspect/lp/${p.id}`}>
+                      <SquareArrowOutUpRight className='w-4 h-4 text-text-secondary' />
+                    </Link>
+                  </Cell>
+                  <Cell>
+                    <ActionButton state={p.state} id={p.id} />
+                  </Cell>
+                </div>
+              );
+            })}
+        </div>
+      </Density>
+    </TooltipProvider>
   );
 });
 
