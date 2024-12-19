@@ -9,10 +9,6 @@ class RecentPairsStore {
 
   constructor() {
     makeAutoObservable(this);
-
-    if (typeof window !== 'undefined') {
-      this.setup();
-    }
   }
 
   // Add a pair to the stack of recent pairs, the old pairs get auto removed

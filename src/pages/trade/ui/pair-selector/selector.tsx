@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
@@ -29,24 +29,34 @@ export const PairSelector = observer(() => {
 
   const { baseRef, quoteRef, focusedType, clearFocus } = useFocus(isOpen);
 
+  const onClose = useCallback(() => {
+    setIsOpen(false);
+    clearFocus();
+    setQuoteFilter('');
+    setBaseFilter('');
+    setSelectedQuote(undefined);
+    setSelectedBase(undefined);
+  }, [clearFocus]);
+
   const onSelect = useCallback(
     (base: Metadata, quote: Metadata) => {
       handleRouting({ router, baseAsset: base, quoteAsset: quote });
-      setIsOpen(false);
-      clearFocus();
-      setQuoteFilter('');
-      setBaseFilter('');
-      setSelectedQuote(undefined);
-      setSelectedBase(undefined);
+      onClose();
     },
-    [clearFocus, router],
+    [router, onClose],
   );
 
-  useEffect(() => {
+  const onClear = () => {
+    clearFocus();
+    setQuoteFilter('');
+    setBaseFilter('');
+  };
+
+  const onConfirm = () => {
     if (selectedBase && selectedQuote) {
       onSelect(selectedBase, selectedQuote);
     }
-  }, [selectedBase, selectedQuote, onSelect]);
+  };
 
   if (
     error instanceof Error &&
@@ -72,7 +82,7 @@ export const PairSelector = observer(() => {
     <div className='relative flex items-center gap-2 text-text-primary'>
       <StarButton pair={{ base: baseAsset, quote: quoteAsset }} />
 
-      <Dialog isOpen={isOpen} onClose={() => setIsOpen(false)}>
+      <Dialog isOpen={isOpen} onClose={onClose}>
         <Trigger onClick={() => setIsOpen(true)} pair={{ base: baseAsset, quote: quoteAsset }} />
 
         <Dialog.Content title='Select pair'>
@@ -80,7 +90,7 @@ export const PairSelector = observer(() => {
           <button type='button' className='w-full h-0 -mt-6 focus:outline-none' />
 
           <Density sparse>
-            <div className='grid grid-cols-[1fr,16px,1fr] gap-2 pt-[2px] items-center'>
+            <div className='grid grid-cols-[minmax(0,1fr),16px,minmax(0,1fr)] [&_input]:max-w-[calc(100%_-_32px)] gap-2 pt-[2px] items-center'>
               <FilterInput
                 ref={baseRef}
                 value={baseFilter}
@@ -108,7 +118,9 @@ export const PairSelector = observer(() => {
           {focusedType === 'base' && (
             <SearchResults
               search={baseFilter}
-              onClear={clearFocus}
+              showConfirm={!!(selectedQuote && selectedBase)}
+              onClear={onClear}
+              onConfirm={onConfirm}
               onSelect={asset => {
                 setSelectedBase(asset);
                 if (!selectedQuote) {
@@ -121,7 +133,9 @@ export const PairSelector = observer(() => {
           {focusedType === 'quote' && (
             <SearchResults
               search={quoteFilter}
-              onClear={clearFocus}
+              showConfirm={!!(selectedQuote && selectedBase)}
+              onClear={onClear}
+              onConfirm={onConfirm}
               onSelect={asset => {
                 setSelectedQuote(asset);
                 if (!selectedBase) {

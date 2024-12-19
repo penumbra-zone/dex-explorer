@@ -8,6 +8,7 @@ import { usePairs } from '@/pages/trade/api/use-pairs';
 import { shortify } from '@penumbra-zone/types/shortify';
 import { getFormattedAmtFromValueView } from '@penumbra-zone/types/value-view';
 import { Skeleton } from '@/shared/ui/skeleton';
+import { LoadingAsset } from './loading-asset';
 
 export interface DefaultResultsProps {
   onSelect: (pair: Pair) => void;
@@ -19,19 +20,17 @@ export const DefaultResults = observer(({ onSelect }: DefaultResultsProps) => {
 
   if (isLoading) {
     return (
-      <>
-        <div className='mt-4 mb-2 w-24 h-4'>
+      <div className='flex flex-col gap-2 mt-4'>
+        <div className='w-24 min-h-5 h-5'>
           <Skeleton />
         </div>
 
         <div className='flex flex-col gap-1'>
           {new Array(5).fill(null).map((_, i) => (
-            <div key={i} className='w-full h-16'>
-              <Skeleton />
-            </div>
+            <LoadingAsset key={i} />
           ))}
         </div>
-      </>
+      </div>
     );
   }
 

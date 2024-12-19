@@ -6,10 +6,6 @@ class StarStateStore {
 
   constructor() {
     makeAutoObservable(this);
-
-    if (typeof window !== 'undefined') {
-      this.setup();
-    }
   }
 
   star = (pair: Pair) => {

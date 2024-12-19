@@ -6,6 +6,7 @@ import { Text } from '@penumbra-zone/ui/Text';
 import { Button } from '@penumbra-zone/ui/Button';
 import { TextInput } from '@penumbra-zone/ui/TextInput';
 import { forwardRef } from 'react';
+import { Density } from '@penumbra-zone/ui/Density';
 
 export interface FilterInputProps {
   asset?: Metadata;
@@ -30,13 +31,15 @@ export const FilterInput = forwardRef<HTMLInputElement, FilterInputProps>(
               'grow h-14 flex gap-2 items-center text-text-primary px-3 rounded-sm bg-other-tonalFill5',
             )}
           >
-            <div className='grow flex items-center gap-2'>
+            <div className='grow flex items-center gap-2 max-w-[calc(100%_-_32px)]'>
               <AssetIcon metadata={asset} />
-              <Text>{asset.symbol}</Text>
+              <Text truncate>{asset.symbol}</Text>
             </div>
-            <Button iconOnly='adornment' icon={X} onClick={deselect}>
-              Deselect asset
-            </Button>
+            <Density compact>
+              <Button iconOnly='adornment' icon={X} onClick={deselect}>
+                Deselect asset
+              </Button>
+            </Density>
           </div>
         )}
 
