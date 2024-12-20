@@ -1,6 +1,6 @@
 'use client';
 
-import { Cell, HeaderCell, LoadingCell } from './market-trades';
+import { LoadingCell } from './market-trades';
 import { connectionStore } from '@/shared/model/connection';
 import { observer } from 'mobx-react-lite';
 import { Text, TextProps } from '@penumbra-zone/ui/Text';
@@ -9,12 +9,11 @@ import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
 import { Density } from '@penumbra-zone/ui/Density';
 import { TooltipProvider } from '@penumbra-zone/ui/Tooltip';
 import { Tooltip } from '@penumbra-zone/ui/Tooltip';
-import { Order, PositionData, stateToString, usePositions } from '@/pages/trade/api/positions.ts';
+import { Order, stateToString, usePositions } from '@/pages/trade/api/positions.ts';
 import {
   PositionId,
   PositionState_PositionStateEnum,
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
-import { bech32mPositionId } from '@penumbra-zone/bech32m/plpid';
 import { Button } from '@penumbra-zone/ui/Button';
 import { positionsStore } from '@/pages/trade/model/positions';
 import Link from 'next/link';
@@ -23,6 +22,7 @@ import { useEffect } from 'react';
 import { pnum } from '@penumbra-zone/types/pnum';
 import { useRegistryAssets } from '@/shared/api/registry';
 import { usePathToMetadata } from '../model/use-path';
+import { PositionsCurrentValue } from './positions-current-value';
 
 const LoadingRow = () => {
   return (
@@ -140,12 +140,12 @@ const RowLabel = ({
 
 const MAX_ACTION_COUNT = 15;
 
-const HeaderActionButton = observer(() => {
-  const { data } = usePositions();
+const HeaderActionButton = observer(({ displayPositions }: { displayPositions: Position[] }) => {
+  // const { data } = usePositions();
   const { loading, closePositions, withdrawPositions } = positionsStore;
 
   const openedPositions =
-    data?.filter(p => p.positionState === PositionState_PositionStateEnum.OPENED) ?? [];
+    displayPositions?.filter(p => p.state === PositionState_PositionStateEnum.OPENED) ?? [];
   if (openedPositions.length > 1) {
     return (
       <Button
@@ -153,7 +153,7 @@ const HeaderActionButton = observer(() => {
         actionType='destructive'
         disabled={loading}
         onClick={() =>
-          void closePositions(openedPositions.slice(0, MAX_ACTION_COUNT).map(p => p.positionId))
+          void closePositions(openedPositions.slice(0, MAX_ACTION_COUNT).map(p => p.id))
         }
       >
         Close Batch
@@ -162,7 +162,7 @@ const HeaderActionButton = observer(() => {
   }
 
   const closedPositions =
-    data?.filter(p => p.positionState === PositionState_PositionStateEnum.CLOSED) ?? [];
+    displayPositions?.filter(p => p.state === PositionState_PositionStateEnum.CLOSED) ?? [];
   if (closedPositions.length > 1) {
     return (
       <Button
@@ -170,7 +170,7 @@ const HeaderActionButton = observer(() => {
         actionType='destructive'
         disabled={loading}
         onClick={() =>
-          void withdrawPositions(closedPositions.map(p => p.positionId).slice(0, MAX_ACTION_COUNT))
+          void withdrawPositions(closedPositions.map(p => p.id).slice(0, MAX_ACTION_COUNT))
         }
       >
         Withdraw Batch
@@ -244,7 +244,8 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                   <Text tableHeadingSmall>Position ID</Text>
                 </Table.Th>
                 <Table.Th hAlign='right' density='slim'>
-                  <Text tableHeadingSmall>Actions</Text>
+                  <HeaderActionButton displayPositions={displayPositions} />
+                  {/* <Text tableHeadingSmall>Actions</Text> */}
                 </Table.Th>
               </Table.Tr>
             </Table.Thead>
@@ -322,7 +323,7 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                         />
                       </Table.Td>
                       <Table.Td density='slim'>
-                        <Text technical>{p.currentValue}</Text>
+                        <PositionsCurrentValue baseAsset={p.baseAsset} quoteAsset={p.quoteAsset} />
                       </Table.Td>
                       <Table.Td density='slim'>
                         <div className='flex max-w-[104px]'>
