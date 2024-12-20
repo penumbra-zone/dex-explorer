@@ -1,4 +1,4 @@
-import { get, makeAutoObservable } from 'mobx';
+import { makeAutoObservable } from 'mobx';
 import { TransactionPlannerRequest } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
 import {
   Position,
@@ -15,11 +15,27 @@ import { getPositionData, PositionData, stateToString } from '@/pages/trade/api/
 import { penumbra } from '@/shared/const/penumbra.ts';
 import { DexService } from '@penumbra-zone/protobuf';
 import { openToast } from '@penumbra-zone/ui/Toast';
-import { toValueView } from '@/shared/utils/value-view';
-import { bech32mPositionId } from '@penumbra-zone/bech32m/plpid';
 import { pnum } from '@penumbra-zone/types/pnum';
-import { compareAssetId, getBaseQuoteAssets, pqToPrice } from '@/shared/math/position';
-import { registryQueryFn } from '@/shared/api/registry';
+
+export interface DisplayPosition {
+  id: string;
+  positionId: PositionId;
+  direction: string;
+  amount: ValueView;
+  basePrice: ValueView;
+  effectivePrice: ValueView;
+  baseAsset: Metadata;
+  quoteAsset: Metadata;
+}
+
+export interface DisplayAsset {
+  asset: Metadata;
+  exponent: number;
+  amount: number;
+  price: number;
+  effectivePrice: number;
+  reserves: Amount;
+}
 
 class PositionsStore {
   public loading = false;
@@ -154,7 +170,7 @@ class PositionsStore {
       effectivePrice: number;
       reserves: Amount;
     };
-  }) => {
+  }): { direction: string; baseAsset: DisplayAsset; quoteAsset: DisplayAsset } => {
     if (!this.currentPair || !asset1.asset.penumbraAssetId || !asset2.asset.penumbraAssetId) {
       throw new Error('No current pair or assets');
     }
@@ -213,112 +229,101 @@ class PositionsStore {
     };
   };
 
-  get displayPositions() {
+  get displayPositions(): DisplayPosition[] {
     if (!this.assets.length || !this.currentPair) {
       return [];
     }
 
-    return (
-      Object.entries(this.positionsById)
-        // .filter(([id, position]) => {
-        //   return id === 'plpid1lr87eu7khtu2zhqraw9gq3trtltvgyzahuen59rqxkm3qutrzvsquf9qr6';
-        // })
-        .map(([id, position]) => {
-          /* eslint-disable curly -- makes code more concise */
-          const { phi, reserves, state } = position;
-          if (!phi || !reserves?.r1 || !reserves.r2 || !state) return;
+    return Object.entries(this.positionsById)
+      .map(([id, position]) => {
+        /* eslint-disable curly -- makes code more concise */
+        const { phi, reserves, state } = position;
+        if (!phi || !reserves?.r1 || !reserves.r2 || !state) return;
 
-          const { pair, component } = phi;
-          if (!pair || !component?.p || !component.q) return;
+        const { pair, component } = phi;
+        if (!pair || !component?.p || !component.q) return;
 
-          const asset1 = this.assets.find(asset => asset.penumbraAssetId?.equals(pair.asset1));
-          const asset2 = this.assets.find(asset => asset.penumbraAssetId?.equals(pair.asset2));
-          if (!asset1?.penumbraAssetId || !asset2?.penumbraAssetId) return;
+        const asset1 = this.assets.find(asset => asset.penumbraAssetId?.equals(pair.asset1));
+        const asset2 = this.assets.find(asset => asset.penumbraAssetId?.equals(pair.asset2));
+        if (!asset1?.penumbraAssetId || !asset2?.penumbraAssetId) return;
 
-          const asset1Exponent = asset1.denomUnits.find(
-            denumUnit => denumUnit.denom === asset1.display,
-          )?.exponent;
-          const asset2Exponent = asset2.denomUnits.find(
-            denumUnit => denumUnit.denom === asset2.display,
-          )?.exponent;
-          if (!asset1Exponent || !asset2Exponent) return;
+        const asset1Exponent = asset1.denomUnits.find(
+          denumUnit => denumUnit.denom === asset1.display,
+        )?.exponent;
+        const asset2Exponent = asset2.denomUnits.find(
+          denumUnit => denumUnit.denom === asset2.display,
+        )?.exponent;
+        if (!asset1Exponent || !asset2Exponent) return;
 
-          const { p, q } = component;
-          const { r1, r2 } = reserves;
-          const asset1Price = pnum(p).toBigNumber().dividedBy(pnum(q).toBigNumber()).toNumber();
-          const asset2Price = pnum(q).toBigNumber().dividedBy(pnum(p).toBigNumber()).toNumber();
-          const asset1Amount = pnum(r1, asset1Exponent).toNumber();
-          const asset2Amount = pnum(r2, asset2Exponent).toNumber();
+        const { p, q } = component;
+        const { r1, r2 } = reserves;
+        const asset1Price = pnum(p).toBigNumber().dividedBy(pnum(q).toBigNumber()).toNumber();
+        const asset2Price = pnum(q).toBigNumber().dividedBy(pnum(p).toBigNumber()).toNumber();
+        const asset1Amount = pnum(r1, asset1Exponent).toNumber();
+        const asset2Amount = pnum(r2, asset2Exponent).toNumber();
 
-          // but clearly, this measure of price is insufficient because if two
-          // positions have the same coefficients but one quote a 100% fee and
-          // the other a 0% fee, they have in fact very different prices. how do
-          // we get a measure of price that includes this information?
+        // but clearly, this measure of price is insufficient because if two
+        // positions have the same coefficients but one quote a 100% fee and
+        // the other a 0% fee, they have in fact very different prices. how do
+        // we get a measure of price that includes this information?
 
-          // this is what the effective price is for:
-          // effective exchange rate between asset 1 and asset 2: (p_1/p_2)*gamma
-          // p1 / (p2 * gamma) ?
-          //
-          // asset 2 to asset 1: (p_2 * gamma)/p_1
-          const gamma = (10_000 - component.fee) / 10_000;
-          const asset1EffectivePrice = pnum(p)
-            .toBigNumber()
-            .dividedBy(pnum(q).toBigNumber().times(pnum(gamma).toBigNumber()))
-            .toNumber();
+        // this is what the effective price is for:
+        // effective exchange rate between asset 1 and asset 2: (p_1/p_2)*gamma
+        // p1 / (p2 * gamma) ?
+        //
+        // asset 2 to asset 1: (p_2 * gamma)/p_1
+        const gamma = (10_000 - component.fee) / 10_000;
+        const asset1EffectivePrice = pnum(p)
+          .toBigNumber()
+          .dividedBy(pnum(q).toBigNumber().times(pnum(gamma).toBigNumber()))
+          .toNumber();
 
-          const asset2EffectivePrice = pnum(q)
-            .toBigNumber()
-            .times(pnum(gamma).toBigNumber())
-            .dividedBy(pnum(p).toBigNumber())
-            .toNumber();
+        const asset2EffectivePrice = pnum(q)
+          .toBigNumber()
+          .times(pnum(gamma).toBigNumber())
+          .dividedBy(pnum(p).toBigNumber())
+          .toNumber();
 
-          const { direction, baseAsset, quoteAsset } = this.getDirectionalPositionInfo({
-            asset1: {
-              asset: asset1,
-              exponent: asset1Exponent,
-              amount: asset1Amount,
-              price: asset1Price,
-              effectivePrice: asset1EffectivePrice,
-              reserves: reserves.r1,
-            },
-            asset2: {
-              asset: asset2,
-              exponent: asset2Exponent,
-              amount: asset2Amount,
-              price: asset2Price,
-              effectivePrice: asset2EffectivePrice,
-              reserves: reserves.r2,
-            },
-          });
+        const { direction, baseAsset, quoteAsset } = this.getDirectionalPositionInfo({
+          asset1: {
+            asset: asset1,
+            exponent: asset1Exponent,
+            amount: asset1Amount,
+            price: asset1Price,
+            effectivePrice: asset1EffectivePrice,
+            reserves: reserves.r1,
+          },
+          asset2: {
+            asset: asset2,
+            exponent: asset2Exponent,
+            amount: asset2Amount,
+            price: asset2Price,
+            effectivePrice: asset2EffectivePrice,
+            reserves: reserves.r2,
+          },
+        });
 
-          return {
-            id,
-            position,
-            direction,
-            amount:
-              direction === 'Sell'
-                ? pnum(baseAsset.amount, baseAsset.exponent).toValueView(baseAsset.asset)
-                : pnum(quoteAsset.amount, quoteAsset.exponent).toValueView(quoteAsset.asset),
-            basePrice: pnum(quoteAsset.price, quoteAsset.exponent).toValueView(quoteAsset.asset),
-            effectivePrice: pnum(quoteAsset.effectivePrice, quoteAsset.exponent).toValueView(
-              quoteAsset.asset,
-            ),
-            baseAsset,
-            quoteAsset,
-            fee: component?.fee
-              ? `${pnum(component.fee / 100).toFormattedString({ decimals: 2 })}%`
-              : '',
-            currentValue: '',
-            isActive: state.state !== PositionState_PositionStateEnum.WITHDRAWN,
-            state: state.state,
-            stateString: stateToString(state.state),
-          };
-        })
-        .filter(Boolean)
-        .map(p => {
-          return p;
-        })
-    );
+        return {
+          id,
+          positionId: position.positionId,
+          direction,
+          amount:
+            direction === 'Sell'
+              ? pnum(baseAsset.amount, baseAsset.exponent).toValueView(baseAsset.asset)
+              : pnum(quoteAsset.amount, quoteAsset.exponent).toValueView(quoteAsset.asset),
+          basePrice: pnum(quoteAsset.price, quoteAsset.exponent).toValueView(quoteAsset.asset),
+          effectivePrice: pnum(quoteAsset.effectivePrice, quoteAsset.exponent).toValueView(
+            quoteAsset.asset,
+          ),
+          baseAsset,
+          quoteAsset,
+          fee: `${pnum(component.fee / 100).toFormattedString({ decimals: 2 })}%`,
+          isActive: state.state !== PositionState_PositionStateEnum.WITHDRAWN,
+          state: state.state,
+          stateString: stateToString(state.state),
+        };
+      })
+      .filter(Boolean);
   }
 }
 

@@ -24,16 +24,6 @@ import { useRegistryAssets } from '@/shared/api/registry';
 import { usePathToMetadata } from '../model/use-path';
 import { PositionsCurrentValue } from './positions-current-value';
 
-const LoadingRow = () => {
-  return (
-    <div className='grid grid-cols-8 text-text-secondary border-b border-other-tonalStroke'>
-      {Array.from({ length: 8 }).map((_, index) => (
-        <LoadingCell key={index} />
-      ))}
-    </div>
-  );
-};
-
 const NotConnectedNotice = () => {
   return (
     <div className='p-5'>
@@ -141,11 +131,10 @@ const RowLabel = ({
 const MAX_ACTION_COUNT = 15;
 
 const HeaderActionButton = observer(({ displayPositions }: { displayPositions: Position[] }) => {
-  // const { data } = usePositions();
   const { loading, closePositions, withdrawPositions } = positionsStore;
 
   const openedPositions =
-    displayPositions?.filter(p => p.state === PositionState_PositionStateEnum.OPENED) ?? [];
+    displayPositions.filter(p => p.state === PositionState_PositionStateEnum.OPENED) ?? [];
   if (openedPositions.length > 1) {
     return (
       <Button
@@ -153,7 +142,7 @@ const HeaderActionButton = observer(({ displayPositions }: { displayPositions: P
         actionType='destructive'
         disabled={loading}
         onClick={() =>
-          void closePositions(openedPositions.slice(0, MAX_ACTION_COUNT).map(p => p.id))
+          void closePositions(openedPositions.slice(0, MAX_ACTION_COUNT).map(p => p.positionId))
         }
       >
         Close Batch
@@ -162,7 +151,7 @@ const HeaderActionButton = observer(({ displayPositions }: { displayPositions: P
   }
 
   const closedPositions =
-    displayPositions?.filter(p => p.state === PositionState_PositionStateEnum.CLOSED) ?? [];
+    displayPositions.filter(p => p.state === PositionState_PositionStateEnum.CLOSED) ?? [];
   if (closedPositions.length > 1) {
     return (
       <Button
@@ -170,7 +159,7 @@ const HeaderActionButton = observer(({ displayPositions }: { displayPositions: P
         actionType='destructive'
         disabled={loading}
         onClick={() =>
-          void withdrawPositions(closedPositions.map(p => p.id).slice(0, MAX_ACTION_COUNT))
+          void withdrawPositions(closedPositions.map(p => p.positionId).slice(0, MAX_ACTION_COUNT))
         }
       >
         Withdraw Batch
@@ -336,7 +325,7 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                         </div>
                       </Table.Td>
                       <Table.Td hAlign='right' density='slim'>
-                        <ActionButton state={p.state} id={p.id} />
+                        <ActionButton state={p.state} id={p.positionId} />
                       </Table.Td>
                     </Table.Tr>
                   );
