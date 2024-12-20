@@ -4,6 +4,7 @@ import { Cell, HeaderCell, LoadingCell } from './market-trades';
 import { connectionStore } from '@/shared/model/connection';
 import { observer } from 'mobx-react-lite';
 import { Text, TextProps } from '@penumbra-zone/ui/Text';
+import { Table } from '@penumbra-zone/ui/Table';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
 import { Density } from '@penumbra-zone/ui/Density';
 import { TooltipProvider } from '@penumbra-zone/ui/Tooltip';
@@ -84,13 +85,13 @@ const ActionButton = observer(
 
     if (state === PositionState_PositionStateEnum.OPENED) {
       return (
-        <Button onClick={() => void closePositions([id])} disabled={loading}>
+        <Button density='slim' onClick={() => void closePositions([id])} disabled={loading}>
           Close
         </Button>
       );
     } else if (state === PositionState_PositionStateEnum.CLOSED) {
       return (
-        <Button disabled={loading} onClick={() => void withdrawPositions([id])}>
+        <Button density='slim' disabled={loading} onClick={() => void withdrawPositions([id])}>
           Withdraw
         </Button>
       );
@@ -137,37 +138,6 @@ const RowLabel = ({
   // });
 };
 
-const AmountDisplay = ({
-  p,
-  kind,
-}: {
-  p: PositionData;
-  kind: 'tradeAmount' | 'effectivePrice';
-}) => {
-  if (!p.orders.length) {
-    return (
-      <Text detail color='text.secondary'>
-        -
-      </Text>
-    );
-  }
-  return p.orders.map((o, i) => (
-    <ValueViewComponent
-      valueView={kind === 'tradeAmount' ? o.tradeAmount : o.effectivePrice}
-      key={i}
-    />
-  ));
-};
-
-function getWeightedPrice(items: { amount: number; price: number }[]) {
-  console.log('TCL: getWeightedPrice -> items', items);
-  const totalAmount = items.reduce((acc, item) => acc + item.amount, 0);
-  console.log('TCL: getWeightedPrice -> totalAmount', totalAmount);
-  const weightedPrice = items.reduce((acc, item) => acc + item.amount * item.price, 0);
-  console.log('TCL: getWeightedPrice -> weightedPrice / totalAmount', weightedPrice / totalAmount);
-  return totalAmount ? weightedPrice / totalAmount : 0;
-}
-
 const MAX_ACTION_COUNT = 15;
 
 const HeaderActionButton = observer(() => {
@@ -179,6 +149,7 @@ const HeaderActionButton = observer(() => {
   if (openedPositions.length > 1) {
     return (
       <Button
+        density='slim'
         actionType='destructive'
         disabled={loading}
         onClick={() =>
@@ -195,6 +166,7 @@ const HeaderActionButton = observer(() => {
   if (closedPositions.length > 1) {
     return (
       <Button
+        density='slim'
         actionType='destructive'
         disabled={loading}
         onClick={() =>
@@ -245,46 +217,64 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
 
   return (
     <TooltipProvider>
-      <Density compact>
-        <div className='pt-4 px-4 pb-0 overflow-x-auto'>
-          <div className='sticky top-0 z-10 grid grid-cols-8 text-text-secondary border-b border-other-tonalStroke bg-app-main'>
-            <HeaderCell>Type</HeaderCell>
-            <HeaderCell>Trade Amount</HeaderCell>
-            <HeaderCell>Effective Price</HeaderCell>
-            <HeaderCell>Fee Tier</HeaderCell>
-            <HeaderCell>Base Price</HeaderCell>
-            <HeaderCell>Current Value</HeaderCell>
-            <HeaderCell>Position ID</HeaderCell>
-            <HeaderCell>{/* <HeaderActionButton /> */}-</HeaderCell>
-          </div>
-
-          {isLoading && Array.from({ length: 15 }).map((_, i) => <LoadingRow key={i} />)}
-
-          {displayPositions
-            .filter(p => (showInactive ? true : p.isActive))
-            .map(p => {
-              return (
-                <div
-                  key={p.positionIdString}
-                  className='grid grid-cols-8 border-b border-other-tonalStroke'
-                >
-                  <Cell>
-                    <div className='flex flex-col gap-2'>
-                      <Text detail color='text.secondary'>
+      <Density variant='slim'>
+        <div className='flex justify-center px-4'>
+          <Table bgColor='base.blackAlt'>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th density='slim'>
+                  <Text tableHeadingSmall>Type</Text>
+                </Table.Th>
+                <Table.Th density='slim'>
+                  <Text tableHeadingSmall>Trade Amount</Text>
+                </Table.Th>
+                <Table.Th density='slim'>
+                  <Text tableHeadingSmall>Effective Price</Text>
+                </Table.Th>
+                <Table.Th density='slim'>
+                  <Text tableHeadingSmall>Fee Tier</Text>
+                </Table.Th>
+                <Table.Th density='slim'>
+                  <Text tableHeadingSmall>Base Price</Text>
+                </Table.Th>
+                <Table.Th density='slim'>
+                  <Text tableHeadingSmall>Current Value</Text>
+                </Table.Th>
+                <Table.Th density='slim'>
+                  <Text tableHeadingSmall>Position ID</Text>
+                </Table.Th>
+                <Table.Th hAlign='right' density='slim'>
+                  <Text tableHeadingSmall>Actions</Text>
+                </Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {isLoading &&
+                Array.from({ length: 15 }).map((_, i) => (
+                  <Table.Tr key={i}>
+                    {Array.from({ length: 8 }).map((_, index) => (
+                      <Table.Td key={index}>
+                        <LoadingCell key={index} />
+                      </Table.Td>
+                    ))}
+                  </Table.Tr>
+                ))}
+              {displayPositions
+                .filter(p => (showInactive ? true : p.isActive))
+                .map(p => {
+                  return (
+                    <Table.Tr key={p.id}>
+                      <Table.Td density='slim'>
                         <RowLabel state={p.state} direction={p.direction} />
-                      </Text>
-                    </div>
-                  </Cell>
-                  <Cell>
-                    <div className='flex flex-col gap-2'>
-                      <Text detail color='text.secondary'>
-                        <ValueViewComponent valueView={p.amount} trailingZeros={true} />
-                      </Text>
-                    </div>
-                  </Cell>
-                  <Cell>
-                    <div className='flex flex-col gap-2'>
-                      <Text detail color='text.secondary'>
+                      </Table.Td>
+                      <Table.Td density='slim'>
+                        <ValueViewComponent
+                          valueView={p.amount}
+                          trailingZeros={true}
+                          density='slim'
+                        />
+                      </Table.Td>
+                      <Table.Td density='slim'>
                         <Tooltip
                           message={
                             <div>
@@ -296,9 +286,9 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                               <div>
                                 <Text detail color='text.primary'>
                                   Fee:{' '}
-                                  {pnum(p.effectivePrice)
+                                  {pnum(p.basePrice)
                                     .toBigNumber()
-                                    .minus(pnum(p.basePrice).toBigNumber())
+                                    .minus(pnum(p.effectivePrice).toBigNumber())
                                     .toString()}{' '}
                                   ({p.fee})
                                 </Text>
@@ -311,42 +301,47 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                             </div>
                           }
                         >
-                          <ValueViewComponent valueView={p.effectivePrice} trailingZeros={true} />
+                          <ValueViewComponent
+                            valueView={p.effectivePrice}
+                            trailingZeros={true}
+                            density='slim'
+                          />
                         </Tooltip>
-                      </Text>
-                    </div>
-                  </Cell>
-                  <Cell>
-                    <div className='tabular-nums'>
-                      <Text detailTechnical color='text.primary'>
-                        {p.fee}
-                      </Text>
-                    </div>
-                  </Cell>
-                  <Cell>
-                    <Text detail color='text.secondary'>
-                      <ValueViewComponent valueView={p.basePrice} trailingZeros={true} />
-                    </Text>
-                  </Cell>
-                  <Cell>
-                    <Text detail color='text.secondary'>
-                      {p.currentValue}
-                    </Text>
-                  </Cell>
-                  <Cell>
-                    <Text detail color='text.secondary' truncate>
-                      {p.id}
-                    </Text>
-                    <Link href={`/inspect/lp/${p.id}`}>
-                      <SquareArrowOutUpRight className='w-4 h-4 text-text-secondary' />
-                    </Link>
-                  </Cell>
-                  <Cell>
-                    <ActionButton state={p.state} id={p.id} />
-                  </Cell>
-                </div>
-              );
-            })}
+                      </Table.Td>
+                      <Table.Td density='slim'>
+                        <Text detailTechnical color='text.primary'>
+                          {p.fee}
+                        </Text>
+                      </Table.Td>
+                      <Table.Td density='slim'>
+                        <ValueViewComponent
+                          valueView={p.basePrice}
+                          trailingZeros={true}
+                          showIcon={false}
+                          density='slim'
+                        />
+                      </Table.Td>
+                      <Table.Td density='slim'>
+                        <Text technical>{p.currentValue}</Text>
+                      </Table.Td>
+                      <Table.Td density='slim'>
+                        <div className='flex max-w-[104px]'>
+                          <Text as='div' detailTechnical color='text.primary' truncate>
+                            {p.id}
+                          </Text>
+                          <Link href={`/inspect/lp/${p.id}`}>
+                            <SquareArrowOutUpRight className='w-4 h-4 text-text-secondary' />
+                          </Link>
+                        </div>
+                      </Table.Td>
+                      <Table.Td hAlign='right' density='slim'>
+                        <ActionButton state={p.state} id={p.id} />
+                      </Table.Td>
+                    </Table.Tr>
+                  );
+                })}
+            </Table.Tbody>
+          </Table>
         </div>
       </Density>
     </TooltipProvider>

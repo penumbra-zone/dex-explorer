@@ -257,12 +257,13 @@ class PositionsStore {
 
           // this is what the effective price is for:
           // effective exchange rate between asset 1 and asset 2: (p_1/p_2)*gamma
+          // p1 / (p2 * gamma) ?
+          //
           // asset 2 to asset 1: (p_2 * gamma)/p_1
           const gamma = (10_000 - component.fee) / 10_000;
           const asset1EffectivePrice = pnum(p)
             .toBigNumber()
-            .dividedBy(pnum(q).toBigNumber())
-            .times(pnum(gamma).toBigNumber())
+            .dividedBy(pnum(q).toBigNumber().times(pnum(gamma).toBigNumber()))
             .toNumber();
 
           const asset2EffectivePrice = pnum(q)
@@ -315,7 +316,6 @@ class PositionsStore {
         })
         .filter(Boolean)
         .map(p => {
-          console.log('TCL: PositionsStore -> getdisplayPositions -> p', p);
           return p;
         })
     );
