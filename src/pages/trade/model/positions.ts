@@ -120,9 +120,9 @@ class PositionsStore {
   private async updatePositionInCache(positionId: PositionId) {
     const { data } = await penumbra.service(DexService).liquidityPositionById({ positionId });
     if (data) {
-      queryClient.setQueryData(['positions'], (oldData: Map<PositionId, Position>) => {
-        oldData.set(positionId, data);
-        return oldData;
+      queryClient.setQueryData(['positions'], (positionsById: Map<PositionId, Position>) => {
+        positionsById.set(positionId, data);
+        return positionsById;
       });
     }
   }
