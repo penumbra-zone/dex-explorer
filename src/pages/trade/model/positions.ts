@@ -121,9 +121,6 @@ class PositionsStore {
     const { data } = await penumbra.service(DexService).liquidityPositionById({ positionId });
     if (data) {
       queryClient.setQueryData(['positions'], (oldData: Map<PositionId, Position>) => {
-        if (!oldData.has(positionId)) {
-          throw new Error('Trying to update position data cache when none is present');
-        }
         oldData.set(positionId, data);
         return oldData;
       });

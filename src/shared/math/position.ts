@@ -23,14 +23,6 @@ export const compareAssetId = (a: AssetId, b: AssetId): number => {
   return 0;
 };
 
-export const getBaseQuoteAssets = (asset1: Metadata, asset2: Metadata): [Metadata, Metadata] => {
-  if (!asset1.penumbraAssetId || !asset2.penumbraAssetId) {
-    throw new Error('Asset must have a penumbraAssetId');
-  }
-  const correctOrder = compareAssetId(asset1.penumbraAssetId, asset2.penumbraAssetId) <= 0;
-  return correctOrder ? [asset1, asset2] : [asset2, asset1];
-};
-
 /**
  * A slimmed-down representation for assets, restricted to what we need for math.
  *
