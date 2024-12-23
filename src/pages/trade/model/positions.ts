@@ -11,21 +11,27 @@ import { planBuildBroadcast } from '@/pages/trade/ui/order-form/helpers.tsx';
 import { connectionStore } from '@/shared/model/connection';
 import { AddressIndex } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
 import { queryClient } from '@/shared/const/queryClient.ts';
-import { getPositionData, PositionData, stateToString } from '@/pages/trade/api/positions.ts';
+import { isZero } from '@penumbra-zone/types/amount';
 import { penumbra } from '@/shared/const/penumbra.ts';
 import { DexService } from '@penumbra-zone/protobuf';
 import { openToast } from '@penumbra-zone/ui/Toast';
 import { pnum } from '@penumbra-zone/types/pnum';
+import { bech32mPositionId } from '@penumbra-zone/bech32m/plpid';
 
 export interface DisplayPosition {
-  id: string;
-  positionId: PositionId;
-  direction: string;
-  amount: ValueView;
-  basePrice: ValueView;
-  effectivePrice: ValueView;
-  baseAsset: Metadata;
-  quoteAsset: Metadata;
+  id: PositionId;
+  idString: string;
+  orders: {
+    direction: string;
+    amount: ValueView;
+    basePrice: ValueView;
+    effectivePrice: ValueView;
+    baseAsset: DisplayAsset;
+    quoteAsset: DisplayAsset;
+  }[];
+  fee: string;
+  isActive: boolean;
+  state: PositionState_PositionStateEnum;
 }
 
 export interface DisplayAsset {
@@ -39,7 +45,7 @@ export interface DisplayAsset {
 
 class PositionsStore {
   public loading = false;
-  public positionsById: Record<string, Position> = {};
+  public positionsById = new Map<PositionId, Position>();
   private assets: Metadata[] = [];
   private currentPair: [Metadata, Metadata] | null = null;
 
@@ -114,18 +120,17 @@ class PositionsStore {
   private async updatePositionInCache(positionId: PositionId) {
     const { data } = await penumbra.service(DexService).liquidityPositionById({ positionId });
     if (data) {
-      const newPositionData = await getPositionData(positionId, data);
-      queryClient.setQueryData<PositionData[]>(['positions'], oldData => {
-        if (!oldData) {
+      queryClient.setQueryData(['positions'], (oldData: Map<PositionId, Position>) => {
+        if (!oldData.has(positionId)) {
           throw new Error('Trying to update position data cache when none is present');
         }
-        // Finding matching positionId and swap out the position data with latest
-        return oldData.map(p => (p.positionId === positionId ? newPositionData : p));
+        oldData.set(positionId, data);
+        return oldData;
       });
     }
   }
 
-  setPositions = (positionsById: Record<string, Position>) => {
+  setPositions = (positionsById: Map<PositionId, Position>) => {
     this.positionsById = positionsById;
   };
 
@@ -137,20 +142,57 @@ class PositionsStore {
     this.currentPair = [baseAsset, quoteAsset];
   };
 
-  getDirection = (baseReserves: Amount, quoteReserves: Amount) => {
-    if (pnum(baseReserves).toBigInt() !== 0n && pnum(quoteReserves).toBigInt() !== 0n) {
-      return 'Sell';
+  getOrdersByBaseQuoteAssets = (baseAsset: DisplayAsset, quoteAsset: DisplayAsset) => {
+    if (!isZero(baseAsset.reserves) && !isZero(quoteAsset.reserves)) {
+      return [
+        {
+          direction: 'Buy',
+          baseAsset,
+          quoteAsset,
+        },
+        {
+          direction: 'Sell',
+          baseAsset: quoteAsset,
+          quoteAsset: baseAsset,
+        },
+      ];
     }
 
-    if (pnum(baseReserves).toBigInt() !== 0n) {
-      return 'Sell';
+    if (!isZero(baseAsset.reserves) && isZero(quoteAsset.reserves)) {
+      return [
+        {
+          direction: 'Sell',
+          baseAsset,
+          quoteAsset,
+        },
+      ];
     }
 
-    // else quoteReserves !== 0n
-    return 'Buy';
+    if (isZero(baseAsset.reserves) && !isZero(quoteAsset.reserves)) {
+      return [
+        {
+          direction: 'Buy',
+          baseAsset,
+          quoteAsset,
+        },
+      ];
+    }
+
+    return [
+      {
+        direction: '',
+        baseAsset,
+        quoteAsset,
+      },
+      {
+        direction: '',
+        baseAsset: quoteAsset,
+        quoteAsset: baseAsset,
+      },
+    ];
   };
 
-  getDirectionalPositionInfo = ({
+  getDirectionalOrders = ({
     asset1,
     asset2,
   }: {
@@ -170,7 +212,7 @@ class PositionsStore {
       effectivePrice: number;
       reserves: Amount;
     };
-  }): { direction: string; baseAsset: DisplayAsset; quoteAsset: DisplayAsset } => {
+  }): { direction: string; baseAsset: DisplayAsset; quoteAsset: DisplayAsset }[] => {
     if (!this.currentPair || !asset1.asset.penumbraAssetId || !asset2.asset.penumbraAssetId) {
       throw new Error('No current pair or assets');
     }
@@ -187,46 +229,26 @@ class PositionsStore {
 
     // - if position in current pair, use the current orientation
     if (asset1IsBaseAsset && asset2IsQuoteAsset) {
-      return {
-        direction: this.getDirection(asset1.reserves, asset2.reserves),
-        baseAsset: asset1,
-        quoteAsset: asset2,
-      };
+      return this.getOrdersByBaseQuoteAssets(asset1, asset2);
     }
 
     if (asset1IsQuoteAsset && asset2IsBaseAsset) {
-      return {
-        direction: this.getDirection(asset2.reserves, asset1.reserves),
-        baseAsset: asset2,
-        quoteAsset: asset1,
-      };
+      return this.getOrdersByBaseQuoteAssets(asset2, asset1);
     }
 
     // - if position not in current pair, and one asset in position
     //   pair is the current view’s quote asset, use that asset as
     //   the quote asset
     if (asset1IsQuoteAsset) {
-      return {
-        direction: this.getDirection(asset2.reserves, asset1.reserves),
-        baseAsset: asset2,
-        quoteAsset: asset1,
-      };
+      return this.getOrdersByBaseQuoteAssets(asset2, asset1);
     }
 
     if (asset2IsQuoteAsset) {
-      return {
-        direction: this.getDirection(asset1.reserves, asset2.reserves),
-        baseAsset: asset1,
-        quoteAsset: asset2,
-      };
+      return this.getOrdersByBaseQuoteAssets(asset1, asset2);
     }
 
     // - otherwise use whatever ordering
-    return {
-      direction: this.getDirection(asset1.reserves, asset2.reserves),
-      baseAsset: asset1,
-      quoteAsset: asset2,
-    };
+    return this.getOrdersByBaseQuoteAssets(asset1, asset2);
   };
 
   get displayPositions(): DisplayPosition[] {
@@ -234,7 +256,7 @@ class PositionsStore {
       return [];
     }
 
-    return Object.entries(this.positionsById)
+    return [...this.positionsById.entries()]
       .map(([id, position]) => {
         /* eslint-disable curly -- makes code more concise */
         const { phi, reserves, state } = position;
@@ -284,7 +306,7 @@ class PositionsStore {
           .dividedBy(pnum(p).toBigNumber())
           .toNumber();
 
-        const { direction, baseAsset, quoteAsset } = this.getDirectionalPositionInfo({
+        const orders = this.getDirectionalOrders({
           asset1: {
             asset: asset1,
             exponent: asset1Exponent,
@@ -304,26 +326,27 @@ class PositionsStore {
         });
 
         return {
-          id,
-          positionId: position.positionId,
-          direction,
-          amount:
-            direction === 'Sell'
-              ? pnum(baseAsset.amount, baseAsset.exponent).toValueView(baseAsset.asset)
-              : pnum(quoteAsset.amount, quoteAsset.exponent).toValueView(quoteAsset.asset),
-          basePrice: pnum(quoteAsset.price, quoteAsset.exponent).toValueView(quoteAsset.asset),
-          effectivePrice: pnum(quoteAsset.effectivePrice, quoteAsset.exponent).toValueView(
-            quoteAsset.asset,
-          ),
-          baseAsset,
-          quoteAsset,
+          id: id,
+          idString: bech32mPositionId(id),
+          orders: orders.map(({ direction, baseAsset, quoteAsset }) => ({
+            direction,
+            amount:
+              direction === 'Sell'
+                ? pnum(baseAsset.amount, baseAsset.exponent).toValueView(baseAsset.asset)
+                : pnum(quoteAsset.amount, quoteAsset.exponent).toValueView(quoteAsset.asset),
+            basePrice: pnum(quoteAsset.price, quoteAsset.exponent).toValueView(quoteAsset.asset),
+            effectivePrice: pnum(quoteAsset.effectivePrice, quoteAsset.exponent).toValueView(
+              quoteAsset.asset,
+            ),
+            baseAsset,
+            quoteAsset,
+          })),
           fee: `${pnum(component.fee / 100).toFormattedString({ decimals: 2 })}%`,
           isActive: state.state !== PositionState_PositionStateEnum.WITHDRAWN,
           state: state.state,
-          stateString: stateToString(state.state),
         };
       })
-      .filter(Boolean);
+      .filter(displayPosition => displayPosition !== undefined);
   }
 }
 

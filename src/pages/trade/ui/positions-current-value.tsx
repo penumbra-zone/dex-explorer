@@ -1,18 +1,18 @@
 import React from 'react';
 import { useMarketPrice } from '../model/useMarketPrice';
-import { Asset } from '@/shared/math/position';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
 import { LoadingCell } from './market-trades';
 import { pnum } from '@penumbra-zone/types/pnum';
+import { DisplayAsset } from '../model/positions';
 
 export const PositionsCurrentValue = ({
   baseAsset,
   quoteAsset,
 }: {
-  baseAsset: Asset;
-  quoteAsset: Asset;
+  baseAsset: DisplayAsset;
+  quoteAsset: DisplayAsset;
 }) => {
-  const marketPrice = useMarketPrice(baseAsset.symbol, quoteAsset.symbol);
+  const marketPrice = useMarketPrice(baseAsset.asset.symbol, quoteAsset.asset.symbol);
 
   return marketPrice ? (
     <ValueViewComponent

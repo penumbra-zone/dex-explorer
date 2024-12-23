@@ -9,13 +9,13 @@ import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
 import { Density } from '@penumbra-zone/ui/Density';
 import { TooltipProvider } from '@penumbra-zone/ui/Tooltip';
 import { Tooltip } from '@penumbra-zone/ui/Tooltip';
-import { Order, stateToString, usePositions } from '@/pages/trade/api/positions.ts';
+import { stateToString, usePositions } from '@/pages/trade/api/positions.ts';
 import {
   PositionId,
   PositionState_PositionStateEnum,
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { Button } from '@penumbra-zone/ui/Button';
-import { positionsStore } from '@/pages/trade/model/positions';
+import { DisplayPosition, positionsStore } from '@/pages/trade/model/positions';
 import Link from 'next/link';
 import { SquareArrowOutUpRight } from 'lucide-react';
 import { useEffect } from 'react';
@@ -56,13 +56,13 @@ const ErrorNotice = ({ error }: { error: unknown }) => {
 
 const getStateLabel = (
   state: PositionState_PositionStateEnum,
-  side?: Order['side'],
+  direction: DisplayPosition['orders'][number]['direction'],
 ): { label: string; color: TextProps['color'] } => {
-  if (side && state === PositionState_PositionStateEnum.OPENED) {
-    if (side === 'Buy') {
-      return { label: side, color: 'success.light' };
+  if (state === PositionState_PositionStateEnum.OPENED) {
+    if (direction === 'Buy') {
+      return { label: direction, color: 'success.light' };
     } else {
-      return { label: side, color: 'destructive.light' };
+      return { label: direction, color: 'destructive.light' };
     }
   } else {
     return { label: stateToString(state), color: 'neutral.light' };
@@ -95,80 +95,57 @@ const ActionButton = observer(
   },
 );
 
-const RowLabel = ({
-  state,
-  direction,
-}: {
-  state: PositionState_PositionStateEnum;
-  direction: Order['side'];
-}) => {
-  const { label, color } = getStateLabel(state, direction);
-  return (
-    <Text detail color={color}>
-      {label}
-    </Text>
-  );
-  // A withdrawn position has no orders
-  // if (!p.orders.length) {
-  //   const { label, color } = getStateLabel(p.positionState);
-  //   return (
-  //     <Text detail color={color}>
-  //       {label}
-  //     </Text>
-  //   );
-  // }
-  // // For opened or closed positions
-  // return p.orders.map((o, i) => {
-  //   const { label, color } = getStateLabel(p.positionState, o.side);
-  //   return (
-  //     <Text detail color={color} key={i}>
-  //       {label}
-  //     </Text>
-  //   );
-  // });
-};
-
 const MAX_ACTION_COUNT = 15;
 
-const HeaderActionButton = observer(({ displayPositions }: { displayPositions: Position[] }) => {
-  const { loading, closePositions, withdrawPositions } = positionsStore;
+const HeaderActionButton = observer(
+  ({ displayPositions }: { displayPositions: DisplayPosition[] }) => {
+    const { loading, closePositions, withdrawPositions } = positionsStore;
 
-  const openedPositions =
-    displayPositions.filter(p => p.state === PositionState_PositionStateEnum.OPENED) ?? [];
-  if (openedPositions.length > 1) {
-    return (
-      <Button
-        density='slim'
-        actionType='destructive'
-        disabled={loading}
-        onClick={() =>
-          void closePositions(openedPositions.slice(0, MAX_ACTION_COUNT).map(p => p.positionId))
-        }
-      >
-        Close Batch
-      </Button>
+    const openedPositions = displayPositions.filter(
+      position => position.state === PositionState_PositionStateEnum.OPENED,
     );
-  }
 
-  const closedPositions =
-    displayPositions.filter(p => p.state === PositionState_PositionStateEnum.CLOSED) ?? [];
-  if (closedPositions.length > 1) {
-    return (
-      <Button
-        density='slim'
-        actionType='destructive'
-        disabled={loading}
-        onClick={() =>
-          void withdrawPositions(closedPositions.map(p => p.positionId).slice(0, MAX_ACTION_COUNT))
-        }
-      >
-        Withdraw Batch
-      </Button>
+    if (openedPositions.length > 1) {
+      return (
+        <Button
+          density='slim'
+          actionType='destructive'
+          disabled={loading}
+          onClick={() =>
+            void closePositions(
+              openedPositions.slice(0, MAX_ACTION_COUNT).map(position => position.id),
+            )
+          }
+        >
+          Close Batch
+        </Button>
+      );
+    }
+
+    const closedPositions = displayPositions.filter(
+      position => position.state === PositionState_PositionStateEnum.CLOSED,
     );
-  }
 
-  return 'Actions';
-});
+    if (closedPositions.length > 1) {
+      return (
+        <Button
+          density='slim'
+          actionType='destructive'
+          disabled={loading}
+          onClick={() =>
+            void withdrawPositions(
+              closedPositions.map(position => position.id).slice(0, MAX_ACTION_COUNT),
+            )
+          }
+        >
+          Withdraw Batch
+        </Button>
+      );
+    }
+
+    return 'Actions';
+  },
+);
 
 const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
   const { connected } = connectionStore;
@@ -176,7 +153,6 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
   const { data: assets } = useRegistryAssets();
   const { data, isLoading, error } = usePositions();
   const { displayPositions, setPositions, setAssets } = positionsStore;
-  console.log('TCL: displayPositions', displayPositions);
 
   useEffect(() => {
     setPositions(data ?? {});
@@ -234,7 +210,6 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                 </Table.Th>
                 <Table.Th hAlign='right' density='slim'>
                   <HeaderActionButton displayPositions={displayPositions} />
-                  {/* <Text tableHeadingSmall>Actions</Text> */}
                 </Table.Th>
               </Table.Tr>
             </Table.Thead>
@@ -250,82 +225,113 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                   </Table.Tr>
                 ))}
               {displayPositions
-                .filter(p => (showInactive ? true : p.isActive))
-                .map(p => {
+                .filter(position => (showInactive ? true : position.isActive))
+                .map(position => {
                   return (
-                    <Table.Tr key={p.id}>
+                    <Table.Tr key={position.idString}>
                       <Table.Td density='slim'>
-                        <RowLabel state={p.state} direction={p.direction} />
+                        <div className='flex flex-col gap-4'>
+                          {position.orders
+                            .map(order => getStateLabel(position.state, order.direction))
+                            .map(({ label, color }, i) => (
+                              <Text as='div' detail color={color} key={i}>
+                                {label}
+                              </Text>
+                            ))}
+                        </div>
                       </Table.Td>
                       <Table.Td density='slim'>
-                        <ValueViewComponent
-                          valueView={p.amount}
-                          trailingZeros={true}
-                          density='slim'
-                        />
+                        <div className='flex flex-col gap-4'>
+                          {position.orders.map((order, i) => (
+                            <ValueViewComponent
+                              key={i}
+                              valueView={order.amount}
+                              trailingZeros={true}
+                              density='slim'
+                            />
+                          ))}
+                        </div>
                       </Table.Td>
                       <Table.Td density='slim'>
-                        <Tooltip
-                          message={
-                            <div>
-                              <div>
-                                <Text detail color='text.primary'>
-                                  Base price: {pnum(p.basePrice).toFormattedString()}
-                                </Text>
-                              </div>
-                              <div>
-                                <Text detail color='text.primary'>
-                                  Fee:{' '}
-                                  {pnum(p.basePrice)
-                                    .toBigNumber()
-                                    .minus(pnum(p.effectivePrice).toBigNumber())
-                                    .toString()}{' '}
-                                  ({p.fee})
-                                </Text>
-                              </div>
-                              <div>
-                                <Text detail color='text.primary'>
-                                  Effective price: {pnum(p.effectivePrice).toFormattedString()}
-                                </Text>
-                              </div>
-                            </div>
-                          }
-                        >
-                          <ValueViewComponent
-                            valueView={p.effectivePrice}
-                            trailingZeros={true}
-                            density='slim'
-                          />
-                        </Tooltip>
+                        {/* Fight display inline 4 px spacing */}
+                        <div className='flex flex-col gap-2 -mb-1 items-start'>
+                          {position.orders.map((order, i) => (
+                            <Tooltip
+                              key={i}
+                              message={
+                                <>
+                                  <Text as='div' detail color='text.primary'>
+                                    Base price: {pnum(order.basePrice).toFormattedString()}
+                                  </Text>
+                                  <Text as='div' detail color='text.primary'>
+                                    Fee:{' '}
+                                    {pnum(order.basePrice)
+                                      .toBigNumber()
+                                      .minus(pnum(order.effectivePrice).toBigNumber())
+                                      .toString()}{' '}
+                                    ({position.fee})
+                                  </Text>
+                                  <Text as='div' detail color='text.primary'>
+                                    Effective price:{' '}
+                                    {pnum(order.effectivePrice).toFormattedString()}
+                                  </Text>
+                                </>
+                              }
+                            >
+                              <ValueViewComponent
+                                as='div'
+                                valueView={order.effectivePrice}
+                                trailingZeros={true}
+                                density='slim'
+                              />
+                            </Tooltip>
+                          ))}
+                        </div>
                       </Table.Td>
                       <Table.Td density='slim'>
-                        <Text detailTechnical color='text.primary'>
-                          {p.fee}
+                        <Text as='div' detailTechnical color='text.primary'>
+                          {position.fee}
                         </Text>
                       </Table.Td>
                       <Table.Td density='slim'>
-                        <ValueViewComponent
-                          valueView={p.basePrice}
-                          trailingZeros={true}
-                          showIcon={false}
-                          density='slim'
-                        />
+                        <div className='flex flex-col gap-4'>
+                          {position.orders.map((order, i) => (
+                            <Text
+                              key={i}
+                              as='div'
+                              detailTechnical
+                              color='text.primary'
+                              whitespace='nowrap'
+                            >
+                              {pnum(order.basePrice).toFormattedString()}{' '}
+                              {order.baseAsset.asset.symbol}
+                            </Text>
+                          ))}
+                        </div>
                       </Table.Td>
                       <Table.Td density='slim'>
-                        <PositionsCurrentValue baseAsset={p.baseAsset} quoteAsset={p.quoteAsset} />
+                        <div className='flex flex-col gap-4'>
+                          {position.orders.map((order, i) => (
+                            <PositionsCurrentValue
+                              key={i}
+                              baseAsset={order.baseAsset}
+                              quoteAsset={order.quoteAsset}
+                            />
+                          ))}
+                        </div>
                       </Table.Td>
                       <Table.Td density='slim'>
                         <div className='flex max-w-[104px]'>
                           <Text as='div' detailTechnical color='text.primary' truncate>
-                            {p.id}
+                            {position.idString}
                           </Text>
-                          <Link href={`/inspect/lp/${p.id}`}>
+                          <Link href={`/inspect/lp/${position.idString}`}>
                             <SquareArrowOutUpRight className='w-4 h-4 text-text-secondary' />
                           </Link>
                         </div>
                       </Table.Td>
                       <Table.Td hAlign='right' density='slim'>
-                        <ActionButton state={p.state} id={p.positionId} />
+                        <ActionButton state={position.state} id={position.id} />
                       </Table.Td>
                     </Table.Tr>
                   );
