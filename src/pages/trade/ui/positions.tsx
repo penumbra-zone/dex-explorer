@@ -7,8 +7,7 @@ import { Text, TextProps } from '@penumbra-zone/ui/Text';
 import { Table } from '@penumbra-zone/ui/Table';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
 import { Density } from '@penumbra-zone/ui/Density';
-import { TooltipProvider } from '@penumbra-zone/ui/Tooltip';
-import { Tooltip } from '@penumbra-zone/ui/Tooltip';
+import { Tooltip, TooltipProvider } from '@penumbra-zone/ui/Tooltip';
 import { stateToString, usePositions } from '@/pages/trade/api/positions.ts';
 import {
   Position,
