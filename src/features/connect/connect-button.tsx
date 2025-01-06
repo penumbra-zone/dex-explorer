@@ -38,43 +38,23 @@ const ConnectButtonInner = observer(
 
     return (
       <>
-        {variant === 'default' ? (
-          <Density variant={variant === 'default' ? 'sparse' : 'compact'}>
-            {providerOrigins.length === 0 ? (
-              <Button
-                icon={Wallet2}
-                actionType={actionType}
-                onClick={() =>
-                  window.open('https://praxwallet.com/', '_blank', 'noopener,noreferrer')
-                }
-              >
-                Install Prax
-              </Button>
-            ) : (
-              <Button icon={Wallet2} actionType={actionType} onClick={onConnectClick}>
-                Connect wallet
-              </Button>
-            )}
-          </Density>
-        ) : (
-          <Density compact>
-            {providerOrigins.length === 0 ? (
-              <Button
-                icon={Wallet2}
-                actionType={actionType}
-                onClick={() =>
-                  window.open('https://praxwallet.com/', '_blank', 'noopener,noreferrer')
-                }
-              >
-                Install Prax
-              </Button>
-            ) : (
-              <Button actionType={actionType} onClick={onConnectClick}>
-                Connect wallet
-              </Button>
-            )}
-          </Density>
-        )}
+        <Density variant={variant === 'default' ? 'sparse' : 'compact'}>
+          {providerOrigins.length === 0 ? (
+            <Button
+              icon={Wallet2}
+              actionType={actionType}
+              onClick={() =>
+                window.open('https://praxwallet.com/', '_blank', 'noopener,noreferrer')
+              }
+            >
+              Install Prax
+            </Button>
+          ) : (
+            <Button icon={Wallet2} actionType={actionType} onClick={onConnectClick}>
+              Connect wallet
+            </Button>
+          )}
+        </Density>
 
         <Dialog isOpen={isOpen} onClose={() => setIsOpen(false)}>
           <Dialog.Content title='Choose wallet'>
