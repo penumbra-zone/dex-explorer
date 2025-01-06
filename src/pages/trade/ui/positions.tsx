@@ -198,7 +198,9 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                   <Text tableHeadingSmall>Effective Price</Text>
                 </Table.Th>
                 <Table.Th density='slim'>
-                  <Text tableHeadingSmall>Fee Tier</Text>
+                  <Text tableHeadingSmall whitespace='nowrap'>
+                    Fee Tier
+                  </Text>
                 </Table.Th>
                 <Table.Th density='slim'>
                   <Text tableHeadingSmall>Base Price</Text>
