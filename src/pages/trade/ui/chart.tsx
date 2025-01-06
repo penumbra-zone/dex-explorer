@@ -264,7 +264,7 @@ export const Chart = observer(() => {
       {error && (
         <div className='w-full h-full flex items-center justify-center'>
           <div className='w-[450px] h-full flex items-center justify-center'>
-            <BlockchainError onDetailsClick={() => console.log('Details clicked')} />
+            <BlockchainError />
           </div>
         </div>
       )}
