@@ -11,6 +11,7 @@ import { TooltipProvider } from '@penumbra-zone/ui/Tooltip';
 import { Tooltip } from '@penumbra-zone/ui/Tooltip';
 import { stateToString, usePositions } from '@/pages/trade/api/positions.ts';
 import {
+  Position,
   PositionId,
   PositionState_PositionStateEnum,
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
@@ -155,7 +156,7 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
   const { displayPositions, setPositions, setAssets } = positionsStore;
 
   useEffect(() => {
-    setPositions(data ?? {});
+    setPositions(data ?? new Map<PositionId, Position>());
   }, [data, setPositions]);
 
   useEffect(() => {
@@ -278,12 +279,13 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                                 </>
                               }
                             >
-                              <ValueViewComponent
-                                as='div'
-                                valueView={order.effectivePrice}
-                                trailingZeros={true}
-                                density='slim'
-                              />
+                              <div>
+                                <ValueViewComponent
+                                  valueView={order.effectivePrice}
+                                  trailingZeros={true}
+                                  density='slim'
+                                />
+                              </div>
                             </Tooltip>
                           ))}
                         </div>
