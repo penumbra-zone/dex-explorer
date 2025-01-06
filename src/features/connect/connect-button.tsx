@@ -39,7 +39,7 @@ const ConnectButtonInner = observer(
     return (
       <>
         {variant === 'default' ? (
-          <Density sparse>
+          <Density variant={variant === 'default' ? 'sparse' : 'compact'}>
             {providerOrigins.length === 0 ? (
               <Button
                 icon={Wallet2}
