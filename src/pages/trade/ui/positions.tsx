@@ -54,8 +54,8 @@ const NoPositions = () => {
 
 const ErrorNotice = ({ error }: { error: unknown }) => {
   return (
-    <div className='flex items-center justify-center p-4 min-h-[400px]'>
-      <BlockchainError message={String(error)} />
+    <div className='min-h-[400px] flex items-center justify-center'>
+      <BlockchainError message={String(error)} direction='column' />
     </div>
   );
 };
