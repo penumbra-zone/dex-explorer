@@ -24,6 +24,7 @@ import { usePathToMetadata } from '../model/use-path';
 import { PositionsCurrentValue } from './positions-current-value';
 import { SquareArrowOutUpRight, Wallet2 } from 'lucide-react';
 import { ConnectButton } from '@/features/connect/connect-button';
+import { BlockchainError } from '@/shared/ui/blockchain-error';
 
 const NotConnectedNotice = () => {
   return (
@@ -53,10 +54,8 @@ const NoPositions = () => {
 
 const ErrorNotice = ({ error }: { error: unknown }) => {
   return (
-    <div className='p-5'>
-      <Text small color='destructive.light'>
-        {String(error)}
-      </Text>
+    <div className='flex items-center justify-center p-4 min-h-[400px]'>
+      <BlockchainError message={String(error)} />
     </div>
   );
 };

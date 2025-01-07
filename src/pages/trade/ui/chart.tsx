@@ -262,15 +262,13 @@ export const Chart = observer(() => {
       </div>
 
       <div className='grow flex items-center justify-center min-h-0'>
-        {error ? (
+        {error && (
           <div className='w-[450px]'>
             <BlockchainError />
           </div>
-        ) : isLoading ? (
-          <ChartLoadingState />
-        ) : data ? (
-          <ChartData candles={data} />
-        ) : null}
+        )}
+        {!error && isLoading && <ChartLoadingState />}
+        {!error && !isLoading && data && <ChartData candles={data} />}
       </div>
     </div>
   );
