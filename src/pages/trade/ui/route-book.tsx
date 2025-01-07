@@ -6,6 +6,7 @@ import { usePathSymbols } from '@/pages/trade/model/use-path.ts';
 import { calculateSpread } from '@/pages/trade/model/trace.ts';
 import { TradeRow } from '@/pages/trade/ui/trade-row.tsx';
 import { Skeleton } from '@/shared/ui/skeleton';
+import { BlockchainError } from '@/shared/ui/blockchain-error';
 
 const SkeletonRow = (props: { isSpread: boolean }) =>
   props.isSpread ? (
@@ -105,7 +106,11 @@ export const RouteBook = observer(() => {
   const { data, error: bookErr } = useBook();
 
   if (bookErr) {
-    return <div className='text-red-500'>Error loading route book: {String(bookErr)}</div>;
+    return (
+      <div className='flex items-center justify-center p-4 min-h-[600px]'>
+        <BlockchainError message={`Error loading route book: ${String(bookErr)}`} />
+      </div>
+    );
   }
 
   return <RouteBookData bookData={data} />;

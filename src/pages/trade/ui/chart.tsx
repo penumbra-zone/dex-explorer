@@ -244,7 +244,7 @@ export const Chart = observer(() => {
   const { data, isLoading, error } = useCandles(duration);
 
   return (
-    <div className='flex flex-col grow h-full'>
+    <div className='flex flex-col h-full min-h-0'>
       <div className='flex px-3 border-b border-b-other-solidStroke'>
         {durationWindows.map(w => (
           <button
@@ -261,17 +261,16 @@ export const Chart = observer(() => {
         ))}
       </div>
 
-      {error && (
-        <div className='w-full h-full flex items-center justify-center'>
-          <div className='w-[450px] h-full flex items-center justify-center'>
+      <div className='grow flex items-center justify-center min-h-0'>
+        {error ? (
+          <div className='w-[450px]'>
             <BlockchainError />
           </div>
-        </div>
-      )}
-
-      <div className='grow w-full h-full max-h-full pt-2 pl-4 pb-4 self-center flex items-center'>
-        {isLoading && <ChartLoadingState />}
-        {data && <ChartData candles={data} />}
+        ) : isLoading ? (
+          <ChartLoadingState />
+        ) : data ? (
+          <ChartData candles={data} />
+        ) : null}
       </div>
     </div>
   );
