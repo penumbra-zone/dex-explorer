@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import { useEffect } from 'react';
 import { LoadingCell } from './market-trades';
 import { connectionStore } from '@/shared/model/connection';
 import { observer } from 'mobx-react-lite';
@@ -9,27 +11,32 @@ import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
 import { Density } from '@penumbra-zone/ui/Density';
 import { Tooltip, TooltipProvider } from '@penumbra-zone/ui/Tooltip';
 import { stateToString, usePositions } from '@/pages/trade/api/positions.ts';
+import { Button } from '@penumbra-zone/ui/Button';
 import {
   Position,
   PositionId,
   PositionState_PositionStateEnum,
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
-import { Button } from '@penumbra-zone/ui/Button';
 import { DisplayPosition, positionsStore } from '@/pages/trade/model/positions';
-import Link from 'next/link';
-import { SquareArrowOutUpRight } from 'lucide-react';
-import { useEffect } from 'react';
 import { pnum } from '@penumbra-zone/types/pnum';
 import { useRegistryAssets } from '@/shared/api/registry';
 import { usePathToMetadata } from '../model/use-path';
 import { PositionsCurrentValue } from './positions-current-value';
+import { SquareArrowOutUpRight, Wallet2 } from 'lucide-react';
+import { ConnectButton } from '@/features/connect/connect-button';
 
 const NotConnectedNotice = () => {
   return (
-    <div className='p-5'>
-      <Text small color='text.secondary'>
-        Connect your wallet
+    <div className='flex flex-col items-center justify-center h-[400px] gap-4'>
+      <div className='w-12 h-12 text-text-secondary'>
+        <Wallet2 className='w-full h-full' />
+      </div>
+      <Text color='text.secondary' small>
+        Connect wallet to see your positions
       </Text>
+      <div className='w-fit'>
+        <ConnectButton variant='minimal' actionType='default' />
+      </div>
     </div>
   );
 };
