@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ChainRegistryClient } from '@penumbra-labs/registry';
 import { pindexer } from '@/shared/database';
-import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
-import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { Metadata, AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 
 export interface PriceResponse {
     symbol: string;
@@ -22,8 +21,6 @@ export async function GET(req: NextRequest): Promise<NextResponse<PricesApiRespo
     if (!symbols.length) {
         return NextResponse.json({ error: 'No symbols provided' }, { status: 400 });
     }
-
-    console.log('Requested symbols:', symbols);
 
     const registryClient = new ChainRegistryClient();
     const registry = await registryClient.remote.get(chainId);
@@ -58,53 +55,14 @@ export async function GET(req: NextRequest): Promise<NextResponse<PricesApiRespo
         );
     }
 
-    // Helper function to convert decimal array to hex string
-    const toHex = (arr?: Uint8Array) => {
-        if (!arr) return '';
-        return Buffer.from(arr).toString('hex');
-    };
-
-    // Get the stablecoin (TestUSD for testnet, USDC for mainnet)
-    const stablecoin = allAssets.find(asset => {
-        if (chainId !== 'penumbra-1') {
-            return asset.symbol === 'TestUSD';
-        }
-        return asset.symbol === 'USDC';
-    });
-
-    if (!stablecoin) {
-        return NextResponse.json({ error: 'Stablecoin not found in registry' }, { status: 500 });
-    }
-
     // Get prices from pindexer using UM as the base asset
     const results = await pindexer.pairs({
         usdc: baseAsset.penumbraAssetId ?? new AssetId(),
         stablecoins: [baseAsset.penumbraAssetId ?? new AssetId()],
     });
 
-    // Map asset IDs to symbols for easier lookup
-    const assetIdToSymbol = new Map<string, string>();
-    allAssets.forEach(asset => {
-        const hex = toHex(asset.penumbraAssetId?.inner);
-        if (hex) {
-            assetIdToSymbol.set(hex, asset.symbol);
-        }
-    });
-
-    console.log('Base asset:', baseAsset.symbol);
-    console.log(
-        'Pairs data:',
-        results.map(r => ({
-            start_symbol: assetIdToSymbol.get(r.asset_start.toString('hex')),
-            end_symbol: assetIdToSymbol.get(r.asset_end.toString('hex')),
-            price: r.price,
-        })),
-    );
-
     // Map results to response format
-    const response: PriceResponse[] = assets.map(asset => {
-        const assetIdHex = toHex(asset.penumbraAssetId?.inner);
-
+    const prices = assets.map(asset => {
         // For the base asset itself, return 1 as the price
         if (asset.symbol === baseAsset.symbol) {
             return {
@@ -113,23 +71,33 @@ export async function GET(req: NextRequest): Promise<NextResponse<PricesApiRespo
             };
         }
 
+        // Skip if either asset doesn't have an ID or inner bytes
+        if (!asset.penumbraAssetId?.inner || !baseAsset.penumbraAssetId?.inner) {
+            return {
+                symbol: asset.symbol,
+                price: null,
+            };
+        }
+
+        const assetBuffer = Buffer.from(asset.penumbraAssetId.inner);
+        const baseBuffer = Buffer.from(baseAsset.penumbraAssetId.inner);
+
         // Find direct pair with base asset
-        const baseAssetHex = toHex(baseAsset.penumbraAssetId?.inner);
         const directPair = results.find(r => {
-            const startHex = r.asset_start.toString('hex');
-            const endHex = r.asset_end.toString('hex');
             return (
-                (startHex === assetIdHex && endHex === baseAssetHex) ||
-                (startHex === baseAssetHex && endHex === assetIdHex)
+                (Buffer.compare(r.asset_start, assetBuffer) === 0 && Buffer.compare(r.asset_end, baseBuffer) === 0) ||
+                (Buffer.compare(r.asset_start, baseBuffer) === 0 && Buffer.compare(r.asset_end, assetBuffer) === 0)
             );
         });
 
         if (directPair) {
-            // For GN/UM pair where GN is start and UM is end, use the price directly
-            // This gives us the price of GN in terms of UM
+            // If we're the end asset, invert the price
+            // If we're the start asset, use the price directly
+            const isEnd = Buffer.compare(Buffer.from(asset.penumbraAssetId.inner), directPair.asset_end) === 0;
+            const price = isEnd ? 1 / directPair.price : directPair.price;
             return {
                 symbol: asset.symbol,
-                price: directPair.price,
+                price,
             };
         }
 
@@ -140,5 +108,5 @@ export async function GET(req: NextRequest): Promise<NextResponse<PricesApiRespo
         };
     });
 
-    return NextResponse.json(response);
+    return NextResponse.json(prices);
 }
