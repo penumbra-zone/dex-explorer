@@ -6,6 +6,7 @@ import { Density } from '@penumbra-zone/ui/Density';
 import { useBalances } from '@/shared/api/balances';
 import { useAssets } from '@/shared/api/assets';
 import { usePairs } from '@/pages/trade/api/use-pairs';
+import { useSummaries } from '../api/use-summaries';
 import { observer } from 'mobx-react-lite';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
@@ -20,7 +21,6 @@ import { AssetIcon } from '@penumbra-zone/ui/AssetIcon';
 import type { PairData } from '@/shared/api/server/summary/pairs';
 import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { formatAmount } from '@penumbra-zone/types/amount';
-import { calculateDisplayPrice } from '@/shared/utils/price-conversion';
 import { useRouter } from 'next/navigation';
 import { Button } from '@penumbra-zone/ui/Button';
 
@@ -122,19 +122,23 @@ const NotConnectedNotice = () => {
   );
 };
 
-const calculateAssetDistribution = (balances: BalancesResponse[]) => {
+const calculateAssetDistribution = (
+  balances: BalancesResponse[],
+  getAssetPrice: (metadata: Metadata) => number | null,
+) => {
   const validBalances = balances.filter(balance => {
     const valueView = getBalanceView.optional(balance);
     const metadata = getMetadataFromBalancesResponse.optional(balance);
     return valueView && metadata;
   });
 
-  const total = validBalances.reduce((acc, balance) => {
+  // Calculate values first
+  const valuesWithMetadata = validBalances.map(balance => {
     const valueView = getBalanceView.optional(balance);
     const metadata = getMetadataFromBalancesResponse.optional(balance);
     const amount = valueView?.valueView.value?.amount;
     if (!amount || !metadata) {
-      return acc;
+      return { value: 0, balance };
     }
     const formattedAmount = Number(
       formatAmount({
@@ -142,34 +146,26 @@ const calculateAssetDistribution = (balances: BalancesResponse[]) => {
         exponent: getDisplayDenomExponent(metadata),
       }),
     );
-    return acc + formattedAmount;
-  }, 0);
-
-  if (total === 0) {
-    return { distribution: [], sortedBalances: [] };
-  }
-
-  const distributionWithMetadata = validBalances.map(balance => {
-    const valueView = getBalanceView.optional(balance);
-    const metadata = getMetadataFromBalancesResponse.optional(balance);
-    const amount = valueView?.valueView.value?.amount;
-    if (!amount || !metadata) {
-      return { percentage: 0, color: '#000000', balance };
-    }
-    const formattedAmount = Number(
-      formatAmount({
-        amount,
-        exponent: getDisplayDenomExponent(metadata),
-      }),
-    );
+    const price = getAssetPrice(metadata) ?? 0;
     return {
-      percentage: (formattedAmount / total) * 100,
-      color: `hsl(${Math.random() * 360}, 70%, 50%)`,
+      value: formattedAmount * price,
       balance,
     };
   });
 
-  // Sort by percentage in descending order
+  const totalValue = valuesWithMetadata.reduce((acc, { value }) => acc + value, 0);
+
+  if (totalValue === 0) {
+    return { distribution: [], sortedBalances: [] };
+  }
+
+  const distributionWithMetadata = valuesWithMetadata.map(({ value, balance }) => ({
+    percentage: (value / totalValue) * 100,
+    color: `hsl(${Math.random() * 360}, 70%, 50%)`,
+    balance,
+  }));
+
+  // Sort by value percentage in descending order
   const sorted = distributionWithMetadata.sort((a, b) => b.percentage - a.percentage);
 
   return {
@@ -184,12 +180,21 @@ export const AssetsTable = observer(() => {
   const { data: balances, isLoading: balancesLoading } = useBalances();
   const { data: assets, isLoading: assetsLoading } = useAssets();
   const { data: pairs, isLoading: pairsLoading } = usePairs();
+  const summaryQueries = useSummaries(pairs ?? []);
 
   if (!connected) {
     return <NotConnectedNotice />;
   }
 
-  if (balancesLoading || assetsLoading || pairsLoading || !balances || !assets || !pairs) {
+  if (
+    balancesLoading ||
+    assetsLoading ||
+    pairsLoading ||
+    !balances ||
+    !assets ||
+    !pairs ||
+    summaryQueries.some(q => q.isLoading)
+  ) {
     return <LoadingState />;
   }
 
@@ -199,38 +204,32 @@ export const AssetsTable = observer(() => {
     return valueView && metadata;
   });
 
-  const { distribution, sortedBalances } = calculateAssetDistribution(validBalances);
-
   // Find price for an asset from pairs data
   const getAssetPrice = (metadata: Metadata) => {
     const pair = pairs.find(
       (p: PairData) =>
         p.baseAsset.symbol === metadata.symbol || p.quoteAsset.symbol === metadata.symbol,
     );
+
     if (!pair) {
+      return null;
+    }
+
+    // Find the summary data for this pair
+    const pairIndex = pairs.indexOf(pair);
+    const summary = summaryQueries[pairIndex]?.data;
+
+    if (!summary || 'noData' in summary || 'error' in summary) {
       return null;
     }
 
     // If the asset is the quote asset, we use the price directly
     // If it's the base asset, we need to calculate the inverse
     const isQuote = pair.quoteAsset.symbol === metadata.symbol;
-    const amount = pair.volume.valueView.value?.amount;
-    if (!amount) {
-      return null;
-    }
-
-    const formattedAmount = formatAmount({
-      amount,
-      exponent: getDisplayDenomExponent(isQuote ? pair.quoteAsset : pair.baseAsset),
-    });
-
-    const price = Number(formattedAmount);
-    if (isQuote) {
-      return price;
-    } else {
-      return calculateDisplayPrice(1 / price, pair.baseAsset, pair.quoteAsset);
-    }
+    return isQuote ? summary.price : 1 / summary.price;
   };
+
+  const { distribution, sortedBalances } = calculateAssetDistribution(validBalances, getAssetPrice);
 
   return (
     <div className='p-6'>
@@ -286,7 +285,7 @@ export const AssetsTable = observer(() => {
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {validBalances.map(balance => {
+              {sortedBalances.map(balance => {
                 const metadata = getMetadataFromBalancesResponse.optional(balance);
                 const valueView = getBalanceView.optional(balance);
                 if (!metadata || !valueView) {
