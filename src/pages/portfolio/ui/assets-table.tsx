@@ -1,7 +1,7 @@
 import { Table } from '@penumbra-zone/ui/Table';
 import { Card } from '@penumbra-zone/ui/Card';
 import { Text } from '@penumbra-zone/ui/Text';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { Density } from '@penumbra-zone/ui/Density';
 import { useBalances } from '@/shared/api/balances';
 import { useAssets } from '@/shared/api/assets';
@@ -146,15 +146,15 @@ const calculateAssetDistribution = (balances: BalancesResponse[]) => {
   }, 0);
 
   if (total === 0) {
-    return [];
+    return { distribution: [], sortedBalances: [] };
   }
 
-  return validBalances.map(balance => {
+  const distributionWithMetadata = validBalances.map(balance => {
     const valueView = getBalanceView.optional(balance);
     const metadata = getMetadataFromBalancesResponse.optional(balance);
     const amount = valueView?.valueView.value?.amount;
     if (!amount || !metadata) {
-      return { percentage: 0, color: '#000000' };
+      return { percentage: 0, color: '#000000', balance };
     }
     const formattedAmount = Number(
       formatAmount({
@@ -164,9 +164,18 @@ const calculateAssetDistribution = (balances: BalancesResponse[]) => {
     );
     return {
       percentage: (formattedAmount / total) * 100,
-      color: `hsl(${Math.random() * 360}, 70%, 50%)`, // Random color for now
+      color: `hsl(${Math.random() * 360}, 70%, 50%)`,
+      balance,
     };
   });
+
+  // Sort by percentage in descending order
+  const sorted = distributionWithMetadata.sort((a, b) => b.percentage - a.percentage);
+
+  return {
+    distribution: sorted.map(({ percentage, color }) => ({ percentage, color })),
+    sortedBalances: sorted.map(({ balance }) => balance),
+  };
 };
 
 export const AssetsTable = observer(() => {
@@ -190,7 +199,7 @@ export const AssetsTable = observer(() => {
     return valueView && metadata;
   });
 
-  const distribution = calculateAssetDistribution(validBalances);
+  const { distribution, sortedBalances } = calculateAssetDistribution(validBalances);
 
   // Find price for an asset from pairs data
   const getAssetPrice = (metadata: Metadata) => {
@@ -226,7 +235,9 @@ export const AssetsTable = observer(() => {
   return (
     <div className='p-6'>
       <Card>
-        <Text h3>Assets</Text>
+        <Text h3 color='text.primary'>
+          Assets
+        </Text>
 
         {/* Asset distribution bar */}
         <div className='flex w-full h-2 mt-4 mb-6 rounded-full overflow-hidden'>
@@ -244,7 +255,7 @@ export const AssetsTable = observer(() => {
 
         {/* Legend */}
         <div className='flex flex-wrap gap-4 mb-6'>
-          {validBalances.map((balance, index) => {
+          {sortedBalances.map((balance, index) => {
             const metadata = getMetadataFromBalancesResponse.optional(balance);
             if (!metadata || !distribution[index]) {
               return null;
@@ -307,14 +318,26 @@ export const AssetsTable = observer(() => {
                     </Table.Td>
                     <Table.Td>
                       {price ? (
-                        <Text>${price.toFixed(2)}</Text>
+                        <Text>
+                          {price.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}{' '}
+                          USDC
+                        </Text>
                       ) : (
                         <Text color='text.secondary'>-</Text>
                       )}
                     </Table.Td>
                     <Table.Td>
                       {value ? (
-                        <Text>${value.toFixed(2)}</Text>
+                        <Text>
+                          {value.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}{' '}
+                          USDC
+                        </Text>
                       ) : (
                         <Text color='text.secondary'>-</Text>
                       )}
@@ -322,18 +345,18 @@ export const AssetsTable = observer(() => {
                     <Table.Td>
                       <div className='flex gap-2'>
                         <Button
-                          icon={ArrowUpRight}
-                          actionType='accent'
-                          onClick={() => router.push(`/trade/${metadata.symbol}/TestUSD`)}
-                        >
-                          Buy
-                        </Button>
-                        <Button
-                          icon={ArrowUpRight}
-                          actionType='destructive'
+                          icon={ArrowDownRight}
+                          iconOnly
                           onClick={() => router.push(`/trade/TestUSD/${metadata.symbol}`)}
                         >
                           Sell
+                        </Button>
+                        <Button
+                          icon={ArrowUpRight}
+                          iconOnly
+                          onClick={() => router.push(`/trade/${metadata.symbol}/TestUSD`)}
+                        >
+                          Buy
                         </Button>
                       </div>
                     </Table.Td>
