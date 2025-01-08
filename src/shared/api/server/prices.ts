@@ -76,7 +76,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<PricesApiRespo
         return NextResponse.json({ error: 'Stablecoin not found in registry' }, { status: 500 });
     }
 
-    // Get prices from pindexer using the base asset (UM)
+    // Get prices from pindexer using UM as the base asset
     const results = await pindexer.pairs({
         usdc: baseAsset.penumbraAssetId ?? new AssetId(),
         stablecoins: [baseAsset.penumbraAssetId ?? new AssetId()],
@@ -92,21 +92,18 @@ export async function GET(req: NextRequest): Promise<NextResponse<PricesApiRespo
     });
 
     console.log('Base asset:', baseAsset.symbol);
-    console.log('Pairs data:', results.map(r => ({
-        start_symbol: assetIdToSymbol.get(r.asset_start.toString('hex')),
-        end_symbol: assetIdToSymbol.get(r.asset_end.toString('hex')),
-        price: r.price
-    })));
+    console.log(
+        'Pairs data:',
+        results.map(r => ({
+            start_symbol: assetIdToSymbol.get(r.asset_start.toString('hex')),
+            end_symbol: assetIdToSymbol.get(r.asset_end.toString('hex')),
+            price: r.price,
+        })),
+    );
 
     // Map results to response format
     const response: PriceResponse[] = assets.map(asset => {
         const assetIdHex = toHex(asset.penumbraAssetId?.inner);
-
-        if (asset.symbol === 'TestUSD') {
-            console.log('Processing TestUSD:');
-            console.log('TestUSD asset ID:', assetIdHex);
-            console.log('Base asset (UM) ID:', toHex(baseAsset.penumbraAssetId?.inner));
-        }
 
         // For the base asset itself, return 1 as the price
         if (asset.symbol === baseAsset.symbol) {
@@ -118,91 +115,25 @@ export async function GET(req: NextRequest): Promise<NextResponse<PricesApiRespo
 
         // Find direct pair with base asset
         const baseAssetHex = toHex(baseAsset.penumbraAssetId?.inner);
-        const directPair = results.find(
-            r => {
-                const startHex = r.asset_start.toString('hex');
-                const endHex = r.asset_end.toString('hex');
-
-                if (asset.symbol === 'TestUSD') {
-                    console.log('Checking pair:');
-                    console.log('- Start:', startHex, assetIdToSymbol.get(startHex));
-                    console.log('- End:', endHex, assetIdToSymbol.get(endHex));
-                    console.log('- Price:', r.price);
-                }
-
-                return (
-                    (startHex === assetIdHex && endHex === baseAssetHex) ||
-                    (startHex === baseAssetHex && endHex === assetIdHex)
-                );
-            }
-        );
+        const directPair = results.find(r => {
+            const startHex = r.asset_start.toString('hex');
+            const endHex = r.asset_end.toString('hex');
+            return (
+                (startHex === assetIdHex && endHex === baseAssetHex) ||
+                (startHex === baseAssetHex && endHex === assetIdHex)
+            );
+        });
 
         if (directPair) {
-            // If the asset is the end asset, we need to invert the price
-            const isEnd = assetIdHex === directPair.asset_end.toString('hex');
-            const price = isEnd ? 1 / directPair.price : directPair.price;
-            if (asset.symbol === 'TestUSD') {
-                console.log('Found direct pair for TestUSD:');
-                console.log('- Is end asset?', isEnd);
-                console.log('- Raw price:', directPair.price);
-                console.log('- Final price:', isEnd ? 1 / directPair.price : directPair.price);
-            }
+            // For GN/UM pair where GN is start and UM is end, use the price directly
+            // This gives us the price of GN in terms of UM
             return {
                 symbol: asset.symbol,
-                price,
+                price: directPair.price,
             };
         }
 
-        // If no direct pair found, try to find a route through TestUSD
-        const testUsdAsset = allAssets.find(a => a.symbol === 'TestUSD');
-        if (testUsdAsset?.penumbraAssetId) {
-            const testUsdHex = toHex(testUsdAsset.penumbraAssetId.inner);
-
-            // Find Asset/TestUSD pair
-            const assetTestUsdPair = results.find(
-                r => {
-                    const startHex = r.asset_start.toString('hex');
-                    const endHex = r.asset_end.toString('hex');
-                    return (
-                        (startHex === assetIdHex && endHex === testUsdHex) ||
-                        (startHex === testUsdHex && endHex === assetIdHex)
-                    );
-                }
-            );
-
-            // Find TestUSD/UM pair
-            const testUsdUmPair = results.find(
-                r => {
-                    const startHex = r.asset_start.toString('hex');
-                    const endHex = r.asset_end.toString('hex');
-                    return (
-                        (startHex === testUsdHex && endHex === baseAssetHex) ||
-                        (startHex === baseAssetHex && endHex === testUsdHex)
-                    );
-                }
-            );
-
-            if (assetTestUsdPair && testUsdUmPair) {
-                // Calculate price through TestUSD
-                const assetToTestUsd = assetIdHex === assetTestUsdPair.asset_end.toString('hex')
-                    ? 1 / assetTestUsdPair.price
-                    : assetTestUsdPair.price;
-
-                const testUsdToUm = testUsdHex === testUsdUmPair.asset_end.toString('hex')
-                    ? 1 / testUsdUmPair.price
-                    : testUsdUmPair.price;
-
-                const price = assetToTestUsd * testUsdToUm;
-                console.log(`Indirect pair for ${asset.symbol} through TestUSD: ${price}`);
-                return {
-                    symbol: asset.symbol,
-                    price,
-                };
-            }
-        }
-
         // If no route found, return null
-        console.log(`No route found for ${asset.symbol}`);
         return {
             symbol: asset.symbol,
             price: null,
@@ -210,4 +141,4 @@ export async function GET(req: NextRequest): Promise<NextResponse<PricesApiRespo
     });
 
     return NextResponse.json(response);
-} 
+}

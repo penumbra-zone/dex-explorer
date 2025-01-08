@@ -87,7 +87,7 @@ class Pindexer {
   async pairs({ usdc, stablecoins }: { usdc: AssetId; stablecoins: AssetId[] }) {
     console.log('Pairs query with:', {
       usdc: usdc.inner.toString('hex'),
-      stablecoins: stablecoins.map(s => s.inner.toString('hex'))
+      stablecoins: stablecoins.map(s => s.inner.toString('hex')),
     });
 
     const usdcTable = this.db
@@ -121,12 +121,15 @@ class Pindexer {
       .limit(15);
 
     const results = await joined.execute();
-    console.log('Database results:', results.map(r => ({
-      start: r.asset_start.toString('hex'),
-      end: r.asset_end.toString('hex'),
-      price: r.price,
-      usdc_price: r.usdc_price
-    })));
+    console.log(
+      'Database results:',
+      results.map(r => ({
+        start: r.asset_start.toString('hex'),
+        end: r.asset_end.toString('hex'),
+        price: r.price,
+        usdc_price: r.usdc_price,
+      })),
+    );
     return results;
   }
 

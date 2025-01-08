@@ -1,1 +1,1 @@
-export { GET } from '@/shared/api/server/prices'; 
+export { GET } from '@/shared/api/server/prices';
