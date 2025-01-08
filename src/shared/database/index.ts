@@ -85,6 +85,11 @@ class Pindexer {
   }
 
   async pairs({ usdc, stablecoins }: { usdc: AssetId; stablecoins: AssetId[] }) {
+    console.log('Pairs query with:', {
+      usdc: usdc.inner.toString('hex'),
+      stablecoins: stablecoins.map(s => s.inner.toString('hex'))
+    });
+
     const usdcTable = this.db
       .selectFrom('dex_ex_pairs_summary')
       .where('asset_end', '=', Buffer.from(usdc.inner))
@@ -95,7 +100,6 @@ class Pindexer {
     const joined = this.db
       .selectFrom('dex_ex_pairs_summary as outer')
       .selectAll('outer')
-      // get the usdc price of the quote asset
       .leftJoin(usdcTable.as('usdc'), 'outer.asset_end', 'usdc.asset_start')
       .select(['usdc.price as usdc_price'])
       .where(exp =>
@@ -116,7 +120,14 @@ class Pindexer {
       )
       .limit(15);
 
-    return joined.execute();
+    const results = await joined.execute();
+    console.log('Database results:', results.map(r => ({
+      start: r.asset_start.toString('hex'),
+      end: r.asset_end.toString('hex'),
+      price: r.price,
+      usdc_price: r.usdc_price
+    })));
+    return results;
   }
 
   async candles({

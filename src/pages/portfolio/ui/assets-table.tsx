@@ -5,8 +5,6 @@ import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { Density } from '@penumbra-zone/ui/Density';
 import { useBalances } from '@/shared/api/balances';
 import { useAssets } from '@/shared/api/assets';
-import { usePairs } from '@/pages/trade/api/use-pairs';
-import { useSummaries } from '../api/use-summaries';
 import { observer } from 'mobx-react-lite';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
@@ -18,11 +16,11 @@ import {
 import { BalancesResponse } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { AssetIcon } from '@penumbra-zone/ui/AssetIcon';
-import type { PairData } from '@/shared/api/server/summary/pairs';
 import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { formatAmount } from '@penumbra-zone/types/amount';
 import { useRouter } from 'next/navigation';
 import { Button } from '@penumbra-zone/ui/Button';
+import { usePrices } from '@/shared/api/prices';
 
 const LoadingState = () => {
   return (
@@ -179,22 +177,21 @@ export const AssetsTable = observer(() => {
   const { connected } = connectionStore;
   const { data: balances, isLoading: balancesLoading } = useBalances();
   const { data: assets, isLoading: assetsLoading } = useAssets();
-  const { data: pairs, isLoading: pairsLoading } = usePairs();
-  const summaryQueries = useSummaries(pairs ?? []);
+  const { data: prices, isLoading: pricesLoading } = usePrices(
+    balances
+      ?.map(balance => getMetadataFromBalancesResponse.optional(balance)?.symbol)
+      .filter((symbol): symbol is string => symbol !== undefined) ?? [],
+  );
+
+  // Determine if we're on testnet (anything that's not penumbra-1 is testnet)
+  const isTestnet = process.env['PENUMBRA_CHAIN_ID'] !== 'penumbra-1';
+  const stableCoinSymbol = isTestnet ? 'UM' : 'USDC';
 
   if (!connected) {
     return <NotConnectedNotice />;
   }
 
-  if (
-    balancesLoading ||
-    assetsLoading ||
-    pairsLoading ||
-    !balances ||
-    !assets ||
-    !pairs ||
-    summaryQueries.some(q => q.isLoading)
-  ) {
+  if (balancesLoading || assetsLoading || pricesLoading || !balances || !assets) {
     return <LoadingState />;
   }
 
@@ -204,29 +201,12 @@ export const AssetsTable = observer(() => {
     return valueView && metadata;
   });
 
-  // Find price for an asset from pairs data
-  const getAssetPrice = (metadata: Metadata) => {
-    const pair = pairs.find(
-      (p: PairData) =>
-        p.baseAsset.symbol === metadata.symbol || p.quoteAsset.symbol === metadata.symbol,
-    );
-
-    if (!pair) {
+  const getAssetPrice = (metadata: Metadata): number | null => {
+    if (!prices) {
       return null;
     }
-
-    // Find the summary data for this pair
-    const pairIndex = pairs.indexOf(pair);
-    const summary = summaryQueries[pairIndex]?.data;
-
-    if (!summary || 'noData' in summary || 'error' in summary) {
-      return null;
-    }
-
-    // If the asset is the quote asset, we use the price directly
-    // If it's the base asset, we need to calculate the inverse
-    const isQuote = pair.quoteAsset.symbol === metadata.symbol;
-    return isQuote ? summary.price : 1 / summary.price;
+    const price = prices.find(p => p.symbol === metadata.symbol)?.price ?? null;
+    return price;
   };
 
   const { distribution, sortedBalances } = calculateAssetDistribution(validBalances, getAssetPrice);
@@ -322,7 +302,7 @@ export const AssetsTable = observer(() => {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}{' '}
-                          USDC
+                          {stableCoinSymbol}
                         </Text>
                       ) : (
                         <Text color='text.secondary'>-</Text>
@@ -335,7 +315,7 @@ export const AssetsTable = observer(() => {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}{' '}
-                          USDC
+                          {stableCoinSymbol}
                         </Text>
                       ) : (
                         <Text color='text.secondary'>-</Text>
@@ -346,14 +326,18 @@ export const AssetsTable = observer(() => {
                         <Button
                           icon={ArrowDownRight}
                           iconOnly
-                          onClick={() => router.push(`/trade/TestUSD/${metadata.symbol}`)}
+                          onClick={() =>
+                            router.push(`/trade/${stableCoinSymbol}/${metadata.symbol}`)
+                          }
                         >
                           Sell
                         </Button>
                         <Button
                           icon={ArrowUpRight}
                           iconOnly
-                          onClick={() => router.push(`/trade/${metadata.symbol}/TestUSD`)}
+                          onClick={() =>
+                            router.push(`/trade/${metadata.symbol}/${stableCoinSymbol}`)
+                          }
                         >
                           Buy
                         </Button>
