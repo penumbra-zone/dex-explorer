@@ -343,30 +343,6 @@ export const AssetsTable = observer(() => {
             </Table.Tbody>
           </Table>
         </Density>
-
-        {/* Debug pricing data */}
-        <div className='mt-8'>
-          <Text h4>Debug: Pricing Data</Text>
-          <pre className='mt-4 p-4 bg-neutral-900 rounded-lg overflow-auto'>
-            {JSON.stringify(
-              pairs.map(p => ({
-                base: p.baseAsset.symbol,
-                quote: p.quoteAsset.symbol,
-                baseExponent: getDisplayDenomExponent(p.baseAsset),
-                quoteExponent: getDisplayDenomExponent(p.quoteAsset),
-                amount: p.volume.valueView.value?.amount,
-                formattedAmount: p.volume.valueView.value?.amount
-                  ? formatAmount({
-                      amount: p.volume.valueView.value.amount,
-                      exponent: getDisplayDenomExponent(p.quoteAsset),
-                    })
-                  : null,
-              })),
-              null,
-              2,
-            )}
-          </pre>
-        </div>
       </Card>
     </div>
   );
