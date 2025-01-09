@@ -1,51 +1,10 @@
+import debounce from 'lodash/debounce';
 import { makeAutoObservable, reaction, runInAction } from 'mobx';
 import { AssetId, Value } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { pnum } from '@penumbra-zone/types/pnum';
-import debounce from 'lodash/debounce';
 import { parseNumber } from '@/shared/utils/num';
-import { penumbra } from '@/shared/const/penumbra';
-import { SimulationService } from '@penumbra-zone/protobuf';
-import { SimulateTradeRequest } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
-import { openToast } from '@penumbra-zone/ui/Toast';
-import { AssetInfo } from '@/pages/trade/model/AssetInfo';
-
-const estimateAmount = async (
-  from: AssetInfo,
-  to: AssetInfo,
-  input: number,
-): Promise<number | undefined> => {
-  try {
-    const req = new SimulateTradeRequest({
-      input: from.value(input),
-      output: to.id,
-    });
-
-    const res = await penumbra.service(SimulationService).simulateTrade(req);
-
-    const amount = res.output?.output?.amount;
-    if (amount === undefined) {
-      throw new Error('Amount returned from swap simulation was undefined');
-    }
-    return pnum(amount, to.exponent).toNumber();
-  } catch (e) {
-    if (
-      e instanceof Error &&
-      ![
-        'ConnectError',
-        'PenumbraNotInstalledError',
-        'PenumbraProviderNotAvailableError',
-        'PenumbraProviderNotConnectedError',
-      ].includes(e.name)
-    ) {
-      openToast({
-        type: 'error',
-        message: e.name,
-        description: e.message,
-      });
-    }
-    return undefined;
-  }
-};
+import { AssetInfo } from '../../../model/AssetInfo';
+import { estimateAmount } from './estimate-amount';
 
 export type Direction = 'buy' | 'sell';
 
