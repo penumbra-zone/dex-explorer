@@ -1,15 +1,15 @@
 import { observer } from 'mobx-react-lite';
 import { Button } from '@penumbra-zone/ui/Button';
 import { Text } from '@penumbra-zone/ui/Text';
+import { Slider as PenumbraSlider } from '@penumbra-zone/ui/Slider';
 import { connectionStore } from '@/shared/model/connection';
+import { ConnectButton } from '@/features/connect/connect-button';
 import { OrderInput } from './order-input';
 import { SegmentedControl } from './segmented-control';
-import { ConnectButton } from '@/features/connect/connect-button';
 import { InfoRowGasFee } from './info-row-gas-fee';
 import { InfoRowTradingFee } from './info-row-trading-fee';
 import { OrderFormStore } from './store/OrderFormStore';
-import { Slider as PenumbraSlider } from '@penumbra-zone/ui/Slider';
-import { InfoRow } from '@/pages/trade/ui/order-form/info-row';
+import { InfoRow } from './info-row';
 
 interface SliderProps {
   inputValue: string;
@@ -61,55 +61,26 @@ export const MarketOrderForm = observer(({ parentStore }: { parentStore: OrderFo
   return (
     <div className='p-4'>
       <SegmentedControl direction={store.direction} setDirection={store.setDirection} />
-      {isBuy ? (
-        <>
-          <div className='mb-4'>
-            <OrderInput
-              label={'Pay with'}
-              value={store.quoteInput}
-              onChange={store.setQuoteInput}
-              isEstimating={store.quoteEstimating}
-              isApproximately={false}
-              denominator={store.quoteAsset?.symbol}
-            />
-          </div>
-          <div className='mb-4'>
-            <OrderInput
-              disabled
-              label={'Buy'}
-              value={store.baseInput}
-              onChange={store.setBaseInput}
-              isEstimating={store.baseEstimating}
-              isApproximately={store.baseInputAmount !== 0}
-              denominator={store.baseAsset?.symbol}
-            />
-          </div>
-        </>
-      ) : (
-        <>
-          <div className='mb-4'>
-            <OrderInput
-              label={'Sell'}
-              value={store.baseInput}
-              onChange={store.setBaseInput}
-              isEstimating={store.baseEstimating}
-              isApproximately={false}
-              denominator={store.baseAsset?.symbol}
-            />
-          </div>
-          <div className='mb-4'>
-            <OrderInput
-              disabled
-              label={'Receive'}
-              value={store.quoteInput}
-              onChange={store.setQuoteInput}
-              isEstimating={store.quoteEstimating}
-              isApproximately={store.quoteInputAmount !== 0}
-              denominator={store.quoteAsset?.symbol}
-            />
-          </div>
-        </>
-      )}
+      <div className='mb-4'>
+        <OrderInput
+          label={isBuy ? 'Buy' : 'Sell'}
+          value={store.baseInput}
+          onChange={store.setBaseInput}
+          isEstimating={store.baseEstimating}
+          isApproximately={isBuy && store.baseInputAmount !== 0}
+          denominator={store.baseAsset?.symbol}
+        />
+      </div>
+      <div className='mb-4'>
+        <OrderInput
+          label={isBuy ? 'Pay with' : 'Receive'}
+          value={store.quoteInput}
+          onChange={store.setQuoteInput}
+          isEstimating={store.quoteEstimating}
+          isApproximately={!isBuy && store.quoteInputAmount !== 0}
+          denominator={store.quoteAsset?.symbol}
+        />
+      </div>
       <Slider
         inputValue={store.quoteInput}
         balance={store.quoteBalance}
