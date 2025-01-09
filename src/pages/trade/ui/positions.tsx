@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { LoadingCell } from './market-trades';
 import { connectionStore } from '@/shared/model/connection';
 import { observer } from 'mobx-react-lite';
@@ -124,7 +124,7 @@ const HeaderActionButton = observer(
             )
           }
         >
-          Close Batch
+          Close Batch ({Math.min(openedPositions.length, MAX_ACTION_COUNT)})
         </Button>
       );
     }
@@ -145,7 +145,7 @@ const HeaderActionButton = observer(
             )
           }
         >
-          Withdraw Batch
+          Withdraw Batch ({Math.min(closedPositions.length, MAX_ACTION_COUNT)})
         </Button>
       );
     }
@@ -155,18 +155,40 @@ const HeaderActionButton = observer(
 );
 
 const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
+  const prevDisplayPositions = useRef<DisplayPosition[]>([]);
   const { connected } = connectionStore;
   const { baseAsset, quoteAsset } = usePathToMetadata();
   const { data: assets } = useRegistryAssets();
   const { data, isLoading, error } = usePositions();
   const { displayPositions, setPositions, setAssets } = positionsStore;
 
+  console.log(
+    'TCL: Positions -> displayPositions sell',
+    displayPositions.filter(p => p.orders.find(o => o.direction === 'Sell')),
+  );
+  console.log(
+    'TCL: Positions -> displayPositions 0.9',
+    displayPositions.find(
+      p => p.idString === 'plpid1m37pnsh6ds8mse0ar3kmrrcqm79rjrgu7pj5cay4wfqypwpklv7q95x3s6',
+    ),
+  );
+
+  console.log(
+    'new lpid',
+    displayPositions
+      .map(p => p.idString)
+      .filter(id => !prevDisplayPositions.current.map(p => p.idString).includes(id)),
+  );
+  prevDisplayPositions.current = displayPositions;
+
   useEffect(() => {
     setPositions(data ?? new Map<PositionId, Position>());
   }, [data, setPositions]);
 
   useEffect(() => {
-    setAssets(assets ?? []);
+    if (assets) {
+      setAssets(assets);
+    }
   }, [assets, setAssets]);
 
   useEffect(() => {
@@ -322,11 +344,7 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                       <Table.Td density='slim'>
                         <div className='flex flex-col gap-4'>
                           {position.orders.map((order, i) => (
-                            <PositionsCurrentValue
-                              key={i}
-                              baseAsset={order.baseAsset}
-                              quoteAsset={order.quoteAsset}
-                            />
+                            <PositionsCurrentValue key={i} order={order} />
                           ))}
                         </div>
                       </Table.Td>

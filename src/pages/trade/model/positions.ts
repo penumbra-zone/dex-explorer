@@ -276,10 +276,25 @@ class PositionsStore {
 
         const { p, q } = component;
         const { r1, r2 } = reserves;
-        const asset1Price = pnum(p).toBigNumber().dividedBy(pnum(q).toBigNumber()).toNumber();
-        const asset2Price = pnum(q).toBigNumber().dividedBy(pnum(p).toBigNumber()).toNumber();
+        const asset1Price = pnum(q).toBigNumber().dividedBy(pnum(p).toBigNumber()).toNumber();
+        const asset2Price = pnum(p).toBigNumber().dividedBy(pnum(q).toBigNumber()).toNumber();
         const asset1Amount = pnum(r1, asset1Exponent).toNumber();
         const asset2Amount = pnum(r2, asset2Exponent).toNumber();
+
+        if (id === 'plpid1m37pnsh6ds8mse0ar3kmrrcqm79rjrgu7pj5cay4wfqypwpklv7q95x3s6') {
+          console.log('TCL: PositionsStore -> get position', position);
+          console.log('TCL: PositionsStore -> get displayPositions -> id', id);
+          console.log('TCL: PositionsStore -> get displayPositions -> p', p);
+          console.log('TCL: PositionsStore -> get displayPositions -> q', q);
+          console.log('TCL: PositionsStore -> get displayPositions -> component', component);
+
+          console.log('TCL: PositionsStore -> asset1', asset1);
+          console.log('TCL: PositionsStore -> asset2', asset2);
+          console.log('TCL: PositionsStore -> asset1Price', asset1Price);
+          console.log('TCL: PositionsStore -> asset2Price', asset2Price);
+          console.log('TCL: PositionsStore -> asset1Amount', asset1Amount);
+          console.log('TCL: PositionsStore -> asset2Amount', asset2Amount);
+        }
 
         // but clearly, this measure of price is insufficient because if two
         // positions have the same coefficients but one quote a 100% fee and
@@ -292,15 +307,15 @@ class PositionsStore {
         //
         // asset 2 to asset 1: (p_2 * gamma)/p_1
         const gamma = (10_000 - component.fee) / 10_000;
-        const asset1EffectivePrice = pnum(p)
-          .toBigNumber()
-          .dividedBy(pnum(q).toBigNumber().times(pnum(gamma).toBigNumber()))
-          .toNumber();
-
-        const asset2EffectivePrice = pnum(q)
+        const asset1EffectivePrice = pnum(q)
           .toBigNumber()
           .times(pnum(gamma).toBigNumber())
           .dividedBy(pnum(p).toBigNumber())
+          .toNumber();
+
+        const asset2EffectivePrice = pnum(p)
+          .toBigNumber()
+          .dividedBy(pnum(q).toBigNumber().times(pnum(gamma).toBigNumber()))
           .toNumber();
 
         const orders = this.getDirectionalOrders({
@@ -327,10 +342,13 @@ class PositionsStore {
           idString: bech32mPositionId(id),
           orders: orders.map(({ direction, baseAsset, quoteAsset }) => ({
             direction,
-            amount:
-              direction === 'Sell'
-                ? pnum(baseAsset.amount, baseAsset.exponent).toValueView(baseAsset.asset)
-                : pnum(quoteAsset.amount, quoteAsset.exponent).toValueView(quoteAsset.asset),
+            // amount:
+            //   direction === 'Buy'
+            //     ? pnum(baseAsset.amount, baseAsset.exponent).toValueView(baseAsset.asset)
+            //     : pnum(quoteAsset.amount, quoteAsset.exponent).toValueView(quoteAsset.asset),
+            amount: pnum(baseAsset.price * quoteAsset.amount, quoteAsset.exponent).toValueView(
+              baseAsset.asset,
+            ),
             basePrice: pnum(quoteAsset.price, quoteAsset.exponent).toValueView(quoteAsset.asset),
             effectivePrice: pnum(quoteAsset.effectivePrice, quoteAsset.exponent).toValueView(
               quoteAsset.asset,
@@ -339,8 +357,12 @@ class PositionsStore {
             quoteAsset,
           })),
           fee: `${pnum(component.fee / 100).toFormattedString({ decimals: 2 })}%`,
-          isActive: state.state !== PositionState_PositionStateEnum.WITHDRAWN,
+          isActive: ![
+            PositionState_PositionStateEnum.WITHDRAWN,
+            PositionState_PositionStateEnum.CLOSED,
+          ].includes(state.state),
           state: state.state,
+          position,
         };
       })
       .filter(displayPosition => displayPosition !== undefined);
