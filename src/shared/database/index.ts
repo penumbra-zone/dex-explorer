@@ -94,7 +94,9 @@ class Pindexer {
 
     const joined = this.db
       .selectFrom('dex_ex_pairs_summary as outer')
+      // .distinct()
       .selectAll('outer')
+      // get the usdc price of the quote asset
       .leftJoin(usdcTable.as('usdc'), 'outer.asset_end', 'usdc.asset_start')
       .select(['usdc.price as usdc_price'])
       .where(exp =>
@@ -115,8 +117,7 @@ class Pindexer {
       )
       .limit(15);
 
-    const results = await joined.execute();
-    return results;
+    return joined.execute();
   }
 
   async candles({
