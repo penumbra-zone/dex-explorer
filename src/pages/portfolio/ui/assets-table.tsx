@@ -14,13 +14,11 @@ import {
   getBalanceView,
 } from '@penumbra-zone/getters/balances-response';
 import { BalancesResponse } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
-import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { AssetIcon } from '@penumbra-zone/ui/AssetIcon';
 import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { formatAmount } from '@penumbra-zone/types/amount';
 import { useRouter } from 'next/navigation';
 import { Button } from '@penumbra-zone/ui/Button';
-import { usePrices } from '@/shared/api/prices';
 
 const LoadingState = () => {
   return (
@@ -120,10 +118,7 @@ const NotConnectedNotice = () => {
   );
 };
 
-const calculateAssetDistribution = (
-  balances: BalancesResponse[],
-  getAssetPrice: (metadata: Metadata) => number | null,
-) => {
+const calculateAssetDistribution = (balances: BalancesResponse[]) => {
   const validBalances = balances.filter(balance => {
     const valueView = getBalanceView.optional(balance);
     const metadata = getMetadataFromBalancesResponse.optional(balance);
@@ -144,9 +139,9 @@ const calculateAssetDistribution = (
         exponent: getDisplayDenomExponent(metadata),
       }),
     );
-    const price = getAssetPrice(metadata) ?? 0;
+
     return {
-      value: formattedAmount * price,
+      value: formattedAmount,
       balance,
     };
   });
@@ -177,11 +172,6 @@ export const AssetsTable = observer(() => {
   const { connected } = connectionStore;
   const { data: balances, isLoading: balancesLoading } = useBalances();
   const { data: assets, isLoading: assetsLoading } = useAssets();
-  const { data: prices, isLoading: pricesLoading } = usePrices(
-    balances
-      ?.map(balance => getMetadataFromBalancesResponse.optional(balance)?.symbol)
-      .filter((symbol): symbol is string => symbol !== undefined) ?? [],
-  );
 
   // Determine if we're on testnet (anything that's not penumbra-1 is testnet)
   const isTestnet = process.env['PENUMBRA_CHAIN_ID'] !== 'penumbra-1';
@@ -191,7 +181,7 @@ export const AssetsTable = observer(() => {
     return <NotConnectedNotice />;
   }
 
-  if (balancesLoading || assetsLoading || pricesLoading || !balances || !assets) {
+  if (balancesLoading || assetsLoading || !balances || !assets) {
     return <LoadingState />;
   }
 
@@ -201,15 +191,7 @@ export const AssetsTable = observer(() => {
     return valueView && metadata;
   });
 
-  const getAssetPrice = (metadata: Metadata): number | null => {
-    if (!prices) {
-      return null;
-    }
-    const price = prices.find(p => p.symbol === metadata.symbol)?.price ?? null;
-    return price;
-  };
-
-  const { distribution, sortedBalances } = calculateAssetDistribution(validBalances, getAssetPrice);
+  const { distribution, sortedBalances } = calculateAssetDistribution(validBalances);
 
   return (
     <div className='p-6'>
@@ -272,18 +254,6 @@ export const AssetsTable = observer(() => {
                   return null;
                 }
 
-                const price = getAssetPrice(metadata);
-                const amount = valueView.valueView.value?.amount;
-                const formattedAmount = amount
-                  ? Number(
-                      formatAmount({
-                        amount,
-                        exponent: getDisplayDenomExponent(metadata),
-                      }),
-                    )
-                  : null;
-                const value = price && formattedAmount ? price * formattedAmount : null;
-
                 return (
                   <Table.Tr key={metadata.symbol}>
                     <Table.Td>
@@ -296,30 +266,10 @@ export const AssetsTable = observer(() => {
                       <ValueViewComponent valueView={valueView} />
                     </Table.Td>
                     <Table.Td>
-                      {price ? (
-                        <Text>
-                          {price.toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}{' '}
-                          {stableCoinSymbol}
-                        </Text>
-                      ) : (
-                        <Text color='text.secondary'>-</Text>
-                      )}
+                      <Text color='text.secondary'>-</Text>
                     </Table.Td>
                     <Table.Td>
-                      {value ? (
-                        <Text>
-                          {value.toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}{' '}
-                          {stableCoinSymbol}
-                        </Text>
-                      ) : (
-                        <Text color='text.secondary'>-</Text>
-                      )}
+                      <Text color='text.secondary'>-</Text>
                     </Table.Td>
                     <Table.Td>
                       <div className='flex gap-2'>
