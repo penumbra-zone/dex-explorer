@@ -28,7 +28,7 @@ import { BlockchainError } from '@/shared/ui/blockchain-error';
 
 const NotConnectedNotice = () => {
   return (
-    <div className='flex flex-col items-center justify-center h-[400px] gap-4'>
+    <div className='flex flex-col items-center justify-center min-h-screen gap-4'>
       <div className='w-12 h-12 text-text-secondary'>
         <Wallet2 className='w-full h-full' />
       </div>
@@ -54,7 +54,7 @@ const NoPositions = () => {
 
 const ErrorNotice = ({ error }: { error: unknown }) => {
   return (
-    <div className='min-h-[400px] flex items-center justify-center'>
+    <div className='min-h-screen flex items-center justify-center'>
       <BlockchainError message={String(error)} direction='column' />
     </div>
   );
