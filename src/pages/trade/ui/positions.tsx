@@ -52,10 +52,13 @@ const NoPositions = () => {
   );
 };
 
-const ErrorNotice = ({ error }: { error: unknown }) => {
+const ErrorNotice = () => {
   return (
     <div className='min-h-screen flex items-center justify-center'>
-      <BlockchainError message={String(error)} direction='column' />
+      <BlockchainError
+        message='An error occurred while loading data from the blockchain'
+        direction='column'
+      />
     </div>
   );
 };
@@ -179,7 +182,7 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
   }
 
   if (error) {
-    return <ErrorNotice error={error} />;
+    return <ErrorNotice />;
   }
 
   if (!displayPositions.length) {

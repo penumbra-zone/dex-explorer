@@ -108,7 +108,10 @@ export const RouteBook = observer(() => {
   if (bookErr) {
     return (
       <div className='flex items-center justify-center p-4 min-h-[600px]'>
-        <BlockchainError message={`Error loading route book: ${String(bookErr)}`} />
+        <BlockchainError
+          message='An error occurred while loading data from the blockchain'
+          direction='column'
+        />
       </div>
     );
   }
