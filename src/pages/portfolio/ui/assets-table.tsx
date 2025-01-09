@@ -24,7 +24,7 @@ const LoadingState = () => {
   return (
     <div className='p-6'>
       <Card>
-        <Text h3>Assets</Text>
+        <Text color='text.primary'>Assets</Text>
 
         {/* Asset distribution bar skeleton */}
         <div className='w-full h-2 mt-4 mb-6'>
@@ -194,9 +194,9 @@ export const AssetsTable = observer(() => {
   const { distribution, sortedBalances } = calculateAssetDistribution(validBalances);
 
   return (
-    <div className='p-6'>
-      <Card>
-        <Text h3 color='text.primary'>
+    <Card>
+      <div className='p-3'>
+        <Text large color='text.primary'>
           Assets
         </Text>
 
@@ -243,7 +243,7 @@ export const AssetsTable = observer(() => {
                 <Table.Th>Balance</Table.Th>
                 <Table.Th>Price</Table.Th>
                 <Table.Th>Value</Table.Th>
-                <Table.Th>Actions</Table.Th>
+                <Table.Th hAlign='right'>Actions</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -271,8 +271,8 @@ export const AssetsTable = observer(() => {
                     <Table.Td>
                       <Text color='text.secondary'>-</Text>
                     </Table.Td>
-                    <Table.Td>
-                      <div className='flex gap-2'>
+                    <Table.Td hAlign='right'>
+                      <div className='flex gap-2 justify-end'>
                         <Button
                           icon={ArrowDownRight}
                           iconOnly
@@ -299,7 +299,7 @@ export const AssetsTable = observer(() => {
             </Table.Tbody>
           </Table>
         </Density>
-      </Card>
-    </div>
+      </div>
+    </Card>
   );
 });
