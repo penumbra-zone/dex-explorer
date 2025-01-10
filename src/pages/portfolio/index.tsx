@@ -12,7 +12,7 @@ interface PortfolioPageProps {
 }
 
 export function PortfolioPage({ isMobile }: PortfolioPageProps): React.ReactNode {
-  return isMobile ? <MobilePortfolioPage /> :  <DesktopPortfolioPage />;
+  return isMobile ? <MobilePortfolioPage /> : <DesktopPortfolioPage />;
 }
 
 function MobilePortfolioPage() {
