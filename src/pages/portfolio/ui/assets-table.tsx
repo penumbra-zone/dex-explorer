@@ -1,7 +1,7 @@
 import { Table } from '@penumbra-zone/ui/Table';
 import { Card } from '@penumbra-zone/ui/Card';
 import { Text } from '@penumbra-zone/ui/Text';
-import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, AlertCircle } from 'lucide-react';
 import { Density } from '@penumbra-zone/ui/Density';
 import { useBalances } from '@/shared/api/balances';
 import { useAssets } from '@/shared/api/assets';
@@ -19,15 +19,18 @@ import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { formatAmount } from '@penumbra-zone/types/amount';
 import { useRouter } from 'next/navigation';
 import { Button } from '@penumbra-zone/ui/Button';
+import { useState, useEffect } from 'react';
 
 const LoadingState = () => {
   return (
-    <div className='p-6'>
-      <Card>
-        <Text color='text.primary'>Assets</Text>
+    <Card>
+      <div className='p-3'>
+        <Text as={'h4'} large color='text.primary'>
+          Assets
+        </Text>
 
         {/* Asset distribution bar skeleton */}
-        <div className='w-full h-2 mt-4 mb-6'>
+        <div className='w-full h-2 my-5'>
           <Skeleton />
         </div>
 
@@ -35,7 +38,7 @@ const LoadingState = () => {
         <div className='flex flex-wrap gap-4 mb-6'>
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className='flex items-center gap-2'>
-              <div className='w-3 h-3'>
+              <div className='w-2 h-2'>
                 <Skeleton />
               </div>
               <div className='w-20 h-4'>
@@ -99,8 +102,8 @@ const LoadingState = () => {
             </Table.Tbody>
           </Table>
         </Density>
-      </Card>
-    </div>
+      </div>
+    </Card>
   );
 };
 
@@ -118,8 +121,22 @@ const NotConnectedNotice = () => {
   );
 };
 
-const calculateAssetDistribution = (balances: BalancesResponse[]) => {
-  const validBalances = balances.filter(balance => {
+const calculateAssetDistribution = async (balances: BalancesResponse[]) => {
+  // First filter out NFTs and special assets
+  const displayableBalances = balances.filter(balance => {
+    const metadata = getMetadataFromBalancesResponse.optional(balance);
+    if (!metadata?.symbol) {
+      return false;
+    }
+    // Filter out LP NFTs, unbonding tokens, and auction tokens
+    const isSpecialAsset =
+      metadata.symbol.startsWith('lpNft') ||
+      metadata.symbol.startsWith('unbond') ||
+      metadata.symbol.startsWith('auction');
+    return !isSpecialAsset;
+  });
+
+  const validBalances = displayableBalances.filter(balance => {
     const valueView = getBalanceView.optional(balance);
     const metadata = getMetadataFromBalancesResponse.optional(balance);
     return valueView && metadata;
@@ -131,19 +148,51 @@ const calculateAssetDistribution = (balances: BalancesResponse[]) => {
     const metadata = getMetadataFromBalancesResponse.optional(balance);
     const amount = valueView?.valueView.value?.amount;
     if (!amount || !metadata) {
-      return { value: 0, balance };
+      console.warn(
+        'Missing amount or metadata for balance',
+        metadata?.symbol ?? 'unknown symbol',
+        'amount:',
+        amount ? amount.toJsonString() : 'null',
+      );
+      return { value: 0, balance, hasError: true };
     }
-    const formattedAmount = Number(
-      formatAmount({
-        amount,
-        exponent: getDisplayDenomExponent(metadata),
-      }),
-    );
 
-    return {
-      value: formattedAmount,
-      balance,
-    };
+    try {
+      const formattedAmount = Number(
+        formatAmount({
+          amount,
+          exponent: getDisplayDenomExponent(metadata),
+        }),
+      );
+
+      if (Number.isNaN(formattedAmount)) {
+        console.warn(
+          'Failed to format amount for',
+          metadata.symbol,
+          'amount:',
+          amount.toJsonString(),
+          'exponent:',
+          getDisplayDenomExponent(metadata),
+        );
+        return { value: 0, balance, hasError: true };
+      }
+
+      return {
+        value: formattedAmount,
+        balance,
+        hasError: false,
+      };
+    } catch (error) {
+      console.warn(
+        'Error formatting amount for',
+        metadata.symbol,
+        'amount:',
+        amount.toJsonString(),
+        'error:',
+        error,
+      );
+      return { value: 0, balance, hasError: true };
+    }
   });
 
   const totalValue = valuesWithMetadata.reduce((acc, { value }) => acc + value, 0);
@@ -152,18 +201,70 @@ const calculateAssetDistribution = (balances: BalancesResponse[]) => {
     return { distribution: [], sortedBalances: [] };
   }
 
-  const distributionWithMetadata = valuesWithMetadata.map(({ value, balance }) => ({
-    percentage: (value / totalValue) * 100,
-    color: `hsl(${Math.random() * 360}, 70%, 50%)`,
-    balance,
-  }));
+  // Take the first 4 bytes of the hash and convert to an integer
+  const getHueFromHash = (buffer: ArrayBuffer) => {
+    const view = new DataView(buffer);
+    const num = view.getUint32(0, true); // true for little-endian
+    // Offset the hue by the hash value to make UM naturally orange
+    return (num * 83) % 360;
+  };
+
+  const distributionWithMetadata = await Promise.all(
+    valuesWithMetadata.map(async ({ value, balance, hasError }) => {
+      const metadata = getMetadataFromBalancesResponse.optional(balance);
+      const assetIdHex = metadata?.penumbraAssetId?.inner.toString() ?? '';
+
+      // Use Web Crypto API to hash the hex string
+      const hashBuffer = await crypto.subtle.digest(
+        'SHA-256',
+        new TextEncoder().encode(assetIdHex),
+      );
+      const hue = getHueFromHash(hashBuffer);
+
+      const percentage = (value / totalValue) * 100;
+
+      return {
+        percentage,
+        color: `hsl(${hue}, 70%, 50%)`,
+        balance,
+        hasError,
+      };
+    }),
+  );
 
   // Sort by value percentage in descending order
   const sorted = distributionWithMetadata.sort((a, b) => b.percentage - a.percentage);
 
+  // Group small assets (less than 2%) into "Other" category for distribution only
+  const SMALL_ASSET_THRESHOLD = 2;
+  const mainAssets = sorted.filter(asset => asset.percentage >= SMALL_ASSET_THRESHOLD);
+  const smallAssets = sorted.filter(asset => asset.percentage < SMALL_ASSET_THRESHOLD);
+
+  const otherPercentage = smallAssets.reduce((acc, asset) => acc + asset.percentage, 0);
+
+  const distributionWithOther = [
+    ...mainAssets.map(({ percentage, color, hasError }) => ({
+      percentage,
+      color,
+      hasError,
+      isOther: false as const,
+    })),
+    // Only add Other if there are small assets
+    ...(otherPercentage > 0
+      ? [
+          {
+            percentage: otherPercentage,
+            color: 'hsl(0, 0%, 50%)', // Gray color for Other
+            hasError: false,
+            isOther: true as const,
+          },
+        ]
+      : []),
+  ];
+
   return {
-    distribution: sorted.map(({ percentage, color }) => ({ percentage, color })),
-    sortedBalances: sorted.map(({ balance }) => balance),
+    distribution: distributionWithOther,
+    sortedBalances: sorted.map(({ balance }) => balance), // Keep all assets in the table
   };
 };
 
@@ -172,8 +273,23 @@ export const AssetsTable = observer(() => {
   const { connected } = connectionStore;
   const { data: balances, isLoading: balancesLoading } = useBalances();
   const { data: assets, isLoading: assetsLoading } = useAssets();
+  const [showLoading, setShowLoading] = useState(false);
+  const [distribution, setDistribution] = useState<{
+    distribution: {
+      percentage: number;
+      color: string;
+      hasError: boolean;
+      isOther: boolean;
+    }[];
+    sortedBalances: BalancesResponse[];
+  }>();
 
-  // Determine if we're on testnet (anything that's not penumbra-1 is testnet)
+  useEffect(() => {
+    if (balances) {
+      void calculateAssetDistribution(balances).then(setDistribution);
+    }
+  }, [balances]);
+
   const isTestnet = process.env['PENUMBRA_CHAIN_ID'] !== 'penumbra-1';
   const stableCoinSymbol = isTestnet ? 'UM' : 'USDC';
 
@@ -181,125 +297,175 @@ export const AssetsTable = observer(() => {
     return <NotConnectedNotice />;
   }
 
-  if (balancesLoading || assetsLoading || !balances || !assets) {
-    return <LoadingState />;
+  const isActuallyLoading =
+    balancesLoading || assetsLoading || !balances || !assets || !distribution;
+
+  if (showLoading || isActuallyLoading) {
+    return (
+      <div className='relative'>
+        <button
+          onClick={() => setShowLoading(!showLoading)}
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            zIndex: 50,
+            padding: '8px 16px',
+            backgroundColor: '#333',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+          }}
+        >
+          Show Actual State
+        </button>
+        <LoadingState />
+      </div>
+    );
   }
 
-  const validBalances = balances.filter(balance => {
-    const valueView = getBalanceView.optional(balance);
-    const metadata = getMetadataFromBalancesResponse.optional(balance);
-    return valueView && metadata;
-  });
-
-  const { distribution, sortedBalances } = calculateAssetDistribution(validBalances);
-
   return (
-    <Card>
-      <div className='p-3'>
-        <Text large color='text.primary'>
-          Assets
-        </Text>
+    <div className='relative'>
+      <button
+        onClick={() => setShowLoading(!showLoading)}
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          zIndex: 50,
+          padding: '8px 16px',
+          backgroundColor: '#333',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+        }}
+      >
+        Show Loading State
+      </button>
+      <Card>
+        <div className='p-3'>
+          <Text large color='text.primary'>
+            Assets
+          </Text>
 
-        {/* Asset distribution bar */}
-        <div className='flex w-full h-2 mt-4 mb-6 rounded-full overflow-hidden'>
-          {distribution.map((asset, index) => (
-            <div
-              key={index}
-              style={{
-                width: `${asset.percentage}%`,
-                backgroundColor: asset.color,
-              }}
-              className='h-full first:rounded-l-full last:rounded-r-full'
-            />
-          ))}
+          {/* Asset distribution bar */}
+          <div className='flex w-full h-2 mt-4 mb-6 rounded-full overflow-hidden'>
+            {distribution.distribution.map((asset, index) => (
+              <div
+                key={index}
+                style={{
+                  width: `${asset.percentage}%`,
+                  backgroundColor: asset.color,
+                }}
+                className='h-full first:rounded-l-full last:rounded-r-full'
+              />
+            ))}
+          </div>
+
+          {/* Legend */}
+          <div className='flex flex-wrap gap-4 mb-6'>
+            {distribution.sortedBalances.map((balance, index) => {
+              const metadata = getMetadataFromBalancesResponse.optional(balance);
+              const dist = distribution.distribution[index];
+
+              // Skip small assets in legend if they're grouped into Other
+              if (
+                !metadata ||
+                !dist ||
+                (dist.isOther && index !== distribution.distribution.length - 1)
+              ) {
+                return null;
+              }
+
+              return (
+                <div key={metadata.symbol} className='flex items-center gap-2'>
+                  <div className='w-2 h-2 rounded-full' style={{ backgroundColor: dist.color }} />
+                  <Text small color='text.secondary'>
+                    {dist.isOther ? 'Other' : metadata.symbol} {dist.percentage.toFixed(1)}%
+                  </Text>
+                </div>
+              );
+            })}
+          </div>
+
+          <Density compact>
+            <Table>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>Asset</Table.Th>
+                  <Table.Th>Balance</Table.Th>
+                  {/* Price and value are currently stubbed to -, pending pricing api in pindexer. */}
+                  <Table.Th>Price</Table.Th>
+                  <Table.Th>Value</Table.Th>
+                  <Table.Th hAlign='right'>Actions</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {distribution.sortedBalances.map((balance, index) => {
+                  const metadata = getMetadataFromBalancesResponse.optional(balance);
+                  const valueView = getBalanceView.optional(balance);
+                  if (!metadata || !valueView) {
+                    return null;
+                  }
+
+                  const hasError = distribution.distribution[index]?.hasError;
+
+                  return (
+                    <Table.Tr key={metadata.symbol}>
+                      <Table.Td>
+                        <div className='flex items-center gap-2'>
+                          <AssetIcon metadata={metadata} />
+                          <Text>{metadata.symbol}</Text>
+                        </div>
+                      </Table.Td>
+                      <Table.Td>
+                        {hasError ? (
+                          <div className='flex items-center gap-1'>
+                            <AlertCircle className='w-4 h-4 text-orange-500' />
+                            <Text color='text.secondary'>Error formatting balance</Text>
+                          </div>
+                        ) : (
+                          <ValueViewComponent valueView={valueView} />
+                        )}
+                      </Table.Td>
+                      <Table.Td>
+                        <Text color='text.secondary'>-</Text>
+                      </Table.Td>
+                      <Table.Td>
+                        <Text color='text.secondary'>-</Text>
+                      </Table.Td>
+                      <Table.Td hAlign='right'>
+                        <div className='flex gap-2 justify-end'>
+                          <Button
+                            icon={ArrowDownRight}
+                            iconOnly
+                            onClick={() =>
+                              router.push(`/trade/${stableCoinSymbol}/${metadata.symbol}`)
+                            }
+                          >
+                            Sell
+                          </Button>
+                          <Button
+                            icon={ArrowUpRight}
+                            iconOnly
+                            onClick={() =>
+                              router.push(`/trade/${metadata.symbol}/${stableCoinSymbol}`)
+                            }
+                          >
+                            Buy
+                          </Button>
+                        </div>
+                      </Table.Td>
+                    </Table.Tr>
+                  );
+                })}
+              </Table.Tbody>
+            </Table>
+          </Density>
         </div>
-
-        {/* Legend */}
-        <div className='flex flex-wrap gap-4 mb-6'>
-          {sortedBalances.map((balance, index) => {
-            const metadata = getMetadataFromBalancesResponse.optional(balance);
-            if (!metadata || !distribution[index]) {
-              return null;
-            }
-            return (
-              <div key={metadata.symbol} className='flex items-center gap-2'>
-                <div
-                  className='w-3 h-3 rounded-full'
-                  style={{ backgroundColor: distribution[index].color }}
-                />
-                <Text small color='text.secondary'>
-                  {metadata.symbol} {distribution[index].percentage.toFixed(1)}%
-                </Text>
-              </div>
-            );
-          })}
-        </div>
-
-        <Density compact>
-          <Table>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>Asset</Table.Th>
-                <Table.Th>Balance</Table.Th>
-                <Table.Th>Price</Table.Th>
-                <Table.Th>Value</Table.Th>
-                <Table.Th hAlign='right'>Actions</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {sortedBalances.map(balance => {
-                const metadata = getMetadataFromBalancesResponse.optional(balance);
-                const valueView = getBalanceView.optional(balance);
-                if (!metadata || !valueView) {
-                  return null;
-                }
-
-                return (
-                  <Table.Tr key={metadata.symbol}>
-                    <Table.Td>
-                      <div className='flex items-center gap-2'>
-                        <AssetIcon metadata={metadata} />
-                        <Text>{metadata.symbol}</Text>
-                      </div>
-                    </Table.Td>
-                    <Table.Td>
-                      <ValueViewComponent valueView={valueView} />
-                    </Table.Td>
-                    <Table.Td>
-                      <Text color='text.secondary'>-</Text>
-                    </Table.Td>
-                    <Table.Td>
-                      <Text color='text.secondary'>-</Text>
-                    </Table.Td>
-                    <Table.Td hAlign='right'>
-                      <div className='flex gap-2 justify-end'>
-                        <Button
-                          icon={ArrowDownRight}
-                          iconOnly
-                          onClick={() =>
-                            router.push(`/trade/${stableCoinSymbol}/${metadata.symbol}`)
-                          }
-                        >
-                          Sell
-                        </Button>
-                        <Button
-                          icon={ArrowUpRight}
-                          iconOnly
-                          onClick={() =>
-                            router.push(`/trade/${metadata.symbol}/${stableCoinSymbol}`)
-                          }
-                        >
-                          Buy
-                        </Button>
-                      </div>
-                    </Table.Td>
-                  </Table.Tr>
-                );
-              })}
-            </Table.Tbody>
-          </Table>
-        </Density>
-      </div>
-    </Card>
+      </Card>
+    </div>
   );
 });
