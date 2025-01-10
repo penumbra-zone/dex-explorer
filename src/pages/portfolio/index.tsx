@@ -12,7 +12,7 @@ interface PortfolioPageProps {
 }
 
 export function PortfolioPage({ isMobile }: PortfolioPageProps): React.ReactNode {
-  return isMobile ? <MobilePortfolioPage /> : <DesktopPortfolioPage />;
+  return isMobile ? <MobilePortfolioPage /> :  <DesktopPortfolioPage />;
 }
 
 function MobilePortfolioPage() {
@@ -55,7 +55,7 @@ function MobilePortfolioPage() {
 
 function DesktopPortfolioPage() {
   return (
-    <div className='container mx-auto py-8'>
+    <div className='sm:container mx-auto py-8'>
       <AssetsTable />
     </div>
   );

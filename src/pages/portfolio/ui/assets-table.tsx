@@ -290,7 +290,6 @@ export const AssetsTable = observer(() => {
   const { data: balances, isLoading: balancesLoading } = useBalances(addressIndex);
   const { data: assets, isLoading: assetsLoading } = useAssets();
   const { data: chainId } = useChainId();
-  const [showLoading, setShowLoading] = useState(false);
   const [distribution, setDistribution] = useState<{
     distribution: {
       percentage: number;
@@ -314,55 +313,16 @@ export const AssetsTable = observer(() => {
     return <NotConnectedNotice />;
   }
 
-  const isActuallyLoading =
-    balancesLoading || assetsLoading || !balances || !assets || !distribution;
+  const isLoading = balancesLoading || assetsLoading || !balances || !assets || !distribution;
 
-  if (showLoading || isActuallyLoading) {
-    return (
-      <div className='relative'>
-        <button
-          onClick={() => setShowLoading(!showLoading)}
-          style={{
-            position: 'fixed',
-            bottom: '20px',
-            right: '20px',
-            zIndex: 50,
-            padding: '8px 16px',
-            backgroundColor: '#333',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
-        >
-          Show Actual State
-        </button>
-        <LoadingState />
-      </div>
-    );
+  if (isLoading) {
+    return <LoadingState />;
   }
 
   return (
-    <div className='relative'>
-      <button
-        onClick={() => setShowLoading(!showLoading)}
-        style={{
-          position: 'fixed',
-          bottom: '20px',
-          right: '20px',
-          zIndex: 50,
-          padding: '8px 16px',
-          backgroundColor: '#333',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-        }}
-      >
-        Show Loading State
-      </button>
+    <div className='m-4 sm:m-0'>
       <Card>
-        <div className='p-3'>
+        <div className='sm:p-3 p-1'>
           <Text large color='text.primary'>
             Assets
           </Text>
@@ -408,78 +368,80 @@ export const AssetsTable = observer(() => {
           </div>
 
           <Density compact>
-            <Table>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Asset</Table.Th>
-                  <Table.Th>Balance</Table.Th>
-                  {/* Price and value are currently stubbed to -, pending pricing api in pindexer. */}
-                  <Table.Th>Price</Table.Th>
-                  <Table.Th>Value</Table.Th>
-                  <Table.Th hAlign='right'>Actions</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {distribution.sortedBalances.map((balance, index) => {
-                  const metadata = getMetadataFromBalancesResponse.optional(balance);
-                  const valueView = getBalanceView.optional(balance);
-                  if (!metadata || !valueView) {
-                    return null;
-                  }
+            <div className='overflow-scroll sm:overflow-hidden sm:m-0 -mr-4'>
+              <Table>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Asset</Table.Th>
+                    <Table.Th>Balance</Table.Th>
+                    {/* TODO: Price and value are currently stubbed to -, pending pricing api in pindexer. */}
+                    <Table.Th>Price</Table.Th>
+                    <Table.Th>Value</Table.Th>
+                    <Table.Th hAlign='right'>Actions</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {distribution.sortedBalances.map((balance, index) => {
+                    const metadata = getMetadataFromBalancesResponse.optional(balance);
+                    const valueView = getBalanceView.optional(balance);
+                    if (!metadata || !valueView) {
+                      return null;
+                    }
 
-                  const hasError = distribution.distribution[index]?.hasError;
+                    const hasError = distribution.distribution[index]?.hasError;
 
-                  return (
-                    <Table.Tr key={metadata.symbol}>
-                      <Table.Td>
-                        <div className='flex items-center gap-2'>
-                          <AssetIcon metadata={metadata} />
-                          <Text>{metadata.symbol}</Text>
-                        </div>
-                      </Table.Td>
-                      <Table.Td>
-                        {hasError ? (
-                          <div className='flex items-center gap-1'>
-                            <AlertCircle className='w-4 h-4 text-orange-500' />
-                            <Text color='text.secondary'>Error formatting balance</Text>
+                    return (
+                      <Table.Tr key={metadata.symbol}>
+                        <Table.Td>
+                          <div className='flex items-center gap-2'>
+                            <AssetIcon metadata={metadata} />
+                            <Text>{metadata.symbol}</Text>
                           </div>
-                        ) : (
-                          <ValueViewComponent valueView={valueView} />
-                        )}
-                      </Table.Td>
-                      <Table.Td>
-                        <Text color='text.secondary'>-</Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text color='text.secondary'>-</Text>
-                      </Table.Td>
-                      <Table.Td hAlign='right'>
-                        <div className='flex gap-2 justify-end'>
-                          <Button
-                            icon={ArrowDownRight}
-                            iconOnly
-                            onClick={() =>
-                              router.push(`/trade/${stableCoinSymbol}/${metadata.symbol}`)
-                            }
-                          >
-                            Sell
-                          </Button>
-                          <Button
-                            icon={ArrowUpRight}
-                            iconOnly
-                            onClick={() =>
-                              router.push(`/trade/${metadata.symbol}/${stableCoinSymbol}`)
-                            }
-                          >
-                            Buy
-                          </Button>
-                        </div>
-                      </Table.Td>
-                    </Table.Tr>
-                  );
-                })}
-              </Table.Tbody>
-            </Table>
+                        </Table.Td>
+                        <Table.Td>
+                          {hasError ? (
+                            <div className='flex items-center gap-1'>
+                              <AlertCircle className='w-4 h-4 text-orange-500' />
+                              <Text color='text.secondary'>Error formatting balance</Text>
+                            </div>
+                          ) : (
+                            <ValueViewComponent valueView={valueView} />
+                          )}
+                        </Table.Td>
+                        <Table.Td>
+                          <Text color='text.secondary'>-</Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text color='text.secondary'>-</Text>
+                        </Table.Td>
+                        <Table.Td hAlign='right'>
+                          <div className='flex gap-2 justify-end'>
+                            <Button
+                              icon={ArrowDownRight}
+                              iconOnly
+                              onClick={() =>
+                                router.push(`/trade/${stableCoinSymbol}/${metadata.symbol}`)
+                              }
+                            >
+                              Sell
+                            </Button>
+                            <Button
+                              icon={ArrowUpRight}
+                              iconOnly
+                              onClick={() =>
+                                router.push(`/trade/${metadata.symbol}/${stableCoinSymbol}`)
+                              }
+                            >
+                              Buy
+                            </Button>
+                          </div>
+                        </Table.Td>
+                      </Table.Tr>
+                    );
+                  })}
+                </Table.Tbody>
+              </Table>
+            </div>
           </Density>
         </div>
       </Card>
