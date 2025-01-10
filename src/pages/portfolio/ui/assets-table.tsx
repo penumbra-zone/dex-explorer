@@ -64,35 +64,35 @@ const LoadingState = () => {
                 <Table.Tr key={i}>
                   <Table.Td>
                     <div className='flex items-center gap-2'>
-                      <div className='w-8 h-8'>
+                      <div className='w-6 h-6 rounded-full overflow-hidden'>
                         <Skeleton />
                       </div>
-                      <div className='w-20 h-4'>
+                      <div className='w-20 h-5'>
                         <Skeleton />
                       </div>
                     </div>
                   </Table.Td>
                   <Table.Td>
-                    <div className='w-24 h-4'>
+                    <div className='w-24 h-5'>
                       <Skeleton />
                     </div>
                   </Table.Td>
                   <Table.Td>
-                    <div className='w-24 h-4'>
+                    <div className='w-24 h-5'>
                       <Skeleton />
                     </div>
                   </Table.Td>
                   <Table.Td>
-                    <div className='w-24 h-4'>
+                    <div className='w-24 h-5'>
                       <Skeleton />
                     </div>
                   </Table.Td>
                   <Table.Td>
                     <div className='flex gap-2'>
-                      <div className='w-5 h-5'>
+                      <div className='w-8 h-8 rounded-full overflow-hidden'>
                         <Skeleton />
                       </div>
-                      <div className='w-5 h-5'>
+                      <div className='w-8 h-8 rounded-full overflow-hidden'>
                         <Skeleton />
                       </div>
                     </div>
