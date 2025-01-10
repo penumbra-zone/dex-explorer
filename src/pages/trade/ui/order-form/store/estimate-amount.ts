@@ -7,9 +7,10 @@ import { openToast } from '@penumbra-zone/ui/Toast';
 import { penumbra } from '@/shared/const/penumbra';
 import { connectionStore } from '@/shared/model/connection';
 import { getGrpcTransport } from '@/shared/api/transport';
-import { AssetInfo } from '../../../model/AssetInfo';
-import { calculatePriceImpact } from '@/pages/trade/ui/order-form/store/calculate-price-impact';
 import { toValueView } from '@/shared/utils/value-view';
+import { AssetInfo } from '../../../model/AssetInfo';
+import { calculatePriceImpact } from './calculate-price-impact';
+import { Direction } from './types';
 
 export interface EstimationResult {
   amount: number;
@@ -25,6 +26,7 @@ export const estimateAmount = async (
   from: AssetInfo,
   to: AssetInfo,
   input: number,
+  direction: Direction,
 ): Promise<EstimationResult | undefined> => {
   try {
     const grpc = !connectionStore.connected ? await getGrpcTransport() : undefined;
@@ -49,14 +51,20 @@ export const estimateAmount = async (
       (res.unfilled.amount.hi !== 0n || res.unfilled.amount.lo !== 0n)
         ? toValueView({
             amount: pnum(res.unfilled.amount).toNumber(),
-            metadata: from.metadata,
+            metadata: direction === 'buy' ? to.metadata : from.metadata,
           })
         : undefined;
 
+    // Calculate the price impact with the correct sign based on direction
+    let priceImpact = calculatePriceImpact(res.output);
+    if (priceImpact) {
+      priceImpact = Math.abs(priceImpact) * (direction === 'buy' ? 1 : -1);
+    }
+
     return {
       unfilled,
+      priceImpact,
       amount: pnum(amount, to.exponent).toNumber(),
-      priceImpact: calculatePriceImpact(res.output),
     };
   } catch (e) {
     if (

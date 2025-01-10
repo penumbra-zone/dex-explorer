@@ -98,14 +98,14 @@ export const MarketOrderForm = observer(({ parentStore }: { parentStore: OrderFo
           <InfoRow
             label='Price impact'
             value={store.priceImpact}
-            toolTip='This percentage represents the effect of your trade on the token’s price'
+            toolTip='This percentage represents the effect of your trade on the token’s price.'
           />
         )}
         {store.unfilled && (
           <InfoRow
             label='Unfilled amount'
             value={store.unfilled}
-            toolTip='The portion of your trade that cannot be completed due to insufficient liquidity'
+            toolTip='The portion of your trade that cannot be completed due to insufficient liquidity.'
           />
         )}
       </div>

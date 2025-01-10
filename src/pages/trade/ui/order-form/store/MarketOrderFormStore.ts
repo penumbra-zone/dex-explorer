@@ -7,8 +7,7 @@ import { AssetInfo } from '../../../model/AssetInfo';
 import { estimateAmount } from './estimate-amount';
 import { formatNumber } from '@penumbra-zone/types/amount';
 import { getMetadata } from '@penumbra-zone/getters/value-view';
-
-export type Direction = 'buy' | 'sell';
+import { Direction } from './types';
 
 export type LastEdited = 'Base' | 'Quote';
 
@@ -63,7 +62,7 @@ export class MarketOrderFormStore {
       this._quoteEstimating = true;
     });
     try {
-      const res = await estimateAmount(this._baseAsset, this._quoteAsset, input);
+      const res = await estimateAmount(this._baseAsset, this._quoteAsset, input, this.direction);
       if (res === undefined) {
         return;
       }
@@ -91,7 +90,7 @@ export class MarketOrderFormStore {
       this._baseEstimating = true;
     });
     try {
-      const res = await estimateAmount(this._quoteAsset, this._baseAsset, input);
+      const res = await estimateAmount(this._quoteAsset, this._baseAsset, input, this.direction);
       if (res === undefined) {
         return;
       }
@@ -111,6 +110,7 @@ export class MarketOrderFormStore {
     this.direction = x;
     this._unfilled = undefined;
     this._priceImpact = undefined;
+    void this.estimateQuote();
   };
 
   get baseInput(): string {
@@ -216,7 +216,7 @@ export class MarketOrderFormStore {
     if (this._priceImpact === undefined || Math.abs(this._priceImpact) < 0.001) {
       return;
     }
-    const percent = formatNumber(Math.abs(this._priceImpact) * 100, { precision: 3 });
+    const percent = formatNumber(this._priceImpact * 100, { precision: 3 });
     return `${percent}%`;
   }
 
