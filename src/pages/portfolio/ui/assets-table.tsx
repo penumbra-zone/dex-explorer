@@ -20,6 +20,21 @@ import { formatAmount } from '@penumbra-zone/types/amount';
 import { useRouter } from 'next/navigation';
 import { Button } from '@penumbra-zone/ui/Button';
 import { useState, useEffect } from 'react';
+import { AddressIndex } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
+import { ViewService } from '@penumbra-zone/protobuf';
+import { useQuery } from '@tanstack/react-query';
+import { penumbra } from '@/shared/const/penumbra';
+
+const useChainId = () => {
+  return useQuery({
+    queryKey: ['chainId'],
+    queryFn: async () => {
+      const { parameters } = await penumbra.service(ViewService).appParameters({});
+      return parameters?.chainId;
+    },
+    enabled: connectionStore.connected,
+  });
+};
 
 const LoadingState = () => {
   return (
@@ -271,8 +286,10 @@ const calculateAssetDistribution = async (balances: BalancesResponse[]) => {
 export const AssetsTable = observer(() => {
   const router = useRouter();
   const { connected } = connectionStore;
-  const { data: balances, isLoading: balancesLoading } = useBalances();
+  const addressIndex = new AddressIndex({ account: connectionStore.subaccount });
+  const { data: balances, isLoading: balancesLoading } = useBalances(addressIndex);
   const { data: assets, isLoading: assetsLoading } = useAssets();
+  const { data: chainId } = useChainId();
   const [showLoading, setShowLoading] = useState(false);
   const [distribution, setDistribution] = useState<{
     distribution: {
@@ -290,7 +307,7 @@ export const AssetsTable = observer(() => {
     }
   }, [balances]);
 
-  const isTestnet = process.env['PENUMBRA_CHAIN_ID'] !== 'penumbra-1';
+  const isTestnet = chainId !== 'penumbra-1';
   const stableCoinSymbol = isTestnet ? 'UM' : 'USDC';
 
   if (!connected) {
