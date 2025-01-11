@@ -17,10 +17,6 @@ class ConnectionStateStore {
 
   constructor() {
     makeAutoObservable(this);
-
-    if (typeof window !== 'undefined') {
-      this.setup();
-    }
   }
 
   private setManifest(manifest: PenumbraManifest | undefined) {
@@ -85,6 +81,8 @@ class ConnectionStateStore {
       await penumbra.disconnect();
     } catch (error) {
       console.error(error);
+    } finally {
+      window.location.reload();
     }
   }
 

@@ -9,7 +9,7 @@ import cn from 'clsx';
 export interface OrderInputProps {
   id?: string;
   label: string;
-  value?: number;
+  value: string;
   placeholder?: string;
   isEstimating?: boolean;
   isApproximately?: boolean;
@@ -17,6 +17,7 @@ export interface OrderInputProps {
   denominator?: string;
   max?: string | number;
   min?: string | number;
+  disabled?: boolean;
 }
 
 /**
@@ -35,6 +36,7 @@ export const OrderInput = forwardRef<HTMLInputElement, OrderInputProps>(
       denominator,
       max,
       min,
+      disabled,
     }: OrderInputProps,
     ref,
   ) => {
@@ -72,7 +74,7 @@ export const OrderInput = forwardRef<HTMLInputElement, OrderInputProps>(
           <>
             <div
               ref={textRef}
-              className='font-default text-textLg font-medium leading-textLg visibility:hidden absolute'
+              className='font-default text-textLg font-medium leading-textLg invisible absolute'
             >
               {value}
             </div>
@@ -81,15 +83,22 @@ export const OrderInput = forwardRef<HTMLInputElement, OrderInputProps>(
                 'w-full appearance-none border-none bg-transparent',
                 'rounded-sm text-text-primary transition-colors duration-150',
                 'p-2 pt-7',
-                isApproximately ? 'pl-7' : 'pl-3',
+                isApproximately && value ? 'pl-7' : 'pl-3',
                 'font-default text-textLg font-medium leading-textLg',
-                'hover:bg-other-tonalFill5 focus:outline-none focus:bg-other-tonalFill10',
+                !disabled &&
+                  'hover:bg-other-tonalFill5 focus:outline-none focus:bg-other-tonalFill10',
+                disabled && 'cursor-not-allowed',
                 '[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
                 "[&[type='number']]:[-moz-appearance:textfield]",
               )}
               style={{ paddingRight: denomWidth + 20 }}
-              value={value ?? ''}
+              value={value}
+              disabled={disabled}
               onChange={e => onChange?.(e.target.value)}
+              onWheel={e => {
+                // Remove focus to prevent scroll changes
+                (e.target as HTMLInputElement).blur();
+              }}
               placeholder={placeholder}
               type='number'
               max={max}
@@ -103,7 +112,7 @@ export const OrderInput = forwardRef<HTMLInputElement, OrderInputProps>(
                   ≈
                 </span>
                 <div className='absolute top-[31px]' style={{ left: textWidth + 8 * 4 }}>
-                  <Tooltip message='This is an estimate based on current data and may vary. It is not a guarantee.'>
+                  <Tooltip message='Swap outputs are estimates based on current market prices.'>
                     <Icon IconComponent={InfoIcon} size='sm' color='text.primary' />
                   </Tooltip>
                 </div>
