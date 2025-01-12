@@ -321,11 +321,8 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                       <Table.Td density='slim'>
                         <div className='flex flex-col gap-4'>
                           {position.orders.map((order, i) => (
-                            <PositionsCurrentValue
-                              key={i}
-                              baseAsset={order.baseAsset}
-                              quoteAsset={order.quoteAsset}
-                            />
+
+                              <PositionsCurrentValue key={i} order={order} />
                           ))}
                         </div>
                       </Table.Td>
