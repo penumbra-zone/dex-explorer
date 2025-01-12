@@ -146,6 +146,7 @@ class Pindexer {
     limit,
     offset,
     stablecoins,
+    usdc,
     // TODO: implement search of assets
     // search,
   }: {
@@ -161,7 +162,15 @@ class Pindexer {
     search: string;
     limit: number;
     offset: number;
+    usdc: AssetId;
   }) {
+    const usdcTable = this.db
+      .selectFrom('dex_ex_pairs_summary')
+      .where('asset_end', '=', Buffer.from(usdc.inner))
+      .where('the_window', '=', '1m')
+      .groupBy(['asset_end', 'asset_start', 'the_window'])
+      .selectAll();
+
     // Selects only distinct pairs (USDT/USDC, but not reverse) with its data
     const summaryTable = this.db
       .selectFrom('dex_ex_pairs_summary')
@@ -207,7 +216,7 @@ class Pindexer {
           .onRef('candles.asset_start', '=', 'summary.asset_start')
           .onRef('candles.asset_end', '=', 'summary.asset_end'),
       )
-      // TODO: sort by volume expressed in USD. Question: how to get it expressed in USD?
+      .leftJoin(usdcTable.as('usdc'), 'summary.asset_end', 'usdc.asset_start')
       .orderBy('trades_over_window', 'desc')
       .select([
         'summary.asset_start',
@@ -224,7 +233,9 @@ class Pindexer {
         'summary.high',
         'candles.candles',
         'candles.candle_times',
+        'usdc.price as usdc_price',
       ])
+      .orderBy('summary.liquidity', 'desc')
       .limit(limit)
       .offset(offset);
 

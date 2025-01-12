@@ -9,9 +9,6 @@ import { Icon } from '@penumbra-zone/ui/Icon';
 import { PairCard } from '@/pages/explore/ui/pair-card';
 import { useSummaries } from '@/pages/explore/api/use-summaries';
 import SpinnerIcon from '@/shared/assets/spinner-icon.svg';
-import { useMultipleSummaries } from '@/pages/trade/model/useSummary';
-import { SummaryData } from '@/shared/api/server/summary/types';
-import { calculateScaledAmount, collectQuoteAssets } from '@/shared/utils/price-conversion';
 
 /** A hook that fires the callback when observed element (on the bottom of the page) is in the view */
 const useObserver = (disabled: boolean, cb: VoidFunction) => {
@@ -54,48 +51,7 @@ export const ExplorePairs = () => {
 
   const [search, setSearch] = useState('');
 
-  // Fetch trading pair summaries.
   const { data, isLoading, isRefetching, isFetchingNextPage, fetchNextPage } = useSummaries(search);
-
-  // Create temporary translator to normalize volumes/liquidity to USDC values.
-  // Deep clone is neccesary since objects are passed by reference in typeScript.
-  let translator = data?.pages ? structuredClone(data.pages) : undefined;
-
-  // Extract quote assets from all trading pairs.
-  let quoteAssetsList: string[] = [];
-  if (translator) {
-    quoteAssetsList = collectQuoteAssets(translator);
-  }
-
-  // Get USDC exchange rates for all quote assets.
-  const usdcPriceQueries = useMultipleSummaries(quoteAssetsList);
-
-  // Calculate USDC-denominated volumes and liquidity for each trading pair.
-  // For each pair, scale the values using USDC price of the quote asset.
-  let volumePairs: bigint[] = [];
-  let liquidityPairs: bigint[] = [];
-
-  data?.pages[0]?.forEach((item, index) => {
-    let usdcPrice = usdcPriceQueries[index]?.data as SummaryData;
-
-    if (usdcPrice && 'directVolume' in usdcPrice && 'liquidity' in usdcPrice) {
-      calculateScaledAmount(item, usdcPrice, 'directVolume', volumePairs, index);
-      calculateScaledAmount(item, usdcPrice, 'liquidity', liquidityPairs, index);
-    }
-  });
-
-  // Update volume and liquidity amounts with their respective USDC-normalized values,
-  // skipping USDC pairs.
-  if (translator) {
-    translator.forEach(page => {
-      page.forEach((item, itemIndex) => {
-        if (quoteAssetsList[itemIndex] !== 'USDC') {
-          item.directVolume.valueView.value!.amount!.lo = volumePairs[itemIndex]!;
-          item.liquidity.valueView.value!.amount!.lo = liquidityPairs[itemIndex]!;
-        }
-      });
-    });
-  }
 
   const { observerEl } = useObserver(isLoading || isRefetching || isFetchingNextPage, () => {
     void fetchNextPage();
@@ -144,7 +100,7 @@ export const ExplorePairs = () => {
           </>
         )}
 
-        {translator?.map(page =>
+        {data?.pages.map(page =>
           page.map(summary => (
             <PairCard
               loading={false}

@@ -4,6 +4,7 @@ import { DexExPairsSummary } from '@/shared/database/schema';
 import { calculateDisplayPrice } from '@/shared/utils/price-conversion';
 import { round } from '@penumbra-zone/types/round';
 import { toValueView } from '@/shared/utils/value-view';
+import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 
 const priceDiffLabel = (num: number): ChangeData['sign'] => {
   if (num === 0) {
@@ -39,18 +40,40 @@ export const adaptSummary = (
   summary: DexExPairsSummary,
   baseAsset: Metadata,
   quoteAsset: Metadata,
+  usdc: Metadata | undefined,
   candles?: number[],
   candleTimes?: Date[],
 ): SummaryData => {
-  const directVolume = toValueView({
+  let liquidity = toValueView({
+    amount: Math.floor(summary.liquidity),
+    metadata: quoteAsset,
+  });
+
+  let directVolume = toValueView({
     amount: Math.floor(summary.direct_volume_over_window),
     metadata: quoteAsset,
   });
 
-  const liquidity = toValueView({
-    amount: Math.floor(summary.liquidity),
-    metadata: quoteAsset,
-  });
+  if (summary.usdc_price) {
+    const expDiffLiquidity = Math.abs(
+      getDisplayDenomExponent(quoteAsset) - getDisplayDenomExponent(usdc),
+    );
+    const resultLiquidity = summary.liquidity * summary.usdc_price * 10 ** expDiffLiquidity;
+    liquidity = toValueView({
+      amount: Math.floor(resultLiquidity),
+      metadata: quoteAsset,
+    });
+
+    const expDiffDirectVolume = Math.abs(
+      getDisplayDenomExponent(quoteAsset) - getDisplayDenomExponent(usdc),
+    );
+    const resultDirectVolume =
+      summary.direct_volume_over_window * summary.usdc_price * 10 ** expDiffDirectVolume;
+    directVolume = toValueView({
+      amount: Math.floor(resultDirectVolume),
+      metadata: quoteAsset,
+    });
+  }
 
   const priceDiff = summary.price - summary.price_then;
   const change = {

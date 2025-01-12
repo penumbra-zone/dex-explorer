@@ -29,18 +29,16 @@ export const getAllSummaries = async (
 
   const registryClient = new ChainRegistryClient();
   const registry = await registryClient.remote.get(chainId);
+  const allAssets = registry.getAllAssets();
 
-  const stablecoins = registry
-    .getAllAssets()
-    .filter(asset => ['USDT', 'USDC', 'USDY'].includes(asset.symbol))
-    .map(asset => asset.penumbraAssetId) as AssetId[];
+  const stablecoins = allAssets.filter(asset => ['USDT', 'USDC', 'USDY'].includes(asset.symbol));
+  const usdc = stablecoins.find(asset => asset.symbol === 'USDC');
 
   const results = await pindexer.summaries({
     ...params,
-    stablecoins,
+    stablecoins: stablecoins.map(asset => asset.penumbraAssetId) as AssetId[],
+    usdc: usdc?.penumbraAssetId as AssetId,
   });
-
-  const allAssets = registry.getAllAssets();
 
   const summaries = await Promise.all(
     results.map(summary => {
@@ -54,6 +52,7 @@ export const getAllSummaries = async (
         summary,
         baseAsset,
         quoteAsset,
+        usdc,
         summary.candles,
         summary.candle_times,
       );
