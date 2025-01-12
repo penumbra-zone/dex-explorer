@@ -37,6 +37,7 @@ export const getAllSummaries = async (
   const results = await pindexer.summaries({
     ...params,
     stablecoins: stablecoins.map(asset => asset.penumbraAssetId) as AssetId[],
+    // eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style -- usdc is defined
     usdc: usdc?.penumbraAssetId as AssetId,
   });
 
@@ -56,6 +57,14 @@ export const getAllSummaries = async (
         summary.candles,
         summary.candle_times,
       );
+
+      // Filter out pairs with zero liquidity and trading volume
+      if (
+        (data.liquidity.valueView.value?.amount?.lo &&
+          data.directVolume.valueView.value?.amount?.lo) === 0n
+      ) {
+        return;
+      }
 
       return serialize(data);
     }),

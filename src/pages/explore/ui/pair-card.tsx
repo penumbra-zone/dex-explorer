@@ -67,7 +67,7 @@ export const PairCard = ({ loading, summary }: PairCardProps) => {
   const yesterday = subDays(new Date(), 1);
 
   const { data: assets } = useRegistryAssets();
-  const usdc = assets?.find(asset => asset.symbol === 'USDC');
+  const usdcMetadata = assets?.find(asset => asset.symbol === 'USDC');
 
   return (
     <Link
@@ -123,7 +123,7 @@ export const PairCard = ({ loading, summary }: PairCardProps) => {
               {shortify(Number(getFormattedAmtFromValueView(summary.liquidity)))}
             </Text>
             <Text detail color='text.secondary'>
-              {usdc?.symbol}
+              {usdcMetadata?.symbol}
             </Text>
           </>
         )}
@@ -138,7 +138,7 @@ export const PairCard = ({ loading, summary }: PairCardProps) => {
               {shortify(Number(getFormattedAmtFromValueView(summary.directVolume)))}
             </Text>
             <Text detail color='text.secondary'>
-              {usdc?.symbol}
+              {usdcMetadata?.symbol}
             </Text>
           </>
         )}
