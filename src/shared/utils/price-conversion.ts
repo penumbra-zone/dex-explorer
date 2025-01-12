@@ -42,6 +42,6 @@ export function calculateEquivalentInUSDC(
 
   return toValueView({
     amount: Math.floor(result),
-    metadata: usdcMetadata,
+    metadata: quoteAssetMetadata,
   });
 }

@@ -43,8 +43,10 @@ export const getStats = async (): Promise<Serialized<StatsResponse>> => {
 
     const results = await pindexer.stats(
       STATS_DURATION_WINDOW,
+      // eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style -- usdc is defined
       usdcMetadata.penumbraAssetId as AssetId,
     );
+
     const stats = results[0];
     if (!stats) {
       return { error: `No stats found` };
@@ -89,31 +91,33 @@ export const getStats = async (): Promise<Serialized<StatsResponse>> => {
       metadata: usdcMetadata,
     });
 
-    let largestPairLiquidity = toValueView({
-      amount: Math.floor(stats.largest_dv_trading_pair_volume),
-      metadata: largestPairEnd!,
-    });
+    let largestPairLiquidity =
+      largestPairEnd &&
+      toValueView({
+        amount: Math.floor(stats.largest_dv_trading_pair_volume),
+        metadata: largestPairEnd,
+      });
 
     // Converts liquidity and trading volume to their equivalent USDC prices if `usdc_price` is available
-    if (stats.usdc_price) {
+    if (stats.usdc_price && largestPairEnd) {
       liquidity = calculateEquivalentInUSDC(
         stats.liquidity,
         stats.usdc_price,
-        largestPairEnd!,
+        largestPairEnd,
         usdcMetadata,
       );
 
       directVolume = calculateEquivalentInUSDC(
         stats.direct_volume,
         stats.usdc_price,
-        largestPairEnd!,
+        largestPairEnd,
         usdcMetadata,
       );
 
       largestPairLiquidity = calculateEquivalentInUSDC(
         stats.largest_dv_trading_pair_volume,
         stats.usdc_price,
-        largestPairEnd!,
+        largestPairEnd,
         usdcMetadata,
       );
     }

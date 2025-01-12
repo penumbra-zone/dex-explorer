@@ -54,14 +54,14 @@ export const adaptSummary = (
   });
 
   // Converts liquidity and trading volume to their equivalent USDC prices if `usdc_price` is available
-  if (summary.usdc_price) {
-    liquidity = calculateEquivalentInUSDC(summary.liquidity, summary.usdc_price, quoteAsset, usdc!);
+  if (summary.usdc_price && usdc) {
+    liquidity = calculateEquivalentInUSDC(summary.liquidity, summary.usdc_price, quoteAsset, usdc);
 
     directVolume = calculateEquivalentInUSDC(
       summary.direct_volume_over_window,
       summary.usdc_price,
       quoteAsset,
-      usdc!,
+      usdc,
     );
   }
 

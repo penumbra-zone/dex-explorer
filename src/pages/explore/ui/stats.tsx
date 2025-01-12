@@ -11,6 +11,8 @@ import { useRegistryAssets } from '@/shared/api/registry';
 
 export const ExploreStats = () => {
   const { data: stats, isLoading, error } = useStats();
+  const { data: assets } = useRegistryAssets();
+  const usdcMetadata = assets?.find(asset => asset.symbol === 'USDC');
 
   if (error) {
     return (
@@ -19,9 +21,6 @@ export const ExploreStats = () => {
       </Text>
     );
   }
-
-  const { data: assets } = useRegistryAssets();
-  const usdcMetadata = assets?.find(asset => asset.symbol === 'USDC');
 
   return (
     <div className='grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-3 gap-2'>
