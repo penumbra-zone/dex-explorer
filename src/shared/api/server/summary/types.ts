@@ -54,6 +54,7 @@ export const adaptSummary = (
     metadata: quoteAsset,
   });
 
+  // Converts liquidity and trading volume to their equivalent USDC prices if `usdc_price` is available
   if (summary.usdc_price) {
     const expDiffLiquidity = Math.abs(
       getDisplayDenomExponent(quoteAsset) - getDisplayDenomExponent(usdc),
