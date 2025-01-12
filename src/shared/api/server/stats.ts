@@ -88,14 +88,17 @@ export const getStats = async (): Promise<Serialized<StatsResponse>> => {
       largestPairLiquidity:
         largestPairEnd &&
         toValueView({
-          amount: stats.largest_dv_trading_pair_volume,
+          amount: Math.floor(stats.largest_dv_trading_pair_volume),
           metadata: largestPairEnd,
         }),
       liquidity: toValueView({
-        amount: parseInt(`${stats.liquidity}`),
+        amount: Math.floor(parseInt(`${stats.liquidity}`)),
         metadata: usdcMetadata,
       }),
-      directVolume: toValueView({ amount: stats.direct_volume, metadata: usdcMetadata }),
+      directVolume: toValueView({
+        amount: Math.floor(stats.direct_volume),
+        metadata: usdcMetadata,
+      }),
     });
   } catch (error) {
     return { error: (error as Error).message };
