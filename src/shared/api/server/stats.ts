@@ -5,6 +5,7 @@ import { pindexer } from '@/shared/database';
 import { DurationWindow } from '@/shared/utils/duration';
 import { toValueView } from '@/shared/utils/value-view';
 import { Serialized, serialize } from '@/shared/utils/serializer';
+import { calculateEquivalentInUSDC } from '@/shared/utils/price-conversion';
 
 interface StatsDataBase {
   activePairs: number;
@@ -31,23 +32,22 @@ export const getStats = async (): Promise<Serialized<StatsResponse>> => {
     }
 
     const registryClient = new ChainRegistryClient();
-
-    const [registry, results] = await Promise.all([
-      registryClient.remote.get(chainId),
-      pindexer.stats(STATS_DURATION_WINDOW),
-    ]);
-
-    const stats = results[0];
-    if (!stats) {
-      return { error: `No stats found` };
-    }
+    const registry = await registryClient.remote.get(chainId);
 
     // TODO: Add getMetadataBySymbol() helper to registry npm package
     const allAssets = registry.getAllAssets();
-    // TODO: what asset should be used here?
     const usdcMetadata = allAssets.find(asset => asset.symbol.toLowerCase() === 'usdc');
     if (!usdcMetadata) {
       return { error: 'USDC not found in registry' };
+    }
+
+    const results = await pindexer.stats(
+      STATS_DURATION_WINDOW,
+      usdcMetadata.penumbraAssetId as AssetId,
+    );
+    const stats = results[0];
+    if (!stats) {
+      return { error: `No stats found` };
     }
 
     const topPriceMoverStart = allAssets.find(asset => {
@@ -79,26 +79,54 @@ export const getStats = async (): Promise<Serialized<StatsResponse>> => {
         end: largestPairEnd.symbol,
       };
 
+    let liquidity = toValueView({
+      amount: Math.floor(stats.liquidity),
+      metadata: usdcMetadata,
+    });
+
+    let directVolume = toValueView({
+      amount: Math.floor(stats.direct_volume),
+      metadata: usdcMetadata,
+    });
+
+    let largestPairLiquidity = toValueView({
+      amount: Math.floor(stats.largest_dv_trading_pair_volume),
+      metadata: largestPairEnd!,
+    });
+
+    // Converts liquidity and trading volume to their equivalent USDC prices if `usdc_price` is available
+    if (stats.usdc_price) {
+      liquidity = calculateEquivalentInUSDC(
+        stats.liquidity,
+        stats.usdc_price,
+        largestPairEnd!,
+        usdcMetadata,
+      );
+
+      directVolume = calculateEquivalentInUSDC(
+        stats.direct_volume,
+        stats.usdc_price,
+        largestPairEnd!,
+        usdcMetadata,
+      );
+
+      largestPairLiquidity = calculateEquivalentInUSDC(
+        stats.largest_dv_trading_pair_volume,
+        stats.usdc_price,
+        largestPairEnd!,
+        usdcMetadata,
+      );
+    }
+
     return serialize({
       activePairs: stats.active_pairs,
       trades: stats.trades,
       largestPair,
       topPriceMover,
       time: new Date(),
-      largestPairLiquidity:
-        largestPairEnd &&
-        toValueView({
-          amount: Math.floor(stats.largest_dv_trading_pair_volume),
-          metadata: largestPairEnd,
-        }),
-      liquidity: toValueView({
-        amount: Math.floor(parseInt(`${stats.liquidity}`)),
-        metadata: usdcMetadata,
-      }),
-      directVolume: toValueView({
-        amount: Math.floor(stats.direct_volume),
-        metadata: usdcMetadata,
-      }),
+      largestPairLiquidity,
+      liquidity,
+      directVolume,
     });
   } catch (error) {
     return { error: (error as Error).message };

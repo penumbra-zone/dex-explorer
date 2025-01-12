@@ -65,6 +65,7 @@ export interface DexExAggregateSummary {
   top_price_mover_end: Buffer;
   top_price_mover_start: Buffer;
   trades: number;
+  usdc_price: number | null;
 }
 
 export interface DexExMetadata {

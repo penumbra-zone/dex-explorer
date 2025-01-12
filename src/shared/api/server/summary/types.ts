@@ -1,10 +1,9 @@
 import { DurationWindow } from '@/shared/utils/duration.ts';
 import { Metadata, ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { DexExPairsSummary } from '@/shared/database/schema';
-import { calculateDisplayPrice } from '@/shared/utils/price-conversion';
+import { calculateDisplayPrice, calculateEquivalentInUSDC } from '@/shared/utils/price-conversion';
 import { round } from '@penumbra-zone/types/round';
 import { toValueView } from '@/shared/utils/value-view';
-import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 
 const priceDiffLabel = (num: number): ChangeData['sign'] => {
   if (num === 0) {
@@ -56,24 +55,14 @@ export const adaptSummary = (
 
   // Converts liquidity and trading volume to their equivalent USDC prices if `usdc_price` is available
   if (summary.usdc_price) {
-    const expDiffLiquidity = Math.abs(
-      getDisplayDenomExponent(quoteAsset) - getDisplayDenomExponent(usdc),
-    );
-    const resultLiquidity = summary.liquidity * summary.usdc_price * 10 ** expDiffLiquidity;
-    liquidity = toValueView({
-      amount: Math.floor(resultLiquidity),
-      metadata: quoteAsset,
-    });
+    liquidity = calculateEquivalentInUSDC(summary.liquidity, summary.usdc_price, quoteAsset, usdc!);
 
-    const expDiffDirectVolume = Math.abs(
-      getDisplayDenomExponent(quoteAsset) - getDisplayDenomExponent(usdc),
+    directVolume = calculateEquivalentInUSDC(
+      summary.direct_volume_over_window,
+      summary.usdc_price,
+      quoteAsset,
+      usdc!,
     );
-    const resultDirectVolume =
-      summary.direct_volume_over_window * summary.usdc_price * 10 ** expDiffDirectVolume;
-    directVolume = toValueView({
-      amount: Math.floor(resultDirectVolume),
-      metadata: quoteAsset,
-    });
   }
 
   const priceDiff = summary.price - summary.price_then;
