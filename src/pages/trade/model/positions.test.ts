@@ -16,13 +16,42 @@ import { BigNumber } from 'bignumber.js';
 describe('positionsStore', () => {
   const id1 = new Uint8Array(Array(32).fill(0xaa));
   const id2 = new Uint8Array(Array(32).fill(0xbb));
+  const id3 = new Uint8Array(Array(32).fill(0xcc));
+  const id4 = new Uint8Array(Array(32).fill(0xdd));
+  const stableId = new Uint8Array(Array(32).fill(0xee));
   const p1 = 2;
   const p2 = 1;
   const exponent1 = 6;
   const exponent2 = 9;
+
+  const createMetaData = (id: Uint8Array, display: string, exponent: number) => {
+    return new Metadata({
+      penumbraAssetId: new AssetId({ inner: id }),
+      symbol: display,
+      display,
+      denomUnits: [new DenomUnit({ denom: display, exponent })],
+    });
+  };
+
+  const metadataWithId1 = createMetaData(id1, 'asset1', exponent1);
+  const metadataWithId2 = createMetaData(id2, 'asset2', exponent2);
+  const metadataWithId3 = createMetaData(id3, 'asset2', exponent2);
+  const metadataWithId4 = createMetaData(id4, 'asset2', exponent2);
+  const metadataWithStableCoin = createMetaData(stableId, 'USDC', exponent2);
+
   const feeBps = 25;
 
-  const createPosition = ({ r1, r2 }: { r1: bigint; r2: bigint }) => {
+  const createPosition = ({
+    r1,
+    r2,
+    asset1Id = id1,
+    asset2Id = id2,
+  }: {
+    r1: bigint;
+    r2: bigint;
+    asset1Id?: Uint8Array;
+    asset2Id?: Uint8Array;
+  }) => {
     return new Position({
       phi: {
         component: {
@@ -38,10 +67,12 @@ describe('positionsStore', () => {
         },
         pair: {
           asset1: {
-            inner: id1,
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+            inner: asset1Id ?? id1,
           },
           asset2: {
-            inner: id2,
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+            inner: asset2Id ?? id2,
           },
         },
       },
@@ -65,20 +96,13 @@ describe('positionsStore', () => {
   };
 
   beforeAll(() => {
-    const assets: Metadata[] = [
-      new Metadata({
-        penumbraAssetId: new AssetId({ inner: id1 }),
-        display: 'asset1',
-        denomUnits: [new DenomUnit({ denom: 'asset1', exponent: exponent1 })],
-      }),
-      new Metadata({
-        penumbraAssetId: new AssetId({ inner: id2 }),
-        display: 'asset2',
-        denomUnits: [new DenomUnit({ denom: 'asset2', exponent: exponent2 })],
-      }),
-    ];
-
-    positionsStore.setAssets(assets);
+    positionsStore.setAssets([
+      metadataWithId1,
+      metadataWithId2,
+      metadataWithId3,
+      metadataWithId4,
+      metadataWithStableCoin,
+    ]);
 
     // Assert that id1 and id2 are in canonical order
     expect(
@@ -174,6 +198,104 @@ describe('positionsStore', () => {
       expect(pnum(valueViews.amount).toNumber()).toEqual(4.567);
       expect(pnum(valueViews.basePrice).toNumber()).toEqual(basePrice);
       expect(pnum(valueViews.effectivePrice).toNumber()).toEqual(effectivePrice);
+    });
+  });
+
+  describe('getDirectionalOrders', () => {
+    it('should return with asset 1/2 as base/quote asset when its the provided base/quote assets', () => {
+      const position = createPosition({
+        r1: 0n,
+        r2: 100n,
+      });
+
+      const [asset1, asset2] = positionsStore.getCalculatedAssets(position as ExecutedPosition);
+      const directionalOrders = positionsStore.getDirectionalOrders({
+        asset1,
+        asset2,
+        baseAsset: metadataWithId1,
+        quoteAsset: metadataWithId2,
+      });
+      const positionOrder = directionalOrders[0]!;
+
+      expect(
+        positionOrder.baseAsset.asset.penumbraAssetId?.equals(asset1.asset.penumbraAssetId),
+      ).toBe(true);
+      expect(
+        positionOrder.quoteAsset.asset.penumbraAssetId?.equals(asset2.asset.penumbraAssetId),
+      ).toBe(true);
+    });
+
+    it('should return with asset 2/1 as base/quote asset when its the provided base/quote assets', () => {
+      const position = createPosition({
+        r1: 0n,
+        r2: 100n,
+      });
+
+      const [asset1, asset2] = positionsStore.getCalculatedAssets(position as ExecutedPosition);
+      const directionalOrders = positionsStore.getDirectionalOrders({
+        asset1,
+        asset2,
+        baseAsset: metadataWithId2,
+        quoteAsset: metadataWithId1,
+      });
+      const positionOrder = directionalOrders[0]!;
+
+      expect(
+        positionOrder.baseAsset.asset.penumbraAssetId?.equals(asset2.asset.penumbraAssetId),
+      ).toBe(true);
+      expect(
+        positionOrder.quoteAsset.asset.penumbraAssetId?.equals(asset1.asset.penumbraAssetId),
+      ).toBe(true);
+    });
+
+    it('should return with asset 1 as quote asset when asset 1 is a stable coin', () => {
+      const position = createPosition({
+        r1: 0n,
+        r2: 100n,
+        asset1Id: stableId,
+        asset2Id: id2,
+      });
+
+      const [asset1, asset2] = positionsStore.getCalculatedAssets(position as ExecutedPosition);
+      const directionalOrders = positionsStore.getDirectionalOrders({
+        asset1,
+        asset2,
+        baseAsset: metadataWithId1,
+        quoteAsset: metadataWithId2,
+      });
+      const positionOrder = directionalOrders[0]!;
+
+      expect(
+        positionOrder.baseAsset.asset.penumbraAssetId?.equals(asset2.asset.penumbraAssetId),
+      ).toBe(true);
+      expect(
+        positionOrder.quoteAsset.asset.penumbraAssetId?.equals(asset1.asset.penumbraAssetId),
+      ).toBe(true);
+    });
+
+    it('should return with asset 2 as quote asset when asset 2 is a stable coin', () => {
+      const position = createPosition({
+        r1: 0n,
+        r2: 100n,
+        asset1Id: id1,
+        asset2Id: stableId,
+      });
+
+      const [asset1, asset2] = positionsStore.getCalculatedAssets(position as ExecutedPosition);
+      const directionalOrders = positionsStore.getDirectionalOrders({
+        asset1,
+        asset2,
+        baseAsset: metadataWithId1,
+        quoteAsset: metadataWithId2,
+      });
+      const positionOrder = directionalOrders[0]!;
+
+      expect(
+        positionOrder.baseAsset.asset.penumbraAssetId?.equals(asset1.asset.penumbraAssetId),
+      ).toBe(true);
+      expect(
+        positionOrder.quoteAsset.asset.penumbraAssetId?.equals(asset2.asset.penumbraAssetId),
+      ).toBe(true);
     });
   });
 });
