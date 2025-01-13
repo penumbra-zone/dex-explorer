@@ -72,6 +72,11 @@ describe('positionsStore', () => {
     ];
 
     positionsStore.setAssets(assets);
+
+    // Assert that id1 and id2 are in canonical order
+    expect(
+      compareAssetId(new AssetId({ inner: id1 }), new AssetId({ inner: id2 })),
+    ).toBeLessThanOrEqual(0);
   });
 
   describe('getOrdersByBaseQuoteAssets', () => {
@@ -80,10 +85,6 @@ describe('positionsStore', () => {
         r1: 100n,
         r2: 100n,
       });
-
-      const correctOrder =
-        compareAssetId(new AssetId({ inner: id1 }), new AssetId({ inner: id2 })) <= 0;
-      console.log('TCL: correctOrder', correctOrder);
 
       const [asset1, asset2] = positionsStore.getCalculatedAssets(position as ExecutedPosition);
       const orders = positionsStore.getOrdersByBaseQuoteAssets(asset1, asset2);
