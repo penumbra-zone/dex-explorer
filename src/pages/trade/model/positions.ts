@@ -46,6 +46,7 @@ export interface CalculatedAsset {
   reserves: Amount;
 }
 
+// interface to avoid checking if the nested values exist on a Position
 export interface ExecutedPosition {
   phi: {
     component: BareTradingFunction;
