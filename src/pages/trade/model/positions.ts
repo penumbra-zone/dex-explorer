@@ -20,6 +20,7 @@ import { openToast } from '@penumbra-zone/ui/Toast';
 import { pnum } from '@penumbra-zone/types/pnum';
 import { positionIdFromBech32 } from '@penumbra-zone/bech32m/plpid';
 import { updatePositionsQuery } from '@/pages/trade/api/positions';
+import { BigNumber } from 'bignumber.js';
 
 export interface DisplayPosition {
   id: PositionId;
@@ -40,9 +41,9 @@ export interface DisplayPosition {
 export interface CalculatedAsset {
   asset: Metadata;
   exponent: number;
-  amount: number;
-  price: number;
-  effectivePrice: number;
+  amount: BigNumber;
+  price: BigNumber;
+  effectivePrice: BigNumber;
   reserves: Amount;
 }
 
@@ -286,20 +287,24 @@ class PositionsStore {
     // We want to render two main piece of information to the user, assuming their unit of account is the quote asset:
     // - the price i.e, the number of unit of *quote assets* necessary to obtain a unit of base asset.
     // - the trade amount i.e, the amount of *base assets* that the position is either seeking to purchase or sell.
-    const effectivePrice = pnum(baseAsset.effectivePrice, baseAsset.exponent).toValueView(
+    const effectivePrice = pnum(
+      baseAsset.effectivePrice.toString(),
+      baseAsset.exponent,
+    ).toValueView(quoteAsset.asset);
+    const basePrice = pnum(baseAsset.price.toString(), baseAsset.exponent).toValueView(
       quoteAsset.asset,
     );
-    const basePrice = pnum(baseAsset.price, baseAsset.exponent).toValueView(quoteAsset.asset);
 
     // This is the trade amount (in base asset) that the position seeks to SELL or BUY.
     const amount =
       direction === 'Sell'
         ? // We are selling the base asset to obtain the quote asset, so we can simply use the current reserves.
-          pnum(baseAsset.amount, baseAsset.exponent).toValueView(baseAsset.asset)
+          pnum(baseAsset.amount.toString(), baseAsset.exponent).toValueView(baseAsset.asset)
         : // We are buying the base asset, we need to convert the quantity of quote asset that we have provisioned.
-          pnum(quoteAsset.amount * quoteAsset.effectivePrice, quoteAsset.exponent).toValueView(
-            baseAsset.asset,
-          );
+          pnum(
+            quoteAsset.amount.times(quoteAsset.effectivePrice).toString(),
+            quoteAsset.exponent,
+          ).toValueView(baseAsset.asset);
 
     return {
       direction,
@@ -337,12 +342,12 @@ class PositionsStore {
     // Positions specifying a trading pair between `asset_1:asset_2`.
     // This ordering can conflict with the higher level base/quote.
     // First, we compute the exchange rate between asset_1 and asset_2:
-    const asset1Price = pnum(p).toBigNumber().dividedBy(pnum(q).toBigNumber()).toNumber();
+    const asset1Price = pnum(p).toBigNumber().dividedBy(pnum(q).toBigNumber());
     // Then, we compoute the exchange rate between asset_2 and asset_1.
-    const asset2Price = pnum(q).toBigNumber().dividedBy(pnum(p).toBigNumber()).toNumber();
+    const asset2Price = pnum(q).toBigNumber().dividedBy(pnum(p).toBigNumber());
     // We start tracking the reserves for each assets:
-    const asset1ReserveAmount = pnum(r1, asset1Exponent).toNumber();
-    const asset2ReserveAmount = pnum(r2, asset2Exponent).toNumber();
+    const asset1ReserveAmount = pnum(r1, asset1Exponent).toBigNumber();
+    const asset2ReserveAmount = pnum(r2, asset2Exponent).toBigNumber();
     // Next, we compute the fee percentage for the position.
     // We are given a fee recorded in basis points, with an implicit 10^4 scaling factor.
     const f = component.fee;
@@ -350,9 +355,9 @@ class PositionsStore {
     const gamma = (10_000 - f) / 10_000;
     // We use it to compute the effective price i.e, the price inclusive of fees in each directions,
     // in the case of the first rate this is: price * gamma, such that:
-    const asset1EffectivePrice = pnum(asset1Price * gamma).toNumber();
+    const asset1EffectivePrice = asset1Price.times(pnum(gamma).toBigNumber());
     // in the case of the second, we apply it as an inverse:
-    const asset2EffectivePrice = pnum(asset2Price / gamma).toNumber();
+    const asset2EffectivePrice = asset2Price.dividedBy(pnum(gamma).toBigNumber());
 
     return [
       {
