@@ -145,8 +145,8 @@ describe('positionsStore', () => {
       expect(pnum(valueViews.amount).toNumber()).toEqual(
         Number(
           (
-            buyOrder?.quoteAsset.amount *
-            buyOrder?.quoteAsset.effectivePrice *
+            buyOrder!.quoteAsset.amount.toNumber() *
+            buyOrder!.quoteAsset.effectivePrice.toNumber() *
             10 ** (exponent2 - exponent1)
           ).toFixed(exponent1),
         ),

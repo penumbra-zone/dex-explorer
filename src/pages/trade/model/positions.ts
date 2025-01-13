@@ -142,7 +142,10 @@ class PositionsStore {
     this.currentPair = [baseAsset, quoteAsset];
   };
 
-  getOrdersByBaseQuoteAssets = (baseAsset: CalculatedAsset, quoteAsset: CalculatedAsset) => {
+  getOrdersByBaseQuoteAssets = (
+    baseAsset: CalculatedAsset,
+    quoteAsset: CalculatedAsset,
+  ): { direction: string; baseAsset: CalculatedAsset; quoteAsset: CalculatedAsset }[] => {
     if (!isZero(baseAsset.reserves) && !isZero(quoteAsset.reserves)) {
       return [
         {

@@ -16,7 +16,9 @@ export const PositionsCurrentValue = ({ order }: { order: DisplayPosition['order
   if (order.direction === 'Buy') {
     return (
       <ValueViewComponent
-        valueView={pnum(quoteAsset.amount, quoteAsset.exponent).toValueView(quoteAsset.asset)}
+        valueView={pnum(quoteAsset.amount.toNumber(), quoteAsset.exponent).toValueView(
+          quoteAsset.asset,
+        )}
         density='slim'
       />
     );
@@ -24,7 +26,7 @@ export const PositionsCurrentValue = ({ order }: { order: DisplayPosition['order
 
   return (
     <ValueViewComponent
-      valueView={pnum(baseAsset.amount * marketPrice, quoteAsset.exponent).toValueView(
+      valueView={pnum(baseAsset.amount.toNumber() * marketPrice, quoteAsset.exponent).toValueView(
         quoteAsset.asset,
       )}
       density='slim'
