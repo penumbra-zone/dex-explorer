@@ -289,7 +289,6 @@ class PositionsStore {
   };
 
   getCalculatedAssets(position: ExecutedPosition): [CalculatedAsset, CalculatedAsset] {
-    /* eslint-disable curly -- makes code more concise */
     const { phi, reserves } = position;
     const { pair, component } = phi;
 
