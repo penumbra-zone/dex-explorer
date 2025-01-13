@@ -194,36 +194,21 @@ class PositionsStore {
   getDirectionalOrders = ({
     asset1,
     asset2,
+    baseAsset,
+    quoteAsset,
   }: {
-    asset1: {
-      asset: Metadata;
-      exponent: number;
-      amount: number;
-      price: number;
-      effectivePrice: number;
-      reserves: Amount;
-    };
-    asset2: {
-      asset: Metadata;
-      exponent: number;
-      amount: number;
-      price: number;
-      effectivePrice: number;
-      reserves: Amount;
-    };
+    asset1: CalculatedAsset;
+    asset2: CalculatedAsset;
+    baseAsset: Metadata;
+    quoteAsset: Metadata;
   }): { direction: string; baseAsset: CalculatedAsset; quoteAsset: CalculatedAsset }[] => {
-    if (!this.currentPair || !asset1.asset.penumbraAssetId || !asset2.asset.penumbraAssetId) {
-      throw new Error('No current pair or assets');
-    }
-
-    const [currentBaseAsset, currentQuoteAsset] = this.currentPair;
     const wellOrdered =
-      currentBaseAsset.penumbraAssetId?.equals(asset1.asset.penumbraAssetId) &&
-      currentQuoteAsset.penumbraAssetId?.equals(asset2.asset.penumbraAssetId);
+      baseAsset.penumbraAssetId?.equals(asset1.asset.penumbraAssetId) &&
+      quoteAsset.penumbraAssetId?.equals(asset2.asset.penumbraAssetId);
 
     const orderFlipped =
-      currentBaseAsset.penumbraAssetId?.equals(asset2.asset.penumbraAssetId) &&
-      currentQuoteAsset.penumbraAssetId?.equals(asset1.asset.penumbraAssetId);
+      baseAsset.penumbraAssetId?.equals(asset2.asset.penumbraAssetId) &&
+      quoteAsset.penumbraAssetId?.equals(asset1.asset.penumbraAssetId);
 
     // Happy path: we have a "Current pair" view which informs how we should render BASE/QUOTE assets.
     if (wellOrdered) {
@@ -287,6 +272,43 @@ class PositionsStore {
 
     // It's possible that neither are, which is rare, in that case we use the canonical ordering:
     return this.getOrdersByBaseQuoteAssets(asset1, asset2);
+  };
+
+  getOrderValueViews = ({
+    direction,
+    baseAsset,
+    quoteAsset,
+  }: {
+    direction: string;
+    baseAsset: CalculatedAsset;
+    quoteAsset: CalculatedAsset;
+  }) => {
+    // We want to render two main piece of information to the user, assuming their unit of account is the quote asset:
+    // - the price i.e, the number of unit of *quote assets* necessary to obtain a unit of base asset.
+    // - the trade amount i.e, the amount of *base assets* that the position is either seeking to purchase or sell.
+    const effectivePrice = pnum(baseAsset.effectivePrice, baseAsset.exponent).toValueView(
+      quoteAsset.asset,
+    );
+    const basePrice = pnum(baseAsset.price, baseAsset.exponent).toValueView(quoteAsset.asset);
+
+    // This is the trade amount (in base asset) that the position seeks to SELL or BUY.
+    const amount =
+      direction === 'Sell'
+        ? // We are selling the base asset to obtain the quote asset, so we can simply use the current reserves.
+          pnum(baseAsset.amount, baseAsset.exponent).toValueView(baseAsset.asset)
+        : // We are buying the base asset, we need to convert the quantity of quote asset that we have provisioned.
+          pnum(quoteAsset.amount * quoteAsset.effectivePrice, quoteAsset.exponent).toValueView(
+            baseAsset.asset,
+          );
+
+    return {
+      direction,
+      baseAsset,
+      quoteAsset,
+      amount,
+      basePrice,
+      effectivePrice,
+    };
   };
 
   getCalculatedAssets(position: ExecutedPosition): [CalculatedAsset, CalculatedAsset] {
@@ -362,45 +384,25 @@ class PositionsStore {
       const { component } = phi;
       const [asset1, asset2] = this.getCalculatedAssets(position as ExecutedPosition);
 
+      if (!this.currentPair) {
+        throw new Error('No current pair or assets');
+      }
+
+      const [baseAsset, quoteAsset] = this.currentPair;
+
       // Now that we have computed all the price information using the canonical ordering,
       // we can simply adjust our values if the directed pair is not the same as the canonical one:
       const orders = this.getDirectionalOrders({
         asset1,
         asset2,
-      });
+        baseAsset,
+        quoteAsset,
+      }).map(this.getOrderValueViews);
 
       return {
         id: new PositionId(positionIdFromBech32(id)),
         idString: id,
-        orders: orders.map(({ direction, baseAsset, quoteAsset }) => {
-          // We want to render two main piece of information to the user, assuming their unit of account is the quote asset:
-          // - the price i.e, the number of unit of *quote assets* necessary to obtain a unit of base asset.
-          // - the trade amount i.e, the amount of *base assets* that the position is either seeking to purchase or sell.
-          const effectivePrice = pnum(baseAsset.effectivePrice, baseAsset.exponent).toValueView(
-            quoteAsset.asset,
-          );
-          const basePrice = pnum(baseAsset.price, baseAsset.exponent).toValueView(quoteAsset.asset);
-
-          // This is the trade amount (in base asset) that the position seeks to SELL or BUY.
-          const amount =
-            direction === 'Sell'
-              ? // We are selling the base asset to obtain the quote asset, so we can simply use the current reserves.
-                pnum(baseAsset.amount, baseAsset.exponent).toValueView(baseAsset.asset)
-              : // We are buying the base asset, we need to convert the quantity of quote asset that we have provisioned.
-                pnum(
-                  quoteAsset.amount * quoteAsset.effectivePrice,
-                  quoteAsset.exponent,
-                ).toValueView(baseAsset.asset);
-
-          return {
-            direction,
-            amount,
-            basePrice,
-            effectivePrice,
-            baseAsset,
-            quoteAsset,
-          };
-        }),
+        orders,
         fee: `${pnum(component.fee / 100).toFormattedString({ decimals: 2 })}%`,
         // TODO:
         // We do not yet filter `Closed` positions to allow auto-closing position to provide visual
