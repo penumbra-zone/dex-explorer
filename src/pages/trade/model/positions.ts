@@ -3,7 +3,10 @@ import { TransactionPlannerRequest } from '@penumbra-zone/protobuf/penumbra/view
 import {
   Position,
   PositionId,
+  PositionState,
   PositionState_PositionStateEnum,
+  BareTradingFunction,
+  TradingPair,
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { Metadata, ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
@@ -17,6 +20,7 @@ import { openToast } from '@penumbra-zone/ui/Toast';
 import { pnum } from '@penumbra-zone/types/pnum';
 import { positionIdFromBech32 } from '@penumbra-zone/bech32m/plpid';
 import { updatePositionsQuery } from '@/pages/trade/api/positions';
+
 export interface DisplayPosition {
   id: PositionId;
   idString: string;
@@ -25,21 +29,35 @@ export interface DisplayPosition {
     amount: ValueView;
     basePrice: ValueView;
     effectivePrice: ValueView;
-    baseAsset: DisplayAsset;
-    quoteAsset: DisplayAsset;
+    baseAsset: CalculatedAsset;
+    quoteAsset: CalculatedAsset;
   }[];
   fee: string;
   isActive: boolean;
   state: PositionState_PositionStateEnum;
 }
 
-export interface DisplayAsset {
+export interface CalculatedAsset {
   asset: Metadata;
   exponent: number;
   amount: number;
   price: number;
   effectivePrice: number;
   reserves: Amount;
+}
+
+export interface ExecutedPosition {
+  phi: {
+    component: BareTradingFunction;
+    pair: TradingPair;
+  };
+  nonce: Uint8Array;
+  state: PositionState;
+  reserves: {
+    r1: Amount;
+    r2: Amount;
+  };
+  closeOnFill: boolean;
 }
 
 class PositionsStore {
@@ -122,7 +140,7 @@ class PositionsStore {
     this.currentPair = [baseAsset, quoteAsset];
   };
 
-  getOrdersByBaseQuoteAssets = (baseAsset: DisplayAsset, quoteAsset: DisplayAsset) => {
+  getOrdersByBaseQuoteAssets = (baseAsset: CalculatedAsset, quoteAsset: CalculatedAsset) => {
     if (!isZero(baseAsset.reserves) && !isZero(quoteAsset.reserves)) {
       return [
         {
@@ -132,8 +150,8 @@ class PositionsStore {
         },
         {
           direction: 'Sell',
-          baseAsset: baseAsset,
-          quoteAsset: quoteAsset,
+          baseAsset,
+          quoteAsset,
         },
       ];
     }
@@ -192,7 +210,7 @@ class PositionsStore {
       effectivePrice: number;
       reserves: Amount;
     };
-  }): { direction: string; baseAsset: DisplayAsset; quoteAsset: DisplayAsset }[] => {
+  }): { direction: string; baseAsset: CalculatedAsset; quoteAsset: CalculatedAsset }[] => {
     if (!this.currentPair || !asset1.asset.penumbraAssetId || !asset2.asset.penumbraAssetId) {
       throw new Error('No current pair or assets');
     }
@@ -221,23 +239,13 @@ class PositionsStore {
     // that is for the "UM/USDY" pair.
     // In that case, we want to handle this by deciding if the position contain a well-known numeraire,
     // or default to canonical ordering since this is both rare and can be filtered at a higher-level
-    const asset1IsStablecoin =
-      asset1.asset.symbol.toLowerCase() === 'usdc' ||
-      asset1.asset.symbol.toLowerCase() === 'usdy' ||
-      asset1.asset.symbol.toLowerCase() === 'usdt';
-    const asset2IsStablecoin =
-      asset2.asset.symbol.toLowerCase() === 'usdc' ||
-      asset2.asset.symbol.toLowerCase() === 'usdy' ||
-      asset2.asset.symbol.toLowerCase() === 'usdt';
+    const asset1IsStablecoin = ['USDC', 'USDY', 'USDT'].includes(asset1.asset.symbol.toUpperCase());
+    const asset2IsStablecoin = ['USDC', 'USDY', 'USDT'].includes(asset2.asset.symbol.toUpperCase());
 
     const asset1IsNumeraire =
-      asset1IsStablecoin ||
-      asset1.asset.symbol.toLowerCase() === 'btc' ||
-      asset1.asset.symbol.toLowerCase() === 'um';
+      asset1IsStablecoin || ['BTC', 'UM'].includes(asset1.asset.symbol.toUpperCase());
     const asset2IsNumeraire =
-      asset2IsStablecoin ||
-      asset2.asset.symbol.toLowerCase() === 'btc' ||
-      asset2.asset.symbol.toLowerCase() === 'um';
+      asset2IsStablecoin || ['BTC', 'UM'].includes(asset2.asset.symbol.toUpperCase());
 
     // If both assets are numeraires, we adjudicate based on priority score:
     if (asset1IsNumeraire && asset2IsNumeraire) {
@@ -280,123 +288,130 @@ class PositionsStore {
     return this.getOrdersByBaseQuoteAssets(asset1, asset2);
   };
 
+  getCalculatedAssets(position: ExecutedPosition): [CalculatedAsset, CalculatedAsset] {
+    /* eslint-disable curly -- makes code more concise */
+    const { phi, reserves } = position;
+    const { pair, component } = phi;
+
+    const asset1 = this.assets.find(asset => asset.penumbraAssetId?.equals(pair.asset1));
+    const asset2 = this.assets.find(asset => asset.penumbraAssetId?.equals(pair.asset2));
+    if (!asset1?.penumbraAssetId || !asset2?.penumbraAssetId) {
+      throw new Error('No assets found in registry that belong to the trading pair');
+    }
+
+    const asset1Exponent = asset1.denomUnits.find(
+      denomUnit => denomUnit.denom === asset1.display,
+    )?.exponent;
+    const asset2Exponent = asset2.denomUnits.find(
+      denomUnit => denomUnit.denom === asset2.display,
+    )?.exponent;
+    if (!asset1Exponent || !asset2Exponent) {
+      throw new Error('No exponents found for assets');
+    }
+
+    const { p, q } = component;
+    const { r1, r2 } = reserves;
+
+    // Positions specifying a trading pair between `asset_1:asset_2`.
+    // This ordering can conflict with the higher level base/quote.
+    // First, we compute the exchange rate between asset_1 and asset_2:
+    const asset1Price = pnum(p).toBigNumber().dividedBy(pnum(q).toBigNumber()).toNumber();
+    // Then, we compoute the exchange rate between asset_2 and asset_1.
+    const asset2Price = pnum(q).toBigNumber().dividedBy(pnum(p).toBigNumber()).toNumber();
+    // We start tracking the reserves for each assets:
+    const asset1ReserveAmount = pnum(r1, asset1Exponent).toNumber();
+    const asset2ReserveAmount = pnum(r2, asset2Exponent).toNumber();
+    // Next, we compute the fee percentage for the position.
+    // We are given a fee recorded in basis points, with an implicit 10^4 scaling factor.
+    const f = component.fee;
+    // This means that for 0 <= f < 10_000 (0% < f < 100%), the fee percentage is defined by:
+    const gamma = (10_000 - f) / 10_000;
+    // We use it to compute the effective price i.e, the price inclusive of fees in each directions,
+    // in the case of the first rate this is: price * gamma, such that:
+    const asset1EffectivePrice = pnum(asset1Price * gamma).toNumber();
+    // in the case of the second, we apply it as an inverse:
+    const asset2EffectivePrice = pnum(asset2Price / gamma).toNumber();
+
+    return [
+      {
+        asset: asset1,
+        exponent: asset1Exponent,
+        amount: asset1ReserveAmount,
+        price: asset1Price,
+        effectivePrice: asset1EffectivePrice,
+        reserves: reserves.r1,
+      },
+      {
+        asset: asset2,
+        exponent: asset2Exponent,
+        amount: asset2ReserveAmount,
+        price: asset2Price,
+        effectivePrice: asset2EffectivePrice,
+        reserves: reserves.r2,
+      },
+    ];
+  }
+
   get displayPositions(): DisplayPosition[] {
     if (!this.assets.length || !this.currentPair) {
       return [];
     }
 
-    return (
-      [...this.positionsById.entries()]
-        .map(([id, position]) => {
-          /* eslint-disable curly -- makes code more concise */
-          const { phi, reserves, state } = position;
-          if (!phi || !reserves?.r1 || !reserves.r2 || !state) return;
+    return [...this.positionsById.entries()].map(([id, position]) => {
+      const { phi, state } = position as ExecutedPosition;
+      const { component } = phi;
+      const [asset1, asset2] = this.getCalculatedAssets(position as ExecutedPosition);
 
-          const { pair, component } = phi;
-          if (!pair || !component?.p || !component.q) return;
+      // Now that we have computed all the price information using the canonical ordering,
+      // we can simply adjust our values if the directed pair is not the same as the canonical one:
+      const orders = this.getDirectionalOrders({
+        asset1,
+        asset2,
+      });
 
-          const asset1 = this.assets.find(asset => asset.penumbraAssetId?.equals(pair.asset1));
-          const asset2 = this.assets.find(asset => asset.penumbraAssetId?.equals(pair.asset2));
-          if (!asset1?.penumbraAssetId || !asset2?.penumbraAssetId) return;
+      return {
+        id: new PositionId(positionIdFromBech32(id)),
+        idString: id,
+        orders: orders.map(({ direction, baseAsset, quoteAsset }) => {
+          // We want to render two main piece of information to the user, assuming their unit of account is the quote asset:
+          // - the price i.e, the number of unit of *quote assets* necessary to obtain a unit of base asset.
+          // - the trade amount i.e, the amount of *base assets* that the position is either seeking to purchase or sell.
+          const effectivePrice = pnum(baseAsset.effectivePrice, baseAsset.exponent).toValueView(
+            quoteAsset.asset,
+          );
+          const basePrice = pnum(baseAsset.price, baseAsset.exponent).toValueView(quoteAsset.asset);
 
-          const asset1Exponent = asset1.denomUnits.find(
-            denumUnit => denumUnit.denom === asset1.display,
-          )?.exponent;
-          const asset2Exponent = asset2.denomUnits.find(
-            denumUnit => denumUnit.denom === asset2.display,
-          )?.exponent;
-          if (!asset1Exponent || !asset2Exponent) return;
-
-          const { p, q } = component;
-          const { r1, r2 } = reserves;
-
-          // Positions specifying a trading pair between `asset_1:asset_2`.
-          // This ordering can conflict with the higher level base/quote.
-          // First, we compute the exchange rate between asset_1 and asset_2:
-          const asset1Price = pnum(p).toBigNumber().dividedBy(pnum(q).toBigNumber()).toNumber();
-          // Then, we compoute the exchange rate between asset_2 and asset_1.
-          const asset2Price = pnum(q).toBigNumber().dividedBy(pnum(p).toBigNumber()).toNumber();
-          // We start tracking the reserves for each assets:
-          const asset1ReserveAmount = pnum(r1, asset1Exponent).toNumber();
-          const asset2ReserveAmount = pnum(r2, asset2Exponent).toNumber();
-          // Next, we compute the fee percentage for the position.
-          // We are given a fee recorded in basis points, with an implicit 10^4 scaling factor.
-          const f = component.fee;
-          // This means that for 0 <= f < 10_000 (0% < f < 100%), the fee percentage is defined by:
-          const gamma = (10_000 - f) / 10_000;
-          // We use it to compute the effective price i.e, the price inclusive of fees in each directions,
-          // in the case of the first rate this is: price * gamma, such that:
-          const asset1EffectivePrice = pnum(asset1Price * gamma).toNumber();
-          // in the case of the second, we apply it as an inverse:
-          const asset2EffectivePrice = pnum(asset2Price / gamma).toNumber();
-
-          // Now that we have computed all the price information using the canonical ordering,
-          // we can simply adjust our values if the directed pair is not the same as the canonical one:
-          const orders = this.getDirectionalOrders({
-            asset1: {
-              asset: asset1,
-              exponent: asset1Exponent,
-              amount: asset1ReserveAmount,
-              price: asset1Price,
-              effectivePrice: asset1EffectivePrice,
-              reserves: reserves.r1,
-            },
-            asset2: {
-              asset: asset2,
-              exponent: asset2Exponent,
-              amount: asset2ReserveAmount,
-              price: asset2Price,
-              effectivePrice: asset2EffectivePrice,
-              reserves: reserves.r2,
-            },
-          });
+          // This is the trade amount (in base asset) that the position seeks to SELL or BUY.
+          const amount =
+            direction === 'Sell'
+              ? // We are selling the base asset to obtain the quote asset, so we can simply use the current reserves.
+                pnum(baseAsset.amount, baseAsset.exponent).toValueView(baseAsset.asset)
+              : // We are buying the base asset, we need to convert the quantity of quote asset that we have provisioned.
+                pnum(
+                  quoteAsset.amount * quoteAsset.effectivePrice,
+                  quoteAsset.exponent,
+                ).toValueView(baseAsset.asset);
 
           return {
-            id: new PositionId(positionIdFromBech32(id)),
-            idString: id,
-            orders: orders.map(({ direction, baseAsset, quoteAsset }) => {
-              // We want to render two main piece of information to the user, assuming their unit of account is the quote asset:
-              // - the price i.e, the number of unit of *quote assets* necessary to obtain a unit of base asset.
-              // - the trade amount i.e, the amount of *base assets* that the position is either seeking to purchase or sell.
-              const effectivePrice = pnum(baseAsset.effectivePrice, baseAsset.exponent).toValueView(
-                quoteAsset.asset,
-              );
-              const basePrice = pnum(baseAsset.price, baseAsset.exponent).toValueView(
-                quoteAsset.asset,
-              );
-
-              // This is the trade amount (in base asset) that the position seeks to SELL or BUY.
-              const amount =
-                direction === 'Sell'
-                  ? // We are selling the base asset to obtain the quote asset, so we can simply use the current reserves.
-                    pnum(baseAsset.amount, baseAsset.exponent).toValueView(baseAsset.asset)
-                  : // We are buying the base asset, we need to convert the quantity of quote asset that we have provisioned.
-                    pnum(
-                      quoteAsset.amount * quoteAsset.effectivePrice,
-                      quoteAsset.exponent,
-                    ).toValueView(baseAsset.asset);
-
-              return {
-                direction,
-                amount,
-                basePrice,
-                effectivePrice,
-                baseAsset,
-                quoteAsset,
-              };
-            }),
-            fee: `${pnum(component.fee / 100).toFormattedString({ decimals: 2 })}%`,
-            // TODO:
-            // We do not yet filter `Closed` positions to allow auto-closing position to provide visual
-            // feedback about execution. This is probably best later replaced by either a notification, or a
-            // dedicated view. Fine for now.
-            isActive: state.state !== PositionState_PositionStateEnum.WITHDRAWN,
-            state: state.state,
+            direction,
+            amount,
+            basePrice,
+            effectivePrice,
+            baseAsset,
+            quoteAsset,
           };
-        })
-        // TODO: filter position view using trading pair route.
-        .filter(displayPosition => displayPosition !== undefined)
-    );
+        }),
+        fee: `${pnum(component.fee / 100).toFormattedString({ decimals: 2 })}%`,
+        // TODO:
+        // We do not yet filter `Closed` positions to allow auto-closing position to provide visual
+        // feedback about execution. This is probably best later replaced by either a notification, or a
+        // dedicated view. Fine for now.
+        isActive: state.state !== PositionState_PositionStateEnum.WITHDRAWN,
+        state: state.state,
+      };
+    });
+    // TODO: filter position view using trading pair route.
+    // .filter(displayPosition => displayPosition !== undefined)
   }
 }
 
