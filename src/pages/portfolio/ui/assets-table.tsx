@@ -287,7 +287,7 @@ export const AssetsTable = observer(() => {
   const router = useRouter();
   const { connected } = connectionStore;
   const addressIndex = new AddressIndex({ account: connectionStore.subaccount });
-  const { data: balances, isLoading: balancesLoading } = useBalances(addressIndex);
+  const { data: balances, isLoading: balancesLoading } = useBalances(addressIndex.account);
   const { data: assets, isLoading: assetsLoading } = useAssets();
   const { data: chainId } = useChainId();
   const [distribution, setDistribution] = useState<{
