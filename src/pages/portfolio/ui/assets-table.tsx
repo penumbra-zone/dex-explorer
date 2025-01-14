@@ -124,7 +124,7 @@ const LoadingState = () => {
 
 const NotConnectedNotice = () => {
   return (
-    <div className='p-6'>
+    <div className='m-4 sm:m-0'>
       <Card>
         <div className='flex flex-col items-center justify-center h-[400px] gap-4'>
           <Text color='text.secondary' small>
@@ -309,14 +309,14 @@ export const AssetsTable = observer(() => {
   const isTestnet = chainId !== 'penumbra-1';
   const stableCoinSymbol = isTestnet ? 'UM' : 'USDC';
 
-  if (!connected) {
-    return <NotConnectedNotice />;
-  }
-
   const isLoading = balancesLoading || assetsLoading || !balances || !assets || !distribution;
 
   if (isLoading) {
     return <LoadingState />;
+  }
+
+  if (!connected) {
+    return <NotConnectedNotice />;
   }
 
   return (
