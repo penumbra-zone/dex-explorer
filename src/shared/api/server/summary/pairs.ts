@@ -9,6 +9,7 @@ import {
 import { ChainRegistryClient } from '@penumbra-labs/registry';
 import { toValueView } from '@/shared/utils/value-view';
 import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
+import { getStablecoins } from '@/shared/utils/stables';
 
 const getAssetById = (allAssets: Metadata[], id: Buffer): Metadata | undefined => {
   return allAssets.find(asset => {
@@ -34,8 +35,7 @@ export async function GET(): Promise<NextResponse<PairsResponse>> {
   const registry = await registryClient.remote.get(chainId);
   const allAssets = registry.getAllAssets();
 
-  const stablecoins = allAssets.filter(asset => ['USDT', 'USDC', 'USDY'].includes(asset.symbol));
-  const usdc = stablecoins.find(asset => asset.symbol === 'USDC');
+  const { stablecoins, usdc } = getStablecoins(allAssets, 'USDC');
 
   const results = await pindexer.pairs({
     // eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style -- usdc is defined
