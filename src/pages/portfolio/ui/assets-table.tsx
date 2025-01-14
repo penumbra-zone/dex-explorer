@@ -136,7 +136,7 @@ const NotConnectedNotice = () => {
   );
 };
 
-const calculateAssetDistribution = async (balances: BalancesResponse[]) => {
+const calculateAssetDistribution = (balances: BalancesResponse[]) => {
   // First filter out NFTs and special assets
   const displayableBalances = balances.filter(balance => {
     const metadata = getMetadataFromBalancesResponse.optional(balance);
@@ -216,36 +216,20 @@ const calculateAssetDistribution = async (balances: BalancesResponse[]) => {
     return { distribution: [], sortedBalances: [] };
   }
 
-  // Take the first 4 bytes of the hash and convert to an integer
-  const getHueFromHash = (buffer: ArrayBuffer) => {
-    const view = new DataView(buffer);
-    const num = view.getUint32(0, true); // true for little-endian
-    // Offset the hue by the hash value to make UM naturally orange
-    return (num * 83) % 360;
-  };
+  const distributionWithMetadata = valuesWithMetadata.map(({ value, balance, hasError }, index) => {
+    // Use golden ratio for even color distribution
+    const hue = (index * 137.5) % 360;
+    const color = `hsl(${hue}, 95%, 53%)`;
 
-  const distributionWithMetadata = await Promise.all(
-    valuesWithMetadata.map(async ({ value, balance, hasError }) => {
-      const metadata = getMetadataFromBalancesResponse.optional(balance);
-      const assetIdHex = metadata?.penumbraAssetId?.inner.toString() ?? '';
+    const percentage = (value / totalValue) * 100;
 
-      // Use Web Crypto API to hash the hex string
-      const hashBuffer = await crypto.subtle.digest(
-        'SHA-256',
-        new TextEncoder().encode(assetIdHex),
-      );
-      const hue = getHueFromHash(hashBuffer);
-
-      const percentage = (value / totalValue) * 100;
-
-      return {
-        percentage,
-        color: `hsl(${hue}, 70%, 50%)`,
-        balance,
-        hasError,
-      };
-    }),
-  );
+    return {
+      percentage,
+      color,
+      balance,
+      hasError,
+    };
+  });
 
   // Sort by value percentage in descending order
   const sorted = distributionWithMetadata.sort((a, b) => b.percentage - a.percentage);
@@ -302,7 +286,7 @@ export const AssetsTable = observer(() => {
 
   useEffect(() => {
     if (balances) {
-      void calculateAssetDistribution(balances).then(setDistribution);
+      setDistribution(calculateAssetDistribution(balances));
     }
   }, [balances]);
 
@@ -328,7 +312,7 @@ export const AssetsTable = observer(() => {
           </Text>
 
           {/* Asset distribution bar */}
-          <div className='flex w-full h-2 mt-4 mb-6 rounded-full overflow-hidden'>
+          <div className='flex w-full h-[16px] mt-4 mb-6 gap-[5px]'>
             {distribution.distribution.map((asset, index) => (
               <div
                 key={index}
@@ -336,7 +320,7 @@ export const AssetsTable = observer(() => {
                   width: `${asset.percentage}%`,
                   backgroundColor: asset.color,
                 }}
-                className='h-full first:rounded-l-full last:rounded-r-full'
+                className='h-full rounded-[4px]'
               />
             ))}
           </div>
