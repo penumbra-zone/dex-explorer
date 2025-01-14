@@ -1,6 +1,8 @@
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 
-/// Utility for retrieving stablecoin metadata
+/**
+ * Utility for retrieving stablecoin metadata
+ */
 export const getStablecoins = (
   allAssets: Metadata[],
   stablecoin: string,

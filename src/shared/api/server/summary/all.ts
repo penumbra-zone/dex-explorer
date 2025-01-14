@@ -72,6 +72,7 @@ export const getAllSummaries = async (
   );
 
   // Sorting by decreasing liquidity in the pool
+  // TODO: sort directly in SQL to avoid breaking server-side pagination
   const sortedSummaries = summaries.filter(Boolean).sort((a, b) => {
     if (!a || !b) {
       return 0;
