@@ -35,6 +35,7 @@ export interface DisplayPosition {
   }[];
   fee: string;
   isActive: boolean;
+  isOpen: boolean;
   state: PositionState_PositionStateEnum;
 }
 
@@ -417,6 +418,7 @@ class PositionsStore {
         // feedback about execution. This is probably best later replaced by either a notification, or a
         // dedicated view. Fine for now.
         isActive: state.state !== PositionState_PositionStateEnum.WITHDRAWN,
+        isOpen: state.state === PositionState_PositionStateEnum.OPENED,
         state: state.state,
       };
     });
