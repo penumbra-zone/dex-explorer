@@ -8,12 +8,13 @@ import { Registry } from '@penumbra-labs/registry';
 import { formatAmount } from '@penumbra-zone/types/amount';
 import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { calculateDisplayPrice } from '@/shared/utils/price-conversion.ts';
-import BigNumber from 'bignumber.js';
+import { toValueView } from '@/shared/utils/value-view';
+import { ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 
 export interface RecentExecutionVV {
   kind: 'buy' | 'sell';
   amount: string;
-  price: string;
+  price: ValueView;
   timestamp: string;
 }
 
@@ -26,7 +27,12 @@ const addVV = (res: RecentExecution[], registry: Registry): RecentExecutionVV[] 
     const baseDisplayDenomExponent = getDisplayDenomExponent.optional(baseMetadata) ?? 0;
 
     const quoteMetadata = registry.getMetadata(r.price.assetId);
-    const price = calculateDisplayPrice(r.price.amount, baseMetadata, quoteMetadata);
+    let priceFloat = calculateDisplayPrice(r.price.amount, baseMetadata, quoteMetadata);
+
+    let price = toValueView({
+      amount: Math.floor(priceFloat),
+      metadata: quoteMetadata,
+    });
 
     return {
       kind: r.kind,
@@ -35,7 +41,7 @@ const addVV = (res: RecentExecution[], registry: Registry): RecentExecutionVV[] 
         exponent: baseDisplayDenomExponent,
         decimalPlaces: 4,
       }),
-      price: new BigNumber(price).toFormat(4),
+      price: price,
       timestamp: r.timestamp,
     };
   });

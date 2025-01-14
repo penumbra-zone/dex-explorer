@@ -3,6 +3,8 @@ import { ReactNode } from 'react';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { RecentExecutionVV, useRecentExecutions } from '@/pages/trade/api/recent-executions.ts';
 import { Density } from '@penumbra-zone/ui/Density';
+import { shortify } from '@penumbra-zone/types/shortify';
+import { getFormattedAmtFromValueView } from '@penumbra-zone/types/value-view';
 
 export const Cell = ({ children }: { children: ReactNode }) => {
   return <div className='flex items-center py-1.5 px-3 min-h-12'>{children}</div>;
@@ -62,7 +64,7 @@ const LoadedState = ({ data }: { data: RecentExecutionVV[] }) => {
       >
         <Cell>
           <Text small color={e.kind === 'buy' ? 'success.light' : 'destructive.light'}>
-            {e.price}
+            {shortify(Number(getFormattedAmtFromValueView(e.price)))}
           </Text>
         </Cell>
         <Cell>
