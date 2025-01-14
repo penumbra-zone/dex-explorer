@@ -311,7 +311,7 @@ export const AssetsTable = observer(() => {
           </Text>
 
           {/* Asset distribution bar */}
-          <div className='flex w-full h-[16px] mt-4 mb-6 gap-[5px]'>
+          <div className='flex w-full h-4 mt-4 mb-6 gap-[5px]'>
             {distribution.distribution.map((asset, index) => (
               <div
                 key={index}
@@ -319,7 +319,7 @@ export const AssetsTable = observer(() => {
                   width: `${asset.percentage}%`,
                   backgroundColor: asset.color,
                 }}
-                className='h-full rounded-[4px]'
+                className='h-full rounded'
               />
             ))}
           </div>
