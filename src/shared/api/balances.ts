@@ -22,8 +22,8 @@ const fetchQuery = (index?: number) => async (): Promise<BalancesResponse[]> => 
  */
 export const useBalances = (index?: number) => {
   return useQuery({
-    queryKey: ['view-service-balances', index],
-    queryFn: fetchQuery(index),
+    queryKey: ['view-service-balances', accountFilter?.account],
+    queryFn: fetchQuery(accountFilter),
     enabled: connectionStore.connected,
   });
 };
