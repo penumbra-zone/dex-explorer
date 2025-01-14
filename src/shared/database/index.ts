@@ -94,7 +94,6 @@ class Pindexer {
 
     const joined = this.db
       .selectFrom('dex_ex_pairs_summary as outer')
-      .distinct()
       .selectAll('outer')
       // get the usdc price of the quote asset
       .leftJoin(usdcTable.as('usdc'), 'outer.asset_end', 'usdc.asset_start')
