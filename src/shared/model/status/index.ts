@@ -57,7 +57,7 @@ class StatusState {
     this.error = undefined;
     this.syncing = status.catchingUp;
     this.fullSyncHeight = status.fullSyncHeight;
-    this.latestKnownBlockHeight = status.catchingUp ? undefined : status.fullSyncHeight;
+    this.latestKnownBlockHeight = status.fullSyncHeight;
     this.syncPercent = status.catchingUp ? 0 : 1;
     this.syncPercentStringified = status.catchingUp ? '0%' : '100%';
   }
