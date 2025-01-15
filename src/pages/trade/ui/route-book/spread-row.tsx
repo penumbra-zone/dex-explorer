@@ -1,3 +1,4 @@
+import { Text } from '@penumbra-zone/ui/Text';
 import type { Trace } from '@/shared/api/server/book/types';
 import { calculateSpread } from '../../model/trace';
 import { usePathSymbols } from '../../model/use-path';
@@ -19,12 +20,18 @@ export const SpreadRow = ({
 
   return (
     <div className='col-span-4 flex items-center h-full justify-center gap-2 px-3 py-3 text-xs border-b border-b-other-tonalStroke'>
-      <span className='text-green-400'>{formatNumber(spreadInfo.midPrice, 7)}</span>
-      <span className='text-gray-400'>Spread:</span>
-      <span className='text-white'>
+      <Text detailTechnical color='success.light'>
+        {formatNumber(spreadInfo.midPrice, 7)}
+      </Text>
+      <Text detailTechnical color='text.secondary'>
+        Spread:
+      </Text>
+      <Text detailTechnical color='text.primary'>
         {formatNumber(spreadInfo.amount, 6)} {pair.quoteSymbol}
-      </span>
-      <span className='text-gray-400'>({parseFloat(spreadInfo.percentage).toFixed(2)}%)</span>
+      </Text>
+      <Text detailTechnical color='text.secondary'>
+        ({parseFloat(spreadInfo.percentage).toFixed(2)}%)
+      </Text>
     </div>
   );
 };
