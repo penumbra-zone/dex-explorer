@@ -18,7 +18,7 @@ import { penumbra } from '@/shared/const/penumbra.ts';
 import { DexService } from '@penumbra-zone/protobuf';
 import { openToast } from '@penumbra-zone/ui/Toast';
 import { pnum } from '@penumbra-zone/types/pnum';
-import { positionIdFromBech32 } from '@penumbra-zone/bech32m/plpid';
+import { bech32mPositionId, positionIdFromBech32 } from '@penumbra-zone/bech32m/plpid';
 import { updatePositionsQuery } from '@/pages/trade/api/positions';
 import { BigNumber } from 'bignumber.js';
 
@@ -35,7 +35,8 @@ export interface DisplayPosition {
   }[];
   fee: string;
   isActive: boolean;
-  isOpen: boolean;
+  isOpened: boolean;
+  isClosed: boolean;
   state: PositionState_PositionStateEnum;
 }
 
@@ -108,9 +109,31 @@ class PositionsStore {
         penumbra.service(DexService).liquidityPositionById({ positionId }),
       );
       const latestPositionData = await Promise.all(promises);
+      console.log(
+        'TCL: PositionsStore -> latestPositionData',
+        positions.map((positionId, i) => ({
+          id: bech32mPositionId(positionId),
+          position: latestPositionData[i],
+        })),
+      );
+      console.log(
+        'TCL: PositionsStore -> latestPositionData is closed',
+        latestPositionData
+          .map((position, i) => [position, i])
+          .filter(([position, i]) => position.data?.closeOnFill)
+          .map(([position, i]) => ({
+            position,
+            positionId: bech32mPositionId(positions[i]),
+          })),
+      );
 
       const planReq = new TransactionPlannerRequest({
         positionWithdraws: positions.map((positionId, i) => ({
+          positionId,
+          tradingPair: latestPositionData[i]?.data?.phi?.pair,
+          reserves: latestPositionData[i]?.data?.reserves,
+        })),
+        positionCloses: positions.map((positionId, i) => ({
           positionId,
           tradingPair: latestPositionData[i]?.data?.phi?.pair,
           reserves: latestPositionData[i]?.data?.reserves,
@@ -418,12 +441,11 @@ class PositionsStore {
         // feedback about execution. This is probably best later replaced by either a notification, or a
         // dedicated view. Fine for now.
         isActive: state.state !== PositionState_PositionStateEnum.WITHDRAWN,
-        isOpen: state.state === PositionState_PositionStateEnum.OPENED,
+        isOpened: state.state === PositionState_PositionStateEnum.OPENED,
+        isClosed: state.state === PositionState_PositionStateEnum.CLOSED,
         state: state.state,
       };
     });
-    // TODO: filter position view using trading pair route.
-    // .filter(displayPosition => displayPosition !== undefined)
   }
 }
 

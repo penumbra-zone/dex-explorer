@@ -112,7 +112,7 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                       <Table.Td density='slim'>
                         <div className='flex flex-col gap-4'>
                           {position.orders.map((order, i) =>
-                            position.isOpen ? (
+                            position.isOpened ? (
                               <Text
                                 as='div'
                                 detail
