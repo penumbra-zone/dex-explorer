@@ -135,9 +135,11 @@ class PositionsStore {
         reserves: latestPositionData[i]?.data?.reserves,
       }));
 
-      const positionCloses = positionWithdraws.filter(position =>
-        positionIdsToClose.some(id => id.equals(position.positionId)),
-      );
+      const positionCloses = positionIdsToClose.length
+        ? positionWithdraws.filter(position =>
+            positionIdsToClose.some(id => id.equals(position.positionId)),
+          )
+        : undefined;
 
       const planReq = new TransactionPlannerRequest({
         positionWithdraws,
