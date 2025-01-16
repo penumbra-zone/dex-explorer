@@ -2,7 +2,7 @@ import { ChainRegistryClient } from '@penumbra-labs/registry';
 import { useQuery } from '@tanstack/react-query';
 import { envQueryFn } from './env/env';
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
-import { getAssetMetadataById } from '@/pages/trade/ui/order-form/helpers';
+import { getAssetMetadataById } from './metadata';
 
 export const chainRegistryClient = new ChainRegistryClient();
 

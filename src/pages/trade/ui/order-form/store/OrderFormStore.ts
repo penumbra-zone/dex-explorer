@@ -22,7 +22,7 @@ import { getSwapCommitmentFromTx } from '@penumbra-zone/getters/transaction';
 import { pnum } from '@penumbra-zone/types/pnum';
 import debounce from 'lodash/debounce';
 import { useStakingTokenMetadata } from '@/shared/api/registry';
-import { getAssetMetadataById, plan, planBuildBroadcast } from '../helpers';
+import { plan, planBuildBroadcast } from '../helpers';
 import { openToast } from '@penumbra-zone/ui/Toast';
 import {
   getMetadataFromBalancesResponse,
@@ -31,6 +31,7 @@ import {
 } from '@penumbra-zone/getters/balances-response';
 import { isMetadataEqual } from '@/shared/utils/is-metadata-equal';
 import { AssetId, Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { getAssetMetadataById } from '@/shared/api/metadata';
 
 export type WhichForm = 'Market' | 'Limit' | 'Range';
 
