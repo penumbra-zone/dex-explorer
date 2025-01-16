@@ -223,6 +223,21 @@ export class OrderFormStore {
           description: 'The amount exceeds your balance',
         });
       }
+      if (
+        e instanceof Error &&
+        ![
+          'ConnectError',
+          'PenumbraNotInstalledError',
+          'PenumbraProviderNotAvailableError',
+          'PenumbraProviderNotConnectedError',
+        ].includes(e.name)
+      ) {
+        openToast({
+          type: 'error',
+          message: e.name,
+          description: e.message,
+        });
+      }
       throw e;
     } finally {
       runInAction(() => {
