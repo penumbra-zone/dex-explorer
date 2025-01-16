@@ -11,7 +11,10 @@ export const HeaderActionButton = observer(
     const openedPositions = displayPositions
       .filter(position => position.isOpened)
       .slice(0, MAX_ACTION_COUNT)
-      .map(position => position.id);
+      .map(position => ({
+        id: position.id,
+        position: position.position,
+      }));
 
     if (openedPositions.length > 1) {
       return (
@@ -29,7 +32,10 @@ export const HeaderActionButton = observer(
     const closedPositions = displayPositions
       .filter(position => position.isClosed)
       .slice(0, MAX_ACTION_COUNT)
-      .map(position => position.id);
+      .map(position => ({
+        id: position.id,
+        position: position.position,
+      }));
 
     if (closedPositions.length > 1) {
       return (
