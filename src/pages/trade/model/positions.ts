@@ -133,7 +133,6 @@ class PositionsStore {
         positionId: id,
         tradingPair: latestPositionData[i]?.data?.phi?.pair,
         reserves: latestPositionData[i]?.data?.reserves,
-        state: latestPositionData[i]?.data?.state,
       }));
 
       const positionCloses = positionWithdraws.filter(position =>
