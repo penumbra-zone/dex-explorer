@@ -18,7 +18,7 @@ import { penumbra } from '@/shared/const/penumbra.ts';
 import { DexService } from '@penumbra-zone/protobuf';
 import { openToast } from '@penumbra-zone/ui/Toast';
 import { pnum } from '@penumbra-zone/types/pnum';
-import { bech32mPositionId, positionIdFromBech32 } from '@penumbra-zone/bech32m/plpid';
+import { positionIdFromBech32 } from '@penumbra-zone/bech32m/plpid';
 import { updatePositionsQuery } from '@/pages/trade/api/positions';
 import { BigNumber } from 'bignumber.js';
 

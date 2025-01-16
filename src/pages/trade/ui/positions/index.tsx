@@ -215,7 +215,7 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                         </div>
                       </Table.Td>
                       <Table.Td hAlign='right' density='slim'>
-                        <ActionButton state={position.state} id={position.id} />
+                        <ActionButton id={position.id} position={position.position} />
                       </Table.Td>
                     </Table.Tr>
                   );
