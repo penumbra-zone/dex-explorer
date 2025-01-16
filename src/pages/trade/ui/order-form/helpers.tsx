@@ -1,4 +1,5 @@
 import {
+  AssetMetadataByIdRequest,
   AuthorizeAndBuildRequest,
   AuthorizeAndBuildResponse,
   BalancesResponse,
@@ -33,6 +34,7 @@ import { penumbra } from '@/shared/const/penumbra';
 import { ReactNode } from 'react';
 import { shorten } from '@penumbra-zone/types/string';
 import { updatePositionsQuery } from '../../api/positions';
+import { AssetId, Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 
 type BroadcastStatus = BroadcastTransactionResponse['status'];
 type BuildStatus = (AuthorizeAndBuildResponse | WitnessAndBuildResponse)['status'];
@@ -166,6 +168,15 @@ export const planBuildBroadcast = async (
   return undefined;
 };
 
+/**
+ * Retrieves asset metadata for a given asset ID from the Penumbra view service.
+ */
+export const getAssetMetadataById = async (assetId: AssetId): Promise<Metadata | undefined> => {
+  const req = new AssetMetadataByIdRequest({ assetId });
+  const { denomMetadata } = await penumbra.service(ViewService).assetMetadataById(req);
+  return denomMetadata;
+};
+
 export const plan = async (
   req: PartialMessage<TransactionPlannerRequest>,
 ): Promise<TransactionPlan> => {
@@ -178,6 +189,7 @@ export const plan = async (
 
 const build = async (
   req: PartialMessage<AuthorizeAndBuildRequest> | PartialMessage<WitnessAndBuildRequest>,
+  // TODO: investigate @connectrpc/connect versions (1.6.1 vs 1.4.0)
   buildFn: PromiseClient<typeof ViewService>['authorizeAndBuild' | 'witnessAndBuild'],
   onStatusUpdate: (
     status?: (AuthorizeAndBuildResponse | WitnessAndBuildResponse)['status'],

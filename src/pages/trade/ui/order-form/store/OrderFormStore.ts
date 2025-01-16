@@ -21,8 +21,8 @@ import { useMarketPrice } from '@/pages/trade/model/useMarketPrice';
 import { getSwapCommitmentFromTx } from '@penumbra-zone/getters/transaction';
 import { pnum } from '@penumbra-zone/types/pnum';
 import debounce from 'lodash/debounce';
-import { useRegistryAssets } from '@/shared/api/registry';
-import { plan, planBuildBroadcast } from '../helpers';
+import { useStakingTokenMetadata } from '@/shared/api/registry';
+import { getAssetMetadataById, plan, planBuildBroadcast } from '../helpers';
 import { openToast } from '@penumbra-zone/ui/Toast';
 import {
   getMetadataFromBalancesResponse,
@@ -30,7 +30,7 @@ import {
   getAddressIndex,
 } from '@penumbra-zone/getters/balances-response';
 import { isMetadataEqual } from '@/shared/utils/is-metadata-equal';
-import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { AssetId, Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 
 export type WhichForm = 'Market' | 'Limit' | 'Range';
 
@@ -49,7 +49,7 @@ export class OrderFormStore {
   private _marketPrice: number | undefined = undefined;
   address?: Address;
   subAccountIndex?: AddressIndex;
-  private _umAsset?: AssetInfo;
+  private _feeAsset?: AssetInfo;
   private _gasFee: { symbol: string; display: string } = { symbol: 'UM', display: '--' };
   private _gasFeeLoading = false;
 
@@ -63,9 +63,11 @@ export class OrderFormStore {
   }
 
   private estimateGasFee = async (): Promise<void> => {
-    if (!this.plan || !this._umAsset) {
+    if (!this.plan) {
+      this.resetGasFee();
       return;
     }
+
     runInAction(() => {
       this._gasFeeLoading = true;
     });
@@ -73,16 +75,24 @@ export class OrderFormStore {
       const res = await plan(this.plan);
       const fee = res.transactionParameters?.fee;
       if (!fee) {
+        this.resetGasFee();
         return;
       }
-      runInAction(() => {
-        if (!this._umAsset) {
+      await runInAction(async () => {
+        // If the fee asset is the staking token, do nothing since it’s already handled in the useEffect
+        // below. Otherwise, set the fee to an alternative asset.
+        const feeAssetId = res.transactionParameters?.fee?.assetId;
+        if (feeAssetId) {
+          await this.setAlternativeFee(feeAssetId);
+        }
+
+        if (!this._feeAsset) {
           return;
         }
 
         this._gasFee = {
-          symbol: this._umAsset.symbol,
-          display: pnum(fee.amount, this._umAsset.exponent).toNumber().toString(),
+          symbol: this._feeAsset.symbol,
+          display: pnum(fee.amount, this._feeAsset.exponent).toNumber().toString(),
         };
       });
     } catch (e) {
@@ -116,8 +126,15 @@ export class OrderFormStore {
     }
   };
 
-  setUmAsset = (x: AssetInfo) => {
-    this._umAsset = x;
+  resetGasFee() {
+    runInAction(() => {
+      this._gasFee = { symbol: 'UM', display: '--' };
+      this._gasFeeLoading = false;
+    });
+  }
+
+  setFeeAsset = (x: AssetInfo) => {
+    this._feeAsset = x;
   };
 
   setSubAccountIndex = (x: AddressIndex) => {
@@ -128,8 +145,8 @@ export class OrderFormStore {
     this.address = x;
   };
 
-  get umAsset(): AssetInfo | undefined {
-    return this._umAsset;
+  get feeAsset(): AssetInfo | undefined {
+    return this._feeAsset;
   }
 
   get gasFee(): { symbol: string; display: string } {
@@ -138,6 +155,21 @@ export class OrderFormStore {
 
   get gasFeeLoading(): boolean {
     return this._gasFeeLoading;
+  }
+
+  async setAlternativeFee(feeAssetId: AssetId) {
+    const metadata = await getAssetMetadataById(feeAssetId);
+    if (!metadata) {
+      return;
+    }
+
+    const assetInfo = AssetInfo.fromMetadata(metadata);
+    if (!assetInfo) {
+      return;
+    }
+
+    // Update the order form store so that it uses this asset as the fee asset
+    orderFormStore.setFeeAsset(assetInfo);
   }
 
   setAssets(base: AssetInfo, quote: AssetInfo, unsetInputs: boolean) {
@@ -264,7 +296,7 @@ const orderFormStore = new OrderFormStore();
 
 export const useOrderFormStore = () => {
   const { subaccount } = connectionStore;
-  const { data: assets } = useRegistryAssets();
+  const { data: registryUM } = useStakingTokenMetadata();
   const { data: subAccounts } = useSubaccounts();
   const { address, addressIndex } = getAccountAddress(subAccounts);
   const { data: balances } = useBalances(addressIndex?.account ?? subaccount);
@@ -335,17 +367,15 @@ export const useOrderFormStore = () => {
 
   useEffect(() => {
     let umAsset: AssetInfo | undefined;
-    if (assets) {
-      const meta = assets.find(x => x.symbol === 'UM');
-      if (meta) {
-        umAsset = AssetInfo.fromMetadata(meta);
-      }
+    if (registryUM) {
+      umAsset = AssetInfo.fromMetadata(registryUM);
     }
 
-    if (umAsset && orderFormStore.umAsset?.symbol !== umAsset.symbol) {
-      orderFormStore.setUmAsset(umAsset);
+    if (umAsset && orderFormStore.feeAsset?.symbol !== umAsset.symbol) {
+      orderFormStore.setFeeAsset(umAsset);
+      orderFormStore.resetGasFee();
     }
-  }, [assets]);
+  }, [registryUM]);
 
   return orderFormStore;
 };
