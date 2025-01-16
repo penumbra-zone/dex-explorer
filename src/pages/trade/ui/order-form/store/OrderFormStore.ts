@@ -194,6 +194,7 @@ export class OrderFormStore {
     if (this._whichForm === 'Market') {
       const plan = this._market.plan;
       if (!plan) {
+        this.resetGasFee();
         return undefined;
       }
       return new TransactionPlannerRequest({
@@ -204,6 +205,7 @@ export class OrderFormStore {
     if (this._whichForm === 'Limit') {
       const plan = this._limit.plan;
       if (!plan) {
+        this.resetGasFee();
         return undefined;
       }
       return new TransactionPlannerRequest({
@@ -212,7 +214,8 @@ export class OrderFormStore {
       });
     }
     const plan = this._range.plan;
-    if (plan === undefined) {
+    if (!plan) {
+      this.resetGasFee();
       return undefined;
     }
     return new TransactionPlannerRequest({
@@ -231,6 +234,7 @@ export class OrderFormStore {
     const source = this.subAccountIndex;
     // Redundant, but makes typescript happier.
     if (!plan || !source) {
+      this.resetGasFee();
       return;
     }
 
@@ -379,26 +383,24 @@ export const useOrderFormStore = () => {
     if (address && addressIndex) {
       orderFormStore.setSubAccountIndex(addressIndex);
       orderFormStore.setAddress(address);
+
+      let umAsset: AssetInfo | undefined;
+      if (registryUM) {
+        umAsset = AssetInfo.fromMetadata(registryUM);
+      }
+
+      if (umAsset && orderFormStore.feeAsset?.symbol !== umAsset.symbol) {
+        orderFormStore.setFeeAsset(umAsset);
+        orderFormStore.resetGasFee();
+      }
     }
-  }, [address, addressIndex]);
+  }, [address, addressIndex, registryUM]);
 
   useEffect(() => {
     if (marketPrice) {
       orderFormStore.setMarketPrice(marketPrice);
     }
   }, [marketPrice]);
-
-  useEffect(() => {
-    let umAsset: AssetInfo | undefined;
-    if (registryUM) {
-      umAsset = AssetInfo.fromMetadata(registryUM);
-    }
-
-    if (umAsset && orderFormStore.feeAsset?.symbol !== umAsset.symbol) {
-      orderFormStore.setFeeAsset(umAsset);
-      orderFormStore.resetGasFee();
-    }
-  }, [registryUM]);
 
   return orderFormStore;
 };
