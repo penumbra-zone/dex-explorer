@@ -10,6 +10,7 @@ import { InfoRowGasFee } from './info-row-gas-fee';
 import { SelectGroup } from './select-group';
 import { OrderFormStore } from './store/OrderFormStore';
 import { BuyLimitOrderOptions, SellLimitOrderOptions } from './store/LimitOrderFormStore';
+import { InfoRow } from './info-row';
 
 export const LimitOrderForm = observer(({ parentStore }: { parentStore: OrderFormStore }) => {
   const { connected } = connectionStore;
@@ -59,6 +60,17 @@ export const LimitOrderForm = observer(({ parentStore }: { parentStore: OrderFor
           gasFee={parentStore.gasFee.display}
           symbol={parentStore.gasFee.symbol}
           isLoading={parentStore.gasFeeLoading}
+        />
+        <InfoRow
+          label={isBuy ? 'Pay with' : 'Receive'}
+          value={store.quoteInput || '--'}
+          toolTip={
+            store.quoteInput
+              ? isBuy
+                ? `Pay with ${store.quoteInput} ${store.quoteAsset?.symbol}`
+                : `Receive ${store.baseInput} ${store.baseAsset?.symbol}`
+              : 'Enter the form fields to see the amount.'
+          }
         />
       </div>
       <div className='mb-4'>
