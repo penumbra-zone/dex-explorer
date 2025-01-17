@@ -402,18 +402,14 @@ export const AssetsTable = observer(() => {
                             <Button
                               icon={ArrowDownRight}
                               iconOnly
-                              onClick={() =>
-                                router.push(`/trade/${stableCoinSymbol}/${metadata.symbol}`)
-                              }
+                              disabled
                             >
                               Sell
                             </Button>
                             <Button
                               icon={ArrowUpRight}
                               iconOnly
-                              onClick={() =>
-                                router.push(`/trade/${metadata.symbol}/${stableCoinSymbol}`)
-                              }
+                              disabled
                             >
                               Buy
                             </Button>
