@@ -17,24 +17,9 @@ import { BalancesResponse } from '@penumbra-zone/protobuf/penumbra/view/v1/view_
 import { AssetIcon } from '@penumbra-zone/ui/AssetIcon';
 import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { formatAmount } from '@penumbra-zone/types/amount';
-import { useRouter } from 'next/navigation';
 import { Button } from '@penumbra-zone/ui/Button';
 import { useState, useEffect } from 'react';
 import { AddressIndex } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
-import { ViewService } from '@penumbra-zone/protobuf';
-import { useQuery } from '@tanstack/react-query';
-import { penumbra } from '@/shared/const/penumbra';
-
-const useChainId = () => {
-  return useQuery({
-    queryKey: ['chainId'],
-    queryFn: async () => {
-      const { parameters } = await penumbra.service(ViewService).appParameters({});
-      return parameters?.chainId;
-    },
-    enabled: connectionStore.connected,
-  });
-};
 
 const LoadingState = () => {
   return (

@@ -16,3 +16,7 @@ run-container: container
     -e PENUMBRA_INDEXER_ENDPOINT -e PENUMBRA_INDEXER_CA_CERT -e PENUMBRA_GRPC_ENDPOINT \
     -e PENUMBRA_CHAIN_ID -e PENUMBRA_CUILOA_URL \
     -p 3000:3000 -it ghcr.io/penumbra-zone/dex-explorer
+
+lint:
+  tsc --noEmit && pnpm lint --max-warnings 0
+  pnpm lint:prettier
