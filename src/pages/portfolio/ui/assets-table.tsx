@@ -276,12 +276,10 @@ const calculateAssetDistribution = (balances: BalancesResponse[]): DistributionR
 };
 
 export const AssetsTable = observer(() => {
-  const router = useRouter();
   const { connected } = connectionStore;
   const addressIndex = new AddressIndex({ account: connectionStore.subaccount });
   const { data: balances, isLoading: balancesLoading } = useBalances(addressIndex.account);
   const { data: assets, isLoading: assetsLoading } = useAssets();
-  const { data: chainId } = useChainId();
   const [distribution, setDistribution] = useState<DistributionResult>();
 
   useEffect(() => {
@@ -289,9 +287,6 @@ export const AssetsTable = observer(() => {
       setDistribution(calculateAssetDistribution(balances));
     }
   }, [balances]);
-
-  const isTestnet = chainId !== 'penumbra-1';
-  const stableCoinSymbol = isTestnet ? 'UM' : 'USDC';
 
   const isLoading = balancesLoading || assetsLoading || !balances || !assets || !distribution;
 
