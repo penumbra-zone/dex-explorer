@@ -399,18 +399,10 @@ export const AssetsTable = observer(() => {
                         </Table.Td>
                         <Table.Td hAlign='right'>
                           <div className='flex gap-2 justify-end'>
-                            <Button
-                              icon={ArrowDownRight}
-                              iconOnly
-                              disabled
-                            >
+                            <Button icon={ArrowDownRight} iconOnly disabled>
                               Sell
                             </Button>
-                            <Button
-                              icon={ArrowUpRight}
-                              iconOnly
-                              disabled
-                            >
+                            <Button icon={ArrowUpRight} iconOnly disabled>
                               Buy
                             </Button>
                           </div>
