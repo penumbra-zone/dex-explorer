@@ -38,10 +38,17 @@ export const getValueView = (registry: Registry, { amount, assetId }: Value) => 
 export const getPriceForTrace = (
   trace: SwapExecution_Trace,
   registry: Registry,
-  invertPrice: boolean,
+  sell: boolean,
 ): Trace => {
-  const baseValue = trace.value[0];
-  const quoteValue = trace.value[trace.value.length - 1];
+  // First, we record the first and last hops.
+  const firstHop = trace.value[0];
+  const lastHop = trace.value[trace.value.length - 1];
+
+  // Then, we determine which is the base and quote asset.
+  // If we are selling, the first hop is the base asset, the last hop is the quote asset.
+  // Vice-versa for buying, the first hop is the quote asset, the last hop is the base asset.
+  const baseValue = sell ? lastHop : firstHop;
+  const quoteValue = sell ? firstHop : lastHop;
 
   if (!baseValue?.amount || !quoteValue?.amount || !baseValue.assetId || !quoteValue.assetId) {
     throw new Error('Missing required value fields');
@@ -61,15 +68,9 @@ export const getPriceForTrace = (
     exponent: quoteDisplayDenomExponent,
   });
 
-  const price = invertPrice
-    ? // For sell-side, price should be in terms of quote asset
-      new BigNumber(formattedBaseAmount)
-        .dividedBy(formattedQuoteAmount)
-        .toFormat(baseDisplayDenomExponent)
-    : // For buy-side, price remains in terms of base asset
-      new BigNumber(formattedQuoteAmount)
-        .dividedBy(formattedBaseAmount)
-        .toFormat(quoteDisplayDenomExponent);
+  const price = new BigNumber(formattedQuoteAmount)
+    .dividedBy(formattedBaseAmount)
+    .toFormat(quoteDisplayDenomExponent);
 
   return {
     price: removeTrailingZeros(price),
