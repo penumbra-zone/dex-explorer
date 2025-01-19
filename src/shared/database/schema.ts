@@ -8,6 +8,11 @@ import { DurationWindow } from '@/shared/utils/duration.ts';
 
 import type { ColumnType } from 'kysely';
 
+export type ArrayType<T> = ArrayTypeImpl<T> extends (infer U)[] ? U[] : ArrayTypeImpl<T>;
+
+export type ArrayTypeImpl<T> =
+  T extends ColumnType<infer S, infer I, infer U> ? ColumnType<S[], I[], U[]> : T[];
+
 export type Generated<T> =
   T extends ColumnType<infer S, infer I, infer U>
     ? ColumnType<S, I | undefined, U>
@@ -65,7 +70,22 @@ export interface DexExAggregateSummary {
   top_price_mover_end: Buffer;
   top_price_mover_start: Buffer;
   trades: number;
-  usdc_price: number | null;
+}
+
+export interface DexExBatchSwapTraces {
+  amount_hops: ArrayType<Numeric>;
+  asset_end: Buffer;
+  asset_hops: ArrayType<Buffer>;
+  asset_start: Buffer;
+  batch_input: Numeric;
+  batch_output: Numeric;
+  height: number;
+  input: Numeric;
+  output: Numeric;
+  position_id_hops: ArrayType<Buffer>;
+  price_float: number;
+  rowid: Generated<number>;
+  time: Timestamp;
 }
 
 export interface DexExMetadata {
@@ -80,6 +100,7 @@ export interface DexExPairsBlockSnapshot {
   id: Generated<number>;
   liquidity: number;
   price: number;
+  start_price_indexing_denom: number;
   swap_volume: number;
   time: Timestamp;
   trades: number;
@@ -88,6 +109,7 @@ export interface DexExPairsBlockSnapshot {
 export interface DexExPairsSummary {
   asset_end: Buffer;
   asset_start: Buffer;
+  direct_volume_indexing_denom_over_window: number;
   direct_volume_over_window: number;
   high: number;
   liquidity: number;
@@ -95,10 +117,10 @@ export interface DexExPairsSummary {
   low: number;
   price: number;
   price_then: number;
+  swap_volume_indexing_denom_over_window: number;
   swap_volume_over_window: number;
   the_window: DurationWindow;
   trades_over_window: number;
-  usdc_price: number | null;
 }
 
 export interface DexExPositionExecutions {
@@ -309,6 +331,7 @@ interface RawDB {
   _insights_validators: _InsightsValidators;
   block_details: BlockDetails;
   dex_ex_aggregate_summary: DexExAggregateSummary;
+  dex_ex_batch_swap_traces: DexExBatchSwapTraces;
   dex_ex_metadata: DexExMetadata;
   dex_ex_pairs_block_snapshot: DexExPairsBlockSnapshot;
   dex_ex_pairs_summary: DexExPairsSummary;
@@ -344,5 +367,6 @@ export type DB = Pick<
   | 'dex_ex_position_state'
   | 'dex_ex_position_reserves'
   | 'dex_ex_position_withdrawals'
+  | 'dex_ex_batch_swap_traces'
   | 'dex_ex_metadata'
 >;
