@@ -6,42 +6,35 @@ import { AssetId, Value } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/a
 import { pnum } from '@penumbra-zone/types/pnum';
 
 const transformDbVal = ({
-  context_asset_end,
-  context_asset_start,
-  delta_1,
-  delta_2,
-  lambda_1,
-  lambda_2,
+  asset_end,
+  asset_start,
+  height,
+  input,
+  output,
+  price_float,
   time,
+  kind,
 }: {
-  context_asset_end: Buffer;
-  context_asset_start: Buffer;
-  delta_1: string;
-  delta_2: string;
-  lambda_1: string;
-  lambda_2: string;
+  asset_start: Buffer;
+  asset_end: Buffer;
+  height: number;
+  input: string;
+  output: string;
+  price_float: number;
   time: Date;
+  kind: 'buy' | 'sell';
 }): RecentExecution => {
   const baseAssetId = new AssetId({
-    inner: Uint8Array.from(context_asset_start),
+    inner: Uint8Array.from(asset_start),
   });
-  const quoteAssetId = new AssetId({ inner: Uint8Array.from(context_asset_end) });
+  const quoteAssetId = new AssetId({ inner: Uint8Array.from(asset_end) });
 
-  // Determine trade direction
-  const isBaseAssetInput = BigInt(delta_1) !== 0n;
-  const kind = isBaseAssetInput ? 'sell' : 'buy';
-
-  // Amount of base & quote asset being traded in or out of
-  const baseAmount = isBaseAssetInput ? pnum(delta_1) : pnum(lambda_1);
-  const quoteAmount = isBaseAssetInput ? pnum(lambda_2) : pnum(delta_2);
-
-  const price = baseAmount.toBigNumber().div(quoteAmount.toBigNumber()).toNumber();
   const timestamp = time.toISOString();
 
   return {
     kind,
-    amount: new Value({ amount: baseAmount.toAmount(), assetId: baseAssetId }),
-    price: { amount: price, assetId: quoteAssetId },
+    amount: new Value({ amount: pnum(input).toAmount(), assetId: baseAssetId }),
+    price: { amount: price_float, assetId: quoteAssetId },
     timestamp,
   };
 };
@@ -82,7 +75,6 @@ export async function GET(
   const registryClient = new ChainRegistryClient();
   const registry = await registryClient.remote.get(chainId);
 
-  // TODO: Add getMetadataBySymbol() helper to registry npm package
   const allAssets = registry.getAllAssets();
   const baseAssetMetadata = allAssets.find(
     a => a.symbol.toLowerCase() === baseAssetSymbol.toLowerCase(),
@@ -97,13 +89,26 @@ export async function GET(
     );
   }
 
-  const results = await pindexer.recentExecutions(
+  // We need two queries: * base -> quote (sell)
+  //                      * quote -> base (buy)
+  const sellStream = await pindexer.recentExecutions(
     baseAssetMetadata.penumbraAssetId,
     quoteAssetMetadata.penumbraAssetId,
     Number(limit),
   );
 
-  const response = results.map(transformDbVal);
+  const buyStream = await pindexer.recentExecutions(
+    quoteAssetMetadata.penumbraAssetId,
+    baseAssetMetadata.penumbraAssetId,
+    Number(limit),
+  );
 
-  return NextResponse.json(serialize(response));
+  const sellResponse = sellStream.map(data => transformDbVal({ ...data, kind: 'sell' }));
+const buyResponse = buyStream.map(data => transformDbVal({ ...data, kind: 'buy' }));
+  // Weave the two responses together based on timestamps
+  const allResponse = [...sellResponse, ...buyResponse].sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+  );
+
+  return NextResponse.json(serialize(allResponse));
 }
