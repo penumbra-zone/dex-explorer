@@ -104,7 +104,7 @@ export async function GET(
   );
 
   const sellResponse = sellStream.map(data => transformDbVal({ ...data, kind: 'sell' }));
-const buyResponse = buyStream.map(data => transformDbVal({ ...data, kind: 'buy' }));
+  const buyResponse = buyStream.map(data => transformDbVal({ ...data, kind: 'buy' }));
   // Weave the two responses together based on timestamps
   const allResponse = [...sellResponse, ...buyResponse].sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),

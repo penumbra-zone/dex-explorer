@@ -6,19 +6,17 @@ import { DurationWindow } from '@/shared/utils/duration.ts';
  * Please do not edit it manually.
  */
 
-import type { ColumnType } from "kysely";
+import type { ColumnType } from 'kysely';
 
-export type ArrayType<T> = ArrayTypeImpl<T> extends (infer U)[]
-  ? U[]
-  : ArrayTypeImpl<T>;
+export type ArrayType<T> = ArrayTypeImpl<T> extends (infer U)[] ? U[] : ArrayTypeImpl<T>;
 
-export type ArrayTypeImpl<T> = T extends ColumnType<infer S, infer I, infer U>
-  ? ColumnType<S[], I[], U[]>
-  : T[];
+export type ArrayTypeImpl<T> =
+  T extends ColumnType<infer S, infer I, infer U> ? ColumnType<S[], I[], U[]> : T[];
 
-export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
-  ? ColumnType<S, I | undefined, U>
-  : ColumnType<T, T | undefined, T>;
+export type Generated<T> =
+  T extends ColumnType<infer S, infer I, infer U>
+    ? ColumnType<S, I | undefined, U>
+    : ColumnType<T, T | undefined, T>;
 
 export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
 
@@ -359,5 +357,16 @@ interface RawDB {
   supply_validators: SupplyValidators;
 }
 
-
-export type DB = Pick<RawDB, 'dex_ex_aggregate_summary' | 'dex_ex_pairs_block_snapshot' | 'dex_ex_pairs_summary' | 'dex_ex_price_charts' | 'dex_ex_position_executions' | 'dex_ex_position_state' | 'dex_ex_position_reserves' | 'dex_ex_position_withdrawals' | 'dex_ex_batch_swap_traces' | 'dex_ex_metadata'>;
+export type DB = Pick<
+  RawDB,
+  | 'dex_ex_aggregate_summary'
+  | 'dex_ex_pairs_block_snapshot'
+  | 'dex_ex_pairs_summary'
+  | 'dex_ex_price_charts'
+  | 'dex_ex_position_executions'
+  | 'dex_ex_position_state'
+  | 'dex_ex_position_reserves'
+  | 'dex_ex_position_withdrawals'
+  | 'dex_ex_batch_swap_traces'
+  | 'dex_ex_metadata'
+>;
