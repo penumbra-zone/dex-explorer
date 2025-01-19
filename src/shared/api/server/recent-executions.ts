@@ -31,10 +31,14 @@ const transformDbVal = ({
 
   const timestamp = time.toISOString();
 
+  // When we go from quote to base, we need to invert the price.
+  // This makes sense: a UX-friendly price is always denominated in quote assets.
+  const price = kind === 'sell' ? price_float : 1 / price_float;
+
   return {
     kind,
     amount: new Value({ amount: pnum(input).toAmount(), assetId: baseAssetId }),
-    price: { amount: price_float, assetId: quoteAssetId },
+    price: { amount: price, assetId: quoteAssetId },
     timestamp,
   };
 };
