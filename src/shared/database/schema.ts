@@ -70,6 +70,7 @@ export interface DexExAggregateSummary {
   top_price_mover_end: Buffer;
   top_price_mover_start: Buffer;
   trades: number;
+  usdc_price: number | null;
 }
 
 export interface DexExBatchSwapTraces {
@@ -121,6 +122,7 @@ export interface DexExPairsSummary {
   swap_volume_over_window: number;
   the_window: DurationWindow;
   trades_over_window: number;
+  usdc_price: number | null;
 }
 
 export interface DexExPositionExecutions {

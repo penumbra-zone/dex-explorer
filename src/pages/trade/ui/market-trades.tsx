@@ -1,21 +1,12 @@
-import { Text } from '@penumbra-zone/ui/Text';
 import { ReactNode } from 'react';
-import { Skeleton } from '@/shared/ui/skeleton';
-import { RecentExecutionVV, useRecentExecutions } from '@/pages/trade/api/recent-executions.ts';
+import { useAutoAnimate } from '@formkit/auto-animate/react';
+import { TableCell } from '@penumbra-zone/ui/TableCell';
 import { Density } from '@penumbra-zone/ui/Density';
+import { Skeleton } from '@penumbra-zone/ui/Skeleton';
+import { useRecentExecutions } from '../api/recent-executions.ts';
 
 export const Cell = ({ children }: { children: ReactNode }) => {
   return <div className='flex items-center py-1.5 px-3 min-h-12'>{children}</div>;
-};
-
-export const HeaderCell = ({ children }: { children: ReactNode }) => {
-  return (
-    <Cell>
-      <Text detail whitespace='nowrap'>
-        {children}
-      </Text>
-    </Cell>
-  );
 };
 
 export const LoadingCell = () => {
@@ -25,17 +16,6 @@ export const LoadingCell = () => {
         <Skeleton />
       </div>
     </Cell>
-  );
-};
-
-const LoadingRow = () => {
-  return (
-    <div className='grid grid-cols-subgrid col-span-4 text-text-secondary border-b border-other-tonalStroke'>
-      <LoadingCell />
-      <LoadingCell />
-      <LoadingCell />
-      <LoadingCell />
-    </div>
   );
 };
 
@@ -53,50 +33,46 @@ const formatLocalTime = (isoString: string): string => {
   });
 };
 
-const LoadedState = ({ data }: { data: RecentExecutionVV[] }) => {
-  return data.map((e, i) => {
-    return (
-      <div
-        key={i}
-        className='grid grid-cols-subgrid col-span-4 text-text-secondary border-b border-other-tonalStroke'
-      >
-        <Cell>
-          <Text small color={e.kind === 'buy' ? 'success.light' : 'destructive.light'}>
-            {e.price}
-          </Text>
-        </Cell>
-        <Cell>
-          <Text small color='text.primary'>
-            {e.amount}
-          </Text>
-        </Cell>
-        <Cell>
-          <Text small color='text.primary'>
-            {formatLocalTime(e.timestamp)}
-          </Text>
-        </Cell>
-        <Cell>-</Cell>
-      </div>
-    );
-  });
-};
-
 export const MarketTrades = () => {
   const { data, isLoading, error } = useRecentExecutions();
+  const [parent] = useAutoAnimate();
 
   return (
     <Density slim>
-      <div className='grid grid-cols-4 pt-4 px-4 pb-0 h-auto overflow-auto'>
-        <div className='grid grid-cols-subgrid col-span-4 text-text-secondary border-b border-other-tonalStroke'>
-          <HeaderCell>Price</HeaderCell>
-          <HeaderCell>Amount</HeaderCell>
-          <HeaderCell>Time</HeaderCell>
-          <HeaderCell>Route</HeaderCell>
+      <div ref={parent} className='grid grid-cols-4 pt-4 px-4 pb-0 h-auto overflow-auto'>
+        <div className='grid grid-cols-subgrid col-span-4'>
+          <TableCell heading>Price</TableCell>
+          <TableCell heading>Amount</TableCell>
+          <TableCell heading>Time</TableCell>
+          <TableCell heading>Route</TableCell>
         </div>
 
-        {isLoading && new Array(15).fill(0).map((_, i) => <LoadingRow key={i} />)}
         {error && <ErrorState error={error} />}
-        {data && <LoadedState data={data} />}
+
+        {data?.map((trade, index) => (
+          <div key={trade.timestamp + trade.amount} className='grid grid-cols-subgrid col-span-4'>
+            <TableCell
+              numeric
+              variant={index !== data.length - 1 ? 'cell' : 'lastCell'}
+              loading={isLoading}
+            >
+              <span
+                className={trade.kind === 'buy' ? 'text-success-light' : 'text-destructive-light'}
+              >
+                {trade.price}
+              </span>
+            </TableCell>
+            <TableCell cell numeric loading={isLoading}>
+              {trade.amount}
+            </TableCell>
+            <TableCell cell numeric loading={isLoading}>
+              {formatLocalTime(trade.timestamp)}
+            </TableCell>
+            <TableCell cell loading={isLoading}>
+              --
+            </TableCell>
+          </div>
+        ))}
       </div>
     </Density>
   );

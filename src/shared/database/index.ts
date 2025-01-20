@@ -234,6 +234,8 @@ class Pindexer {
         'summary.the_window',
         'summary.direct_volume_over_window',
         'summary.swap_volume_over_window',
+        'summary.direct_volume_indexing_denom_over_window',
+        'summary.swap_volume_indexing_denom_over_window',
         'summary.liquidity',
         'summary.liquidity_then',
         'summary.trades_over_window',
