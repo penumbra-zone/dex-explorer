@@ -8,12 +8,12 @@ import { pnum } from '@penumbra-zone/types/pnum';
 const transformDbVal = ({
   asset_end,
   asset_start,
-  height,
   input,
   output,
   price_float,
   time,
   kind,
+  amount_hops,
 }: {
   asset_start: Buffer;
   asset_end: Buffer;
@@ -23,6 +23,7 @@ const transformDbVal = ({
   price_float: number;
   time: Date;
   kind: 'buy' | 'sell';
+  amount_hops: string[];
 }): RecentExecution => {
   const baseAssetId = new AssetId({
     inner: Uint8Array.from(asset_start),
@@ -43,6 +44,7 @@ const transformDbVal = ({
     amount: new Value({ amount: pnum(baseAmount).toAmount(), assetId: baseAssetId }),
     price: { amount: price, assetId: quoteAssetId },
     timestamp,
+    hops: amount_hops.length,
   };
 };
 
@@ -58,6 +60,7 @@ export interface RecentExecution {
   amount: Value;
   price: FloatValue;
   timestamp: string;
+  hops: number;
 }
 
 export async function GET(

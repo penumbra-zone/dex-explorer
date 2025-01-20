@@ -4,6 +4,7 @@ import { TableCell } from '@penumbra-zone/ui/TableCell';
 import { Density } from '@penumbra-zone/ui/Density';
 import { Skeleton } from '@penumbra-zone/ui/Skeleton';
 import { useRecentExecutions } from '../api/recent-executions.ts';
+import { pluralize } from '@/shared/utils/pluralize';
 
 export const Cell = ({ children }: { children: ReactNode }) => {
   return <div className='flex items-center py-1.5 px-3 min-h-12'>{children}</div>;
@@ -62,14 +63,27 @@ export const MarketTrades = () => {
                 {trade.price}
               </span>
             </TableCell>
-            <TableCell cell numeric loading={isLoading}>
+            <TableCell
+              variant={index !== data.length - 1 ? 'cell' : 'lastCell'}
+              numeric
+              loading={isLoading}
+            >
               {trade.amount}
             </TableCell>
-            <TableCell cell numeric loading={isLoading}>
+            <TableCell
+              variant={index !== data.length - 1 ? 'cell' : 'lastCell'}
+              numeric
+              loading={isLoading}
+            >
               {formatLocalTime(trade.timestamp)}
             </TableCell>
-            <TableCell cell loading={isLoading}>
-              --
+            <TableCell
+              variant={index !== data.length - 1 ? 'cell' : 'lastCell'}
+              loading={isLoading}
+            >
+              <span className={trade.hops <= 2 ? 'text-text-primary' : 'text-text-special'}>
+                {trade.hops === 2 ? 'Direct' : pluralize(trade.hops - 2, 'Hop', 'Hops')}
+              </span>
             </TableCell>
           </div>
         ))}

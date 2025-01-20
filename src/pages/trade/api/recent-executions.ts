@@ -15,6 +15,7 @@ export interface RecentExecutionVV {
   amount: string;
   price: string;
   timestamp: string;
+  hops: number;
 }
 
 const addVV = (res: RecentExecution[], registry: Registry): RecentExecutionVV[] => {
@@ -30,6 +31,7 @@ const addVV = (res: RecentExecution[], registry: Registry): RecentExecutionVV[] 
 
     return {
       kind: r.kind,
+      hops: r.hops,
       amount: formatAmount({
         amount: r.amount.amount,
         exponent: baseDisplayDenomExponent,
