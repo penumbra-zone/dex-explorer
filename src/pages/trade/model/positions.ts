@@ -126,8 +126,8 @@ class PositionsStore {
         })
         .map(({ id, position }) => ({
           positionId: id,
-          tradingPair: position?.phi?.pair,
-          reserves: position?.reserves,
+          tradingPair: position.phi?.pair,
+          reserves: position.reserves,
         }));
 
       // Return early if there's no work to do.
@@ -149,14 +149,16 @@ class PositionsStore {
 
       // We collect a list of position ids that are currently opened.
       const openedPositionIdStrings = balances
-        ?.filter(
+        .filter(
           ({ balanceView }) =>
-            balanceView?.valueView?.case === 'knownAssetId' &&
-            (balanceView?.valueView?.value as any)?.metadata?.base?.startsWith('lpnft_opened_'),
+            balanceView?.valueView.case === 'knownAssetId' &&
+            balanceView.valueView.value.metadata?.base.startsWith('lpnft_opened_'),
         )
         .map(
           ({ balanceView }) =>
-            (balanceView?.valueView?.value as any)?.metadata?.base?.replace('lpnft_opened_', '') ||
+            (balanceView?.valueView.case === 'knownAssetId' &&
+              // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Short-circuits properly
+              balanceView.valueView.value.metadata?.base.replace('lpnft_opened_', '')) ||
             '',
         );
 
@@ -170,7 +172,7 @@ class PositionsStore {
         .filter(({ id }) => {
           const idStr = bech32mPositionId(id);
           // Now check if id is in openedPositionIdStrings
-          return openedPositionIdStrings?.includes(idStr);
+          return openedPositionIdStrings.includes(idStr);
         })
         .map(({ id: positionId }) => ({ positionId }));
 
