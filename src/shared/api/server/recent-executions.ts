@@ -34,10 +34,13 @@ const transformDbVal = ({
   // When we go from quote to base, we need to invert the price.
   // This makes sense: a UX-friendly price is always denominated in quote assets.
   const price = kind === 'sell' ? price_float : 1 / price_float;
+  // We always want to render the base amount in the trade, regardless of the direction.
+  // The `kind` field informs on the direction.
+  const baseAmount = kind === 'sell' ? input : output;
 
   return {
     kind,
-    amount: new Value({ amount: pnum(input).toAmount(), assetId: baseAssetId }),
+    amount: new Value({ amount: pnum(baseAmount).toAmount(), assetId: baseAssetId }),
     price: { amount: price, assetId: quoteAssetId },
     timestamp,
   };
