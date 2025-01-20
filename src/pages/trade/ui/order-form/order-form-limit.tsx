@@ -69,7 +69,7 @@ export const LimitOrderForm = observer(({ parentStore }: { parentStore: OrderFor
             store.quoteInput
               ? isBuy
                 ? `Pay with ${store.quoteInput} ${store.quoteAsset?.symbol}`
-                : `Receive ${store.baseInput} ${store.baseAsset?.symbol}`
+                : `Receive ${store.quoteInput} ${store.quoteAsset?.symbol}`
               : 'Enter the form fields to see the amount.'
           }
         />
