@@ -6,6 +6,7 @@ import { DurationWindow } from '@/shared/utils/duration';
 import { toValueView } from '@/shared/utils/value-view';
 import { Serialized, serialize } from '@/shared/utils/serializer';
 import { calculateEquivalentInUSDC } from '@/shared/utils/price-conversion';
+import { getClientSideEnv } from '../env/getClientSideEnv';
 
 interface StatsDataBase {
   activePairs: number;
@@ -26,10 +27,7 @@ const STATS_DURATION_WINDOW: DurationWindow = '1d';
 
 export const getStats = async (): Promise<Serialized<StatsResponse>> => {
   try {
-    const chainId = process.env['PENUMBRA_CHAIN_ID'];
-    if (!chainId) {
-      return { error: 'PENUMBRA_CHAIN_ID is not set' };
-    }
+    const chainId = getClientSideEnv().PENUMBRA_CHAIN_ID;
 
     const registryClient = new ChainRegistryClient();
     const registry = await registryClient.remote.get(chainId);
