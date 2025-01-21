@@ -1,67 +1,73 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pindexer } from '@/shared/database';
-import { ChainRegistryClient } from '@penumbra-labs/registry';
-import { serialize, Serialized } from '@/shared/utils/serializer';
-import { AssetId, Value } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { ChainRegistryClient, Registry } from '@penumbra-labs/registry';
+import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { pnum } from '@penumbra-zone/types/pnum';
+import { serialize, Serialized } from '@/shared/utils/serializer';
+import { formatAmount } from '@penumbra-zone/types/amount';
+import { pindexer } from '@/shared/database';
+import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
+import { calculateDisplayPrice } from '@/shared/utils/price-conversion';
+import BigNumber from 'bignumber.js';
 
-const transformDbVal = ({
-  asset_end,
-  asset_start,
-  input,
-  output,
-  price_float,
-  time,
-  kind,
-  amount_hops,
-}: {
-  asset_start: Buffer;
-  asset_end: Buffer;
-  height: number;
-  input: string;
-  output: string;
-  price_float: number;
-  time: Date;
-  kind: 'buy' | 'sell';
-  amount_hops: string[];
-}): RecentExecution => {
-  const baseAssetId = new AssetId({
-    inner: Uint8Array.from(asset_start),
-  });
-  const quoteAssetId = new AssetId({ inner: Uint8Array.from(asset_end) });
-
-  const timestamp = time.toISOString();
-
-  // When we go from quote to base, we need to invert the price.
-  // This makes sense: a UX-friendly price is always denominated in quote assets.
-  const price = kind === 'sell' ? price_float : 1 / price_float;
-  // We always want to render the base amount in the trade, regardless of the direction.
-  // The `kind` field informs on the direction.
-  const baseAmount = kind === 'sell' ? input : output;
-
-  return {
-    kind,
-    amount: new Value({ amount: pnum(baseAmount).toAmount(), assetId: baseAssetId }),
-    price: { amount: price, assetId: quoteAssetId },
-    timestamp,
-    hops: amount_hops.length,
-  };
-};
+type FromPromise<T> = T extends Promise<(infer U)[]> ? U : T;
+type RecentExecutionData = FromPromise<ReturnType<typeof pindexer.recentExecutions>>;
 
 export type RecentExecutionsResponse = RecentExecution[] | { error: string };
 
-interface FloatValue {
-  assetId: AssetId;
-  amount: number;
-}
-
 export interface RecentExecution {
   kind: 'buy' | 'sell';
-  amount: Value;
-  price: FloatValue;
+  amount: string;
+  price: string;
   timestamp: string;
-  hops: number;
+  hops: string[];
 }
+
+const transformData = (
+  data: RecentExecutionData,
+  direction: 'buy' | 'sell',
+  registry: Registry,
+): RecentExecution => {
+  const baseAssetId = new AssetId({
+    inner: Uint8Array.from(data.asset_start),
+  });
+  const baseMetadata = registry.getMetadata(baseAssetId);
+  const baseDisplayDenomExponent = getDisplayDenomExponent.optional(baseMetadata) ?? 0;
+
+  const quoteAssetId = new AssetId({ inner: Uint8Array.from(data.asset_end) });
+  const quoteMetadata = registry.getMetadata(quoteAssetId);
+
+  const timestamp = data.time.toISOString();
+
+  // When we go from quote to base, we need to invert the price.
+  // This makes sense: a UX-friendly price is always denominated in quote assets.
+  const priceNum = direction === 'sell' ? data.price_float : 1 / data.price_float;
+  const price = calculateDisplayPrice(priceNum, baseMetadata, quoteMetadata);
+
+  // We always want to render the base amount in the trade, regardless of the direction.
+  // The `kind` field informs on the direction.
+  const baseAmount = direction === 'sell' ? data.input : data.output;
+
+  const hops = data.asset_hops
+    .map(buffer => {
+      const assetId = new AssetId({ inner: Uint8Array.from(buffer) });
+      return registry.tryGetMetadata(assetId)?.symbol;
+    })
+    .filter(Boolean) as string[];
+
+  const amount = formatAmount({
+    amount: pnum(baseAmount, { exponent: baseDisplayDenomExponent }).toAmount(),
+    exponent: baseDisplayDenomExponent,
+    decimalPlaces: 4,
+  });
+
+  return {
+    hops,
+    timestamp,
+    amount,
+    kind: direction,
+    price: new BigNumber(price).toFormat(4),
+  };
+};
 
 export async function GET(
   req: NextRequest,
@@ -113,12 +119,15 @@ export async function GET(
     Number(limit),
   );
 
-  const sellResponse = sellStream.map(data => transformDbVal({ ...data, kind: 'sell' }));
-  const buyResponse = buyStream.map(data => transformDbVal({ ...data, kind: 'buy' }));
+  const responses = await Promise.all([
+    sellStream.map(data => transformData(data, 'sell', registry)),
+    buyStream.map(data => transformData(data, 'buy', registry)),
+  ]);
+
   // Weave the two responses together based on timestamps
-  const allResponse = [...sellResponse, ...buyResponse].sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-  );
+  const allResponse = responses
+    .flat()
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   return NextResponse.json(serialize(allResponse));
 }

@@ -81,8 +81,10 @@ export const MarketTrades = () => {
               variant={index !== data.length - 1 ? 'cell' : 'lastCell'}
               loading={isLoading}
             >
-              <span className={trade.hops <= 2 ? 'text-text-primary' : 'text-text-special'}>
-                {trade.hops === 2 ? 'Direct' : pluralize(trade.hops - 2, 'Hop', 'Hops')}
+              <span className={trade.hops.length <= 2 ? 'text-text-primary' : 'text-text-special'}>
+                {trade.hops.length === 2
+                  ? 'Direct'
+                  : pluralize(trade.hops.length - 2, 'Hop', 'Hops')}
               </span>
             </TableCell>
           </div>
