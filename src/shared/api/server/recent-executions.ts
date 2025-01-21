@@ -40,7 +40,12 @@ const transformData = (
 
   // When we go from quote to base, we need to invert the price.
   // This makes sense: a UX-friendly price is always denominated in quote assets.
-  const priceNum = direction === 'sell' ? data.price_float : 1 / data.price_float;
+  let priceNum: number;
+  if (direction === 'sell') {
+    priceNum = data.price_float;
+  } else {
+    priceNum = data.price_float === 0 ? 0 : 1 / data.price_float;
+  }
   const price = calculateDisplayPrice(priceNum, baseMetadata, quoteMetadata);
 
   // We always want to render the base amount in the trade, regardless of the direction.
@@ -48,20 +53,20 @@ const transformData = (
   const baseAmount = direction === 'sell' ? data.input : data.output;
   const amountValue = new Value({ amount: pnum(baseAmount).toAmount(), assetId: baseAssetId })
     .amount;
-
-  const hops = data.asset_hops
-    .map(buffer => {
-      const assetId = new AssetId({ inner: Uint8Array.from(buffer) });
-      return registry.tryGetMetadata(assetId)?.symbol;
-    })
-    .filter(Boolean) as string[];
-
   const amount = formatAmount({
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- amount created by `new Value` always defined
     amount: amountValue!,
     exponent: baseDisplayDenomExponent,
     decimalPlaces: 4,
   });
+
+  const hops = data.asset_hops
+    .reverse()
+    .map(buffer => {
+      const assetId = new AssetId({ inner: Uint8Array.from(buffer) });
+      return registry.tryGetMetadata(assetId)?.symbol;
+    })
+    .filter(Boolean) as string[];
 
   return {
     hops,
