@@ -1,13 +1,13 @@
+import BigNumber from 'bignumber.js';
 import { NextRequest, NextResponse } from 'next/server';
 import { ChainRegistryClient, Registry } from '@penumbra-labs/registry';
-import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { AssetId, Value } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { pnum } from '@penumbra-zone/types/pnum';
 import { serialize, Serialized } from '@/shared/utils/serializer';
 import { formatAmount } from '@penumbra-zone/types/amount';
 import { pindexer } from '@/shared/database';
 import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { calculateDisplayPrice } from '@/shared/utils/price-conversion';
-import BigNumber from 'bignumber.js';
 
 type FromPromise<T> = T extends Promise<(infer U)[]> ? U : T;
 type RecentExecutionData = FromPromise<ReturnType<typeof pindexer.recentExecutions>>;
@@ -46,6 +46,8 @@ const transformData = (
   // We always want to render the base amount in the trade, regardless of the direction.
   // The `kind` field informs on the direction.
   const baseAmount = direction === 'sell' ? data.input : data.output;
+  const amountValue = new Value({ amount: pnum(baseAmount).toAmount(), assetId: baseAssetId })
+    .amount;
 
   const hops = data.asset_hops
     .map(buffer => {
@@ -55,7 +57,8 @@ const transformData = (
     .filter(Boolean) as string[];
 
   const amount = formatAmount({
-    amount: pnum(baseAmount, { exponent: baseDisplayDenomExponent }).toAmount(),
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- amount created by `new Value` always defined
+    amount: amountValue!,
     exponent: baseDisplayDenomExponent,
     decimalPlaces: 4,
   });
