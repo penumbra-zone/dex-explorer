@@ -135,17 +135,8 @@ class PositionsStore {
         return;
       }
 
-      // TODO(jason): not sure if this is duplicating code, feel free to move it out somewhere less disruptive.
-      async function asyncIterableToArray<T>(asyncIterable: AsyncIterable<T>): Promise<T[]> {
-        const array: T[] = [];
-        for await (const item of asyncIterable) {
-          array.push(item);
-        }
-        return array;
-      }
-
       // Query the balance, ignoring the subaccount index for now.
-      const balances = await asyncIterableToArray(penumbra.service(ViewService).balances({}));
+      const balances = await Array.fromAsync(penumbra.service(ViewService).balances({}));
 
       // We collect a list of position ids that are currently opened.
       const openedPositionIdStrings = balances
