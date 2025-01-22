@@ -34,6 +34,9 @@ export const getAllSummaries = async (
   const allAssets = registry.getAllAssets();
 
   const { stablecoins, usdc } = getStablecoins(allAssets, 'USDC');
+  if (!usdc) {
+    throw new Error('usdc asset does not exist');
+  }
 
   const results = await pindexer.summaries({
     ...params,
