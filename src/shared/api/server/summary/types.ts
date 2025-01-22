@@ -48,7 +48,7 @@ export const adaptSummary = (
     metadata: quoteAsset,
   });
 
-  let directVolume = toValueView({
+  const directVolume = toValueView({
     amount: Math.floor(summary.direct_volume_indexing_denom_over_window),
     metadata: usdc,
   });

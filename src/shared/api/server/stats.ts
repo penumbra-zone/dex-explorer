@@ -7,6 +7,7 @@ import { toValueView } from '@/shared/utils/value-view';
 import { Serialized, serialize } from '@/shared/utils/serializer';
 import { getClientSideEnv } from '../env/getClientSideEnv';
 import { DirectedTradingPair } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
+import { getStablecoins } from '@/shared/utils/stables';
 
 export interface StatsData {
   activePairs: number;
@@ -27,7 +28,7 @@ export const getStats = async (): Promise<Serialized<StatsResponse>> => {
     const chainId = getClientSideEnv().PENUMBRA_CHAIN_ID;
     const registryClient = new ChainRegistryClient();
     const registry = await registryClient.remote.get(chainId);
-    const usdcMetadata = registry.getAllAssets().find(x => x.symbol.toLowerCase() === 'usdc');
+    const usdcMetadata = getStablecoins(registry.getAllAssets(), 'usdc').usdc;
     if (!usdcMetadata) {
       return { error: 'USDC not found in registry' };
     }

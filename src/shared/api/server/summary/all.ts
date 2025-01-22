@@ -42,7 +42,7 @@ export const getAllSummaries = async (
     ...params,
     stablecoins: stablecoins.map(asset => asset.penumbraAssetId) as AssetId[],
     // eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style -- usdc is defined
-    usdc: usdc?.penumbraAssetId as AssetId,
+    usdc: usdc.penumbraAssetId as AssetId,
   });
 
   const summaries = await Promise.all(
