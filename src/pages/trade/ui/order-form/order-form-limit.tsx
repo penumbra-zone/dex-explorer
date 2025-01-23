@@ -63,13 +63,13 @@ export const LimitOrderForm = observer(({ parentStore }: { parentStore: OrderFor
           isLoading={parentStore.gasFeeLoading}
         />
         <InfoRow
-          label={isBuy ? 'Pay with' : 'Receive'}
-          value={store.quoteInput || '--'}
+          label='Receive'
+          value={isBuy ? store.baseInput || '--' : store.quoteInput || '--'}
           toolTip={
             // eslint-disable-next-line no-nested-ternary -- allow nested ternary
             store.quoteInput
               ? isBuy
-                ? `Pay with ${store.quoteInput} ${store.quoteAsset?.symbol}`
+                ? `Receive ${store.baseInput} ${store.baseAsset?.symbol}`
                 : `Receive ${store.quoteInput} ${store.quoteAsset?.symbol}`
               : 'Enter the form fields to see the amount.'
           }
