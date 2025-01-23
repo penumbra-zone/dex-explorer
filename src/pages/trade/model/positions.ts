@@ -295,11 +295,11 @@ class PositionsStore {
     // that is for the "UM/USDY" pair.
     // In that case, we want to handle this by deciding if the position contain a well-known numeraire,
     // or default to canonical ordering since this is both rare and can be filtered at a higher-level
-    const asset1IsStablecoin = isStablecoinSymbol(asset1.asset.symbol.toUpperCase());
-    const asset2IsStablecoin = isStablecoinSymbol(asset2.asset.symbol.toUpperCase());
+    const asset1IsStablecoin = isStablecoinSymbol(asset1.asset.symbol);
+    const asset2IsStablecoin = isStablecoinSymbol(asset2.asset.symbol);
 
-    const asset1IsNumeraire = isNumeraireSymbol(asset1.asset.symbol.toUpperCase());
-    const asset2IsNumeraire = isNumeraireSymbol(asset2.asset.symbol.toUpperCase());
+    const asset1IsNumeraire = isNumeraireSymbol(asset1.asset.symbol);
+    const asset2IsNumeraire = isNumeraireSymbol(asset2.asset.symbol);
 
     // If both assets are numeraires, we adjudicate based on priority score:
     if (asset1IsNumeraire && asset2IsNumeraire) {
