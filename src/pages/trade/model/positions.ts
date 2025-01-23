@@ -246,6 +246,8 @@ class PositionsStore {
       ];
     }
 
+    // Fallback if both reserves are zero
+    // ...is there some kind of bug here that loops and renders the entire 'type' column empty in the position table?
     return [
       {
         direction: '',
