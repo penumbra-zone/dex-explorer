@@ -298,8 +298,8 @@ class PositionsStore {
     const asset1IsStablecoin = isStablecoinSymbol(asset1.asset.symbol);
     const asset2IsStablecoin = isStablecoinSymbol(asset2.asset.symbol);
 
-    const asset1IsNumeraire = isNumeraireSymbol(asset1.asset.symbol);
-    const asset2IsNumeraire = isNumeraireSymbol(asset2.asset.symbol);
+    const asset1IsNumeraire = asset1IsStablecoin || isNumeraireSymbol(asset1.asset.symbol);
+    const asset2IsNumeraire = asset2IsStablecoin || isNumeraireSymbol(asset2.asset.symbol);
 
     // If both assets are numeraires, we adjudicate based on priority score:
     if (asset1IsNumeraire && asset2IsNumeraire) {
