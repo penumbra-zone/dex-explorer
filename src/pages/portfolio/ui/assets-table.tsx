@@ -49,58 +49,60 @@ const LoadingState = () => {
         </div>
 
         <Density compact>
-          <Table>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>Asset</Table.Th>
-                <Table.Th>Balance</Table.Th>
-                <Table.Th>Price</Table.Th>
-                <Table.Th>Value</Table.Th>
-                <Table.Th>Actions</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Table.Tr key={i}>
-                  <Table.Td>
-                    <div className='flex items-center gap-2'>
-                      <div className='w-6 h-6 rounded-full overflow-hidden'>
-                        <Skeleton />
-                      </div>
-                      <div className='w-20 h-5'>
-                        <Skeleton />
-                      </div>
-                    </div>
-                  </Table.Td>
-                  <Table.Td>
-                    <div className='w-24 h-5'>
-                      <Skeleton />
-                    </div>
-                  </Table.Td>
-                  <Table.Td>
-                    <div className='w-24 h-5'>
-                      <Skeleton />
-                    </div>
-                  </Table.Td>
-                  <Table.Td>
-                    <div className='w-24 h-5'>
-                      <Skeleton />
-                    </div>
-                  </Table.Td>
-                  <Table.Td>
-                    <div className='flex gap-2'>
-                      <div className='w-8 h-8 rounded-full overflow-hidden'>
-                        <Skeleton />
-                      </div>
-                      <div className='w-8 h-8 rounded-full overflow-hidden'>
-                        <Skeleton />
-                      </div>
-                    </div>
-                  </Table.Td>
+          <div className='overflow-x-auto w-full'>
+            <Table>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>Asset</Table.Th>
+                  <Table.Th>Balance</Table.Th>
+                  <Table.Th>Price</Table.Th>
+                  <Table.Th>Value</Table.Th>
+                  <Table.Th>Actions</Table.Th>
                 </Table.Tr>
-              ))}
-            </Table.Tbody>
-          </Table>
+              </Table.Thead>
+              <Table.Tbody>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Table.Tr key={i}>
+                    <Table.Td>
+                      <div className='flex items-center gap-2'>
+                        <div className='w-6 h-6 rounded-full overflow-hidden'>
+                          <Skeleton />
+                        </div>
+                        <div className='w-20 h-5'>
+                          <Skeleton />
+                        </div>
+                      </div>
+                    </Table.Td>
+                    <Table.Td>
+                      <div className='w-24 h-5'>
+                        <Skeleton />
+                      </div>
+                    </Table.Td>
+                    <Table.Td>
+                      <div className='w-24 h-5'>
+                        <Skeleton />
+                      </div>
+                    </Table.Td>
+                    <Table.Td>
+                      <div className='w-24 h-5'>
+                        <Skeleton />
+                      </div>
+                    </Table.Td>
+                    <Table.Td>
+                      <div className='flex gap-2'>
+                        <div className='w-8 h-8 rounded-full overflow-hidden'>
+                          <Skeleton />
+                        </div>
+                        <div className='w-8 h-8 rounded-full overflow-hidden'>
+                          <Skeleton />
+                        </div>
+                      </div>
+                    </Table.Td>
+                  </Table.Tr>
+                ))}
+              </Table.Tbody>
+            </Table>
+          </div>
         </Density>
       </div>
     </Card>
@@ -337,7 +339,7 @@ export const AssetsTable = observer(() => {
           </div>
 
           <Density compact>
-            <div className='overflow-scroll sm:overflow-hidden sm:m-0 -mr-4'>
+            <div className='w-full table-fixed'>
               <Table>
                 <Table.Thead>
                   <Table.Tr>
@@ -361,12 +363,14 @@ export const AssetsTable = observer(() => {
 
                     return (
                       <Table.Tr key={metadata.symbol}>
-                        <Table.Td>
-                          <div className='flex items-center gap-2'>
-                            <AssetIcon metadata={metadata} />
-                            <Text>{metadata.symbol}</Text>
-                          </div>
-                        </Table.Td>
+                        <div className='truncate max-w-[180px] whitespace-nowrap overflow-hidden text-ellipsis'>
+                          <Table.Td>
+                            <div className='flex items-center gap-2'>
+                              <AssetIcon metadata={metadata} />
+                              <Text>{metadata.symbol}</Text>
+                            </div>
+                          </Table.Td>
+                        </div>
                         <Table.Td>
                           {hasError ? (
                             <div className='flex items-center gap-1'>
