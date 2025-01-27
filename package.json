@@ -47,6 +47,7 @@
     "@penumbra-zone/wasm": "^37.0.0",
     "@radix-ui/react-icons": "^1.3.2",
     "@rehooks/component-size": "^1.0.3",
+    "@styled-icons/evaicons-solid": "^10.46.0",
     "@styled-icons/octicons": "^10.47.0",
     "@tanstack/react-query": "^5.62.3",
     "@textea/json-viewer": "^4.0.0",

@@ -1,8 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
+import orderBy from 'lodash/orderBy';
+import { useEffect, useState } from 'react';
 import { connectionStore } from '@/shared/model/connection';
+import { ChevronDown } from '@styled-icons/evaicons-solid/ChevronDown';
+import { ChevronUp } from '@styled-icons/evaicons-solid/ChevronUp';
 import { observer } from 'mobx-react-lite';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Table } from '@penumbra-zone/ui/Table';
@@ -30,6 +33,51 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
   const { data: assets } = useRegistryAssets();
   const { data, isLoading, error } = usePositions();
   const { displayPositions, setPositions, setAssets } = positionsStore;
+  const [sortBy, setSortBy] = useState<{
+    key: string;
+    direction: 'desc' | 'asc';
+  }>({
+    key: 'effectivePrice',
+    direction: 'desc',
+  });
+
+  const SortableTableHeader = ({
+    sortKey,
+    children,
+  }: {
+    sortKey: string;
+    children: React.ReactNode;
+  }) => {
+    return (
+      <Table.Th density='slim'>
+        <button
+          onClick={() => {
+            setSortBy({
+              key: sortKey,
+              direction: sortBy.key === sortKey && sortBy.direction === 'desc' ? 'asc' : 'desc',
+            });
+          }}
+        >
+          <Text
+            as='button'
+            tableHeadingSmall
+            color={sortBy.key === sortKey ? 'text.primary' : 'text.secondary'}
+          >
+            {children}
+          </Text>
+          {sortKey === sortBy.key && (
+            <>
+              {sortBy.direction === 'asc' ? (
+                <ChevronUp className='w-6 h-6 text-text-primary' />
+              ) : (
+                <ChevronDown className='w-6 h-6 text-text-primary' />
+              )}
+            </>
+          )}
+        </button>
+      </Table.Th>
+    );
+  };
 
   useEffect(() => {
     if (data) {
@@ -66,29 +114,13 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
           <Table bgColor='base.blackAlt'>
             <Table.Thead>
               <Table.Tr>
-                <Table.Th density='slim'>
-                  <Text tableHeadingSmall>Type</Text>
-                </Table.Th>
-                <Table.Th density='slim'>
-                  <Text tableHeadingSmall>Trade Amount</Text>
-                </Table.Th>
-                <Table.Th density='slim'>
-                  <Text tableHeadingSmall>Effective Price</Text>
-                </Table.Th>
-                <Table.Th density='slim'>
-                  <Text tableHeadingSmall whitespace='nowrap'>
-                    Fee Tier
-                  </Text>
-                </Table.Th>
-                <Table.Th density='slim'>
-                  <Text tableHeadingSmall>Base Price</Text>
-                </Table.Th>
-                <Table.Th density='slim'>
-                  <Text tableHeadingSmall>Current Value</Text>
-                </Table.Th>
-                <Table.Th density='slim'>
-                  <Text tableHeadingSmall>Position ID</Text>
-                </Table.Th>
+                <SortableTableHeader sortKey='type'>Type</SortableTableHeader>
+                <SortableTableHeader sortKey='tradeAmount'>Trade Amount</SortableTableHeader>
+                <SortableTableHeader sortKey='effectivePrice'>Effective Price</SortableTableHeader>
+                <SortableTableHeader sortKey='feeTier'>Fee Tier</SortableTableHeader>
+                <SortableTableHeader sortKey='basePrice'>Base Price</SortableTableHeader>
+                <SortableTableHeader sortKey='currentValue'>Current Value</SortableTableHeader>
+                <SortableTableHeader sortKey='positionId'>Position ID</SortableTableHeader>
                 <Table.Th hAlign='right' density='slim'>
                   <HeaderActionButton displayPositions={displayPositions} />
                 </Table.Th>
@@ -105,144 +137,144 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                     ))}
                   </Table.Tr>
                 ))}
-              {displayPositions
-                .filter(position => (showInactive ? true : !position.isWithdrawn))
-                .map(position => {
-                  return (
-                    <Table.Tr key={position.idString}>
-                      <Table.Td density='slim'>
-                        <div className='flex flex-col gap-4'>
-                          {position.orders
-                            .slice(0, position.isWithdrawn ? 1 : Infinity)
-                            .map((order, i) =>
-                              position.isOpened ? (
-                                <Text
-                                  as='div'
-                                  detail
-                                  color={
-                                    order.direction === 'Buy'
-                                      ? 'success.light'
-                                      : 'destructive.light'
-                                  }
-                                  key={i}
-                                >
-                                  {order.direction}
-                                </Text>
-                              ) : (
-                                <Text as='div' detail color='neutral.light' key={i}>
-                                  {stateToString(position.state)}
-                                </Text>
-                              ),
-                            )}
-                        </div>
-                      </Table.Td>
-                      <Table.Td density='slim'>
-                        <div className='flex flex-col gap-4'>
-                          {position.isWithdrawn ? (
-                            <Dash />
-                          ) : (
-                            position.orders.map((order, i) => (
-                              <ValueViewComponent
-                                key={i}
-                                valueView={
-                                  position.isClosed && i === 1 ? order.basePrice : order.amount
+              {orderBy(
+                displayPositions.filter(position => (showInactive ? true : !position.isWithdrawn)),
+                ['orders', 0, sortBy.key],
+                sortBy.direction,
+              ).map(position => {
+                return (
+                  <Table.Tr key={position.idString}>
+                    <Table.Td density='slim'>
+                      <div className='flex flex-col gap-4'>
+                        {position.orders
+                          .slice(0, position.isWithdrawn ? 1 : Infinity)
+                          .map((order, i) =>
+                            position.isOpened ? (
+                              <Text
+                                as='div'
+                                detail
+                                color={
+                                  order.direction === 'Buy' ? 'success.light' : 'destructive.light'
                                 }
-                                trailingZeros={false}
-                                density='slim'
-                              />
-                            ))
-                          )}
-                        </div>
-                      </Table.Td>
-                      <Table.Td density='slim'>
-                        {/* Fight display inline 4 px spacing */}
-                        <div className='flex flex-col gap-2 -mb-1 items-start'>
-                          {position.isClosed || position.isWithdrawn ? (
-                            <Dash />
-                          ) : (
-                            position.orders.map((order, i) => (
-                              <Tooltip
                                 key={i}
-                                message={
-                                  <>
-                                    <Text as='div' detail color='text.primary'>
-                                      Base price: {pnum(order.basePrice).toFormattedString()}
-                                    </Text>
-                                    <Text as='div' detail color='text.primary'>
-                                      Fee:{' '}
-                                      {pnum(order.basePrice)
-                                        .toBigNumber()
-                                        .minus(pnum(order.effectivePrice).toBigNumber())
-                                        .toString()}{' '}
-                                      ({position.fee})
-                                    </Text>
-                                    <Text as='div' detail color='text.primary'>
-                                      Effective price:{' '}
-                                      {pnum(order.effectivePrice).toFormattedString()}
-                                    </Text>
-                                  </>
-                                }
                               >
-                                <div>
-                                  <ValueViewComponent
-                                    valueView={order.effectivePrice}
-                                    trailingZeros={false}
-                                    density='slim'
-                                  />
-                                </div>
-                              </Tooltip>
-                            ))
+                                {order.direction}
+                              </Text>
+                            ) : (
+                              <Text as='div' detail color='neutral.light' key={i}>
+                                {stateToString(position.state)}
+                              </Text>
+                            ),
                           )}
-                        </div>
-                      </Table.Td>
-                      <Table.Td density='slim'>
-                        <Text as='div' detailTechnical color='text.primary'>
-                          {position.isClosed || position.isWithdrawn ? <Dash /> : position.fee}
+                      </div>
+                    </Table.Td>
+                    <Table.Td density='slim'>
+                      <div className='flex flex-col gap-4'>
+                        {position.isWithdrawn ? (
+                          <Dash />
+                        ) : (
+                          position.orders.map((order, i) => (
+                            <ValueViewComponent
+                              key={i}
+                              valueView={
+                                position.isClosed && i === 1 ? order.basePrice : order.amount
+                              }
+                              trailingZeros={false}
+                              density='slim'
+                            />
+                          ))
+                        )}
+                      </div>
+                    </Table.Td>
+                    <Table.Td density='slim'>
+                      {/* Fight display inline 4 px spacing */}
+                      <div className='flex flex-col gap-2 -mb-1 items-start'>
+                        {position.isClosed || position.isWithdrawn ? (
+                          <Dash />
+                        ) : (
+                          position.orders.map((order, i) => (
+                            <Tooltip
+                              key={i}
+                              message={
+                                <>
+                                  <Text as='div' detail color='text.primary'>
+                                    Base price: {pnum(order.basePrice).toFormattedString()}
+                                  </Text>
+                                  <Text as='div' detail color='text.primary'>
+                                    Fee:{' '}
+                                    {pnum(order.basePrice)
+                                      .toBigNumber()
+                                      .minus(pnum(order.effectivePrice).toBigNumber())
+                                      .toString()}{' '}
+                                    ({position.fee})
+                                  </Text>
+                                  <Text as='div' detail color='text.primary'>
+                                    Effective price:{' '}
+                                    {pnum(order.effectivePrice).toFormattedString()}
+                                  </Text>
+                                </>
+                              }
+                            >
+                              <div>
+                                <ValueViewComponent
+                                  valueView={order.effectivePrice}
+                                  trailingZeros={false}
+                                  density='slim'
+                                />
+                              </div>
+                            </Tooltip>
+                          ))
+                        )}
+                      </div>
+                    </Table.Td>
+                    <Table.Td density='slim'>
+                      <Text as='div' detailTechnical color='text.primary'>
+                        {position.isClosed || position.isWithdrawn ? <Dash /> : position.fee}
+                      </Text>
+                    </Table.Td>
+                    <Table.Td density='slim'>
+                      <div className='flex flex-col gap-4'>
+                        {position.isClosed || position.isWithdrawn ? (
+                          <Dash />
+                        ) : (
+                          position.orders.map((order, i) => (
+                            <ValueViewComponent
+                              key={i}
+                              valueView={order.basePrice}
+                              trailingZeros={false}
+                              density='slim'
+                            />
+                          ))
+                        )}
+                      </div>
+                    </Table.Td>
+                    <Table.Td density='slim'>
+                      <div className='flex flex-col gap-4'>
+                        {position.isWithdrawn ? (
+                          <Dash />
+                        ) : (
+                          position.orders.map((order, i) => (
+                            <PositionsCurrentValue key={i} order={order} />
+                          ))
+                        )}
+                      </div>
+                    </Table.Td>
+                    <Table.Td density='slim'>
+                      <div className='flex max-w-[104px]'>
+                        <Text as='div' detailTechnical color='text.primary' truncate>
+                          {position.idString}
                         </Text>
-                      </Table.Td>
-                      <Table.Td density='slim'>
-                        <div className='flex flex-col gap-4'>
-                          {position.isClosed || position.isWithdrawn ? (
-                            <Dash />
-                          ) : (
-                            position.orders.map((order, i) => (
-                              <ValueViewComponent
-                                key={i}
-                                valueView={order.basePrice}
-                                trailingZeros={false}
-                                density='slim'
-                              />
-                            ))
-                          )}
-                        </div>
-                      </Table.Td>
-                      <Table.Td density='slim'>
-                        <div className='flex flex-col gap-4'>
-                          {position.isWithdrawn ? (
-                            <Dash />
-                          ) : (
-                            position.orders.map((order, i) => (
-                              <PositionsCurrentValue key={i} order={order} />
-                            ))
-                          )}
-                        </div>
-                      </Table.Td>
-                      <Table.Td density='slim'>
-                        <div className='flex max-w-[104px]'>
-                          <Text as='div' detailTechnical color='text.primary' truncate>
-                            {position.idString}
-                          </Text>
-                          <Link href={`/inspect/lp/${position.idString}`}>
-                            <SquareArrowOutUpRight className='w-4 h-4 text-text-secondary' />
-                          </Link>
-                        </div>
-                      </Table.Td>
-                      <Table.Td hAlign='right' density='slim'>
-                        <ActionButton id={position.id} position={position.position} />
-                      </Table.Td>
-                    </Table.Tr>
-                  );
-                })}
+                        <Link href={`/inspect/lp/${position.idString}`}>
+                          <SquareArrowOutUpRight className='w-4 h-4 text-text-secondary' />
+                        </Link>
+                      </div>
+                    </Table.Td>
+                    <Table.Td hAlign='right' density='slim'>
+                      <ActionButton id={position.id} position={position.position} />
+                    </Table.Td>
+                  </Table.Tr>
+                );
+              })}
             </Table.Tbody>
           </Table>
         </div>
