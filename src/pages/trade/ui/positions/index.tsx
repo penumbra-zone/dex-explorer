@@ -119,7 +119,9 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                 <SortableTableHeader sortKey='effectivePrice'>Effective Price</SortableTableHeader>
                 <SortableTableHeader sortKey='feeTier'>Fee Tier</SortableTableHeader>
                 <SortableTableHeader sortKey='basePrice'>Base Price</SortableTableHeader>
-                <SortableTableHeader sortKey='currentValue'>Current Value</SortableTableHeader>
+                <Table.Th density='slim'>
+                  <Text tableHeadingSmall>Current Value</Text>
+                </Table.Th>
                 <SortableTableHeader sortKey='positionId'>Position ID</SortableTableHeader>
                 <Table.Th hAlign='right' density='slim'>
                   <HeaderActionButton displayPositions={displayPositions} />
@@ -138,8 +140,33 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                   </Table.Tr>
                 ))}
               {orderBy(
-                displayPositions.filter(position => (showInactive ? true : !position.isWithdrawn)),
-                ['orders', 0, sortBy.key],
+                displayPositions
+                  .filter(position => (showInactive ? true : !position.isWithdrawn))
+                  .map(position => ({
+                    ...position,
+                    sortValues: {
+                      type: position.isOpened
+                        ? position.orders[0]?.direction
+                        : stateToString(position.state),
+                      tradeAmount: position.isWithdrawn
+                        ? 0
+                        : pnum(position.orders[0]?.amount).toNumber(),
+                      effectivePrice:
+                        position.isClosed || position.isWithdrawn
+                          ? 0
+                          : pnum(position.orders[0]?.effectivePrice).toNumber(),
+                      basePrice:
+                        position.isClosed || position.isWithdrawn
+                          ? 0
+                          : pnum(position.orders[0]?.basePrice).toNumber(),
+                      feeTier:
+                        position.isClosed || position.isWithdrawn
+                          ? 0
+                          : Number(position.fee.replace('%', '')),
+                      positionId: position.idString,
+                    },
+                  })),
+                `sortValues.${sortBy.key}`,
                 sortBy.direction,
               ).map(position => {
                 return (
