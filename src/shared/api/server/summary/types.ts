@@ -49,7 +49,7 @@ export const adaptSummary = (
   });
 
   // Converts liquidity and trading volume to their equivalent USDC prices if `usdc_price` is available
-  let rawLiquidity = Math.max(Math.floor(summary.liquidity), 0.0);
+  const rawLiquidity = Math.max(Math.floor(summary.liquidity), 0.0);
   let liquidity: ValueView;
   if (summary.usdc_price) {
     liquidity = calculateEquivalentInUSDC(rawLiquidity, summary.usdc_price, quoteAsset, usdc);
