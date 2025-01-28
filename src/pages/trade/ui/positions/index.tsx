@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import orderBy from 'lodash/orderBy';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { connectionStore } from '@/shared/model/connection';
 import { ChevronDown } from '@styled-icons/evaicons-solid/ChevronDown';
 import { ChevronUp } from '@styled-icons/evaicons-solid/ChevronUp';
@@ -41,43 +41,40 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
     direction: 'desc',
   });
 
-  const SortableTableHeader = ({
-    sortKey,
-    children,
-  }: {
-    sortKey: string;
-    children: React.ReactNode;
-  }) => {
-    return (
-      <Table.Th density='slim'>
-        <button
-          onClick={() => {
-            setSortBy({
-              key: sortKey,
-              direction: sortBy.key === sortKey && sortBy.direction === 'desc' ? 'asc' : 'desc',
-            });
-          }}
-        >
-          <Text
-            as='button'
-            tableHeadingSmall
-            color={sortBy.key === sortKey ? 'text.primary' : 'text.secondary'}
+  const SortableTableHeader = useCallback(
+    ({ sortKey, children }: { sortKey: string; children: React.ReactNode }) => {
+      return (
+        <Table.Th density='slim'>
+          <button
+            onClick={() => {
+              setSortBy({
+                key: sortKey,
+                direction: sortBy.key === sortKey && sortBy.direction === 'desc' ? 'asc' : 'desc',
+              });
+            }}
           >
-            {children}
-          </Text>
-          {sortKey === sortBy.key && (
-            <>
-              {sortBy.direction === 'asc' ? (
-                <ChevronUp className='w-6 h-6 text-text-primary' />
-              ) : (
-                <ChevronDown className='w-6 h-6 text-text-primary' />
-              )}
-            </>
-          )}
-        </button>
-      </Table.Th>
-    );
-  };
+            <Text
+              as='button'
+              tableHeadingSmall
+              color={sortBy.key === sortKey ? 'text.primary' : 'text.secondary'}
+            >
+              {children}
+            </Text>
+            {sortKey === sortBy.key && (
+              <>
+                {sortBy.direction === 'asc' ? (
+                  <ChevronUp className='w-6 h-6 text-text-primary' />
+                ) : (
+                  <ChevronDown className='w-6 h-6 text-text-primary' />
+                )}
+              </>
+            )}
+          </button>
+        </Table.Th>
+      );
+    },
+    [sortBy, setSortBy],
+  );
 
   useEffect(() => {
     if (data) {
