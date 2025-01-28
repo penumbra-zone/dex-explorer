@@ -453,44 +453,49 @@ class PositionsStore {
     }
 
     const positions = [...this.positionsById.entries()].map(([id, position]) => {
-      try {
-        const { phi, state } = position as ExecutedPosition;
-        const { component } = phi;
-        const [asset1, asset2] = this.getCalculatedAssets(position as ExecutedPosition);
+      const { phi, state } = position as ExecutedPosition;
+      const { component } = phi;
 
-        if (!this.currentPair) {
-          throw new Error('No current pair or assets');
+      const [asset1, asset2] = (() => {
+        try {
+          return this.getCalculatedAssets(position as ExecutedPosition);
+        } catch (e) {
+          // this.getCalculatedAssets() throws if the assets are not found in the registry
+          // e.g. if the position was created in `pcli`
+          return [];
         }
+      })();
 
-        const [baseAsset, quoteAsset] = this.currentPair;
-
-        // Now that we have computed all the price information using the canonical ordering,
-        // we can simply adjust our values if the directed pair is not the same as the canonical one:
-        const orders = this.getDirectionalOrders({
-          asset1,
-          asset2,
-          baseAsset,
-          quoteAsset,
-        }).map(this.getOrderValueViews);
-
-        return {
-          id: new PositionId(positionIdFromBech32(id)),
-          idString: id,
-          position,
-          orders,
-          fee: `${pnum(component.fee / 100).toFormattedString({ decimals: 2 })}%`,
-          // TODO:
-          // We do not yet filter `Closed` positions to allow auto-closing position to provide visual
-          // feedback about execution. This is probably best later replaced by either a notification, or a
-          // dedicated view. Fine for now.
-          isWithdrawn: state.state === PositionState_PositionStateEnum.WITHDRAWN,
-          isOpened: state.state === PositionState_PositionStateEnum.OPENED,
-          isClosed: state.state === PositionState_PositionStateEnum.CLOSED,
-          state: state.state,
-        };
-      } catch (_) {
+      if (!this.currentPair || !asset1 || !asset2) {
         return undefined;
       }
+
+      const [baseAsset, quoteAsset] = this.currentPair;
+
+      // Now that we have computed all the price information using the canonical ordering,
+      // we can simply adjust our values if the directed pair is not the same as the canonical one:
+      const orders = this.getDirectionalOrders({
+        asset1,
+        asset2,
+        baseAsset,
+        quoteAsset,
+      }).map(this.getOrderValueViews);
+
+      return {
+        id: new PositionId(positionIdFromBech32(id)),
+        idString: id,
+        position,
+        orders,
+        fee: `${pnum(component.fee / 100).toFormattedString({ decimals: 2 })}%`,
+        // TODO:
+        // We do not yet filter `Closed` positions to allow auto-closing position to provide visual
+        // feedback about execution. This is probably best later replaced by either a notification, or a
+        // dedicated view. Fine for now.
+        isWithdrawn: state.state === PositionState_PositionStateEnum.WITHDRAWN,
+        isOpened: state.state === PositionState_PositionStateEnum.OPENED,
+        isClosed: state.state === PositionState_PositionStateEnum.CLOSED,
+        state: state.state,
+      };
     });
 
     return positions.filter(Boolean) as DisplayPosition[];
