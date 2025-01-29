@@ -4,8 +4,6 @@ import Link from 'next/link';
 import orderBy from 'lodash/orderBy';
 import { useEffect, useState, useCallback } from 'react';
 import { connectionStore } from '@/shared/model/connection';
-import { ChevronDown } from '@styled-icons/evaicons-solid/ChevronDown';
-import { ChevronUp } from '@styled-icons/evaicons-solid/ChevronUp';
 import { observer } from 'mobx-react-lite';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Table } from '@penumbra-zone/ui/Table';
@@ -16,7 +14,7 @@ import { stateToString, usePositions } from '@/pages/trade/api/positions.ts';
 import { positionsStore } from '@/pages/trade/model/positions';
 import { pnum } from '@penumbra-zone/types/pnum';
 import { useRegistryAssets } from '@/shared/api/registry';
-import { SquareArrowOutUpRight } from 'lucide-react';
+import { SquareArrowOutUpRight, ChevronUp, ChevronDown } from 'lucide-react';
 import { usePathToMetadata } from '../../model/use-path';
 import { PositionsCurrentValue } from '../positions-current-value';
 import { LoadingCell } from '../market-trades';
@@ -46,6 +44,7 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
       return (
         <Table.Th density='slim'>
           <button
+            className='flex'
             onClick={() => {
               setSortBy({
                 key: sortKey,
@@ -54,7 +53,6 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
             }}
           >
             <Text
-              as='button'
               tableHeadingSmall
               color={sortBy.key === sortKey ? 'text.primary' : 'text.secondary'}
             >
@@ -63,9 +61,9 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
             {sortKey === sortBy.key && (
               <>
                 {sortBy.direction === 'asc' ? (
-                  <ChevronUp className='w-6 h-6 text-text-primary' />
+                  <ChevronUp className='w-4 h-4 text-text-primary' />
                 ) : (
-                  <ChevronDown className='w-6 h-6 text-text-primary' />
+                  <ChevronDown className='w-4 h-4 text-text-primary' />
                 )}
               </>
             )}
