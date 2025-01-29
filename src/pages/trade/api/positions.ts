@@ -15,10 +15,13 @@ import { AddressIndex } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys
 // 2) Take those position ids and get position info from the node
 // Context on two-step fetching process: https://github.com/penumbra-zone/penumbra/pull/4837
 const fetchQuery = async (subaccount?: number): Promise<Map<string, Position>> => {
-  const ownedRes = await Array.fromAsync(penumbra.service(ViewService).ownedPositionIds({
-    subaccount: typeof subaccount === 'undefined' ? undefined : new AddressIndex({ account: subaccount }),
-  }));
-  console.log('POSITIONS', ownedRes)
+  const ownedRes = await Array.fromAsync(
+    penumbra.service(ViewService).ownedPositionIds({
+      // In the future, it might change to `subaccount === 0`, so that the main account will become default
+      subaccount:
+        typeof subaccount === 'undefined' ? undefined : new AddressIndex({ account: subaccount }),
+    }),
+  );
   const positionIds = ownedRes.map(r => r.positionId).filter(Boolean) as PositionId[];
 
   const positionsRes = await Array.fromAsync(
