@@ -39,30 +39,25 @@ export const adaptSummary = (
   summary: DexExPairsSummary,
   baseAsset: Metadata,
   quoteAsset: Metadata,
-  usdc: Metadata | undefined,
+  usdc: Metadata,
   candles?: number[],
   candleTimes?: Date[],
 ): SummaryData => {
-  let liquidity = toValueView({
-    amount: Math.floor(summary.liquidity),
-    metadata: quoteAsset,
-  });
-
-  let directVolume = toValueView({
-    amount: Math.floor(summary.direct_volume_over_window),
-    metadata: quoteAsset,
+  const directVolume = toValueView({
+    amount: Math.max(Math.floor(summary.direct_volume_indexing_denom_over_window), 0.0),
+    metadata: usdc,
   });
 
   // Converts liquidity and trading volume to their equivalent USDC prices if `usdc_price` is available
-  if (summary.usdc_price && usdc) {
-    liquidity = calculateEquivalentInUSDC(summary.liquidity, summary.usdc_price, quoteAsset, usdc);
-
-    directVolume = calculateEquivalentInUSDC(
-      summary.direct_volume_over_window,
-      summary.usdc_price,
-      quoteAsset,
-      usdc,
-    );
+  const rawLiquidity = Math.max(Math.floor(summary.liquidity), 0.0);
+  let liquidity: ValueView;
+  if (summary.usdc_price) {
+    liquidity = calculateEquivalentInUSDC(rawLiquidity, summary.usdc_price, quoteAsset, usdc);
+  } else {
+    liquidity = toValueView({
+      amount: Math.max(Math.floor(rawLiquidity), 0.0),
+      metadata: quoteAsset,
+    });
   }
 
   const priceDiff = summary.price - summary.price_then;

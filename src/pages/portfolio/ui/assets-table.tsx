@@ -17,24 +17,9 @@ import { BalancesResponse } from '@penumbra-zone/protobuf/penumbra/view/v1/view_
 import { AssetIcon } from '@penumbra-zone/ui/AssetIcon';
 import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { formatAmount } from '@penumbra-zone/types/amount';
-import { useRouter } from 'next/navigation';
 import { Button } from '@penumbra-zone/ui/Button';
 import { useState, useEffect } from 'react';
 import { AddressIndex } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
-import { ViewService } from '@penumbra-zone/protobuf';
-import { useQuery } from '@tanstack/react-query';
-import { penumbra } from '@/shared/const/penumbra';
-
-const useChainId = () => {
-  return useQuery({
-    queryKey: ['chainId'],
-    queryFn: async () => {
-      const { parameters } = await penumbra.service(ViewService).appParameters({});
-      return parameters?.chainId;
-    },
-    enabled: connectionStore.connected,
-  });
-};
 
 const LoadingState = () => {
   return (
@@ -237,11 +222,17 @@ const calculateAssetDistribution = (balances: BalancesResponse[]): DistributionR
 
   // Sort by value percentage in descending order and calculate distribution
   const sorted = valuesWithMetadata
-    .map((item, index) => ({
-      ...item,
-      percentage: (item.value / totalValue) * 100,
-      color: `hsl(${(index * GOLDEN_RATIO_ANGLE) % 360}, ${COLOR_SATURATION}%, ${COLOR_LIGHTNESS}%)`,
-    }))
+    .map((item, index) => {
+      const metadata = getMetadataFromBalancesResponse.optional(item.balance);
+      const primaryColor = metadata?.images[0]?.theme?.primaryColorHex;
+      return {
+        ...item,
+        percentage: (item.value / totalValue) * 100,
+        color:
+          primaryColor ??
+          `hsl(${(index * GOLDEN_RATIO_ANGLE) % 360}, ${COLOR_SATURATION}%, ${COLOR_LIGHTNESS}%)`,
+      };
+    })
     .sort((a, b) => b.percentage - a.percentage);
 
   // Split into main assets and small assets
@@ -276,12 +267,10 @@ const calculateAssetDistribution = (balances: BalancesResponse[]): DistributionR
 };
 
 export const AssetsTable = observer(() => {
-  const router = useRouter();
   const { connected } = connectionStore;
   const addressIndex = new AddressIndex({ account: connectionStore.subaccount });
   const { data: balances, isLoading: balancesLoading } = useBalances(addressIndex.account);
   const { data: assets, isLoading: assetsLoading } = useAssets();
-  const { data: chainId } = useChainId();
   const [distribution, setDistribution] = useState<DistributionResult>();
 
   useEffect(() => {
@@ -289,9 +278,6 @@ export const AssetsTable = observer(() => {
       setDistribution(calculateAssetDistribution(balances));
     }
   }, [balances]);
-
-  const isTestnet = chainId !== 'penumbra-1';
-  const stableCoinSymbol = isTestnet ? 'UM' : 'USDC';
 
   const isLoading = balancesLoading || assetsLoading || !balances || !assets || !distribution;
 
@@ -399,22 +385,10 @@ export const AssetsTable = observer(() => {
                         </Table.Td>
                         <Table.Td hAlign='right'>
                           <div className='flex gap-2 justify-end'>
-                            <Button
-                              icon={ArrowDownRight}
-                              iconOnly
-                              onClick={() =>
-                                router.push(`/trade/${stableCoinSymbol}/${metadata.symbol}`)
-                              }
-                            >
+                            <Button icon={ArrowDownRight} iconOnly disabled>
                               Sell
                             </Button>
-                            <Button
-                              icon={ArrowUpRight}
-                              iconOnly
-                              onClick={() =>
-                                router.push(`/trade/${metadata.symbol}/${stableCoinSymbol}`)
-                              }
-                            >
+                            <Button icon={ArrowUpRight} iconOnly disabled>
                               Buy
                             </Button>
                           </div>

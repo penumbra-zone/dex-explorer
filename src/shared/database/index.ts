@@ -67,19 +67,10 @@ class Pindexer {
       .execute();
   }
 
-  async stats(window: DurationWindow, usdc: AssetId): Promise<DexExAggregateSummary[]> {
-    const usdcTable = this.db
-      .selectFrom('dex_ex_pairs_summary')
-      .where('asset_end', '=', Buffer.from(usdc.inner))
-      .where('the_window', '=', '1m')
-      .groupBy(['asset_end', 'asset_start', 'the_window'])
-      .selectAll();
-
+  async stats(window: DurationWindow): Promise<DexExAggregateSummary[]> {
     return this.db
       .selectFrom('dex_ex_aggregate_summary as agg')
       .selectAll()
-      .leftJoin(usdcTable.as('usdc'), 'agg.largest_dv_trading_pair_end', 'usdc.asset_start')
-      .select('usdc.price as usdc_price')
       .where('agg.the_window', '=', window)
       .execute();
   }
@@ -234,6 +225,8 @@ class Pindexer {
         'summary.the_window',
         'summary.direct_volume_over_window',
         'summary.swap_volume_over_window',
+        'summary.direct_volume_indexing_denom_over_window',
+        'summary.swap_volume_indexing_denom_over_window',
         'summary.liquidity',
         'summary.liquidity_then',
         'summary.trades_over_window',
@@ -354,19 +347,25 @@ class Pindexer {
 
   async recentExecutions(base: AssetId, quote: AssetId, amount: number) {
     return await this.db
-      .selectFrom('dex_ex_position_executions')
+      .selectFrom('dex_ex_batch_swap_traces')
       .select([
-        'context_asset_end',
-        'context_asset_start',
-        'delta_1',
-        'delta_2',
-        'lambda_1',
-        'lambda_2',
-        'time',
+        'amount_hops',
+        'asset_hops',
+        'asset_end',
+        'asset_hops',
+        'asset_start',
+        'batch_input',
+        'batch_output',
+        'height',
+        'input',
+        'output',
+        'position_id_hops',
+        'price_float',
         'rowid',
+        'time',
       ])
-      .where('context_asset_start', '=', Buffer.from(base.inner))
-      .where('context_asset_end', '=', Buffer.from(quote.inner))
+      .where('asset_start', '=', Buffer.from(base.inner))
+      .where('asset_end', '=', Buffer.from(quote.inner))
       .orderBy('time', 'desc')
       .orderBy('rowid', 'asc') // Secondary sort by ID to maintain order within the same time frame
       .limit(amount)
