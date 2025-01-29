@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import orderBy from 'lodash/orderBy';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { connectionStore } from '@/shared/model/connection';
 import { observer } from 'mobx-react-lite';
 import { Text } from '@penumbra-zone/ui/Text';
@@ -38,6 +38,33 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
     key: 'effectivePrice',
     direction: 'desc',
   });
+
+  const sortedPositions = useMemo(() => {
+    return orderBy(
+      displayPositions
+        .filter(position => (showInactive ? true : !position.isWithdrawn))
+        .map(position => ({
+          ...position,
+          sortValues: {
+            type: position.isOpened ? position.orders[0]?.direction : stateToString(position.state),
+            tradeAmount: position.isWithdrawn ? 0 : pnum(position.orders[0]?.amount).toNumber(),
+            effectivePrice:
+              position.isClosed || position.isWithdrawn
+                ? 0
+                : pnum(position.orders[0]?.effectivePrice).toNumber(),
+            basePrice:
+              position.isClosed || position.isWithdrawn
+                ? 0
+                : pnum(position.orders[0]?.basePrice).toNumber(),
+            feeTier:
+              position.isClosed || position.isWithdrawn ? 0 : Number(position.fee.replace('%', '')),
+            positionId: position.idString,
+          },
+        })),
+      `sortValues.${sortBy.key}`,
+      sortBy.direction,
+    );
+  }, [displayPositions, showInactive, sortBy]);
 
   const SortableTableHeader = useCallback(
     ({ sortKey, children }: { sortKey: string; children: React.ReactNode }) => {
@@ -98,7 +125,7 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
     return <ErrorNotice />;
   }
 
-  if (!displayPositions.length) {
+  if (!sortedPositions.length) {
     return <NoPositions />;
   }
 
@@ -119,7 +146,7 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                 </Table.Th>
                 <SortableTableHeader sortKey='positionId'>Position ID</SortableTableHeader>
                 <Table.Th hAlign='right' density='slim'>
-                  <HeaderActionButton displayPositions={displayPositions} />
+                  <HeaderActionButton displayPositions={sortedPositions} />
                 </Table.Th>
               </Table.Tr>
             </Table.Thead>
@@ -134,36 +161,7 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                     ))}
                   </Table.Tr>
                 ))}
-              {orderBy(
-                displayPositions
-                  .filter(position => (showInactive ? true : !position.isWithdrawn))
-                  .map(position => ({
-                    ...position,
-                    sortValues: {
-                      type: position.isOpened
-                        ? position.orders[0]?.direction
-                        : stateToString(position.state),
-                      tradeAmount: position.isWithdrawn
-                        ? 0
-                        : pnum(position.orders[0]?.amount).toNumber(),
-                      effectivePrice:
-                        position.isClosed || position.isWithdrawn
-                          ? 0
-                          : pnum(position.orders[0]?.effectivePrice).toNumber(),
-                      basePrice:
-                        position.isClosed || position.isWithdrawn
-                          ? 0
-                          : pnum(position.orders[0]?.basePrice).toNumber(),
-                      feeTier:
-                        position.isClosed || position.isWithdrawn
-                          ? 0
-                          : Number(position.fee.replace('%', '')),
-                      positionId: position.idString,
-                    },
-                  })),
-                `sortValues.${sortBy.key}`,
-                sortBy.direction,
-              ).map(position => {
+              {sortedPositions.map(position => {
                 return (
                   <Table.Tr key={position.idString}>
                     <Table.Td density='slim'>
