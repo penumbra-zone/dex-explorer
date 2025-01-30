@@ -12,7 +12,7 @@ import { Tooltip, TooltipProvider } from '@penumbra-zone/ui/Tooltip';
 import { stateToString, usePositions } from '@/pages/trade/api/positions.ts';
 import { positionsStore } from '@/pages/trade/model/positions';
 import { pnum } from '@penumbra-zone/types/pnum';
-import { useRegistryAssets } from '@/shared/api/registry';
+import { useAssets } from '@/shared/api/assets';
 import { SquareArrowOutUpRight } from 'lucide-react';
 import { usePathToMetadata } from '../../model/use-path';
 import { PositionsCurrentValue } from '../positions-current-value';
@@ -27,7 +27,7 @@ import { Dash } from './dash';
 const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
   const { connected, subaccount } = connectionStore;
   const { baseAsset, quoteAsset } = usePathToMetadata();
-  const { data: assets } = useRegistryAssets();
+  const { data: assets } = useAssets();
   const { data, isLoading, error } = usePositions(subaccount);
   const { displayPositions, setPositions, setAssets } = positionsStore;
 
@@ -112,44 +112,54 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                     <Table.Tr key={position.idString}>
                       <Table.Td density='slim'>
                         <div className='flex flex-col gap-4'>
-                          {position.orders.map((order, i) =>
-                            position.isOpened ? (
-                              <Text
-                                as='div'
-                                detail
-                                color={
-                                  order.direction === 'Buy' ? 'success.light' : 'destructive.light'
-                                }
-                                key={i}
-                              >
-                                {order.direction}
-                              </Text>
-                            ) : (
-                              <Text as='div' detail color='neutral.light' key={i}>
-                                {stateToString(position.state)}
-                              </Text>
-                            ),
-                          )}
+                          {position.orders
+                            .slice(0, position.isWithdrawn ? 1 : Infinity)
+                            .map((order, i) =>
+                              position.isOpened ? (
+                                <Text
+                                  as='div'
+                                  detail
+                                  color={
+                                    order.direction === 'Buy'
+                                      ? 'success.light'
+                                      : 'destructive.light'
+                                  }
+                                  key={i}
+                                >
+                                  {order.direction}
+                                </Text>
+                              ) : (
+                                <Text as='div' detail color='neutral.light' key={i}>
+                                  {stateToString(position.state)}
+                                </Text>
+                              ),
+                            )}
                         </div>
                       </Table.Td>
                       <Table.Td density='slim'>
                         <div className='flex flex-col gap-4'>
-                          {position.orders.map((order, i) => (
-                            <ValueViewComponent
-                              key={i}
-                              valueView={
-                                position.isClosed && i === 1 ? order.basePrice : order.amount
-                              }
-                              trailingZeros={false}
-                              density='slim'
-                            />
-                          ))}
+                          {position.isWithdrawn ? (
+                            <Dash />
+                          ) : (
+                            position.orders.map((order, i) => (
+                              <ValueViewComponent
+                                key={i}
+                                valueView={
+                                  position.isClosed && i === 1 ? order.basePrice : order.amount
+                                }
+                                trailingZeros={false}
+                                density='slim'
+                              />
+                            ))
+                          )}
                         </div>
                       </Table.Td>
                       <Table.Td density='slim'>
                         {/* Fight display inline 4 px spacing */}
                         <div className='flex flex-col gap-2 -mb-1 items-start'>
-                          {!position.isClosed ? (
+                          {position.isClosed || position.isWithdrawn ? (
+                            <Dash />
+                          ) : (
                             position.orders.map((order, i) => (
                               <Tooltip
                                 key={i}
@@ -182,19 +192,19 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                                 </div>
                               </Tooltip>
                             ))
-                          ) : (
-                            <Dash />
                           )}
                         </div>
                       </Table.Td>
                       <Table.Td density='slim'>
                         <Text as='div' detailTechnical color='text.primary'>
-                          {!position.isClosed ? position.fee : <Dash />}
+                          {position.isClosed || position.isWithdrawn ? <Dash /> : position.fee}
                         </Text>
                       </Table.Td>
                       <Table.Td density='slim'>
                         <div className='flex flex-col gap-4'>
-                          {!position.isClosed ? (
+                          {position.isClosed || position.isWithdrawn ? (
+                            <Dash />
+                          ) : (
                             position.orders.map((order, i) => (
                               <ValueViewComponent
                                 key={i}
@@ -203,16 +213,18 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                                 density='slim'
                               />
                             ))
-                          ) : (
-                            <Dash />
                           )}
                         </div>
                       </Table.Td>
                       <Table.Td density='slim'>
                         <div className='flex flex-col gap-4'>
-                          {position.orders.map((order, i) => (
-                            <PositionsCurrentValue key={i} order={order} />
-                          ))}
+                          {position.isWithdrawn ? (
+                            <Dash />
+                          ) : (
+                            position.orders.map((order, i) => (
+                              <PositionsCurrentValue key={i} order={order} />
+                            ))
+                          )}
                         </div>
                       </Table.Td>
                       <Table.Td density='slim'>
