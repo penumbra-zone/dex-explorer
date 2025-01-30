@@ -1,27 +1,12 @@
 import { useAutoAnimate } from '@formkit/auto-animate/react';
-import { Fragment, ReactNode } from 'react';
+import { Fragment } from 'react';
 import { ChevronRight } from 'lucide-react';
 import cn from 'clsx';
 import { TableCell } from '@penumbra-zone/ui/TableCell';
 import { Density } from '@penumbra-zone/ui/Density';
-import { Skeleton } from '@penumbra-zone/ui/Skeleton';
 import { Text } from '@penumbra-zone/ui/Text';
 import { pluralize } from '@/shared/utils/pluralize';
-import { useRecentExecutions } from '../api/recent-executions.ts';
-
-export const Cell = ({ children }: { children: ReactNode }) => {
-  return <div className='flex items-center py-1.5 px-3 min-h-12'>{children}</div>;
-};
-
-export const LoadingCell = () => {
-  return (
-    <Cell>
-      <div className='w-12 h-4'>
-        <Skeleton />
-      </div>
-    </Cell>
-  );
-};
+import { useRecentExecutions } from '../../api/recent-executions.ts';
 
 const ErrorState = ({ error }: { error: Error }) => {
   return <div className='text-red-500'>{String(error)}</div>;
@@ -55,7 +40,7 @@ export const MarketTrades = () => {
 
         {data?.map((trade, index) => (
           <div
-            key={trade.timestamp + trade.amount}
+            key={trade.timestamp + trade.amount + trade.kind}
             className={cn(
               'relative grid grid-cols-subgrid col-span-4',
               'group [&:hover>div:not(:last-child)]:invisible',
