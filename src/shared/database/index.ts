@@ -3,6 +3,7 @@ import fs from 'fs';
 import { Kysely, PostgresDialect, Selectable, sql } from 'kysely';
 import {
   DB,
+  BlockDetails,
   DexExAggregateSummary,
   DexExPositionExecutions,
   DexExPositionReserves,
@@ -29,7 +30,7 @@ export interface VolumeAndFees {
   executionCount: number;
 }
 
-class Pindexer {
+export class Pindexer {
   private db: Kysely<DB>;
 
   constructor() {
@@ -397,6 +398,34 @@ class Pindexer {
       fees2: row.fees2,
       executionCount: row.executionCount,
     }));
+  }
+
+  async block(height: string | number) {
+    return await this.db
+      .selectFrom('block_details')
+      .selectAll()
+      .where('height', '=', height.toString())
+      .executeTakeFirst();
+  }
+
+  async blockTransactions(height: number) {
+    return this.db
+      .selectFrom('dex_ex_batch_swap_traces')
+      .selectAll()
+      .where('height', '=', height)
+      .execute();
+  }
+
+  async blockBatchSwaps(height: number) {
+    return this.db
+      .selectFrom('dex_ex_pairs_block_snapshot')
+      .selectAll()
+      .where(sql`EXTRACT(EPOCH FROM time)::integer = (
+        SELECT EXTRACT(EPOCH FROM timestamp)::integer 
+        FROM block_details 
+        WHERE height = ${height.toString()}
+      )`)
+      .execute();
   }
 }
 

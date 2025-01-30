@@ -4,6 +4,7 @@ import { execSync } from 'child_process';
 
 const targetSchemaPath = './src/shared/database/schema.ts';
 const pindexerTableWhitelist = [
+  'block_details',
   'dex_ex_aggregate_summary',
   'dex_ex_pairs_block_snapshot',
   'dex_ex_pairs_summary',
