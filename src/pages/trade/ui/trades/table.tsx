@@ -31,6 +31,8 @@ export interface TradesTableProps {
 export const TradesTable = ({ error, data, isLoading }: TradesTableProps) => {
   const [parent] = useAutoAnimate();
 
+  const rows = data ?? (new Array(10).fill({ hops: [] }) as RecentExecution[]);
+
   return (
     <Density slim>
       <div ref={parent} className='grid grid-cols-4 pt-4 px-4 pb-0 h-auto overflow-auto'>
@@ -43,9 +45,9 @@ export const TradesTable = ({ error, data, isLoading }: TradesTableProps) => {
 
         {error && <ErrorState error={error} />}
 
-        {data?.map((trade, index) => (
+        {rows.map((trade, index) => (
           <div
-            key={trade.timestamp + trade.amount + trade.kind}
+            key={data ? trade.timestamp + trade.amount + trade.kind : index}
             className={cn(
               'relative grid grid-cols-subgrid col-span-4',
               'group [&:hover>div:not(:last-child)]:invisible',
@@ -53,7 +55,7 @@ export const TradesTable = ({ error, data, isLoading }: TradesTableProps) => {
           >
             <TableCell
               numeric
-              variant={index !== data.length - 1 ? 'cell' : 'lastCell'}
+              variant={index !== rows.length - 1 ? 'cell' : 'lastCell'}
               loading={isLoading}
             >
               <span
@@ -63,21 +65,21 @@ export const TradesTable = ({ error, data, isLoading }: TradesTableProps) => {
               </span>
             </TableCell>
             <TableCell
-              variant={index !== data.length - 1 ? 'cell' : 'lastCell'}
+              variant={index !== rows.length - 1 ? 'cell' : 'lastCell'}
               numeric
               loading={isLoading}
             >
               {trade.amount}
             </TableCell>
             <TableCell
-              variant={index !== data.length - 1 ? 'cell' : 'lastCell'}
+              variant={index !== rows.length - 1 ? 'cell' : 'lastCell'}
               numeric
               loading={isLoading}
             >
               {formatLocalTime(trade.timestamp)}
             </TableCell>
             <TableCell
-              variant={index !== data.length - 1 ? 'cell' : 'lastCell'}
+              variant={index !== rows.length - 1 ? 'cell' : 'lastCell'}
               loading={isLoading}
             >
               <Text

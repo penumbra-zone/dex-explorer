@@ -19,22 +19,19 @@ interface ExecutionCollection {
 }
 
 const adaptBody = (body: MyExecutionsRequestBody[]): ExecutionCollection[] => {
-  const reduced = body.reduce(
-    (accum, currentValue) => {
-      const hex =
-        uint8ArrayToHex(currentValue.start.inner) + uint8ArrayToHex(currentValue.end.inner);
-      if (accum[hex]) {
-        accum[hex].heights.push(currentValue.blockHeight);
-      } else {
-        accum[hex] = {
-          base: AssetId.fromJson(currentValue.start),
-          quote: AssetId.fromJson(currentValue.end),
-          heights: [currentValue.blockHeight],
-        };
-      }
-    },
-    {} as Record<string, ExecutionCollection>,
-  );
+  const reduced = body.reduce<Record<string, ExecutionCollection>>((accum, currentValue) => {
+    const hex = uint8ArrayToHex(currentValue.start.inner) + uint8ArrayToHex(currentValue.end.inner);
+    if (accum[hex]) {
+      accum[hex].heights.push(currentValue.blockHeight);
+    } else {
+      accum[hex] = {
+        base: AssetId.fromJson(currentValue.start),
+        quote: AssetId.fromJson(currentValue.end),
+        heights: [currentValue.blockHeight],
+      };
+    }
+    return accum;
+  }, {});
 
   return Object.values(reduced);
 };
@@ -55,8 +52,7 @@ export async function POST(
 
   const registryClient = new ChainRegistryClient();
 
-  const body: MyExecutionsRequestBody[] = await req.json();
-  console.log('BODY', body);
+  const body = (await req.json()) as MyExecutionsRequestBody[];
   if (!Array.isArray(body)) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }

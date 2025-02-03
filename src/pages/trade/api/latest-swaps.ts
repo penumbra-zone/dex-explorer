@@ -32,20 +32,25 @@ export const useLatestSwaps = (subaccount?: number) => {
     queryKey: ['my-executions', data?.length ?? 0],
     enabled: !isLoading,
     queryFn: async () => {
-      console.log('REQUEST', data, isLoading);
       if (!data?.length) {
         return [];
       }
 
+      const mapped = data
+        .map(swap => {
+          return (
+            swap.pair && {
+              blockHeight: Number(swap.blockHeight),
+              start: swap.pair.start,
+              end: swap.pair.end,
+            }
+          );
+        })
+        .filter(Boolean);
+
       const fetchRes = await fetch(`/api/my-executions`, {
         method: 'POST',
-        body: JSON.stringify(
-          data.map(swap => ({
-            blockHeight: swap.blockHeight,
-            start: swap.pair.start,
-            end: swap.pair.end,
-          })),
-        ),
+        body: JSON.stringify(mapped),
       });
 
       const jsonRes = (await fetchRes.json()) as Serialized<RecentExecution[] | { error: string }>;
