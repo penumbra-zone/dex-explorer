@@ -4,7 +4,7 @@ import { MetadataFetchFn, TransactionViewComponent } from './tx-view-component';
 import { TransactionInfo } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
 import type { Jsonified } from '@penumbra-zone/types/jsonified';
 import { useState } from 'react';
-// import { SegmentedControl } from '@penumbra-zone/ui/SegmentedControl';
+import { SegmentedPicker } from './tx-view-component/segmented-picker';
 import { asPublicTransactionView } from '@penumbra-zone/perspective/translators/transaction-view';
 import { typeRegistry, ViewService } from '@penumbra-zone/protobuf';
 // import { useQuery } from '@tanstack/react-query';
@@ -71,13 +71,13 @@ export const TxViewer = ({ txInfo }: { txInfo?: TransactionInfo }) => {
       </div>
 
       <div className='mx-auto mb-4 max-w-[70%]'>
-        {/* <SegmentedControl
+        <SegmentedPicker
           options={filteredOptions}
           value={option}
           onChange={setOption}
           grow
           size='lg'
-        /> */}
+        />
       </div>
       {option === TxDetailsTab.PRIVATE && txInfo && (
         <>
