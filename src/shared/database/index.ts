@@ -372,6 +372,33 @@ class Pindexer {
       .execute();
   }
 
+  async myExecutions(base: AssetId, quote: AssetId, heights: number[]) {
+    return await this.db
+      .selectFrom('dex_ex_batch_swap_traces')
+      .select([
+        'amount_hops',
+        'asset_hops',
+        'asset_end',
+        'asset_hops',
+        'asset_start',
+        'batch_input',
+        'batch_output',
+        'height',
+        'input',
+        'output',
+        'position_id_hops',
+        'price_float',
+        'rowid',
+        'time',
+      ])
+      .where('asset_start', '=', Buffer.from(base.inner))
+      .where('asset_end', '=', Buffer.from(quote.inner))
+      .where('height', 'in', heights)
+      .orderBy('time', 'desc')
+      .orderBy('rowid', 'asc') // Secondary sort by ID to maintain order within the same time frame
+      .execute();
+  }
+
   async getPositionVolumeAndFees(positionId: PositionId): Promise<VolumeAndFees[]> {
     const results = await this.db
       .selectFrom('dex_ex_position_executions')
