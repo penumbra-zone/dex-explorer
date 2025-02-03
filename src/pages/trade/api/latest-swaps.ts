@@ -4,26 +4,44 @@ import { penumbra } from '@/shared/const/penumbra';
 import { ViewService } from '@penumbra-zone/protobuf';
 import { LatestSwapsResponse } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
 import { AddressIndex } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
+import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { DirectedTradingPair } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { RecentExecution } from '@/shared/api/server/recent-executions';
 import { deserialize, Serialized } from '@/shared/utils/serializer';
 import { useRefetchOnNewBlock } from '@/shared/api/compact-block';
+import { usePathToMetadata } from '@/pages/trade/model/use-path';
 
-const fetchQuery = async (subaccount?: number): Promise<LatestSwapsResponse[]> => {
-  return await Array.fromAsync(
-    penumbra.service(ViewService).latestSwaps({
-      accountFilter:
-        typeof subaccount === 'undefined' ? undefined : new AddressIndex({ account: subaccount }),
-    }),
-  );
+const fetchQuery = async (subaccount?: number, base?: AssetId, quote?: AssetId): Promise<LatestSwapsResponse[]> => {
+  if (typeof subaccount === 'undefined' || !base || !quote) {
+    return [];
+  }
+
+  const accountFilter = typeof subaccount === 'undefined' ? undefined : new AddressIndex({ account: subaccount });
+  const swaps = await Promise.all([
+    Array.fromAsync(
+      penumbra.service(ViewService).latestSwaps({
+        pair: new DirectedTradingPair({ start: base, end: quote }),
+        accountFilter,
+      })),
+    Array.fromAsync(
+      penumbra.service(ViewService).latestSwaps({
+        pair: new DirectedTradingPair({ start: quote, end: base }),
+        accountFilter,
+      })),
+  ]);
+
+  return swaps.flat();
 };
 
 /**
  * Must be used within the `observer` mobX HOC
  */
 export const useLatestSwaps = (subaccount?: number) => {
+  const { baseAsset, quoteAsset, baseSymbol, quoteSymbol } = usePathToMetadata();
+
   const { data, isLoading } = useQuery({
-    queryKey: ['my-trades', subaccount],
-    queryFn: () => fetchQuery(subaccount),
+    queryKey: ['my-trades', subaccount, baseSymbol, quoteSymbol],
+    queryFn: () => fetchQuery(subaccount, baseAsset?.penumbraAssetId, quoteAsset?.penumbraAssetId),
     retry: 1,
     enabled: connectionStore.connected,
   });
