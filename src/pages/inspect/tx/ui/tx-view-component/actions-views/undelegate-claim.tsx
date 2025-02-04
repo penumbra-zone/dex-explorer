@@ -1,6 +1,6 @@
 import { UndelegateClaim } from '@penumbra-zone/protobuf/penumbra/core/component/stake/v1/stake_pb';
 import { ViewBox } from '../viewbox';
-// import { IdentityKeyComponent } from '../../identity-key-component';
+import { IdentityKeyComponent } from './identity-key-component';
 import { ActionDetails } from './action-details';
 import {
   getUnbondingStartHeightFromUndelegateClaim,
@@ -18,7 +18,7 @@ export const UndelegateClaimComponent = ({ value }: { value: UndelegateClaim }) 
       visibleContent={
         <ActionDetails>
           <ActionDetails.Row label='Validator'>
-            {/* <IdentityKeyComponent identityKey={validatorIdentity} /> */}
+            <IdentityKeyComponent identityKey={validatorIdentity} />
           </ActionDetails.Row>
 
           <ActionDetails.Row label='Unbonding start height'>

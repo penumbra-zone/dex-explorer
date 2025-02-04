@@ -4,9 +4,8 @@ import { ViewService } from '@penumbra-zone/protobuf';
 import { getGrpcTransport } from '@/shared/api/transport';
 import { TransactionId } from '@penumbra-zone/protobuf/penumbra/core/txhash/v1/txhash_pb';
 import { hexToUint8Array } from '@penumbra-zone/types/hex';
-import { TransactionInfoByHashResponse } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
 
-export const useTransaction = (txHash: string): TransactionInfoByHashResponse => {
+export const useTransactionInfo = (txHash: string) => {
   return useQuery({
     queryKey: ['transaction', txHash],
     retry: 1,
@@ -18,7 +17,7 @@ export const useTransaction = (txHash: string): TransactionInfoByHashResponse =>
           inner: hexToUint8Array(txHash),
         }),
       });
-      return res;
+      return res.txInfo;
     },
     enabled: !!txHash,
   });

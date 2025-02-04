@@ -7,12 +7,7 @@ import {
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { joinLoHiAmount } from '@penumbra-zone/types/amount';
 import { bech32mAssetId } from '@penumbra-zone/bech32m/passet';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@penumbra-zone/ui/Tooltip';
+import { Tooltip } from '@penumbra-zone/ui/Tooltip';
 import { InfoIcon } from 'lucide-react';
 
 export const PositionOpenComponent = ({ value }: { value: PositionOpen }) => {
@@ -63,19 +58,9 @@ export const PositionOpenComponent = ({ value }: { value: PositionOpen }) => {
 
           <div className='flex gap-2'>
             <p className='font-bold'>Trading Parameters</p>
-            {/* <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <InfoIcon className='size-4 cursor-pointer text-muted-foreground hover:text-[#8D5728]' />
-                </TooltipTrigger>
-                <TooltipContent className='w-[250px]'>
-                  <p>
-                    p and q are the price coefficients of the trading function: phi(r1, r2) = p * r1
-                    + q * r2, where r1 and r2 represent the old and new reserves.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider> */}
+            <Tooltip message='p and q are the price coefficients of the trading function: phi(r1, r2) = p * r1 + q * r2, where r1 and r2 represent the old and new reserves.'>
+              <InfoIcon className='size-4 cursor-pointer text-muted-foreground hover:text-[#8D5728]' />
+            </Tooltip>
           </div>
 
           {value.position?.phi?.component?.p && (
