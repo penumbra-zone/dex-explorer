@@ -6,6 +6,7 @@ import { NotConnected } from './not-connected';
 
 export const MyTrades = observer(() => {
   const { subaccount, connected } = connectionStore;
+  // TODO: filter out irrelevant swaps from pindexer
   const { data, isLoading, error } = useLatestSwaps(subaccount);
 
   if (!connected) {
