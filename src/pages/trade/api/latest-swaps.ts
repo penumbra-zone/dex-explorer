@@ -1,37 +1,50 @@
 import { useQuery } from '@tanstack/react-query';
-import { connectionStore } from '@/shared/model/connection';
-import { penumbra } from '@/shared/const/penumbra';
 import { ViewService } from '@penumbra-zone/protobuf';
 import { LatestSwapsResponse } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
 import { AddressIndex } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
 import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { DirectedTradingPair } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
-import { RecentExecution } from '@/shared/api/server/recent-executions';
-import { deserialize, Serialized } from '@/shared/utils/serializer';
+import type { MyExecutionsRequestBody } from '@/shared/api/server/my-executions';
+import type { RecentExecution } from '@/shared/api/server/recent-executions';
+import { connectionStore } from '@/shared/model/connection';
+import { penumbra } from '@/shared/const/penumbra';
 import { useRefetchOnNewBlock } from '@/shared/api/compact-block';
-import { usePathToMetadata } from '@/pages/trade/model/use-path';
+import { apiPostFetch } from '@/shared/utils/api-fetch';
+import { usePathToMetadata } from '../model/use-path';
+import { queryClient } from '@/shared/const/queryClient';
 
-const fetchQuery = async (subaccount?: number, base?: AssetId, quote?: AssetId): Promise<LatestSwapsResponse[]> => {
+const fetchQuery = async (
+  subaccount?: number,
+  base?: AssetId,
+  quote?: AssetId,
+): Promise<LatestSwapsResponse[]> => {
   if (typeof subaccount === 'undefined' || !base || !quote) {
     return [];
   }
 
-  const accountFilter = typeof subaccount === 'undefined' ? undefined : new AddressIndex({ account: subaccount });
+  // Two requests to get swaps in both directions: buy and sell
+  const accountFilter =
+    typeof subaccount === 'undefined' ? undefined : new AddressIndex({ account: subaccount });
   const swaps = await Promise.all([
     Array.fromAsync(
       penumbra.service(ViewService).latestSwaps({
         pair: new DirectedTradingPair({ start: base, end: quote }),
         accountFilter,
-      })),
+      }),
+    ),
     Array.fromAsync(
       penumbra.service(ViewService).latestSwaps({
         pair: new DirectedTradingPair({ start: quote, end: base }),
         accountFilter,
-      })),
+      }),
+    ),
   ]);
 
   return swaps.flat();
 };
+
+const MY_TRADES_KEY = 'my-trades';
+const MY_EXECUTIONS_KEY = 'my-executions';
 
 /**
  * Must be used within the `observer` mobX HOC
@@ -39,53 +52,57 @@ const fetchQuery = async (subaccount?: number, base?: AssetId, quote?: AssetId):
 export const useLatestSwaps = (subaccount?: number) => {
   const { baseAsset, quoteAsset, baseSymbol, quoteSymbol } = usePathToMetadata();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['my-trades', subaccount, baseSymbol, quoteSymbol],
+  const myTradesQuery = useQuery({
+    queryKey: [MY_TRADES_KEY, subaccount, baseSymbol, quoteSymbol],
+    staleTime: Infinity,
     queryFn: () => fetchQuery(subaccount, baseAsset?.penumbraAssetId, quoteAsset?.penumbraAssetId),
-    retry: 1,
     enabled: connectionStore.connected,
   });
 
-  const query = useQuery({
-    queryKey: ['my-executions', data?.length ?? 0],
-    enabled: !isLoading,
+  /**
+   * When a new swap is made, it firstly appears in `latestSwaps` in Prax (myTradesQuery),
+   * and after several seconds it appears in pindexer. This function makes `myExecutionsQuery`
+   * refetch each 5 seconds when the amount of swaps in `myTradesQuery` is different from `myExecutionsQuery`.
+   */
+  const getRefetchInterval = () => {
+    const data = queryClient.getQueryData<RecentExecution[]>([
+      MY_EXECUTIONS_KEY,
+      myTradesQuery.data?.length ?? 0,
+    ]);
+    return myTradesQuery.data?.length !== data?.length ? 5000 : 0;
+  };
+
+  // Pindexer query – will not run if `myTradesQuery` data didn't change
+  const myExecutionsQuery = useQuery({
+    queryKey: [MY_EXECUTIONS_KEY, myTradesQuery.data?.length ?? 0],
+    enabled: typeof myTradesQuery.data !== 'undefined',
+    staleTime: Infinity,
+    refetchInterval: getRefetchInterval,
     queryFn: async () => {
-      if (!data?.length) {
+      if (!myTradesQuery.data?.length) {
         return [];
       }
 
-      const mapped = data
+      const mapped = myTradesQuery.data
         .map(swap => {
           return (
             swap.pair && {
               blockHeight: Number(swap.blockHeight),
-              start: swap.pair.start,
-              end: swap.pair.end,
+              quote: swap.pair.start?.toJson(),
+              base: swap.pair.end?.toJson(),
             }
           );
         })
-        .filter(Boolean);
+        .filter(Boolean) as MyExecutionsRequestBody[];
 
-      const fetchRes = await fetch(`/api/my-executions`, {
-        method: 'POST',
-        body: JSON.stringify(mapped),
-      });
-
-      const jsonRes = (await fetchRes.json()) as Serialized<RecentExecution[] | { error: string }>;
-
-      if ('error' in jsonRes) {
-        throw new Error(jsonRes.error);
-      }
-
-      if (Array.isArray(jsonRes)) {
-        return jsonRes.map(deserialize) as RecentExecution[];
-      }
-
-      return deserialize(jsonRes);
+      return apiPostFetch<RecentExecution[]>('/api/my-executions', mapped);
     },
   });
 
-  useRefetchOnNewBlock('my-executions', query);
+  useRefetchOnNewBlock(MY_TRADES_KEY, myTradesQuery);
 
-  return query;
+  return {
+    ...myExecutionsQuery,
+    isLoading: myTradesQuery.isLoading || myExecutionsQuery.isLoading,
+  };
 };

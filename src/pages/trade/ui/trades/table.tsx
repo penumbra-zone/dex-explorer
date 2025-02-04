@@ -7,6 +7,7 @@ import { Density } from '@penumbra-zone/ui/Density';
 import { Text } from '@penumbra-zone/ui/Text';
 import { pluralize } from '@/shared/utils/pluralize';
 import type { RecentExecution } from '@/shared/api/server/recent-executions';
+import { EmptyTrades } from './empty';
 
 const ErrorState = ({ error }: { error: Error }) => {
   return <div className='text-red-500'>{String(error)}</div>;
@@ -32,6 +33,10 @@ export const TradesTable = ({ error, data, isLoading }: TradesTableProps) => {
   const [parent] = useAutoAnimate();
 
   const rows = data ?? (new Array(10).fill({ hops: [] }) as RecentExecution[]);
+
+  if (!isLoading && !data?.length) {
+    return <EmptyTrades />;
+  }
 
   return (
     <Density slim>

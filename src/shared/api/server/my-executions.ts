@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { JsonObject } from '@bufbuild/protobuf';
+import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { ChainRegistryClient } from '@penumbra-labs/registry';
+import { uint8ArrayToHex } from '@penumbra-zone/types/hex';
 import { serialize, Serialized } from '@/shared/utils/serializer';
 import { pindexer } from '@/shared/database';
 import { RecentExecutionsResponse, transformData } from './recent-executions';
-import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
-import { uint8ArrayToHex } from '@penumbra-zone/types/hex';
 
-export interface MyExecutionsRequestBody {
+export interface MyExecutionsRequestBody extends JsonObject {
   blockHeight: number;
-  start: AssetId;
-  end: AssetId;
+  base: JsonObject;
+  quote: JsonObject;
 }
 
 interface ExecutionCollection {
@@ -18,15 +19,22 @@ interface ExecutionCollection {
   heights: number[];
 }
 
+/**
+ * Combines the list of pair:height combinations into a list of unique pairs with all heights in a merged array.
+ * This transformation is needed to reduce the amount of database queries.
+ */
 const adaptBody = (body: MyExecutionsRequestBody[]): ExecutionCollection[] => {
   const reduced = body.reduce<Record<string, ExecutionCollection>>((accum, currentValue) => {
-    const hex = uint8ArrayToHex(currentValue.start.inner) + uint8ArrayToHex(currentValue.end.inner);
+    const base = AssetId.fromJson(currentValue.base);
+    const quote = AssetId.fromJson(currentValue.quote);
+    const hex = uint8ArrayToHex(base.inner) + uint8ArrayToHex(quote.inner);
+
     if (accum[hex]) {
       accum[hex].heights.push(currentValue.blockHeight);
     } else {
       accum[hex] = {
-        base: AssetId.fromJson(currentValue.start),
-        quote: AssetId.fromJson(currentValue.end),
+        base,
+        quote,
         heights: [currentValue.blockHeight],
       };
     }
@@ -37,10 +45,10 @@ const adaptBody = (body: MyExecutionsRequestBody[]): ExecutionCollection[] => {
 };
 
 /**
- * Returns swap traces array for the given asset pair and within the list of block heights. Params:
- * 1. `baseAsset` {string}: base asset symbol
- * 2. `quoteAsset` {string}: quote asset symbol
- * 3. `heights` {number[]}: number of recent executions to return
+ * Returns swap traces array for a given list of pair:height combinations.
+ * 1. `base` {AssetId}: base asset ID
+ * 2. `quote` {AssetId}: quote asset ID
+ * 3. `blochHeight` {number}: swap block height
  */
 export async function POST(
   req: NextRequest,
@@ -57,6 +65,7 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
+  // transform data to optimize database queries
   const data = adaptBody(body);
 
   // We need two queries: * base -> quote (sell)
