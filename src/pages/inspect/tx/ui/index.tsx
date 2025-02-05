@@ -9,6 +9,7 @@ import { Skeleton } from '@/shared/ui/skeleton';
 export function InspectTx() {
   const params = useParams<{ hash: string }>();
   const { data: txInfo, isLoading, isError } = useTransactionInfo(params?.hash ?? '');
+  console.log('TCL: InspectTx -> txInfo', txInfo);
 
   return (
     <div className='flex flex-col items-center justify-center'>
