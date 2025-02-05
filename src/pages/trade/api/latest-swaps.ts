@@ -12,6 +12,7 @@ import { useRefetchOnNewBlock } from '@/shared/api/compact-block';
 import { apiPostFetch } from '@/shared/utils/api-fetch';
 import { usePathToMetadata } from '../model/use-path';
 import { queryClient } from '@/shared/const/queryClient';
+import { pnum } from '@penumbra-zone/types/pnum';
 
 const fetchQuery = async (
   subaccount = 0,
@@ -86,10 +87,14 @@ export const useLatestSwaps = (subaccount?: number) => {
       const mapped = myTradesQuery.data
         .map(swap => {
           return (
-            swap.pair && {
-              blockHeight: Number(swap.blockHeight),
-              quote: swap.pair.start?.toJson(),
-              base: swap.pair.end?.toJson(),
+            swap.pair &&
+            swap.input &&
+            swap.output && {
+              height: Number(swap.blockHeight),
+              input: Number(pnum(swap.input.amount).toNumber()),
+              output: Number(pnum(swap.output.amount).toNumber()),
+              base: swap.pair.start?.toJson(),
+              quote: swap.pair.end?.toJson(),
             }
           );
         })

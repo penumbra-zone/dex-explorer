@@ -371,29 +371,62 @@ class Pindexer {
       .execute();
   }
 
-  async myExecutions(base: AssetId, quote: AssetId, heights: number[]) {
-    return await this.db
-      .selectFrom('dex_ex_batch_swap_traces')
-      .select([
-        'amount_hops',
-        'asset_hops',
-        'asset_end',
-        'asset_start',
-        'batch_input',
-        'batch_output',
-        'height',
-        'input',
-        'output',
-        'position_id_hops',
-        'price_float',
-        'rowid',
-        'time',
-      ])
-      .where('asset_start', '=', Buffer.from(base.inner))
-      .where('asset_end', '=', Buffer.from(quote.inner))
-      .where('height', 'in', heights)
-      .orderBy('time', 'desc')
-      .orderBy('rowid', 'asc') // Secondary sort by ID to maintain order within the same time frame
+  async myTrades(
+    data: { base: AssetId; quote: AssetId; height: number; input: number; output: number }[],
+  ) {
+    // prepare data for insertion by encoding AssetId to base64 and assigning correct input amount based on direction
+    const sell = data.map(swap => ({
+      type: 'sell',
+      height: swap.height,
+      amount: swap.output,
+      quote: Buffer.from(swap.base.inner).toString('base64'),
+      base: Buffer.from(swap.quote.inner).toString('base64'),
+    }));
+    const buy = data.map(swap => ({
+      type: 'buy',
+      height: swap.height,
+      amount: swap.input,
+      quote: Buffer.from(swap.quote.inner).toString('base64'),
+      base: Buffer.from(swap.base.inner).toString('base64'),
+    }));
+
+    // stringify values to insert into a virtual table
+    const swapsJson = JSON.stringify(buy.concat(sell));
+
+    // create virtual table from JSON, decode buffers again from base64 strings
+    const latestSwaps = this.db.with('latest_swaps', db =>
+      db
+        .selectFrom(
+          sql<{
+            type: 'buy' | 'sell';
+            base: string;
+            quote: string;
+            height: number;
+            amount: number;
+          }>`jsonb_to_recordset(${sql.lit(swapsJson)}::jsonb)`.as<'latest_swaps'>(
+            sql`latest_swaps(base TEXT, quote TEXT, height INT, amount INT, type TEXT)`,
+          ),
+        )
+        .select(exp => [
+          'type',
+          'height',
+          'amount',
+          sql<Buffer>`decode(${exp.ref('latest_swaps.base')}, 'base64')::bytea`.as('base'),
+          sql<Buffer>`decode(${exp.ref('latest_swaps.quote')}, 'base64')::bytea`.as('quote'),
+        ]),
+    );
+
+    // join virtual table with latest swaps
+    return latestSwaps
+      .selectFrom('dex_ex_batch_swap_traces as swaps')
+      .innerJoin('latest_swaps', join =>
+        join
+          .onRef('swaps.asset_start', '=', 'latest_swaps.base')
+          .onRef('swaps.asset_end', '=', 'latest_swaps.quote')
+          .onRef('swaps.height', '=', 'latest_swaps.height')
+          .onRef('swaps.input', '=', 'latest_swaps.amount'),
+      )
+      .selectAll()
       .execute();
   }
 
