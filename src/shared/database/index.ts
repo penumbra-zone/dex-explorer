@@ -350,7 +350,6 @@ class Pindexer {
       .selectFrom('dex_ex_batch_swap_traces')
       .select([
         'amount_hops',
-        'asset_hops',
         'asset_end',
         'asset_hops',
         'asset_start',
@@ -379,7 +378,6 @@ class Pindexer {
         'amount_hops',
         'asset_hops',
         'asset_end',
-        'asset_hops',
         'asset_start',
         'batch_input',
         'batch_output',

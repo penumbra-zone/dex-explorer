@@ -14,11 +14,11 @@ import { usePathToMetadata } from '../model/use-path';
 import { queryClient } from '@/shared/const/queryClient';
 
 const fetchQuery = async (
-  subaccount?: number,
+  subaccount = 0,
   base?: AssetId,
   quote?: AssetId,
 ): Promise<LatestSwapsResponse[]> => {
-  if (typeof subaccount === 'undefined' || !base || !quote) {
+  if (!base || !quote) {
     return [];
   }
 
