@@ -38,7 +38,8 @@ const getMetadata: MetadataFetchFn = async ({ assetId }) => {
 };
 
 export const TxViewer = observer(({ txInfo }: { txInfo?: TransactionInfo }) => {
-  const { connected } = connectionStore;
+  // const { connected } = connectionStore;
+  const connected = false;
   const [option, setOption] = useState(connected ? TxDetailsTab.PRIVATE : TxDetailsTab.PUBLIC);
 
   useEffect(() => {
@@ -88,7 +89,7 @@ export const TxViewer = observer(({ txInfo }: { txInfo?: TransactionInfo }) => {
           />
         </div>
       )}
-      {option === TxDetailsTab.PRIVATE && txInfo && (
+      {/* {option === TxDetailsTab.PRIVATE && txInfo && (
         <>
           <TransactionViewComponent
             txv={
@@ -113,7 +114,7 @@ export const TxViewer = observer(({ txInfo }: { txInfo?: TransactionInfo }) => {
       )}
       {option === TxDetailsTab.RECEIVER && receiverView && showReceiverTransactionView && (
         <TransactionViewComponent txv={receiverView} metadataFetcher={getMetadata} />
-      )}
+      )} */}
       {option === TxDetailsTab.PUBLIC && txInfo && (
         <TransactionViewComponent
           txv={asPublicTransactionView(txInfo.view)}

@@ -8,7 +8,9 @@ import { Skeleton } from '@/shared/ui/skeleton';
 
 export function InspectTx() {
   const params = useParams<{ hash: string }>();
-  const { data: txInfo, isLoading, isError } = useTransactionInfo(params?.hash ?? '');
+  const { data: txInfo, isLoading, isError, error } = useTransactionInfo(params?.hash ?? '');
+  console.log('TCL: InspectTx -> error', error);
+  console.log('TCL: InspectTx -> isError', isError);
   console.log('TCL: InspectTx -> txInfo', txInfo);
 
   return (

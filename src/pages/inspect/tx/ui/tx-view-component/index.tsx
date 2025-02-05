@@ -23,7 +23,7 @@ const useFeeMetadata = (txv: TransactionView, getMetadata: MetadataFetchFn) => {
     new ValueView({
       valueView: {
         case: 'unknownAssetId',
-        value: { amount },
+        value: { amount: amount ?? 0 },
       },
     }),
   );
@@ -62,6 +62,8 @@ export const TransactionViewComponent = ({
   metadataFetcher: MetadataFetchFn;
 }) => {
   const { feeValueView, isLoading, error } = useFeeMetadata(txv, metadataFetcher);
+  console.log('TCL: feeValueView', feeValueView);
+  console.log('TCL: txv', txv);
 
   return (
     <div className='flex flex-col gap-8'>
@@ -76,7 +78,7 @@ export const TransactionViewComponent = ({
           label='Transaction Fee'
           visibleContent={
             <div className='flex items-center gap-2'>
-              <ValueViewComponent valueView={feeValueView} />
+              {/* {feeValueView && <ValueViewComponent valueView={feeValueView} />} */}
               {isLoading && <span className='font-mono text-light-brown'>Loading...</span>}
               {error ? (
                 <span className='font-mono text-red-400'>Error: {String(error)}</span>
