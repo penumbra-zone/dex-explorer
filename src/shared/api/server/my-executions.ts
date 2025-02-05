@@ -46,6 +46,10 @@ const adaptBody = (body: MyExecutionsRequestBody[]): ExecutionCollection[] => {
 
 /**
  * Returns swap traces array for a given list of pair:height combinations.
+ * Needed to merge `latestSwap` method from ViewService with `dex_ex_batch_swap_traces` table from
+ * Pindexer and get specific swap time, price, hops information, and more.
+ *
+ * Parameters:
  * 1. `base` {AssetId}: base asset ID
  * 2. `quote` {AssetId}: quote asset ID
  * 3. `blochHeight` {number}: swap block height
