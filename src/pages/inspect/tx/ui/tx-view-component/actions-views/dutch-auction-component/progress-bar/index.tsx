@@ -46,7 +46,7 @@ export const ProgressBar = ({
 
   return (
     <div className='relative flex grow items-center justify-between gap-2 overflow-hidden'>
-      <ValueViewComponent view={input} size='sm' />
+      <ValueViewComponent valueView={input} />
 
       <div className='relative flex min-h-4 shrink grow items-center overflow-hidden'>
         {!auctionIsUpcoming && (
@@ -89,7 +89,7 @@ export const ProgressBar = ({
       </div>
 
       {outputMetadata && (
-        <ValueViewComponent view={getEmptyValueView(outputMetadata)} size='sm' showValue={false} />
+        <ValueViewComponent valueView={getEmptyValueView(outputMetadata)} showValue={false} />
       )}
     </div>
   );

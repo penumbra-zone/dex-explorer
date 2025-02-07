@@ -14,7 +14,7 @@ export const MemoViewComponent = ({ memo: { memoView } }: { memo: MemoView }) =>
               <ActionDetails>
                 <ActionDetails.Row label='Return Address'>
                   {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- field is always populated when the component is rendered */}
-                  <AddressViewComponent view={memoView.value.plaintext!.returnAddress} />
+                  <AddressViewComponent addressView={memoView.value.plaintext!.returnAddress} />
                 </ActionDetails.Row>
                 <ActionDetails.Row label='Memo Text'>
                   <span

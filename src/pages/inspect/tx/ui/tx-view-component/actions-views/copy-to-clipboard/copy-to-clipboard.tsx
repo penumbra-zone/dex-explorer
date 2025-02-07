@@ -19,9 +19,7 @@ const CopyToClipboard = forwardRef<HTMLButtonElement, CopyToClipboardProps>(
     return (
       <Button
         type='button'
-        variant='link'
         ref={ref}
-        size='sm'
         onClick={() => {
           setCopied(true);
           setTimeout(() => {

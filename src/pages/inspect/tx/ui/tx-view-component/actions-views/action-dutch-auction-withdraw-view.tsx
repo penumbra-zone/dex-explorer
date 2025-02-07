@@ -22,7 +22,10 @@ export const ActionDutchAuctionWithdrawViewComponent = ({
           <ActionDetails.Row label='Amounts'>
             <div className='flex flex-col items-end gap-2'>
               {value.reserves.map(valueView => (
-                <ValueViewComponent key={getDisplayDenomFromView(valueView)} view={valueView} />
+                <ValueViewComponent
+                  key={getDisplayDenomFromView(valueView)}
+                  valueView={valueView}
+                />
               ))}
             </div>
           </ActionDetails.Row>

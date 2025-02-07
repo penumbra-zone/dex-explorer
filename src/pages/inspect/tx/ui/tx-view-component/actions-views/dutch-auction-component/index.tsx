@@ -80,9 +80,7 @@ export const DutchAuctionComponent = ({
 
         {buttonType && (
           <div className='w-[85px] shrink-0'>
-            <Button size='sm' variant='secondary' className='w-full' onClick={onClickButton}>
-              {buttonType === 'end' ? 'End' : 'Withdraw'}
-            </Button>
+            <Button onClick={onClickButton}>{buttonType === 'end' ? 'End' : 'Withdraw'}</Button>
           </div>
         )}
 
