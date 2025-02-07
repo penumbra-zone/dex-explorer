@@ -427,6 +427,8 @@ class Pindexer {
           .onRef('swaps.input', '=', 'latest_swaps.amount'),
       )
       .selectAll()
+      .orderBy('time', 'desc')
+      .limit(10)
       .execute();
   }
 
