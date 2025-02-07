@@ -38,7 +38,6 @@ const getMetadata: MetadataFetchFn = async ({ assetId }) => {
 };
 
 export const TxViewer = observer(({ txInfo }: { txInfo?: TransactionInfo }) => {
-  console.log('TCL: TxViewer -> txInfo', txInfo);
   const { connected } = connectionStore;
   const [option, setOption] = useState(connected ? TxDetailsTab.PRIVATE : TxDetailsTab.PUBLIC);
 

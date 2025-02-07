@@ -11,15 +11,7 @@ import { observer } from 'mobx-react-lite';
 const InspectTx = observer(() => {
   const params = useParams<{ hash: string }>();
   const { connected } = connectionStore;
-  const {
-    data: txInfo,
-    isLoading,
-    isError,
-    error,
-  } = useTransactionInfo(params?.hash ?? '', connected);
-  console.log('TCL: InspectTx -> error', error);
-  console.log('TCL: InspectTx -> isError', isError);
-  console.log('TCL: InspectTx -> txInfo', txInfo);
+  const { data: txInfo, isLoading, isError } = useTransactionInfo(params?.hash ?? '', connected);
 
   return (
     <div className='flex flex-col items-center justify-center'>

@@ -33,8 +33,6 @@ export const SegmentedPicker = <ValueType extends { toString: () => string }>({
   value,
   onChange,
   options,
-  grow = false,
-  size = 'md',
 }: {
   value: ValueType;
   onChange: (value: ValueType) => void;
