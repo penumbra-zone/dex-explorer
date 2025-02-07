@@ -5,16 +5,16 @@ import type { Jsonified } from '@penumbra-zone/types/jsonified';
 import { useEffect, useState } from 'react';
 import { SegmentedPicker } from './tx-view-component/segmented-picker';
 import { asPublicTransactionView } from '@penumbra-zone/perspective/translators/transaction-view';
-import { typeRegistry, ViewService } from '@penumbra-zone/protobuf';
+import { typeRegistry } from '@penumbra-zone/protobuf';
 import { useQuery } from '@tanstack/react-query';
 import { classifyTransaction } from '@penumbra-zone/perspective/transaction/classify';
 import { uint8ArrayToHex } from '@penumbra-zone/types/hex';
 import { ChainRegistryClient } from '@penumbra-labs/registry';
-import { penumbra } from '@/shared/const/penumbra';
 import Link from 'next/link';
 import fetchReceiverView from './tx-view-component/tx-details';
 import { observer } from 'mobx-react-lite';
 import { connectionStore } from '@/shared/model/connection';
+import { envQueryFn } from '@/shared/api/env/env';
 
 export enum TxDetailsTab {
   PUBLIC = 'public',
@@ -29,11 +29,15 @@ const OPTIONS = [
 ];
 
 const getMetadata: MetadataFetchFn = async ({ assetId }) => {
-  const feeAssetId = assetId ? assetId : new ChainRegistryClient().bundled.globals().stakingAssetId;
+  const env = await envQueryFn();
+  const chainId = env.PENUMBRA_CHAIN_ID;
 
-  const { denomMetadata } = await penumbra
-    .service(ViewService)
-    .assetMetadataById({ assetId: feeAssetId });
+  const registryClient = new ChainRegistryClient();
+  const feeAssetId = assetId ? assetId : registryClient.bundled.globals().stakingAssetId;
+
+  const registry = await registryClient.remote.get(chainId);
+  const denomMetadata = registry.getMetadata(feeAssetId);
+
   return denomMetadata;
 };
 

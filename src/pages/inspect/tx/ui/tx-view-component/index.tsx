@@ -62,6 +62,9 @@ export const TransactionViewComponent = ({
   metadataFetcher: MetadataFetchFn;
 }) => {
   const { feeValueView, isLoading, error } = useFeeMetadata(txv, metadataFetcher);
+  console.log('TCL: error', error);
+  console.log('TCL: isLoading', isLoading);
+  console.log('TCL: feeValueView', feeValueView);
 
   return (
     <div className='flex flex-col gap-8'>
