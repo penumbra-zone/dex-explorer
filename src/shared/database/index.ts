@@ -424,7 +424,7 @@ class Pindexer {
           .onRef('swaps.asset_start', '=', 'latest_swaps.base')
           .onRef('swaps.asset_end', '=', 'latest_swaps.quote')
           .onRef('swaps.height', '=', 'latest_swaps.height')
-          .onRef('swaps.input', '=', 'latest_swaps.amount'),
+          .onRef('swaps.batch_input', '=', 'latest_swaps.amount'),
       )
       .selectAll()
       .orderBy('time', 'desc')
