@@ -5,10 +5,18 @@ import { useTransactionInfo } from '../api/transaction';
 import { TxViewer } from './tx-viewer';
 import { Card } from '@penumbra-zone/ui/Card';
 import { Skeleton } from '@/shared/ui/skeleton';
+import { connectionStore } from '@/shared/model/connection';
+import { observer } from 'mobx-react-lite';
 
-export function InspectTx() {
+const InspectTx = observer(() => {
   const params = useParams<{ hash: string }>();
-  const { data: txInfo, isLoading, isError, error } = useTransactionInfo(params?.hash ?? '');
+  const { connected } = connectionStore;
+  const {
+    data: txInfo,
+    isLoading,
+    isError,
+    error,
+  } = useTransactionInfo(params?.hash ?? '', connected);
   console.log('TCL: InspectTx -> error', error);
   console.log('TCL: InspectTx -> isError', isError);
   console.log('TCL: InspectTx -> txInfo', txInfo);
@@ -46,4 +54,6 @@ export function InspectTx() {
       </div>
     </div>
   );
-}
+});
+
+export { InspectTx };

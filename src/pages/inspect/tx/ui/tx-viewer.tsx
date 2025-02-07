@@ -38,8 +38,8 @@ const getMetadata: MetadataFetchFn = async ({ assetId }) => {
 };
 
 export const TxViewer = observer(({ txInfo }: { txInfo?: TransactionInfo }) => {
-  // const { connected } = connectionStore;
-  const connected = false;
+  console.log('TCL: TxViewer -> txInfo', txInfo);
+  const { connected } = connectionStore;
   const [option, setOption] = useState(connected ? TxDetailsTab.PRIVATE : TxDetailsTab.PUBLIC);
 
   useEffect(() => {
@@ -89,7 +89,7 @@ export const TxViewer = observer(({ txInfo }: { txInfo?: TransactionInfo }) => {
           />
         </div>
       )}
-      {/* {option === TxDetailsTab.PRIVATE && txInfo && (
+      {option === TxDetailsTab.PRIVATE && txInfo && (
         <>
           <TransactionViewComponent
             txv={
@@ -114,12 +114,26 @@ export const TxViewer = observer(({ txInfo }: { txInfo?: TransactionInfo }) => {
       )}
       {option === TxDetailsTab.RECEIVER && receiverView && showReceiverTransactionView && (
         <TransactionViewComponent txv={receiverView} metadataFetcher={getMetadata} />
-      )} */}
+      )}
       {option === TxDetailsTab.PUBLIC && txInfo && (
-        <TransactionViewComponent
-          txv={asPublicTransactionView(txInfo.view)}
-          metadataFetcher={getMetadata}
-        />
+        <>
+          <TransactionViewComponent
+            txv={asPublicTransactionView(txInfo.view)}
+            metadataFetcher={getMetadata}
+          />
+          <div className='mt-8'>
+            <div className='text-xl font-bold'>Raw JSON</div>
+            <JsonViewer
+              value={txInfo.toJson({ typeRegistry }) as Jsonified<TransactionInfo>}
+              enableClipboard
+              defaultInspectDepth={1}
+              displayDataTypes={false}
+              theme='dark'
+              rootName={false}
+              quotesOnKeys={false}
+            />
+          </div>
+        </>
       )}
     </div>
   );
