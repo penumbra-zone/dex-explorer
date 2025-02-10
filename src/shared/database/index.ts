@@ -403,6 +403,14 @@ class Pindexer {
       executionCount: row.executionCount,
     }));
   }
+
+  async getTransaction(txHash: string) {
+    return this.db
+      .selectFrom('dex_ex_transactions')
+      .selectAll()
+      .where('tx_hash', '=', txHash)
+      .executeTakeFirst();
+  }
 }
 
 export const pindexer = new Pindexer();
