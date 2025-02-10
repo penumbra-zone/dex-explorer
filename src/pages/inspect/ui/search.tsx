@@ -44,10 +44,10 @@ export const InspectSearch = () => {
 
     if (isPositionId(searchQuery)) {
       router.push(`/inspect/lp/${searchQuery}`);
-    } else if (isBlockHeight(searchQuery)) {
-      router.push(`/inspect/block/${searchQuery}`);
     } else if (isTransactionId(searchQuery)) {
       router.push(`/inspect/tx/${searchQuery}`);
+    } else if (isBlockHeight(searchQuery)) {
+      router.push(`/inspect/block/${searchQuery}`);
     }
   };
 
