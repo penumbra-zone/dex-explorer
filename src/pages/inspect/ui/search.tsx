@@ -40,15 +40,13 @@ export const InspectSearch = () => {
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
     if (isPositionId(searchQuery)) {
-      setLoading(true);
       router.push(`/inspect/lp/${searchQuery}`);
     } else if (isBlockHeight(searchQuery)) {
-      setLoading(true);
       router.push(`/inspect/block/${searchQuery}`);
     } else if (isTransactionId(searchQuery)) {
-      setLoading(true);
       router.push(`/inspect/tx/${searchQuery}`);
     }
   };
