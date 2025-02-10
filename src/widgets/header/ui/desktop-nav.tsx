@@ -1,4 +1,5 @@
 import { useRouter } from 'next/navigation';
+import { Link } from 'next/link';
 import { Tabs } from '@penumbra-zone/ui/Tabs';
 import { Density } from '@penumbra-zone/ui/Density';
 import { HEADER_LINKS } from './links';
