@@ -1,6 +1,4 @@
-import { Pool, types } from 'pg';
-import fs from 'fs';
-import { Kysely, PostgresDialect, Selectable, sql } from 'kysely';
+import { Kysely, Selectable, sql } from 'kysely';
 import {
   DB,
   DexExAggregateSummary,
@@ -11,6 +9,7 @@ import {
 import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { DurationWindow } from '@/shared/utils/duration.ts';
 import { PositionId } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
+import { pindexerDb } from './client';
 
 const MAINNET_CHAIN_ID = 'penumbra-1';
 
@@ -33,28 +32,7 @@ class Pindexer {
   private db: Kysely<DB>;
 
   constructor() {
-    const ca = process.env['PENUMBRA_INDEXER_CA_CERT'];
-    const connectionString = process.env['PENUMBRA_INDEXER_ENDPOINT'];
-    const dbConfig = {
-      connectionString: connectionString,
-      ...(ca && {
-        ssl: {
-          rejectUnauthorized: true,
-          ca: ca.startsWith('-----BEGIN CERTIFICATE-----') ? ca : fs.readFileSync(ca, 'utf-8'),
-        },
-      }),
-    };
-    const dialect = new PostgresDialect({
-      pool: new Pool(dbConfig),
-    });
-
-    this.db = new Kysely<DB>({ dialect });
-
-    const int8TypeId = 20;
-    // Map int8 to number.
-    types.setTypeParser(int8TypeId, val => {
-      return BigInt(val);
-    });
+    this.db = pindexerDb;
   }
 
   async summary(window: DurationWindow, baseAsset: AssetId, quoteAsset: AssetId) {
