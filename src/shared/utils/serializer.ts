@@ -36,6 +36,10 @@ export const serialize = <VAL>(value: VAL): Serialized<VAL> => {
     return value.toString() as Serialized<VAL>;
   }
 
+  if (value instanceof Error) {
+    return value.toString() as Serialized<VAL>;
+  }
+
   if (isMessage(value)) {
     return {
       proto: value.getType().typeName,
