@@ -1,7 +1,11 @@
 import { sql } from 'kysely';
 import { bech32mPositionId } from '@penumbra-zone/bech32m/plpid';
 import { ChainRegistryClient } from '@penumbra-labs/registry';
-import { AssetId, Metadata, ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import {
+  AssetId,
+  Metadata,
+  ValueView,
+} from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { PositionId } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { pindexerDb } from '@/shared/database/client';
 import { serialize, Serialized } from '@/shared/utils/serializer';
@@ -9,6 +13,8 @@ import { toValueView } from '@/shared/utils/value-view';
 
 export interface LeaderboardSearchParams {
   limit: number;
+  base?: string;
+  quote?: string;
 }
 
 export interface LeaderboardData {
@@ -22,15 +28,27 @@ export interface LeaderboardData {
   executions: number;
 }
 
+export interface LeaderboardPageInfo {
+  data: LeaderboardData[];
+  filters: LeaderboardSearchParams;
+}
+
 const getURLParams = (searchParams: URLSearchParams): LeaderboardSearchParams => {
   const limit = Number(searchParams.get('limit')) || 30;
+  const base = searchParams.get('base') ?? undefined;
+  const quote = searchParams.get('quote') ?? undefined;
   return {
     limit,
+    base,
+    quote,
   };
 };
 
-export const queryLeaderboard = async (params: URLSearchParams): Promise<Serialized<LeaderboardData[] | Error>> => {
-  const { limit } = getURLParams(params);
+export const queryLeaderboard = async (
+  params: URLSearchParams,
+): Promise<Serialized<LeaderboardPageInfo | string>> => {
+  const filters = getURLParams(params);
+  const { limit } = filters;
 
   const chainId = process.env['PENUMBRA_CHAIN_ID'];
   if (!chainId) {
@@ -43,7 +61,7 @@ export const queryLeaderboard = async (params: URLSearchParams): Promise<Seriali
 
     const results = await pindexerDb
       .selectFrom('dex_ex_position_executions')
-      .select((exp) => ([
+      .select(exp => [
         'position_id',
         'context_asset_start',
         'context_asset_end',
@@ -52,7 +70,7 @@ export const queryLeaderboard = async (params: URLSearchParams): Promise<Seriali
         sql<number>`sum(${exp.ref('fee_1')})`.as('fees1'),
         sql<number>`sum(${exp.ref('fee_2')})`.as('fees2'),
         sql<number>`CAST(count(*) AS INTEGER)`.as('executionCount'),
-      ]))
+      ])
       .groupBy(['position_id', 'context_asset_start', 'context_asset_end'])
       .orderBy('executionCount', 'desc')
       .limit(limit)
@@ -60,41 +78,46 @@ export const queryLeaderboard = async (params: URLSearchParams): Promise<Seriali
 
     // TODO: merge dex_ex_position_executions with state table to receive initial data
 
-    const mapped = await Promise.all(results.map((position) => {
-      const asset1 = new AssetId({ inner: position.context_asset_start });
-      const asset2 = new AssetId({ inner: position.context_asset_end });
-      const metadata1 = registry.tryGetMetadata(asset1);
-      const metadata2 = registry.tryGetMetadata(asset2);
+    const mapped = await Promise.all(
+      results.map(position => {
+        const asset1 = new AssetId({ inner: position.context_asset_start });
+        const asset2 = new AssetId({ inner: position.context_asset_end });
+        const metadata1 = registry.tryGetMetadata(asset1);
+        const metadata2 = registry.tryGetMetadata(asset2);
 
-      if (!metadata1 || !metadata2) {
-        return undefined;
-      }
+        if (!metadata1 || !metadata2) {
+          return undefined;
+        }
 
-      return {
-        asset1: metadata1,
-        asset2: metadata2,
-        executions: position.executionCount,
-        positionId: bech32mPositionId(new PositionId({ inner: position.position_id })),
-        volume1: toValueView({
-          amount: position.volume1,
-          metadata: metadata1,
-        }),
-        volume2: toValueView({
-          amount: position.volume2,
-          metadata: metadata2,
-        }),
-        fees1: toValueView({
-          amount: position.fees1,
-          metadata: metadata1,
-        }),
-        fees2: toValueView({
-          amount: position.fees2,
-          metadata: metadata2,
-        }),
-      };
-    }));
+        return {
+          asset1: metadata1,
+          asset2: metadata2,
+          executions: position.executionCount,
+          positionId: bech32mPositionId(new PositionId({ inner: position.position_id })),
+          volume1: toValueView({
+            amount: position.volume1,
+            metadata: metadata1,
+          }),
+          volume2: toValueView({
+            amount: position.volume2,
+            metadata: metadata2,
+          }),
+          fees1: toValueView({
+            amount: position.fees1,
+            metadata: metadata1,
+          }),
+          fees2: toValueView({
+            amount: position.fees2,
+            metadata: metadata2,
+          }),
+        };
+      }),
+    );
 
-    return serialize(mapped.filter(Boolean) as LeaderboardData[]);
+    return serialize({
+      filters,
+      data: mapped.filter(Boolean) as LeaderboardData[],
+    });
   } catch (error) {
     return serialize(error as Error);
   }
