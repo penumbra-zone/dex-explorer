@@ -6,6 +6,7 @@ import { useMemo, useTransition } from 'react';
 import cn from 'clsx';
 import { Text } from '@penumbra-zone/ui/Text';
 import { TableCell } from '@penumbra-zone/ui/TableCell';
+import { SegmentedControl } from '@penumbra-zone/ui/SegmentedControl';
 import { PagePath } from '@/shared/const/pages';
 import { Serialized, deserialize } from '@/shared/utils/serializer';
 import { LeaderboardPageInfo } from '../api/query-leaderboard';
@@ -73,6 +74,10 @@ export const LeaderboardTable = ({ data }: LeaderboardTableProps) => {
     updateFilter('quote', symbol);
   };
 
+  const onIntervalChange = (value: string) => {
+    updateFilter('interval', value);
+  };
+
   if (typeof deserialized === 'string') {
     return (
       <Text large color='destructive.light'>
@@ -81,7 +86,7 @@ export const LeaderboardTable = ({ data }: LeaderboardTableProps) => {
     );
   }
 
-  const { data: positions } = deserialized;
+  const { data: positions, filters } = deserialized;
 
   return (
     <>
@@ -91,6 +96,16 @@ export const LeaderboardTable = ({ data }: LeaderboardTableProps) => {
         </Text>
 
         <div className='flex gap-1 items-center'>
+          <div className='mr-2'>
+            <SegmentedControl value={filters.interval} onChange={onIntervalChange}>
+              <SegmentedControl.Item value='1h' />
+              <SegmentedControl.Item value='6h' />
+              <SegmentedControl.Item value='24h' />
+              <SegmentedControl.Item value='7d' />
+              <SegmentedControl.Item value='30d' />
+            </SegmentedControl>
+          </div>
+
           <AssetSelector
             assets={assets}
             balances={balances}

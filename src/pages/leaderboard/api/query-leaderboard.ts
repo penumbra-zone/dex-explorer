@@ -11,7 +11,21 @@ import { pindexerDb } from '@/shared/database/client';
 import { serialize, Serialized } from '@/shared/utils/serializer';
 import { toValueView } from '@/shared/utils/value-view';
 
+export const INTERVAL_FILTER = ['1h', '6h', '24h', '7d', '30d'] as const;
+export type LeaderboardIntervalFilter = (typeof INTERVAL_FILTER)[number];
+const intervalFilterToSQL: Record<LeaderboardIntervalFilter, string> = {
+  '1h': '1 hour',
+  '6h': '6 hours',
+  '24h': '1 day',
+  '7d': '1 week',
+  '30d': '1 month',
+};
+
+const DEFAULT_INTERVAL: LeaderboardIntervalFilter = '7d';
+const DEFAULT_LIMIT = 30;
+
 export interface LeaderboardSearchParams {
+  interval: LeaderboardIntervalFilter;
   limit: number;
   base?: string;
   quote?: string;
@@ -34,13 +48,19 @@ export interface LeaderboardPageInfo {
 }
 
 const getURLParams = (searchParams: URLSearchParams): LeaderboardSearchParams => {
-  const limit = Number(searchParams.get('limit')) || 30;
+  const limit = Number(searchParams.get('limit')) || DEFAULT_LIMIT;
   const base = searchParams.get('base') ?? undefined;
   const quote = searchParams.get('quote') ?? undefined;
+
+  let interval =
+    (searchParams.get('interval') as LeaderboardIntervalFilter | null) ?? DEFAULT_INTERVAL;
+  interval = intervalFilterToSQL[interval] ? interval : DEFAULT_INTERVAL;
+
   return {
     limit,
     base,
     quote,
+    interval,
   };
 };
 
@@ -48,7 +68,6 @@ export const queryLeaderboard = async (
   params: URLSearchParams,
 ): Promise<Serialized<LeaderboardPageInfo | string>> => {
   const filters = getURLParams(params);
-  const { limit } = filters;
 
   const chainId = process.env['PENUMBRA_CHAIN_ID'];
   if (!chainId) {
@@ -59,7 +78,7 @@ export const queryLeaderboard = async (
     const registryClient = new ChainRegistryClient();
     const registry = await registryClient.remote.get(chainId);
 
-    const results = await pindexerDb
+    const positionExecutions = pindexerDb
       .selectFrom('dex_ex_position_executions')
       .select(exp => [
         'position_id',
@@ -72,8 +91,19 @@ export const queryLeaderboard = async (
         sql<number>`CAST(count(*) AS INTEGER)`.as('executionCount'),
       ])
       .groupBy(['position_id', 'context_asset_start', 'context_asset_end'])
-      .orderBy('executionCount', 'desc')
-      .limit(limit)
+      .orderBy('executionCount', 'desc');
+
+    const results = await pindexerDb
+      .selectFrom('dex_ex_position_state as state')
+      .where(exp =>
+        exp.and([
+          exp.eb('closing_height', 'is', null),
+          sql<boolean>`${exp.ref('state.opening_time')} >= NOW() - CAST(${intervalFilterToSQL[filters.interval]} AS INTERVAL)`,
+        ]),
+      )
+      .innerJoin(positionExecutions.as('executions'), 'state.position_id', 'executions.position_id')
+      .selectAll('executions')
+      .limit(filters.limit)
       .execute();
 
     // TODO: merge dex_ex_position_executions with state table to receive initial data
