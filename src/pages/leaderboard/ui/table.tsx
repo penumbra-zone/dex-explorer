@@ -1,15 +1,11 @@
 'use client';
 
 import { useAutoAnimate } from '@formkit/auto-animate/react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useMemo, useTransition } from 'react';
+import { useState } from 'react';
 import cn from 'clsx';
 import { Text } from '@penumbra-zone/ui/Text';
 import { TableCell } from '@penumbra-zone/ui/TableCell';
 import { SegmentedControl } from '@penumbra-zone/ui/SegmentedControl';
-import { PagePath } from '@/shared/const/pages';
-import { Serialized, deserialize } from '@/shared/utils/serializer';
-import { LeaderboardPageInfo } from '../api/query-leaderboard';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
 import Link from 'next/link';
 import { SquareArrowOutUpRight } from 'lucide-react';
@@ -21,72 +17,44 @@ import {
 import { useAssets } from '@/shared/api/assets';
 import { useBalances } from '@/shared/api/balances';
 import { getMetadataFromBalancesResponse } from '@penumbra-zone/getters/balances-response';
+import { useLeaderboard } from '@/pages/leaderboard/api/use-leaderboard';
+import { DEFAULT_INTERVAL, LeaderboardIntervalFilter } from '../api/utils';
 
-export interface LeaderboardTableProps {
-  data: Serialized<LeaderboardPageInfo | string>;
-}
-
-export const LeaderboardTable = ({ data }: LeaderboardTableProps) => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const deserialized = deserialize(data);
-
+export const LeaderboardTable = () => {
   const [parent] = useAutoAnimate();
-  const [isLoading, startTransition] = useTransition();
+
+  const [interval, setInterval] = useState(DEFAULT_INTERVAL);
+  const [base, setBase] = useState<AssetSelectorValue>();
+  const [quote, setQuote] = useState<AssetSelectorValue>();
+
+  const baseSymbol =
+    base && (isBalancesResponse(base) ? getMetadataFromBalancesResponse(base).symbol : base.symbol);
+  const quoteSymbol =
+    quote &&
+    (isBalancesResponse(quote) ? getMetadataFromBalancesResponse(quote).symbol : quote.symbol);
+
+  const {
+    data: leaderboard,
+    error,
+    isLoading,
+  } = useLeaderboard({
+    interval,
+    base: baseSymbol,
+    quote: quoteSymbol,
+  });
 
   const { data: assets } = useAssets();
   const { data: balances } = useBalances();
 
-  // Updates the URL query param and quietly reloads the page with loading skeletons
-  const updateFilter = (key: string, value: string) => {
-    startTransition(() => {
-      const search = new URLSearchParams(searchParams ?? undefined);
-      search.set(key, value);
-      router.push(`${PagePath.LpLeaderboard}?${search.toString()}`);
-    });
-  };
-
-  const baseAsset = useMemo(() => {
-    if (typeof deserialized !== 'object' || !deserialized.filters.base) {
-      return undefined;
-    }
-    return assets?.find(asset => asset.symbol === deserialized.filters.base);
-  }, [deserialized, assets]);
-
-  const quoteAsset = useMemo(() => {
-    if (typeof deserialized !== 'object' || !deserialized.filters.quote) {
-      return undefined;
-    }
-    return assets?.find(asset => asset.symbol === deserialized.filters.quote);
-  }, [deserialized, assets]);
-
-  const onBaseChange = (value: AssetSelectorValue) => {
-    const symbol = isBalancesResponse(value)
-      ? getMetadataFromBalancesResponse(value).symbol
-      : value.symbol;
-    updateFilter('base', symbol);
-  };
-
-  const onQuoteChange = (value: AssetSelectorValue) => {
-    const symbol = isBalancesResponse(value)
-      ? getMetadataFromBalancesResponse(value).symbol
-      : value.symbol;
-    updateFilter('quote', symbol);
-  };
-
-  const onIntervalChange = (value: string) => {
-    updateFilter('interval', value);
-  };
-
-  if (typeof deserialized === 'string') {
+  if (error) {
     return (
       <Text large color='destructive.light'>
-        {deserialized}
+        {error.message}
       </Text>
     );
   }
 
-  const { data: positions, filters } = deserialized;
+  const { data: positions } = leaderboard ?? {};
 
   return (
     <>
@@ -97,7 +65,10 @@ export const LeaderboardTable = ({ data }: LeaderboardTableProps) => {
 
         <div className='flex gap-1 items-center'>
           <div className='mr-2'>
-            <SegmentedControl value={filters.interval} onChange={onIntervalChange}>
+            <SegmentedControl
+              value={interval}
+              onChange={value => setInterval(value as LeaderboardIntervalFilter)}
+            >
               <SegmentedControl.Item value='1h' />
               <SegmentedControl.Item value='6h' />
               <SegmentedControl.Item value='24h' />
@@ -106,21 +77,11 @@ export const LeaderboardTable = ({ data }: LeaderboardTableProps) => {
             </SegmentedControl>
           </div>
 
-          <AssetSelector
-            assets={assets}
-            balances={balances}
-            value={baseAsset}
-            onChange={onBaseChange}
-          />
+          <AssetSelector assets={assets} balances={balances} value={base} onChange={setBase} />
           <Text large color='text.secondary'>
             /
           </Text>
-          <AssetSelector
-            assets={assets}
-            balances={balances}
-            value={quoteAsset}
-            onChange={onQuoteChange}
-          />
+          <AssetSelector assets={assets} balances={balances} value={quote} onChange={setQuote} />
         </div>
       </div>
 
@@ -134,10 +95,10 @@ export const LeaderboardTable = ({ data }: LeaderboardTableProps) => {
           <TableCell heading>Volume2</TableCell>
         </div>
 
-        {positions.map((position, index) => (
+        {positions?.map((position, index) => (
           <Link
             href={`/inspect/lp/${position.positionId}`}
-            key={index}
+            key={position.positionId}
             className={cn(
               'relative grid grid-cols-subgrid col-span-6',
               'bg-transparent hover:bg-action-hoverOverlay transition-colors',
