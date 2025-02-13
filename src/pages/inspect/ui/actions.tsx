@@ -24,7 +24,7 @@ export const PositionClosed = ({
             <div className='flex flex-col gap-2 flex-shrink min-w-0'>
               {closingTx && (
                 <Text color='text.secondary' truncate>
-                  Tx: {closingTx}
+                  Tx: <a href={`/inspect/tx/${closingTx}`} className="hover:underline">{closingTx}</a>
                 </Text>
               )}
             </div>
@@ -53,7 +53,7 @@ export const PositionWithdraw = ({ withdrawal }: { withdrawal: PositionWithdrawa
               </div>
 
               <Text color='text.secondary' truncate>
-                Tx: {withdrawal.txHash}
+                Tx: <a href={`/inspect/tx/${withdrawal.txHash}`} className="hover:underline">{withdrawal.txHash}</a>
               </Text>
             </div>
           </div>
@@ -79,7 +79,7 @@ export const PositionOpen = ({ state }: { state: PositionStateVV }) => {
               </div>
 
               <Text color='text.secondary' truncate>
-                Tx: {state.openingTx}
+                Tx: <a href={`/inspect/tx/${state.openingTx}`} className="hover:underline">{state.openingTx}</a>
               </Text>
             </div>
           </div>
