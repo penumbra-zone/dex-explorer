@@ -52,8 +52,8 @@ export const SegmentedPicker = <ValueType extends { toString: () => string }>({
           aria-checked={value === option.value}
           onClick={() => onChange(option.value)}
           className={cn(
-            'flex items-center justify-center text-text-secondary text-sm font-bold rounded-sm flex-1 h-[38px]',
-            value === option.value && 'bg-secondary-main text-text-primary',
+            'flex items-center justify-center text-sm font-bold rounded-sm flex-1 h-[38px]',
+            value === option.value ? 'bg-secondary-main text-text-primary' : 'text-text-secondary',
           )}
         >
           {option.label}
