@@ -16,8 +16,8 @@ import { pnum } from '@penumbra-zone/types/pnum';
 import { useAssets } from '@/shared/api/assets';
 import { SquareArrowOutUpRight, ChevronUp, ChevronDown } from 'lucide-react';
 import { usePathToMetadata } from '../../model/use-path';
-import { PositionsCurrentValue } from '../positions-current-value';
-import { LoadingCell } from '../market-trades';
+import { PositionsCurrentValue } from './positions-current-value';
+import { LoadingCell } from './cell';
 import { NotConnectedNotice } from './not-connected-notice';
 import { ErrorNotice } from './error-notice';
 import { NoPositions } from './no-positions';
@@ -81,6 +81,7 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
           >
             <Text
               tableHeadingSmall
+              whitespace='nowrap'
               color={sortBy.key === sortKey ? 'text.primary' : 'text.secondary'}
             >
               {children}
@@ -132,7 +133,7 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
   return (
     <TooltipProvider>
       <Density variant='slim'>
-        <div className='flex justify-center px-4 overflow-x-auto'>
+        <div className='px-4 overflow-x-auto'>
           <Table bgColor='base.blackAlt'>
             <Table.Thead>
               <Table.Tr>

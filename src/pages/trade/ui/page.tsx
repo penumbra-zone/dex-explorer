@@ -4,7 +4,7 @@ import cn from 'clsx';
 import { PairInfo } from './pair-info';
 import { Chart } from './chart';
 import { RouteTabs } from './route-tabs';
-import { TradesTabs } from './trades-tabs';
+import { TradesTabs } from './trades';
 import { HistoryTabs } from './history-tabs';
 import { FormTabs } from './form-tabs';
 import { useEffect, useState } from 'react';
@@ -159,19 +159,19 @@ export const TradePage = () => {
     };
   }, []);
 
-  if (width > 1600) {
+  if (width >= 1600) {
     return <XlLayout />;
   }
 
-  if (width > 1200) {
+  if (width >= 1200) {
     return <LLayout />;
   }
 
-  if (width > 900) {
+  if (width >= 900) {
     return <DesktopLayout />;
   }
 
-  if (width > 600) {
+  if (width >= 600) {
     return <TabletLayout />;
   }
 
