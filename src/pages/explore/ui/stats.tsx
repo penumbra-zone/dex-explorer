@@ -96,9 +96,9 @@ export const ExploreStats = () => {
         )}
       </InfoCard>
       <InfoCard title='Top Price Mover (24h)' loading={isLoading}>
-          <Text large color='text.primary'>
-            -
-          </Text>
+        <Text large color='text.primary'>
+          -
+        </Text>
       </InfoCard>
     </div>
   );
