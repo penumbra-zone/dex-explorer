@@ -8,14 +8,28 @@ import { deserialize, Serialized } from './serializer';
  */
 export const apiFetch = async <RES extends object>(
   url: string,
-  searchParams: Record<string, string> = {},
+  searchParams: Record<string, string | number> = {},
 ): Promise<RES> => {
-  const urlParams = new URLSearchParams(searchParams).toString();
+  // cast numbers and other search param types to string
+  const params = Object.entries(searchParams).reduce<Record<string, string>>(
+    (acc, [key, value]) => {
+      if (typeof value === 'undefined') {
+        return acc;
+      }
+      if (typeof value !== 'string') {
+        acc[key] = value.toString();
+      }
+      return acc;
+    },
+    {},
+  );
+
+  const urlParams = new URLSearchParams(params).toString();
   const fetchRes = await fetch(`${url}${urlParams && `?${urlParams}`}`);
 
   const jsonRes = (await fetchRes.json()) as Serialized<RES | { error: string }>;
 
-  if ('error' in jsonRes) {
+  if (typeof jsonRes === 'object' && 'error' in jsonRes) {
     throw new Error(jsonRes.error);
   }
 
