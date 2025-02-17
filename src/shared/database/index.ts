@@ -463,6 +463,14 @@ class Pindexer {
       executionCount: row.executionCount,
     }));
   }
+
+  async getBlockSummary(height: number) {
+    return this.db
+      .selectFrom('dex_ex_block_summary')
+      .selectAll()
+      .where('height', '=', height)
+      .executeTakeFirst();
+  }
 }
 
 export const pindexer = new Pindexer();
