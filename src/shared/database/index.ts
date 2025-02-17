@@ -12,6 +12,7 @@ import {
 import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { DurationWindow } from '@/shared/utils/duration.ts';
 import { PositionId } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
+import { hexToUint8Array } from '@penumbra-zone/types/hex';
 
 const MAINNET_CHAIN_ID = 'penumbra-1';
 
@@ -469,7 +470,7 @@ class Pindexer {
     return this.db
       .selectFrom('dex_ex_transactions')
       .selectAll()
-      .where('transaction_id', '=', Buffer.from(txHash))
+      .where('transaction_id', '=', hexToUint8Array(txHash))
       .executeTakeFirst();
   }
 }
