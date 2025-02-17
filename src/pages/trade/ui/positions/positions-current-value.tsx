@@ -1,9 +1,9 @@
 import React from 'react';
-import { useMarketPrice } from '../model/useMarketPrice';
+import { useMarketPrice } from '../../model/useMarketPrice';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
-import { LoadingCell } from './market-trades';
+import { LoadingCell } from './cell';
 import { pnum } from '@penumbra-zone/types/pnum';
-import { DisplayPosition } from '../model/positions';
+import { DisplayPosition } from '../../model/positions';
 
 export const PositionsCurrentValue = ({ order }: { order: DisplayPosition['orders'][number] }) => {
   const { baseAsset, quoteAsset } = order;
@@ -24,11 +24,14 @@ export const PositionsCurrentValue = ({ order }: { order: DisplayPosition['order
     );
   }
 
+  const computedValue = baseAsset.amount.toNumber() * marketPrice;
+  if (!Number.isFinite(computedValue)) {
+    return <LoadingCell />;
+  }
+
   return (
     <ValueViewComponent
-      valueView={pnum(baseAsset.amount.toNumber() * marketPrice, quoteAsset.exponent).toValueView(
-        quoteAsset.asset,
-      )}
+      valueView={pnum(computedValue, quoteAsset.exponent).toValueView(quoteAsset.asset)}
       density='slim'
     />
   );
