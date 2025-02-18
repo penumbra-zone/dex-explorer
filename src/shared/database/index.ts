@@ -7,6 +7,7 @@ import {
   DexExPositionExecutions,
   DexExPositionReserves,
   DexExPositionWithdrawals,
+  DexExBlockSummary,
 } from '@/shared/database/schema.ts';
 import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { DurationWindow } from '@/shared/utils/duration.ts';
@@ -464,7 +465,7 @@ class Pindexer {
     }));
   }
 
-  async getBlockSummary(height: number) {
+  async getBlockSummary(height: number): Promise<Selectable<DexExBlockSummary> | undefined> {
     return this.db
       .selectFrom('dex_ex_block_summary')
       .selectAll()

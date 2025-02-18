@@ -5,6 +5,8 @@ import { useBlockSummary } from '../api/block';
 import { Card } from '@penumbra-zone/ui/Card';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { BlockSummary } from './block-summary';
+import { Metadata, ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
 
 export function InspectBlock() {
   const params = useParams<{ height: string }>();
@@ -16,13 +18,124 @@ export function InspectBlock() {
     rowid: 1,
     height: blockheight,
     time: new Date(),
-    batch_swaps: [],
-    num_open_lps: 0,
-    num_closed_lps: 0,
-    num_withdrawn_lps: 0,
-    num_swaps: 0,
-    num_swap_claims: 0,
-    num_txs: 0,
+    batchSwaps: [
+      {
+        startAsset: new Metadata({
+          display: 'penumbra',
+          base: 'upenumbra',
+          denomUnits: [
+            { denom: 'penumbra', exponent: 6 },
+            { denom: 'upenumbra', exponent: 0 },
+          ],
+        }),
+        endAsset: new Metadata({
+          display: 'penumbra',
+          base: 'upenumbra',
+          denomUnits: [
+            { denom: 'penumbra', exponent: 6 },
+            { denom: 'upenumbra', exponent: 0 },
+          ],
+        }),
+        startPrice: 1.0,
+        endPrice: 2.0,
+        startAmount: '11.11',
+        endAmount: '22.22',
+        startValueView: new ValueView({
+          valueView: {
+            case: 'knownAssetId',
+            value: {
+              amount: new Amount({ lo: 100n, hi: 0n }),
+              metadata: new Metadata({
+                display: 'penumbra',
+                base: 'upenumbra',
+                denomUnits: [
+                  { denom: 'penumbra', exponent: 6 },
+                  { denom: 'upenumbra', exponent: 0 },
+                ],
+              }),
+            },
+          },
+        }),
+        endValueView: new ValueView({
+          valueView: {
+            case: 'knownAssetId',
+            value: {
+              amount: new Amount({ lo: 100n, hi: 0n }),
+              metadata: new Metadata({
+                display: 'penumbra',
+                base: 'upenumbra',
+                denomUnits: [
+                  { denom: 'penumbra', exponent: 6 },
+                  { denom: 'upenumbra', exponent: 0 },
+                ],
+              }),
+            },
+          },
+        }),
+        numSwaps: 3,
+      },
+      {
+        startAsset: new Metadata({
+          display: 'penumbra',
+          base: 'upenumbra',
+          denomUnits: [
+            { denom: 'penumbra', exponent: 6 },
+            { denom: 'upenumbra', exponent: 0 },
+          ],
+        }),
+        endAsset: new Metadata({
+          display: 'penumbra',
+          base: 'upenumbra',
+          denomUnits: [
+            { denom: 'penumbra', exponent: 6 },
+            { denom: 'upenumbra', exponent: 0 },
+          ],
+        }),
+        startPrice: 1.0,
+        endPrice: 2.0,
+        startAmount: '11.11',
+        endAmount: '22.22',
+        startValueView: new ValueView({
+          valueView: {
+            case: 'knownAssetId',
+            value: {
+              amount: new Amount({ lo: 100n, hi: 0n }),
+              metadata: new Metadata({
+                display: 'penumbra',
+                base: 'upenumbra',
+                denomUnits: [
+                  { denom: 'penumbra', exponent: 6 },
+                  { denom: 'upenumbra', exponent: 0 },
+                ],
+              }),
+            },
+          },
+        }),
+        endValueView: new ValueView({
+          valueView: {
+            case: 'knownAssetId',
+            value: {
+              amount: new Amount({ lo: 100n, hi: 0n }),
+              metadata: new Metadata({
+                display: 'penumbra',
+                base: 'upenumbra',
+                denomUnits: [
+                  { denom: 'penumbra', exponent: 6 },
+                  { denom: 'upenumbra', exponent: 0 },
+                ],
+              }),
+            },
+          },
+        }),
+        numSwaps: 2,
+      },
+    ],
+    numOpenLps: 0,
+    numClosedLps: 0,
+    numWithdrawnLps: 0,
+    numSwaps: 0,
+    numSwapClaims: 0,
+    numTxs: 0,
   };
 
   return (
