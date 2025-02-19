@@ -27,7 +27,6 @@ export interface BatchSwapSummary {
 
 export type BlockSummaryApiResponse =
   | {
-      rowid: number;
       height: number;
       time: Date;
       batchSwaps: BatchSwapSummaryDisplay[];
@@ -39,3 +38,18 @@ export type BlockSummaryApiResponse =
       numTxs: number;
     }
   | { error: string };
+
+export type BlockSummaryPindexerResponse =
+  | {
+      rowid: number;
+      height: number;
+      time: Date;
+      batch_swaps: BatchSwapSummary[];
+      num_open_lps: number;
+      num_closed_lps: number;
+      num_withdrawn_lps: number;
+      num_swaps: number;
+      num_swap_claims: number;
+      num_txs: number;
+    }
+  | undefined;

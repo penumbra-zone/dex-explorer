@@ -14,6 +14,7 @@ import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb
 import { DurationWindow } from '@/shared/utils/duration.ts';
 import { PositionId } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { hexToUint8Array } from '@penumbra-zone/types/hex';
+import { BlockSummaryPindexerResponse } from '../api/server/block/types';
 
 const MAINNET_CHAIN_ID = 'penumbra-1';
 
@@ -467,12 +468,12 @@ class Pindexer {
     }));
   }
 
-  async getBlockSummary(height: number): Promise<Selectable<DexExBlockSummary> | undefined> {
-    const result = await this.db
+  async getBlockSummary(height: number): Promise<BlockSummaryPindexerResponse> {
+    const result = (await this.db
       .selectFrom('dex_ex_block_summary')
       .selectAll()
       .where('height', '=', height)
-      .executeTakeFirst();
+      .executeTakeFirst()) as DexExBlockSummary | undefined;
 
     if (!result) {
       return undefined;
@@ -489,7 +490,7 @@ class Pindexer {
         .replace(/"\(/g, '[')
         .replace(/\)"/g, ']');
 
-      const batchSwaps = JSON.parse(parseableBatchSwaps) as BatchSwapSummary[];
+      const batchSwaps = JSON.parse(parseableBatchSwaps) as string[][];
 
       const mapping = {
         0: 'asset_start',
@@ -508,14 +509,16 @@ class Pindexer {
       };
 
       return batchSwaps.map(batchSwap => {
-        return batchSwap.reduce(
+        const parsedBatchSwap = batchSwap.reduce(
           (acc: object, value: unknown, index: number) => ({
             ...acc,
             [mapping[index as keyof typeof mapping]]:
               typeof value === 'string' && hexRegex.test(value) ? parseHex(value) : value,
           }),
           {},
-        ) as BatchSwapSummary;
+        );
+
+        return parsedBatchSwap as unknown as BatchSwapSummary;
       });
     }
 

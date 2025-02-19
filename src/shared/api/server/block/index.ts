@@ -84,7 +84,6 @@ export async function GET(
   const registry = await registryClient.remote.get(chainId);
 
   const blockSummary = await pindexer.getBlockSummary(Number(height));
-  console.log('TCL: blockSummary', blockSummary.batch_swaps);
 
   if (!blockSummary) {
     return NextResponse.json({ error: 'Block summary not found' }, { status: 404 });
