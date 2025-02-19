@@ -197,6 +197,14 @@ export interface DexExPriceCharts {
   the_window: DurationWindow;
 }
 
+export interface DexExTransactions {
+  rowid: number;
+  transaction_id: Buffer;
+  transaction: Buffer;
+  height: number;
+  time: Timestamp;
+}
+
 export interface GovernanceDelegatorVotes {
   block_height: Int8;
   id: Generated<number>;
