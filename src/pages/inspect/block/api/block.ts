@@ -6,6 +6,9 @@ export const useBlockSummary = (height: string) => {
     queryKey: ['block', height],
     retry: 1,
     queryFn: async (): Promise<BlockSummaryApiResponse> => {
+      if (!height) {
+        throw new Error('Invalid block height');
+      }
       const response = await fetch(`/api/block/${height}`);
       return response.json() as Promise<BlockSummaryApiResponse>;
     },

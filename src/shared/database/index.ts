@@ -8,10 +8,12 @@ import {
   DexExPositionReserves,
   DexExPositionWithdrawals,
   DexExBlockSummary,
+  BatchSwapSummary,
 } from '@/shared/database/schema.ts';
 import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { DurationWindow } from '@/shared/utils/duration.ts';
 import { PositionId } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
+import { hexToUint8Array } from '@penumbra-zone/types/hex';
 
 const MAINNET_CHAIN_ID = 'penumbra-1';
 
@@ -466,11 +468,61 @@ class Pindexer {
   }
 
   async getBlockSummary(height: number): Promise<Selectable<DexExBlockSummary> | undefined> {
-    return this.db
+    const result = await this.db
       .selectFrom('dex_ex_block_summary')
       .selectAll()
       .where('height', '=', height)
       .executeTakeFirst();
+
+    if (!result) {
+      return undefined;
+    }
+
+    function parseBatchSwaps(rawBatchSwaps: string): BatchSwapSummary[] {
+      const parseableBatchSwaps = rawBatchSwaps
+        // Remove escaped double quotes
+        .replace(/\\"/g, '"')
+        // convert to parseable array
+        .replace(/^\{/, '[')
+        .replace(/\}$/, ']')
+        // convert tuple to array
+        .replace(/"\(/g, '[')
+        .replace(/\)"/g, ']');
+
+      const batchSwaps = JSON.parse(parseableBatchSwaps) as BatchSwapSummary[];
+
+      const mapping = {
+        0: 'asset_start',
+        1: 'asset_end',
+        2: 'input',
+        3: 'output',
+        4: 'num_swaps',
+        5: 'price_float',
+      };
+
+      const hexRegex = /\\x[0-9a-fA-F]+/;
+
+      const parseHex = (value: string) => {
+        const cleanValue = value.replace(/\\+x/g, '');
+        return Buffer.from(hexToUint8Array(cleanValue));
+      };
+
+      return batchSwaps.map(batchSwap => {
+        return batchSwap.reduce(
+          (acc: object, value: unknown, index: number) => ({
+            ...acc,
+            [mapping[index as keyof typeof mapping]]:
+              typeof value === 'string' && hexRegex.test(value) ? parseHex(value) : value,
+          }),
+          {},
+        ) as BatchSwapSummary;
+      });
+    }
+
+    return {
+      ...result,
+      batch_swaps: parseBatchSwaps(result.batch_swaps),
+    };
   }
 }
 

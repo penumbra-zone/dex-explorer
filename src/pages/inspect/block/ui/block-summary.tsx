@@ -3,6 +3,7 @@ import { Text } from '@penumbra-zone/ui/Text';
 import { Table } from '@penumbra-zone/ui/Table';
 import { BlockSummaryApiResponse } from '@/shared/api/server/block/types';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
+import { pnum } from '@penumbra-zone/types/pnum';
 
 export function BlockSummary({ blockSummary }: { blockSummary: BlockSummaryApiResponse }) {
   if ('error' in blockSummary) {
@@ -54,23 +55,44 @@ export function BlockSummary({ blockSummary }: { blockSummary: BlockSummaryApiRe
             <Table.Tr>
               <Table.Th>From</Table.Th>
               <Table.Th>To</Table.Th>
+              <Table.Th>Price</Table.Th>
               <Table.Th>Number of Hops</Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {blockSummary.batchSwaps.map(swap => (
-              <Table.Tr key={JSON.stringify(swap)}>
-                <Table.Td>
-                  <ValueViewComponent valueView={swap.startValueView} />
-                </Table.Td>
-                <Table.Td>
-                  <ValueViewComponent valueView={swap.endValueView} />
-                </Table.Td>
-                <Table.Td>
-                  <Text color='text.primary'>{swap.numSwaps}</Text>
-                </Table.Td>
+            {blockSummary.batchSwaps.length ? (
+              blockSummary.batchSwaps.map(swap => (
+                <Table.Tr key={JSON.stringify(swap)}>
+                  <Table.Td>
+                    <ValueViewComponent
+                      valueView={pnum(swap.startInput).toValueView(swap.startAsset)}
+                      trailingZeros={false}
+                    />
+                  </Table.Td>
+                  <Table.Td>
+                    <ValueViewComponent
+                      valueView={pnum(swap.endOutput).toValueView(swap.endAsset)}
+                      trailingZeros={false}
+                    />
+                  </Table.Td>
+                  <Table.Td>
+                    <Text color='text.primary'>
+                      {swap.endPrice} {swap.endAsset.symbol}
+                    </Text>
+                  </Table.Td>
+                  <Table.Td>
+                    <Text color='text.primary'>{swap.numSwaps}</Text>
+                  </Table.Td>
+                </Table.Tr>
+              ))
+            ) : (
+              <Table.Tr>
+                <Table.Td>--</Table.Td>
+                <Table.Td>--</Table.Td>
+                <Table.Td>--</Table.Td>
+                <Table.Td>--</Table.Td>
               </Table.Tr>
-            ))}
+            )}
           </Table.Tbody>
         </Table>
       </div>

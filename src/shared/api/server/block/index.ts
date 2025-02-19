@@ -14,20 +14,30 @@ export const getBatchSwapDisplayData =
   (registry: Registry) =>
   (batchSwapSummary: BatchSwapSummary): BatchSwapSummaryDisplay => {
     const startAssetId = new AssetId({
-      inner: Uint8Array.from(batchSwapSummary.asset_start),
+      inner: batchSwapSummary.asset_start,
     });
     const startMetadata = registry.getMetadata(startAssetId);
     const startExponent = getDisplayDenomExponent.optional(startMetadata) ?? 0;
 
-    const endAssetId = new AssetId({ inner: Uint8Array.from(batchSwapSummary.asset_end) });
+    const endAssetId = new AssetId({ inner: batchSwapSummary.asset_end });
     const endMetadata = registry.getMetadata(endAssetId);
     const endExponent = getDisplayDenomExponent.optional(endMetadata) ?? 0;
 
     return {
       startAsset: startMetadata,
       endAsset: endMetadata,
-      startPrice: Number(batchSwapSummary.output) / Number(batchSwapSummary.input),
-      endPrice: Number(batchSwapSummary.input) / Number(batchSwapSummary.output),
+      startInput: batchSwapSummary.input,
+      endOutput: batchSwapSummary.output,
+      startExponent,
+      endExponent,
+      startPrice: pnum(
+        Number(batchSwapSummary.output) / Number(batchSwapSummary.input),
+        startExponent,
+      ).toFormattedString(),
+      endPrice: pnum(
+        Number(batchSwapSummary.input) / Number(batchSwapSummary.output),
+        endExponent,
+      ).toFormattedString(),
       startAmount: pnum(
         // convert string to bigint so that pnum parses it in base units
         // which means we can use the exponent to format it in display units
@@ -39,7 +49,7 @@ export const getBatchSwapDisplayData =
         // which means we can use the exponent to format it in display units
         batchSwapSummary.input,
         startExponent,
-      ).toValueView(),
+      ).toValueView(startMetadata),
       endAmount: pnum(
         // convert string to bigint so that pnum parses it in base units
         // which means we can use the exponent to format it in display units
@@ -51,18 +61,21 @@ export const getBatchSwapDisplayData =
         // which means we can use the exponent to format it in display units
         batchSwapSummary.output,
         endExponent,
-      ).toValueView(),
+      ).toValueView(endMetadata),
       numSwaps: batchSwapSummary.num_swaps,
     };
   };
 
-export async function GET(req: NextRequest): Promise<NextResponse<BlockSummaryApiResponse>> {
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: { height: string } },
+): Promise<NextResponse<BlockSummaryApiResponse>> {
   const chainId = process.env['PENUMBRA_CHAIN_ID'];
   if (!chainId) {
     return NextResponse.json({ error: 'PENUMBRA_CHAIN_ID is not set' }, { status: 500 });
   }
 
-  const height = req.nextUrl.searchParams.get('height');
+  const height = params.height;
   if (!height) {
     return NextResponse.json({ error: 'height is required' }, { status: 400 });
   }
@@ -71,6 +84,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<BlockSummaryAp
   const registry = await registryClient.remote.get(chainId);
 
   const blockSummary = await pindexer.getBlockSummary(Number(height));
+  console.log('TCL: blockSummary', blockSummary.batch_swaps);
 
   if (!blockSummary) {
     return NextResponse.json({ error: 'Block summary not found' }, { status: 404 });

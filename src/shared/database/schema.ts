@@ -210,7 +210,7 @@ export interface DexExBlockSummary {
   rowid: number;
   height: number;
   time: Date;
-  batch_swaps: BatchSwapSummary[];
+  batch_swaps: string;
   num_open_lps: number;
   num_closed_lps: number;
   num_withdrawn_lps: number;
