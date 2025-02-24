@@ -6,6 +6,7 @@ import { Button } from '@penumbra-zone/ui/Button';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Density } from '@penumbra-zone/ui/Density';
 import { AssetsTable } from './ui/assets-table';
+import { WalletConnect } from './ui/wallet-connect';
 
 interface PortfolioPageProps {
   isMobile: boolean;
@@ -56,6 +57,7 @@ function MobilePortfolioPage() {
 function DesktopPortfolioPage() {
   return (
     <div className='sm:container mx-auto py-8'>
+      <WalletConnect />
       <AssetsTable />
     </div>
   );
