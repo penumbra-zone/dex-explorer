@@ -17,7 +17,10 @@ export const fetchChainBalances = async (
         await Promise.all(
             chains.map(async chain => {
                 try {
-                    const chainAddress = bech32.encode(chain.chain.bech32_prefix, bech32.toWords(addressBytes));
+                    const chainAddress = bech32.encode(
+                        chain.chain.bech32_prefix,
+                        bech32.toWords(addressBytes),
+                    );
                     const response = await fetch(
                         `${chain.restEndpoint}/cosmos/bank/v1beta1/balances/${chainAddress}`,
                     );
@@ -32,18 +35,16 @@ export const fetchChainBalances = async (
                         .map(b => decodeBalance({ ...b, chain: chain.chainId }, chain.assets));
 
                     allBalances.push(...nonZeroBalances);
-                } catch (error) {
+                } catch {
                     // Silently fail for individual chains
                     return;
                 }
             }),
         );
-        console.log('allBalances', allBalances);
+
         return allBalances;
-    } catch (error) {
-        if (error instanceof Error) {
-            throw error;
-        }
-        throw new Error('Failed to fetch balances');
+    } catch (err) {
+        const error = err instanceof Error ? err : new Error('Failed to fetch balances');
+        throw error;
     }
-}; 
+};

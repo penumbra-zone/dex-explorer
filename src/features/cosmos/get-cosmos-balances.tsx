@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getChainConfigs } from './utils/chain-configs';
-import { decodeBalance } from './utils/decode-balance';
 import { fetchChainBalances } from './utils/fetch-balances';
 import type { Balance } from './types';
 
@@ -11,7 +10,8 @@ export const useCosmosBalances = (address?: string) => {
 
   const fetchBalances = useCallback(async (userAddress: string) => {
     const chains = getChainConfigs();
-    return fetchChainBalances(userAddress, chains);
+    const result = await fetchChainBalances(userAddress, chains);
+    return result;
   }, []);
 
   useEffect(() => {
@@ -22,11 +22,12 @@ export const useCosmosBalances = (address?: string) => {
     setIsLoading(true);
     setError(undefined);
 
-    fetchBalances(address)
+    void fetchBalances(address)
       .then(setBalances)
-      .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : 'Failed to fetch balances'),
-      )
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Failed to fetch balances';
+        setError(message);
+      })
       .finally(() => setIsLoading(false));
   }, [address, fetchBalances]);
 
