@@ -8,12 +8,10 @@ import {
   DexExPositionReserves,
   DexExPositionWithdrawals,
   DexExBlockSummary,
-  BatchSwapSummary,
 } from '@/shared/database/schema.ts';
 import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { DurationWindow } from '@/shared/utils/duration.ts';
 import { PositionId } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
-import { hexToUint8Array } from '@penumbra-zone/types/hex';
 import { BlockSummaryPindexerResponse } from '../api/server/block/types';
 
 const MAINNET_CHAIN_ID = 'penumbra-1';
