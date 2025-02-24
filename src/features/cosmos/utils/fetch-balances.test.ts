@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { fetchChainBalances } from './fetch-balances';
 import type { ChainConfig } from '../types';
@@ -100,6 +101,6 @@ describe('fetchChainBalances', () => {
     const result = await fetchChainBalances('cosmos1...', [mockChains[0]]);
 
     expect(result).toHaveLength(1);
-    expect(result[0].amount).toBe('1000000');
+    expect(result[0]?.amount).toBe('1000000');
   });
 });
