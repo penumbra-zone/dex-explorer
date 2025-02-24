@@ -1,18 +1,11 @@
-import { Metadata, ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 
 export interface BatchSwapSummaryDisplay {
   startAsset: Metadata;
   endAsset: Metadata;
-  startExponent: number;
-  endExponent: number;
   startInput: string;
   endOutput: string;
-  startPrice: string;
   endPrice: string;
-  startAmount: string;
-  endAmount: string;
-  startValueView: ValueView;
-  endValueView: ValueView;
   numSwaps: number;
 }
 

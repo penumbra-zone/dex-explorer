@@ -9,59 +9,59 @@ import { ChainRegistryClient, Registry } from '@penumbra-labs/registry';
 import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { pnum } from '@penumbra-zone/types/pnum';
 import { BatchSwapSummary } from '@/shared/database/schema';
+import { hexToUint8Array, base64ToHex } from '@penumbra-zone/types/hex';
+import { joinLoHi, LoHi } from '@penumbra-zone/types/lo-hi';
+
+function isLoHi(value: unknown): value is LoHi {
+  return typeof value === 'object' && value !== null && 'lo' in value;
+}
+
+interface AssetWithInner {
+  inner: string;
+}
+
+function isAsset(value: unknown): value is AssetWithInner {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'inner' in value &&
+    value.inner !== null &&
+    typeof (value as AssetWithInner).inner === 'string'
+  );
+}
 
 export const getBatchSwapDisplayData =
   (registry: Registry) =>
   (batchSwapSummary: BatchSwapSummary): BatchSwapSummaryDisplay => {
+    if (!isLoHi(batchSwapSummary.input) || !isLoHi(batchSwapSummary.output)) {
+      throw new Error('Invalid input or output: expected LoHi type');
+    }
+
+    if (!isAsset(batchSwapSummary.asset_start) || !isAsset(batchSwapSummary.asset_end)) {
+      throw new Error('Invalid asset_start or asset_end');
+    }
+
     const startAssetId = new AssetId({
-      inner: batchSwapSummary.asset_start,
+      inner: hexToUint8Array(base64ToHex(batchSwapSummary.asset_start.inner)),
     });
     const startMetadata = registry.getMetadata(startAssetId);
     const startExponent = getDisplayDenomExponent.optional(startMetadata) ?? 0;
 
-    const endAssetId = new AssetId({ inner: batchSwapSummary.asset_end });
+    const endAssetId = new AssetId({
+      inner: hexToUint8Array(base64ToHex(batchSwapSummary.asset_end.inner)),
+    });
     const endMetadata = registry.getMetadata(endAssetId);
     const endExponent = getDisplayDenomExponent.optional(endMetadata) ?? 0;
+
+    const inputBigInt = joinLoHi(batchSwapSummary.input.lo, batchSwapSummary.input.hi);
+    const outputBigInt = joinLoHi(batchSwapSummary.output.lo, batchSwapSummary.output.hi);
 
     return {
       startAsset: startMetadata,
       endAsset: endMetadata,
-      startInput: batchSwapSummary.input,
-      endOutput: batchSwapSummary.output,
-      startExponent,
-      endExponent,
-      startPrice: pnum(
-        Number(batchSwapSummary.output) / Number(batchSwapSummary.input),
-        startExponent,
-      ).toFormattedString(),
-      endPrice: pnum(
-        Number(batchSwapSummary.input) / Number(batchSwapSummary.output),
-        endExponent,
-      ).toFormattedString(),
-      startAmount: pnum(
-        // convert string to bigint so that pnum parses it in base units
-        // which means we can use the exponent to format it in display units
-        batchSwapSummary.input,
-        startExponent,
-      ).toFormattedString(),
-      startValueView: pnum(
-        // convert string to bigint so that pnum parses it in base units
-        // which means we can use the exponent to format it in display units
-        batchSwapSummary.input,
-        startExponent,
-      ).toValueView(startMetadata),
-      endAmount: pnum(
-        // convert string to bigint so that pnum parses it in base units
-        // which means we can use the exponent to format it in display units
-        batchSwapSummary.output,
-        endExponent,
-      ).toFormattedString(),
-      endValueView: pnum(
-        // convert string to bigint so that pnum parses it in base units
-        // which means we can use the exponent to format it in display units
-        batchSwapSummary.output,
-        endExponent,
-      ).toValueView(endMetadata),
+      startInput: pnum(inputBigInt, startExponent).toString(),
+      endOutput: pnum(outputBigInt, endExponent).toString(),
+      endPrice: pnum(outputBigInt / inputBigInt, endExponent).toFormattedString(),
       numSwaps: batchSwapSummary.num_swaps,
     };
   };

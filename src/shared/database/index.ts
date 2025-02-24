@@ -475,57 +475,7 @@ class Pindexer {
       .where('height', '=', height)
       .executeTakeFirst()) as DexExBlockSummary | undefined;
 
-    if (!result) {
-      return undefined;
-    }
-
-    function parseBatchSwaps(rawBatchSwaps: string): BatchSwapSummary[] {
-      const parseableBatchSwaps = rawBatchSwaps
-        // Remove escaped double quotes
-        .replace(/\\"/g, '"')
-        // convert to parseable array
-        .replace(/^\{/, '[')
-        .replace(/\}$/, ']')
-        // convert tuple to array
-        .replace(/"\(/g, '[')
-        .replace(/\)"/g, ']');
-
-      const batchSwaps = JSON.parse(parseableBatchSwaps) as string[][];
-
-      const mapping = {
-        0: 'asset_start',
-        1: 'asset_end',
-        2: 'input',
-        3: 'output',
-        4: 'num_swaps',
-        5: 'price_float',
-      };
-
-      const hexRegex = /\\x[0-9a-fA-F]+/;
-
-      const parseHex = (value: string) => {
-        const cleanValue = value.replace(/\\+x/g, '');
-        return Buffer.from(hexToUint8Array(cleanValue));
-      };
-
-      return batchSwaps.map(batchSwap => {
-        const parsedBatchSwap = batchSwap.reduce(
-          (acc: object, value: unknown, index: number) => ({
-            ...acc,
-            [mapping[index as keyof typeof mapping]]:
-              typeof value === 'string' && hexRegex.test(value) ? parseHex(value) : value,
-          }),
-          {},
-        );
-
-        return parsedBatchSwap as unknown as BatchSwapSummary;
-      });
-    }
-
-    return {
-      ...result,
-      batch_swaps: parseBatchSwaps(result.batch_swaps),
-    };
+    return result;
   }
 }
 
