@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pindexer } from '@/shared/database';
 import { TransactionApiResponse } from './types';
+import { uint8ArrayToHex } from '@penumbra-zone/types/hex';
 
-export async function GET(req: NextRequest): Promise<NextResponse<TransactionApiResponse>> {
-  const txHash = req.nextUrl.searchParams.get('txHash');
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: { txHash: string } },
+): Promise<NextResponse<TransactionApiResponse>> {
+  const txHash = params.txHash;
   if (!txHash) {
     return NextResponse.json({ error: 'txHash is required' }, { status: 400 });
   }
@@ -15,7 +19,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<TransactionApi
   }
 
   return NextResponse.json({
-    tx: response.transaction,
+    tx: uint8ArrayToHex(response.transaction),
     height: response.height,
   });
 }

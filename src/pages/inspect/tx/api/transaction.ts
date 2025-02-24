@@ -62,7 +62,7 @@ export const useTransactionInfo = (txHash: string, connected: boolean) => {
 
       const { tx, height } = jsonRes;
 
-      const transaction = Transaction.fromBinary(tx);
+      const transaction = Transaction.fromBinary(hexToUint8Array(tx));
 
       const txInfo = new TransactionInfo({
         height: BigInt(height),

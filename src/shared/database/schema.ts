@@ -198,7 +198,6 @@ export interface DexExPriceCharts {
 }
 
 export interface DexExTransactions {
-  rowid: number;
   transaction_id: Buffer;
   transaction: Buffer;
   height: number;
@@ -350,6 +349,7 @@ interface RawDB {
   dex_ex_position_state: DexExPositionState;
   dex_ex_position_withdrawals: DexExPositionWithdrawals;
   dex_ex_price_charts: DexExPriceCharts;
+  dex_ex_transactions: DexExTransactions;
   governance_delegator_votes: GovernanceDelegatorVotes;
   governance_proposals: GovernanceProposals;
   governance_validator_votes: GovernanceValidatorVotes;
@@ -379,4 +379,5 @@ export type DB = Pick<
   | 'dex_ex_position_withdrawals'
   | 'dex_ex_batch_swap_traces'
   | 'dex_ex_metadata'
+  | 'dex_ex_transactions'
 >;

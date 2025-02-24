@@ -1,6 +1,6 @@
 export type TransactionApiResponse =
   | {
-      tx: Uint8Array;
+      tx: string;
       height: number;
     }
   | { error: string };

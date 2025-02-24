@@ -470,7 +470,7 @@ class Pindexer {
     return this.db
       .selectFrom('dex_ex_transactions')
       .selectAll()
-      .where('transaction_id', '=', hexToUint8Array(txHash))
+      .where('transaction_id', '=', Buffer.from(hexToUint8Array(txHash)))
       .executeTakeFirst();
   }
 }
