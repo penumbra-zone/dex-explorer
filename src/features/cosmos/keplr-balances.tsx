@@ -126,7 +126,6 @@ export const CosmosBalances = () => {
           // Add non-zero balances
           for (const balance of data.balances) {
             if (balance.amount !== '0') {
-              console.log(`Balance for ${chain.chainId}:`, balance);
               allBalances.push({
                 denom: balance.denom,
                 amount: balance.amount,
