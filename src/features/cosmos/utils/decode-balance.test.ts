@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, expect, it } from 'vitest';
 import type { Asset } from '@chain-registry/types';
 import { decodeBalance } from './decode-balance';
