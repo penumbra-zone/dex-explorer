@@ -4,6 +4,7 @@ import { TableCell } from '@penumbra-zone/ui/TableCell';
 import { BlockSummaryApiResponse } from '@/shared/api/server/block/types';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
 import { pnum } from '@penumbra-zone/types/pnum';
+import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 
 export function BlockSummary({ blockSummary }: { blockSummary: BlockSummaryApiResponse }) {
   if ('error' in blockSummary) {
@@ -58,30 +59,35 @@ export function BlockSummary({ blockSummary }: { blockSummary: BlockSummaryApiRe
             <TableCell heading>Number of Hops</TableCell>
           </div>
           {blockSummary.batchSwaps.length ? (
-            blockSummary.batchSwaps.map(swap => (
-              <div className='grid grid-cols-subgrid col-span-4' key={JSON.stringify(swap)}>
-                <TableCell>
-                  <ValueViewComponent
-                    valueView={pnum(swap.startInput).toValueView(swap.startAsset)}
-                    trailingZeros={false}
-                  />
-                </TableCell>
-                <TableCell>
-                  <ValueViewComponent
-                    valueView={pnum(swap.endOutput).toValueView(swap.endAsset)}
-                    trailingZeros={false}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Text color='text.primary'>
-                    {swap.endPrice} {swap.endAsset.symbol}
-                  </Text>
-                </TableCell>
-                <TableCell>
-                  <Text color='text.primary'>{swap.numSwaps}</Text>
-                </TableCell>
-              </div>
-            ))
+            blockSummary.batchSwaps.map(swap => {
+              const startAsset = Metadata.fromJson(swap.startAsset);
+              const endAsset = Metadata.fromJson(swap.endAsset);
+
+              return (
+                <div className='grid grid-cols-subgrid col-span-4' key={JSON.stringify(swap)}>
+                  <TableCell>
+                    <ValueViewComponent
+                      valueView={pnum(swap.startInput).toValueView(startAsset)}
+                      trailingZeros={false}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <ValueViewComponent
+                      valueView={pnum(swap.endOutput).toValueView(endAsset)}
+                      trailingZeros={false}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Text color='text.primary'>
+                      {swap.endPrice} {endAsset.symbol}
+                    </Text>
+                  </TableCell>
+                  <TableCell>
+                    <Text color='text.primary'>{swap.numSwaps}</Text>
+                  </TableCell>
+                </div>
+              );
+            })
           ) : (
             <div className='grid grid-cols-subgrid col-span-4'>
               <TableCell>--</TableCell>

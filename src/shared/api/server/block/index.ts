@@ -57,8 +57,8 @@ export const getBatchSwapDisplayData =
     const outputBigInt = joinLoHi(batchSwapSummary.output.lo, batchSwapSummary.output.hi);
 
     return {
-      startAsset: startMetadata,
-      endAsset: endMetadata,
+      startAsset: startMetadata.toJson(),
+      endAsset: endMetadata.toJson(),
       startInput: pnum(inputBigInt, startExponent).toString(),
       endOutput: pnum(outputBigInt, endExponent).toString(),
       endPrice: pnum(outputBigInt / inputBigInt, endExponent).toFormattedString(),

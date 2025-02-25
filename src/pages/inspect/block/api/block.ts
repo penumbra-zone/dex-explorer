@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { BlockSummaryApiResponse } from '@/shared/api/server/block/types';
+import { apiFetch } from '@/shared/utils/api-fetch';
 
 export const useBlockSummary = (height: string) => {
   return useQuery({
@@ -9,8 +10,7 @@ export const useBlockSummary = (height: string) => {
       if (!height) {
         throw new Error('Invalid block height');
       }
-      const response = await fetch(`/api/block/${height}`);
-      return response.json() as Promise<BlockSummaryApiResponse>;
+      return apiFetch<BlockSummaryApiResponse>(`/api/block/${height}`);
     },
   });
 };

@@ -13,7 +13,6 @@ import {
 import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { DurationWindow } from '@/shared/utils/duration.ts';
 import { PositionId } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
-import { BlockSummaryPindexerResponse } from '../api/server/block/types';
 import { hexToUint8Array } from '@penumbra-zone/types/hex';
 
 const MAINNET_CHAIN_ID = 'penumbra-1';
@@ -468,14 +467,12 @@ class Pindexer {
     }));
   }
 
-  async getBlockSummary(height: number): Promise<BlockSummaryPindexerResponse> {
-    const result = (await this.db
+  async getBlockSummary(height: number): Promise<Selectable<DexExBlockSummary> | undefined> {
+    return this.db
       .selectFrom('dex_ex_block_summary')
       .selectAll()
       .where('height', '=', height)
-      .executeTakeFirst()) as DexExBlockSummary | undefined;
-
-    return result;
+      .executeTakeFirst();
   }
 
   async getTransaction(txHash: string): Promise<Selectable<DexExTransactions> | undefined> {

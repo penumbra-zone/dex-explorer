@@ -1,8 +1,8 @@
-import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { JsonValue } from '@bufbuild/protobuf';
 
 export interface BatchSwapSummaryDisplay {
-  startAsset: Metadata;
-  endAsset: Metadata;
+  startAsset: JsonValue;
+  endAsset: JsonValue;
   startInput: string;
   endOutput: string;
   endPrice: string;
@@ -31,18 +31,3 @@ export type BlockSummaryApiResponse =
       numTxs: number;
     }
   | { error: string };
-
-export type BlockSummaryPindexerResponse =
-  | {
-      rowid: number;
-      height: number;
-      time: Date;
-      batch_swaps: BatchSwapSummary[];
-      num_open_lps: number;
-      num_closed_lps: number;
-      num_withdrawn_lps: number;
-      num_swaps: number;
-      num_swap_claims: number;
-      num_txs: number;
-    }
-  | undefined;
