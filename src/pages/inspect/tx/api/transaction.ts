@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { createClient } from '@connectrpc/connect';
-import { ViewService, TendermintProxyService } from '@penumbra-zone/protobuf';
+import { ViewService } from '@penumbra-zone/protobuf';
 import { getGrpcTransport } from '@/shared/api/transport';
 import { TransactionInfo } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
 import {
@@ -14,6 +14,7 @@ import {
 } from '@penumbra-zone/protobuf/penumbra/core/transaction/v1/transaction_pb';
 import { TransactionId } from '@penumbra-zone/protobuf/penumbra/core/txhash/v1/txhash_pb';
 import { hexToUint8Array } from '@penumbra-zone/types/hex';
+import { TransactionApiResponse } from '@/shared/api/server/transaction/types';
 import { asActionView } from './as-action-view';
 
 export const useTransactionInfo = (txHash: string, connected: boolean) => {
@@ -34,15 +35,18 @@ export const useTransactionInfo = (txHash: string, connected: boolean) => {
         return viewServiceRes.txInfo;
       }
 
-      const tendermintClient = createClient(TendermintProxyService, grpc.transport);
-      const res = await tendermintClient.getTx({ hash });
+      const res = await fetch(`/api/transactions/${txHash}`);
+      const jsonRes = (await res.json()) as TransactionApiResponse;
+      if ('error' in jsonRes) {
+        throw new Error(jsonRes.error);
+      }
 
-      const { tx, height } = res;
+      const { tx, height } = jsonRes;
 
-      const transaction = Transaction.fromBinary(tx);
+      const transaction = Transaction.fromBinary(hexToUint8Array(tx));
 
       const txInfo = new TransactionInfo({
-        height,
+        height: BigInt(height),
         id: new TransactionId({ inner: hash }),
         transaction,
         perspective: new TransactionPerspective({
