@@ -1,6 +1,6 @@
 import { InfoCard } from '@/pages/explore/ui/info-card';
 import { Text } from '@penumbra-zone/ui/Text';
-import { Table } from '@penumbra-zone/ui/Table';
+import { TableCell } from '@penumbra-zone/ui/TableCell';
 import { BlockSummaryApiResponse } from '@/shared/api/server/block/types';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
 import { pnum } from '@penumbra-zone/types/pnum';
@@ -50,51 +50,47 @@ export function BlockSummary({ blockSummary }: { blockSummary: BlockSummaryApiRe
             Swaps
           </Text>
         </div>
-        <Table>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>From</Table.Th>
-              <Table.Th>To</Table.Th>
-              <Table.Th>Price</Table.Th>
-              <Table.Th>Number of Hops</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {blockSummary.batchSwaps.length ? (
-              blockSummary.batchSwaps.map(swap => (
-                <Table.Tr key={JSON.stringify(swap)}>
-                  <Table.Td>
-                    <ValueViewComponent
-                      valueView={pnum(swap.startInput).toValueView(swap.startAsset)}
-                      trailingZeros={false}
-                    />
-                  </Table.Td>
-                  <Table.Td>
-                    <ValueViewComponent
-                      valueView={pnum(swap.endOutput).toValueView(swap.endAsset)}
-                      trailingZeros={false}
-                    />
-                  </Table.Td>
-                  <Table.Td>
-                    <Text color='text.primary'>
-                      {swap.endPrice} {swap.endAsset.symbol}
-                    </Text>
-                  </Table.Td>
-                  <Table.Td>
-                    <Text color='text.primary'>{swap.numSwaps}</Text>
-                  </Table.Td>
-                </Table.Tr>
-              ))
-            ) : (
-              <Table.Tr>
-                <Table.Td>--</Table.Td>
-                <Table.Td>--</Table.Td>
-                <Table.Td>--</Table.Td>
-                <Table.Td>--</Table.Td>
-              </Table.Tr>
-            )}
-          </Table.Tbody>
-        </Table>
+        <div className='grid grid-cols-4'>
+          <div className='grid grid-cols-subgrid col-span-4'>
+            <TableCell heading>From</TableCell>
+            <TableCell heading>To</TableCell>
+            <TableCell heading>Price</TableCell>
+            <TableCell heading>Number of Hops</TableCell>
+          </div>
+          {blockSummary.batchSwaps.length ? (
+            blockSummary.batchSwaps.map(swap => (
+              <div className='grid grid-cols-subgrid col-span-4' key={JSON.stringify(swap)}>
+                <TableCell>
+                  <ValueViewComponent
+                    valueView={pnum(swap.startInput).toValueView(swap.startAsset)}
+                    trailingZeros={false}
+                  />
+                </TableCell>
+                <TableCell>
+                  <ValueViewComponent
+                    valueView={pnum(swap.endOutput).toValueView(swap.endAsset)}
+                    trailingZeros={false}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Text color='text.primary'>
+                    {swap.endPrice} {swap.endAsset.symbol}
+                  </Text>
+                </TableCell>
+                <TableCell>
+                  <Text color='text.primary'>{swap.numSwaps}</Text>
+                </TableCell>
+              </div>
+            ))
+          ) : (
+            <div className='grid grid-cols-subgrid col-span-4'>
+              <TableCell>--</TableCell>
+              <TableCell>--</TableCell>
+              <TableCell>--</TableCell>
+              <TableCell>--</TableCell>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
