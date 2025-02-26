@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pindexer } from '@/shared/database';
-import {
-  BlockSummaryApiResponse,
-  BatchSwapSummaryDisplay,
-} from '@/shared/api/server/block/types.ts';
 import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { ChainRegistryClient, Registry } from '@penumbra-labs/registry';
 import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { pnum } from '@penumbra-zone/types/pnum';
-import { BatchSwapSummary } from '@/shared/database/schema';
 import { hexToUint8Array, base64ToHex } from '@penumbra-zone/types/hex';
 import { joinLoHi, LoHi } from '@penumbra-zone/types/lo-hi';
+import { serialize, Serialized } from '@/shared/utils/serializer';
+import { BatchSwapSummary as PindexerBatchSwapSummary } from '@/shared/database/schema';
+import { BatchSwapSummary, BlockSummaryApiResponse } from './types';
 
 function isLoHi(value: unknown): value is LoHi {
   return typeof value === 'object' && value !== null && 'lo' in value;
@@ -32,7 +30,7 @@ function isAsset(value: unknown): value is AssetWithInner {
 
 export const getBatchSwapDisplayData =
   (registry: Registry) =>
-  (batchSwapSummary: BatchSwapSummary): BatchSwapSummaryDisplay => {
+  (batchSwapSummary: PindexerBatchSwapSummary): BatchSwapSummary => {
     if (!isLoHi(batchSwapSummary.input) || !isLoHi(batchSwapSummary.output)) {
       throw new Error('Invalid input or output: expected LoHi type');
     }
@@ -57,8 +55,8 @@ export const getBatchSwapDisplayData =
     const outputBigInt = joinLoHi(batchSwapSummary.output.lo, batchSwapSummary.output.hi);
 
     return {
-      startAsset: startMetadata.toJson(),
-      endAsset: endMetadata.toJson(),
+      startAsset: startMetadata,
+      endAsset: endMetadata,
       startInput: pnum(inputBigInt, startExponent).toString(),
       endOutput: pnum(outputBigInt, endExponent).toString(),
       endPrice: pnum(outputBigInt / inputBigInt, endExponent).toFormattedString(),
@@ -69,7 +67,7 @@ export const getBatchSwapDisplayData =
 export async function GET(
   _req: NextRequest,
   { params }: { params: { height: string } },
-): Promise<NextResponse<BlockSummaryApiResponse>> {
+): Promise<NextResponse<Serialized<BlockSummaryApiResponse>>> {
   const chainId = process.env['PENUMBRA_CHAIN_ID'];
   if (!chainId) {
     return NextResponse.json({ error: 'PENUMBRA_CHAIN_ID is not set' }, { status: 500 });
@@ -89,15 +87,17 @@ export async function GET(
     return NextResponse.json({ error: 'Block summary not found' }, { status: 404 });
   }
 
-  return NextResponse.json({
-    height: blockSummary.height,
-    time: blockSummary.time,
-    batchSwaps: blockSummary.batch_swaps.map(getBatchSwapDisplayData(registry)),
-    numOpenLps: blockSummary.num_open_lps,
-    numClosedLps: blockSummary.num_closed_lps,
-    numWithdrawnLps: blockSummary.num_withdrawn_lps,
-    numSwaps: blockSummary.num_swaps,
-    numSwapClaims: blockSummary.num_swap_claims,
-    numTxs: blockSummary.num_txs,
-  });
+  return NextResponse.json(
+    serialize({
+      height: blockSummary.height,
+      time: blockSummary.time,
+      batchSwaps: blockSummary.batch_swaps.map(getBatchSwapDisplayData(registry)),
+      numOpenLps: blockSummary.num_open_lps,
+      numClosedLps: blockSummary.num_closed_lps,
+      numWithdrawnLps: blockSummary.num_withdrawn_lps,
+      numSwaps: blockSummary.num_swaps,
+      numSwapClaims: blockSummary.num_swap_claims,
+      numTxs: blockSummary.num_txs,
+    }),
+  );
 }
