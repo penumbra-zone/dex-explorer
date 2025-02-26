@@ -6,7 +6,7 @@ import { PositionId } from '@penumbra-zone/protobuf/penumbra/core/component/dex/
 import { serialize, Serialized } from '@/shared/utils/serializer';
 import { toValueView } from '@/shared/utils/value-view';
 import { getURLParams, intervalFilterToSQL, LeaderboardData, LeaderboardPageInfo } from './utils';
-import { queryLeaderboard } from './query-leaderboard';
+import { pindexer } from '@/shared/database';
 
 export const GET = async (
   req: NextRequest,
@@ -22,7 +22,10 @@ export const GET = async (
     const registryClient = new ChainRegistryClient();
     const registry = await registryClient.remote.get(chainId);
 
-    const result = await queryLeaderboard(filters.limit, intervalFilterToSQL[filters.interval]);
+    const result = await pindexer.queryLeaderboard(
+      filters.limit,
+      intervalFilterToSQL[filters.interval],
+    );
 
     const mapped = await Promise.all(
       result.map(position => {

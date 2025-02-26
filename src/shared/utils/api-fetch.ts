@@ -4,7 +4,7 @@ import { JsonValue } from '@bufbuild/protobuf';
 const parseResponse = async <RES extends object>(response: Response) => {
   const jsonRes = (await response.json()) as Serialized<RES | { error: string }>;
 
-  if ('error' in jsonRes) {
+  if (typeof jsonRes === 'object' && 'error' in jsonRes) {
     throw new Error(jsonRes.error);
   }
 
@@ -23,23 +23,9 @@ const parseResponse = async <RES extends object>(response: Response) => {
  */
 export const apiFetch = async <RES extends object>(
   url: string,
-  searchParams: Record<string, string | number> = {},
+  searchParams: Record<string, string> = {},
 ): Promise<RES> => {
-  // cast numbers and other search param types to string
-  const params = Object.entries(searchParams).reduce<Record<string, string>>(
-    (acc, [key, value]) => {
-      if (typeof value === 'undefined') {
-        return acc;
-      }
-      if (typeof value !== 'string') {
-        acc[key] = value.toString();
-      }
-      return acc;
-    },
-    {},
-  );
-
-  const urlParams = new URLSearchParams(params).toString();
+  const urlParams = new URLSearchParams(searchParams).toString();
   const fetchRes = await fetch(`${url}${urlParams && `?${urlParams}`}`);
 
   return parseResponse<RES>(fetchRes);
