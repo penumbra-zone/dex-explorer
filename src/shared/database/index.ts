@@ -5,11 +5,13 @@ import {
   DexExPositionExecutions,
   DexExPositionReserves,
   DexExPositionWithdrawals,
+  DexExTransactions,
 } from '@/shared/database/schema.ts';
 import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { DurationWindow } from '@/shared/utils/duration.ts';
 import { PositionId } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { pindexerDb } from './client';
+import { hexToUint8Array } from '@penumbra-zone/types/hex';
 
 const MAINNET_CHAIN_ID = 'penumbra-1';
 
@@ -333,7 +335,6 @@ class Pindexer {
       .selectFrom('dex_ex_batch_swap_traces')
       .select([
         'amount_hops',
-        'asset_hops',
         'asset_end',
         'asset_hops',
         'asset_start',
@@ -352,6 +353,67 @@ class Pindexer {
       .orderBy('time', 'desc')
       .orderBy('rowid', 'asc') // Secondary sort by ID to maintain order within the same time frame
       .limit(amount)
+      .execute();
+  }
+
+  async myTrades(
+    data: { base: AssetId; quote: AssetId; height: number; input: number; output: number }[],
+  ) {
+    // prepare data for insertion by encoding AssetId to base64 and assigning correct input amount based on direction
+    const sell = data.map(swap => ({
+      type: 'sell',
+      height: swap.height,
+      amount: swap.output,
+      quote: Buffer.from(swap.base.inner).toString('base64'),
+      base: Buffer.from(swap.quote.inner).toString('base64'),
+    }));
+    const buy = data.map(swap => ({
+      type: 'buy',
+      height: swap.height,
+      amount: swap.input,
+      quote: Buffer.from(swap.quote.inner).toString('base64'),
+      base: Buffer.from(swap.base.inner).toString('base64'),
+    }));
+
+    // stringify values to insert into a virtual table
+    const swapsJson = JSON.stringify(buy.concat(sell));
+
+    // create virtual table from JSON, decode buffers again from base64 strings
+    const latestSwaps = this.db.with('latest_swaps', db =>
+      db
+        .selectFrom(
+          sql<{
+            type: 'buy' | 'sell';
+            base: string;
+            quote: string;
+            height: number;
+            amount: number;
+          }>`jsonb_to_recordset(${sql.lit(swapsJson)}::jsonb)`.as<'latest_swaps'>(
+            sql`latest_swaps(base TEXT, quote TEXT, height INT, amount INT, type TEXT)`,
+          ),
+        )
+        .select(exp => [
+          'type',
+          'height',
+          'amount',
+          sql<Buffer>`decode(${exp.ref('latest_swaps.base')}, 'base64')::bytea`.as('base'),
+          sql<Buffer>`decode(${exp.ref('latest_swaps.quote')}, 'base64')::bytea`.as('quote'),
+        ]),
+    );
+
+    // join virtual table with latest swaps
+    return latestSwaps
+      .selectFrom('dex_ex_batch_swap_traces as swaps')
+      .innerJoin('latest_swaps', join =>
+        join
+          .onRef('swaps.asset_start', '=', 'latest_swaps.base')
+          .onRef('swaps.asset_end', '=', 'latest_swaps.quote')
+          .onRef('swaps.height', '=', 'latest_swaps.height')
+          .onRef('swaps.batch_input', '=', 'latest_swaps.amount'),
+      )
+      .selectAll()
+      .orderBy('time', 'desc')
+      .limit(10)
       .execute();
   }
 
@@ -380,6 +442,14 @@ class Pindexer {
       fees2: row.fees2,
       executionCount: row.executionCount,
     }));
+  }
+
+  async getTransaction(txHash: string): Promise<Selectable<DexExTransactions> | undefined> {
+    return this.db
+      .selectFrom('dex_ex_transactions')
+      .selectAll()
+      .where('transaction_id', '=', Buffer.from(hexToUint8Array(txHash)))
+      .executeTakeFirst();
   }
 }
 

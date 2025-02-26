@@ -1,4 +1,19 @@
 import { deserialize, Serialized } from './serializer';
+import { JsonValue } from '@bufbuild/protobuf';
+
+const parseResponse = async <RES extends object>(response: Response) => {
+  const jsonRes = (await response.json()) as Serialized<RES | { error: string }>;
+
+  if ('error' in jsonRes) {
+    throw new Error(jsonRes.error);
+  }
+
+  if (Array.isArray(jsonRes)) {
+    return jsonRes.map(deserialize) as RES;
+  }
+
+  return deserialize(jsonRes);
+};
 
 /**
  * A wrapper around `fetch` to request data from local endpoints. Features:
@@ -27,15 +42,20 @@ export const apiFetch = async <RES extends object>(
   const urlParams = new URLSearchParams(params).toString();
   const fetchRes = await fetch(`${url}${urlParams && `?${urlParams}`}`);
 
-  const jsonRes = (await fetchRes.json()) as Serialized<RES | { error: string }>;
+  return parseResponse<RES>(fetchRes);
+};
 
-  if (typeof jsonRes === 'object' && 'error' in jsonRes) {
-    throw new Error(jsonRes.error);
-  }
+/**
+ * Same as `apiFetch`, but does a POST request with the second param as JSON body.
+ */
+export const apiPostFetch = async <RES extends object>(
+  url: string,
+  body: JsonValue = {},
+): Promise<RES> => {
+  const fetchRes = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
 
-  if (Array.isArray(jsonRes)) {
-    return jsonRes.map(deserialize) as RES;
-  }
-
-  return deserialize(jsonRes);
+  return parseResponse<RES>(fetchRes);
 };
