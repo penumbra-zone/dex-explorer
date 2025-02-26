@@ -6,6 +6,9 @@ import { Button } from '@penumbra-zone/ui/Button';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Density } from '@penumbra-zone/ui/Density';
 import { AssetsTable } from './ui/assets-table';
+import { WalletConnect } from './ui/wallet-connect';
+import { useRegistry } from '@/shared/api/registry.ts';
+import { IbcChainProvider } from '@/features/cosmos/chain-provider.tsx';
 
 interface PortfolioPageProps {
   isMobile: boolean;
@@ -45,7 +48,6 @@ function MobilePortfolioPage() {
         </Density>
       </div>
 
-      {/* Go Back Button */}
       <Button>
         <Text body>Go Back</Text>
       </Button>
@@ -54,9 +56,16 @@ function MobilePortfolioPage() {
 }
 
 function DesktopPortfolioPage() {
+  const { data } = useRegistry();
+  if (!data) {
+    return;
+  }
   return (
-    <div className='sm:container mx-auto py-8'>
-      <AssetsTable />
-    </div>
+    <IbcChainProvider registry={data}>
+      <div className='sm:container mx-auto py-8'>
+        <WalletConnect />
+        <AssetsTable />
+      </div>
+    </IbcChainProvider>
   );
 }
