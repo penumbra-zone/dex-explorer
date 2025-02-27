@@ -6,8 +6,8 @@ export const intervalFilterToSQL: Record<LeaderboardIntervalFilter, string> = {
   '1h': '1 hour',
   '6h': '6 hours',
   '24h': '1 day',
-  '7d': '1 week',
-  '30d': '1 month',
+  '7d': '7 days',
+  '30d': '30 days',
 };
 
 export const DEFAULT_INTERVAL: LeaderboardIntervalFilter = '7d';
@@ -47,8 +47,8 @@ export const getURLParams = (searchParams: URLSearchParams): LeaderboardSearchPa
 
   return {
     limit,
+    interval,
     base,
     quote,
-    interval,
   };
 };

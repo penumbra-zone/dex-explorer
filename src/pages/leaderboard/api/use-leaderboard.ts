@@ -8,10 +8,12 @@ export const useLeaderboard = (filters: Partial<LeaderboardSearchParams>) => {
   return useQuery<LeaderboardPageInfo>({
     queryKey: ['leaderboard', filters.interval, filters.base, filters.quote, filters.limit],
     queryFn: async () => {
-      return apiFetch<LeaderboardPageInfo>(
-        '/api/position/leaderboard',
-        filters as Record<string, string>,
-      );
+      return apiFetch<LeaderboardPageInfo>('/api/position/leaderboard', {
+        interval: filters.interval,
+        limit: filters.limit,
+        ...(filters.base && { base: filters.base }),
+        ...(filters.quote && { quote: filters.quote }),
+      } as unknown as Record<string, string>);
     },
   });
 };

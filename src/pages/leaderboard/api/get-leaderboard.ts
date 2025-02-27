@@ -7,6 +7,7 @@ import { serialize, Serialized } from '@/shared/utils/serializer';
 import { toValueView } from '@/shared/utils/value-view';
 import { getURLParams, intervalFilterToSQL, LeaderboardData, LeaderboardPageInfo } from './utils';
 import { pindexer } from '@/shared/database';
+import { hexToUint8Array } from '@penumbra-zone/types/hex';
 
 export const GET = async (
   req: NextRequest,
@@ -25,6 +26,8 @@ export const GET = async (
     const result = await pindexer.queryLeaderboard(
       filters.limit,
       intervalFilterToSQL[filters.interval],
+      filters.base,
+      filters.quote,
     );
 
     const mapped = await Promise.all(

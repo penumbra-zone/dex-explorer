@@ -19,19 +19,31 @@ import { useBalances } from '@/shared/api/balances';
 import { getMetadataFromBalancesResponse } from '@penumbra-zone/getters/balances-response';
 import { useLeaderboard } from '@/pages/leaderboard/api/use-leaderboard';
 import { DEFAULT_INTERVAL, LeaderboardIntervalFilter } from '../api/utils';
+import { serialize } from '@/shared/utils/serializer';
+import { uint8ArrayToHex } from '@penumbra-zone/types/hex';
 
 export const LeaderboardTable = () => {
   const [parent] = useAutoAnimate();
 
   const [interval, setInterval] = useState(DEFAULT_INTERVAL);
   const [base, setBase] = useState<AssetSelectorValue>();
+  console.log('TCL: LeaderboardTable -> base', base);
   const [quote, setQuote] = useState<AssetSelectorValue>();
+  console.log('TCL: LeaderboardTable -> quote', quote);
 
-  const baseSymbol =
-    base && (isBalancesResponse(base) ? getMetadataFromBalancesResponse(base).symbol : base.symbol);
-  const quoteSymbol =
+  const baseAssetId =
+    base &&
+    uint8ArrayToHex(
+      (isBalancesResponse(base) ? getMetadataFromBalancesResponse(base) : base).penumbraAssetId
+        .inner,
+    );
+  console.log('TCL: LeaderboardTable -> baseAssetId', baseAssetId);
+  const quoteAssetId =
     quote &&
-    (isBalancesResponse(quote) ? getMetadataFromBalancesResponse(quote).symbol : quote.symbol);
+    uint8ArrayToHex(
+      (isBalancesResponse(quote) ? getMetadataFromBalancesResponse(quote) : quote).penumbraAssetId
+        .inner,
+    );
 
   const {
     data: leaderboard,
@@ -39,8 +51,8 @@ export const LeaderboardTable = () => {
     isLoading,
   } = useLeaderboard({
     interval,
-    base: baseSymbol,
-    quote: quoteSymbol,
+    base: baseAssetId,
+    quote: quoteAssetId,
   });
 
   const { data: assets } = useAssets();
