@@ -462,8 +462,6 @@ class Pindexer {
   }
 
   async queryLeaderboard(limit: number, interval: string, baseHex?: string, quoteHex?: string) {
-    console.log('TCL: queryLeaderboard -> interval', interval);
-    console.log('TCL: queryLeaderboard -> limit', limit);
     const positionExecutions = this.db
       .selectFrom('dex_ex_position_executions')
       .select(exp => [
@@ -486,18 +484,13 @@ class Pindexer {
       )
       .groupBy(['position_id', 'context_asset_start', 'context_asset_end'])
       .orderBy('executionCount', 'desc');
-    console.log('TCL: queryLeaderboard -> positionExecutions', positionExecutions);
-    // console.log(
-    //   'TCL: queryLeaderboard -> positionExecutions 2',
-    //   await positionExecutions.execute(),
-    // );
 
     const results = await this.db
       .selectFrom('dex_ex_position_state as state')
       .where(exp =>
         exp.and([
           exp.eb('closing_height', 'is', null),
-          sql<boolean>`${exp.ref('state.opening_time')} >= NOW() - CAST('180 days' AS INTERVAL)`,
+          sql<boolean>`${exp.ref('state.opening_time')} >= NOW() - CAST('${interval}' AS INTERVAL)`,
         ]),
       )
       .innerJoin(positionExecutions.as('executions'), 'state.position_id', 'executions.position_id')
@@ -505,7 +498,6 @@ class Pindexer {
       .limit(limit)
       .execute();
 
-    console.log('TCL: queryLeaderboard -> results', results);
     return results;
   }
 }

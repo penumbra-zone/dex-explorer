@@ -7,7 +7,6 @@ import { serialize, Serialized } from '@/shared/utils/serializer';
 import { toValueView } from '@/shared/utils/value-view';
 import { getURLParams, intervalFilterToSQL, LeaderboardData, LeaderboardPageInfo } from './utils';
 import { pindexer } from '@/shared/database';
-import { hexToUint8Array } from '@penumbra-zone/types/hex';
 
 export const GET = async (
   req: NextRequest,
