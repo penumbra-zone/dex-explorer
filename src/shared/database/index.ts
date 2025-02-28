@@ -490,7 +490,7 @@ class Pindexer {
       .where(exp =>
         exp.and([
           exp.eb('closing_height', 'is', null),
-          sql<boolean>`${exp.ref('state.opening_time')} >= NOW() - CAST('${interval}' AS INTERVAL)`,
+          sql<boolean>`${exp.ref('state.opening_time')} >= NOW() - CAST(${interval} AS INTERVAL)`,
         ]),
       )
       .innerJoin(positionExecutions.as('executions'), 'state.position_id', 'executions.position_id')

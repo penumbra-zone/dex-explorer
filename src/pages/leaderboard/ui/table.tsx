@@ -51,6 +51,7 @@ export const LeaderboardTable = () => {
     error,
     isLoading,
   } = useLeaderboard({
+    limit: 30,
     interval,
     base: baseAssetId,
     quote: quoteAssetId,

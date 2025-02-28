@@ -6,8 +6,8 @@ export const intervalFilterToSQL: Record<LeaderboardIntervalFilter, string> = {
   '1h': '1 hour',
   '6h': '6 hours',
   '24h': '1 day',
-  '7d': '7 days',
-  '30d': '30 days',
+  '7d': '1 week',
+  '30d': '1 month',
 };
 
 export const DEFAULT_INTERVAL: LeaderboardIntervalFilter = '7d';
@@ -40,10 +40,7 @@ export const getURLParams = (searchParams: URLSearchParams): LeaderboardSearchPa
   const limit = Number(searchParams.get('limit')) || DEFAULT_LIMIT;
   const base = searchParams.get('base') ?? undefined;
   const quote = searchParams.get('quote') ?? undefined;
-
-  let interval =
-    (searchParams.get('interval') as LeaderboardIntervalFilter | null) ?? DEFAULT_INTERVAL;
-  interval = intervalFilterToSQL[interval] ? interval : DEFAULT_INTERVAL;
+  const interval = (searchParams.get('interval') ?? DEFAULT_INTERVAL) as LeaderboardIntervalFilter;
 
   return {
     limit,

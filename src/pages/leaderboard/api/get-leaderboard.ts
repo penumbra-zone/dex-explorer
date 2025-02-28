@@ -5,7 +5,7 @@ import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb
 import { PositionId } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { serialize, Serialized } from '@/shared/utils/serializer';
 import { toValueView } from '@/shared/utils/value-view';
-import { getURLParams, intervalFilterToSQL, LeaderboardData, LeaderboardPageInfo } from './utils';
+import { getURLParams, LeaderboardData, LeaderboardPageInfo, intervalFilterToSQL } from './utils';
 import { pindexer } from '@/shared/database';
 
 export const GET = async (
@@ -16,12 +16,11 @@ export const GET = async (
     return NextResponse.json({ error: 'Error: PENUMBRA_CHAIN_ID is not set' }, { status: 500 });
   }
 
-  const filters = getURLParams(new URLSearchParams(req.url));
-
   try {
     const registryClient = new ChainRegistryClient();
     const registry = await registryClient.remote.get(chainId);
 
+    const filters = getURLParams(new URLSearchParams(req.nextUrl.search));
     const result = await pindexer.queryLeaderboard(
       filters.limit,
       intervalFilterToSQL[filters.interval],
