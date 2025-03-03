@@ -64,9 +64,21 @@ export const GET = async (
       }),
     );
 
-    return NextResponse.json(
-      serialize({ data: mapped.filter(Boolean) as LeaderboardData[], filters }),
+    // Group by positionId and take entry with the most number of executions
+    const uniquePositions = Object.values(
+      (mapped.filter(Boolean) as LeaderboardData[]).reduce<Record<string, LeaderboardData>>(
+        (acc, position) => {
+          const existingPosition = acc[position.positionId];
+          if (!existingPosition || existingPosition.executions < position.executions) {
+            acc[position.positionId] = position;
+          }
+          return acc;
+        },
+        {},
+      ),
     );
+
+    return NextResponse.json(serialize({ data: uniquePositions, filters }));
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
