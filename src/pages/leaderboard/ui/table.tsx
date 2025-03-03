@@ -4,7 +4,6 @@ import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { useState, useMemo, useCallback } from 'react';
 import cn from 'clsx';
 import orderBy from 'lodash/orderBy';
-import uniqBy from 'lodash/uniqBy';
 import { Text } from '@penumbra-zone/ui/Text';
 import { TableCell } from '@penumbra-zone/ui/TableCell';
 import { SegmentedControl } from '@penumbra-zone/ui/SegmentedControl';
@@ -71,7 +70,6 @@ export const LeaderboardTable = () => {
   const { data: assets } = useAssets();
   const { data: balances } = useBalances();
   const { data: positions } = leaderboard ?? {};
-  console.log('TCL: LeaderboardTable -> positions', positions);
 
   const sortedPositions = useMemo(() => {
     return orderBy(
@@ -197,7 +195,10 @@ export const LeaderboardTable = () => {
                     'bg-transparent hover:bg-action-hoverOverlay transition-colors',
                   )}
                 >
-                  <TableCell numeric variant={index !== positions.length - 1 ? 'cell' : 'lastCell'}>
+                  <TableCell
+                    numeric
+                    variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
+                  >
                     <div className='flex max-w-[104px]'>
                       <Text as='div' detailTechnical color='text.primary' truncate>
                         {position.positionId}
@@ -207,19 +208,34 @@ export const LeaderboardTable = () => {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell numeric variant={index !== positions.length - 1 ? 'cell' : 'lastCell'}>
+                  <TableCell
+                    numeric
+                    variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
+                  >
                     {position.executions}
                   </TableCell>
-                  <TableCell numeric variant={index !== positions.length - 1 ? 'cell' : 'lastCell'}>
+                  <TableCell
+                    numeric
+                    variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
+                  >
                     <ValueViewComponent valueView={position.fees1} abbreviate={true} />
                   </TableCell>
-                  <TableCell numeric variant={index !== positions.length - 1 ? 'cell' : 'lastCell'}>
+                  <TableCell
+                    numeric
+                    variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
+                  >
                     <ValueViewComponent valueView={position.volume1} abbreviate={true} />
                   </TableCell>
-                  <TableCell numeric variant={index !== positions.length - 1 ? 'cell' : 'lastCell'}>
+                  <TableCell
+                    numeric
+                    variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
+                  >
                     <ValueViewComponent valueView={position.fees2} abbreviate={true} />
                   </TableCell>
-                  <TableCell numeric variant={index !== positions.length - 1 ? 'cell' : 'lastCell'}>
+                  <TableCell
+                    numeric
+                    variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
+                  >
                     <ValueViewComponent valueView={position.volume2} abbreviate={true} />
                   </TableCell>
                 </Link>

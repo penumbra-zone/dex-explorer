@@ -461,7 +461,12 @@ class Pindexer {
       .executeTakeFirst();
   }
 
-  async queryLeaderboard(limit: number, interval: string, baseHex?: string, quoteHex?: string) {
+  async queryLeaderboard(
+    limit: number,
+    interval: string,
+    baseHex: string | undefined,
+    quoteHex: string | undefined,
+  ) {
     const positionExecutions = this.db
       .selectFrom('dex_ex_position_executions')
       .select(exp => [
