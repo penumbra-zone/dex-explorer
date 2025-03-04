@@ -496,6 +496,7 @@ class Pindexer {
       )
       .innerJoin(positionExecutions.as('executions'), 'state.position_id', 'executions.position_id')
       .selectAll('executions')
+      .selectAll('state')
       .limit(limit)
       .execute();
 

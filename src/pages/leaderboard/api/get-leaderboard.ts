@@ -30,6 +30,7 @@ export const GET = async (
 
     const mapped = await Promise.all(
       result.map(position => {
+        console.log('TCL: position', position);
         const asset1 = new AssetId({ inner: position.context_asset_start });
         const asset2 = new AssetId({ inner: position.context_asset_end });
         const metadata1 = registry.tryGetMetadata(asset1);
@@ -60,6 +61,11 @@ export const GET = async (
             amount: position.fees2,
             metadata: metadata2,
           }),
+          openingTime: position.opening_time,
+          closingTime: position.closing_time,
+          positionRaw: position.position_raw,
+          openingHeight: position.opening_height,
+          closingHeight: position.closing_height,
         } satisfies LeaderboardData;
       }),
     );

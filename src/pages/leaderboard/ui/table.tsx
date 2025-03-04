@@ -199,6 +199,7 @@ export const LeaderboardTable = ({
                     className={cn(
                       'relative grid grid-cols-subgrid col-span-8',
                       'bg-transparent hover:bg-action-hoverOverlay transition-colors',
+                      '[&>*]:h-auto',
                     )}
                   >
                     <TableCell
@@ -229,7 +230,7 @@ export const LeaderboardTable = ({
                       numeric
                       variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
                     >
-                      <div>
+                      <div className='flex flex-col gap-2 py-2'>
                         <ValueViewComponent
                           valueView={position.fees1}
                           abbreviate={true}
@@ -246,7 +247,7 @@ export const LeaderboardTable = ({
                       numeric
                       variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
                     >
-                      <div>
+                      <div className='flex flex-col gap-2 py-2'>
                         <ValueViewComponent
                           valueView={position.volume1}
                           abbreviate={true}
