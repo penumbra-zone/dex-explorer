@@ -12,6 +12,10 @@ import { formatAmount } from '@penumbra-zone/types/amount';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { useBalances } from '@/shared/api/balances';
 import { useBalances as useCosmosBalances } from '@/features/cosmos/use-augmented-balances';
+import { useRegistry } from '@/shared/api/registry';
+import { usePenumbraIbcDenoms } from '@/features/penumbra/penumbra-ibc-utils';
+import { balanceToValueView } from '@/features/cosmos/utils/balance-to-value-view';
+import { Registry } from '@penumbra-labs/registry';
 
 interface AssetAllocation {
   symbol: string;
@@ -22,11 +26,16 @@ interface AssetAllocation {
 }
 
 export const AssetBars: React.FC = () => {
-  // Move the hooks inside the component
   const { data: shieldedBalances, isLoading: isShieldedLoading } = useBalances();
   const { balances: publicBalances, isLoading: isPublicLoading } = useCosmosBalances();
+  const { data: registry } = useRegistry();
+  const { ibcDenoms: penumbraIbcDenoms = [] } = usePenumbraIbcDenoms();
 
   const isLoading = isShieldedLoading || isPublicLoading;
+
+  console.debug('=== SHIELDED BALANCES DIAGNOSTIC ===');
+  console.debug('Shielded Balances Count:', shieldedBalances?.length ?? 0);
+  console.debug('Public Balances Count:', publicBalances.length);
 
   if (isLoading) {
     return <LoadingBars />;
@@ -35,6 +44,9 @@ export const AssetBars: React.FC = () => {
   // If no data is available yet but we're not loading, show a minimal placeholder
   const hasShieldedBalances = shieldedBalances && shieldedBalances.length > 0;
   const hasPublicBalances = publicBalances.length > 0;
+
+  console.debug('Has Shielded Balances:', hasShieldedBalances);
+  console.debug('Has Public Balances:', hasPublicBalances);
 
   if (!hasShieldedBalances && !hasPublicBalances) {
     return (
@@ -55,22 +67,61 @@ export const AssetBars: React.FC = () => {
     );
   }
 
-  // Calculate values for shielded assets
-  const shieldedAllocations = calculateShieldedAssetAllocations(shieldedBalances ?? []);
+  console.debug('Shielded Balances:', shieldedBalances);
+  console.debug('Public Balances:', publicBalances);
+  // IMPORTANT: Calculate values independently regardless of other wallet's state
+  // Calculate values for shielded assets - always provide an array even if null/undefined
+  const shieldedAllocations = shieldedBalances
+    ? calculateShieldedAssetAllocations(shieldedBalances)
+    : [];
+  console.debug('Calculated shielded allocations:', shieldedAllocations.length, 'assets');
+  console.debug(
+    'Shielded Allocations Detail:',
+    shieldedAllocations.map(a => a.symbol),
+  );
 
   // Calculate values for public assets
-  const publicAllocations = calculatePublicAssetAllocations(publicBalances);
+  const publicAllocations = calculatePublicAssetAllocations(
+    publicBalances,
+    registry,
+    penumbraIbcDenoms,
+  );
+  console.debug('Calculated public allocations:', publicAllocations.length, 'assets');
+  console.debug(
+    'Public Allocations Detail:',
+    publicAllocations.map(a => a.symbol),
+  );
 
   // Calculate the max total value to scale the bars
   const shieldedTotal = shieldedAllocations.reduce((acc, { value }) => acc + value, 0);
   const publicTotal = publicAllocations.reduce((acc, { value }) => acc + value, 0);
 
+  console.debug('Shielded Total:', shieldedTotal);
+  console.debug('Public Total:', publicTotal);
+
   // Determine which total is larger for scaling
   const maxTotal = Math.max(shieldedTotal, publicTotal);
 
-  // Calculate the width percentage for each bar
-  const shieldedBarWidth = maxTotal > 0 ? (shieldedTotal / maxTotal) * 100 : 0;
-  const publicBarWidth = maxTotal > 0 ? (publicTotal / maxTotal) * 100 : 0;
+  // Calculate the width percentage for each bar - ensure at least minimal width if assets exist
+  // TODO: fix the way the public bar width is calculated
+  const shieldedBarWidth = 100; /* hasShieldedBalances
+    ? maxTotal > 0
+      ? (shieldedTotal / maxTotal) * 100
+      : shieldedTotal > 0
+        ? 100
+        : 0
+    : 0; */
+
+  const publicBarWidth = hasPublicBalances
+    ? maxTotal > 0
+      ? (publicTotal / maxTotal) * 100
+      : publicTotal > 0
+        ? 100
+        : 0
+    : 0;
+
+  console.debug('Shielded Bar Width:', shieldedBarWidth);
+  console.debug('Public Bar Width:', publicBarWidth);
 
   // Combine allocations for the legend, prioritizing by value
   const combinedAllocations = [...shieldedAllocations, ...publicAllocations]
@@ -147,12 +198,16 @@ export const AssetBars: React.FC = () => {
                     .slice(0, index)
                     .reduce((acc, item) => acc + (item.percentage / 100) * shieldedBarWidth, 0);
 
+                  // Find the matching asset in displayAssets for consistent color
+                  const displayAsset = displayAssets.find(a => a.symbol === allocation.symbol);
+                  const barColor = displayAsset?.color ?? allocation.color;
+
                   return (
                     <div
                       key={`shielded-${allocation.symbol}`}
                       className='absolute top-0 h-full rounded'
                       style={{
-                        backgroundColor: allocation.color,
+                        backgroundColor: barColor,
                         width: `${(allocation.percentage / 100) * shieldedBarWidth}%`,
                         left: `${prevWidth}%`,
                       }}
@@ -173,12 +228,16 @@ export const AssetBars: React.FC = () => {
                     .slice(0, index)
                     .reduce((acc, item) => acc + (item.percentage / 100) * publicBarWidth, 0);
 
+                  // Find the matching asset in displayAssets for consistent color
+                  const displayAsset = displayAssets.find(a => a.symbol === allocation.symbol);
+                  const barColor = displayAsset?.color ?? allocation.color;
+
                   return (
                     <div
                       key={`public-${allocation.symbol}`}
                       className='absolute top-0 h-full rounded'
                       style={{
-                        backgroundColor: allocation.color,
+                        backgroundColor: barColor,
                         width: `${(allocation.percentage / 100) * publicBarWidth}%`,
                         left: `${prevWidth}%`,
                       }}
@@ -194,7 +253,9 @@ export const AssetBars: React.FC = () => {
             {displayAssets.map(asset => (
               <div key={asset.symbol} className='flex items-center gap-1'>
                 <div className='w-2 h-2 rounded-full' style={{ backgroundColor: asset.color }} />
-                <Text small>{asset.symbol}</Text>
+                <Text small color='text.primary'>
+                  {asset.symbol}
+                </Text>
                 <Text small color='text.secondary'>
                   {Math.round(asset.percentage)}%
                 </Text>
@@ -262,27 +323,46 @@ const LoadingBars = () => {
   );
 };
 
-// Helper function to calculate asset allocations from Penumbra balances
+// Help function to calculate asset allocation from Penumbra balances
 function calculateShieldedAssetAllocations(balances: BalancesResponse[]): AssetAllocation[] {
+  console.debug('=== CALCULATE SHIELDED ALLOCATIONS ===');
+  console.debug('Input balances count:', balances.length);
+
   if (balances.length === 0) {
+    console.debug('No shielded balances to display');
     return [];
   }
 
-  // Filter out NFTs and special assets
+  // Filter out NFTs and special assets, but INCLUDE delegation tokens
   const displayableBalances = balances.filter(balance => {
     const metadata = getMetadataFromBalancesResponse.optional(balance);
+
     // If we don't have a symbol, we can't display it
     if (!metadata?.symbol) {
+      console.debug('Filtering out balance with no symbol');
       return false;
     }
 
-    // Filter out LP NFTs, unbonding tokens, and auction tokens
-    return (
-      !metadata.symbol.startsWith('lpNft') &&
-      !metadata.symbol.startsWith('unbond') &&
-      !metadata.symbol.startsWith('auction')
-    );
+    // IMPORTANT: Make sure to include delegation tokens!
+    // Include everything except LP NFTs and auction tokens
+    const isLpNft = metadata.symbol.startsWith('lpNft');
+    const isAuctionToken = metadata.symbol.startsWith('auction');
+    const shouldInclude = !isLpNft && !isAuctionToken;
+
+    // Log specifically for delegation tokens
+    if (metadata.symbol.includes('unbond')) {
+      console.debug(`Found delegation token: ${metadata.symbol}, including: ${shouldInclude}`);
+    }
+
+    console.debug(`Balance ${metadata.symbol}: ${shouldInclude ? 'including' : 'excluding'}`);
+    return shouldInclude;
   });
+
+  console.debug('Displayable balances count:', displayableBalances.length);
+  console.debug(
+    'Displayable balances symbols:',
+    displayableBalances.map(b => getMetadataFromBalancesResponse.optional(b)?.symbol),
+  );
 
   // Calculate values and handle errors
   const valuesWithMetadata = displayableBalances.map((balance, index) => {
@@ -290,7 +370,16 @@ function calculateShieldedAssetAllocations(balances: BalancesResponse[]): AssetA
     const metadata = getMetadataFromBalancesResponse.optional(balance);
     const amount = valueView?.valueView.value?.amount;
 
+    console.debug(`Processing balance ${metadata?.symbol}:`, {
+      hasMetadata: !!metadata,
+      hasValueView: !!valueView,
+      valueViewCase: valueView?.valueView.case,
+      hasAmount: !!amount,
+      amountValue: amount?.toString(),
+    });
+
     if (!amount || !metadata) {
+      console.debug('Missing amount or metadata for balance');
       return {
         symbol: 'Unknown',
         value: 0,
@@ -301,16 +390,31 @@ function calculateShieldedAssetAllocations(balances: BalancesResponse[]): AssetA
     }
 
     try {
+      const displayExponent = getDisplayDenomExponent(metadata);
+
+      console.debug(`Formatting amount for ${metadata.symbol}:`, {
+        rawAmount: String(amount),
+        displayExponent: displayExponent,
+      });
+
       const formattedAmount = Number(
         formatAmount({
           amount,
-          exponent: getDisplayDenomExponent(metadata),
+          exponent: displayExponent,
         }),
       );
 
+      console.debug(
+        `Formatted amount for ${metadata.symbol}: ${formattedAmount} (exponent: ${displayExponent})`,
+      );
+
       if (Number.isNaN(formattedAmount)) {
+        console.warn(`Failed to format amount for ${metadata.symbol}`);
         throw new Error('Failed to format amount');
       }
+
+      // All assets at this point should have a proper symbol
+      const displaySymbol = metadata.symbol;
 
       // Using if-checks instead of optional chaining for cleaner code
       const images = metadata.images;
@@ -319,7 +423,7 @@ function calculateShieldedAssetAllocations(balances: BalancesResponse[]): AssetA
       const primaryColor = theme ? theme.primaryColorHex : null;
 
       return {
-        symbol: metadata.symbol,
+        symbol: displaySymbol,
         value: formattedAmount,
         color:
           primaryColor ??
@@ -328,8 +432,12 @@ function calculateShieldedAssetAllocations(balances: BalancesResponse[]): AssetA
         hasError: false,
       };
     } catch (error) {
+      // Use the symbol from metadata or fall back to Unknown
+      const displaySymbol = metadata.symbol || 'Unknown';
+      console.warn(`Error processing ${displaySymbol}:`, error);
+
       return {
-        symbol: metadata.symbol || 'Unknown',
+        symbol: displaySymbol,
         value: 0,
         color: `hsl(${(index * GOLDEN_RATIO_ANGLE) % 360}, ${COLOR_SATURATION}%, ${COLOR_LIGHTNESS}%)`,
         percentage: 0,
@@ -340,27 +448,71 @@ function calculateShieldedAssetAllocations(balances: BalancesResponse[]): AssetA
 
   // Calculate total value
   const totalValue = valuesWithMetadata.reduce((acc, { value }) => acc + value, 0);
+  console.debug('Total shielded value:', totalValue);
+  console.debug(
+    'Individual asset values:',
+    valuesWithMetadata.map(item => ({ symbol: item.symbol, value: item.value })),
+  );
 
   // Update percentages
-  return valuesWithMetadata
+  const result = valuesWithMetadata
     .map(item => ({
       ...item,
       percentage: totalValue > 0 ? (item.value / totalValue) * 100 : 0,
     }))
     .sort((a, b) => b.value - a.value);
+
+  console.debug(
+    'Final shielded allocations:',
+    result.map(r => ({
+      symbol: r.symbol,
+      value: r.value,
+      percentage: r.percentage,
+    })),
+  );
+
+  return result;
 }
 
 // Helper function to calculate asset allocations from Cosmos balances
-function calculatePublicAssetAllocations(balances: Balance[]): AssetAllocation[] {
+function calculatePublicAssetAllocations(
+  balances: Balance[],
+  registry: Registry | undefined,
+  penumbraIbcDenoms: string[] = [],
+): AssetAllocation[] {
   if (balances.length === 0) {
     return [];
   }
 
   // Group balances by symbol and sum amounts
   const groupedBySymbol = balances.reduce<
-    Record<string, { symbol: string; amount: number; denom: string; chain: string }>
+    Record<
+      string,
+      { symbol: string; amount: number; denom: string; chain: string; displaySymbol: string }
+    >
   >((acc, balance) => {
-    const symbol = balance.symbol ?? balance.denom;
+    // Extract a display symbol for the asset
+    // If we have a symbol from decodeBalance, use it
+    // Otherwise, try to create a more readable version based on chain and denom
+    let displaySymbol = balance.symbol;
+
+    // If registry is available, try to get a better name using balanceToValueView
+    if (registry && !displaySymbol && balance.denom.startsWith('ibc/')) {
+      const valueView = balanceToValueView(balance, registry, penumbraIbcDenoms);
+      if (valueView.valueView.case === 'knownAssetId') {
+        const metadata = valueView.valueView.value.metadata;
+        if (metadata?.symbol) {
+          displaySymbol = metadata.symbol;
+        }
+      }
+    }
+
+    // All balances at this point should have a symbol, but just in case use the denom as fallback
+    if (!displaySymbol) {
+      displaySymbol = balance.denom;
+    }
+
+    const symbol = displaySymbol;
     if (!symbol) {
       return acc;
     }
@@ -368,6 +520,7 @@ function calculatePublicAssetAllocations(balances: Balance[]): AssetAllocation[]
     if (!acc[symbol]) {
       acc[symbol] = {
         symbol,
+        displaySymbol,
         amount: 0,
         denom: balance.denom,
         chain: balance.chain,

@@ -7,11 +7,13 @@
 The Portfolio page is structured with the following components:
 
 1. **Main Component (`src/pages/portfolio/index.tsx`)**
+
    - Switches between mobile and desktop views
    - Mobile view shows a message that the page requires a desktop device
    - Desktop view renders the `WalletConnect` and `AssetsTable` components
 
 2. **Wallet Connection (`src/pages/portfolio/ui/wallet-connect.tsx`)**
+
    - Displays two cards:
      - **Shielded Assets**: For connecting Prax Wallet (Penumbra's wallet)
      - **Public Assets**: For connecting Cosmos wallet
@@ -20,6 +22,7 @@ The Portfolio page is structured with the following components:
      - `CosmosConnectButton` for Cosmos wallet
 
 3. **Assets Table (`src/pages/portfolio/ui/assets-table.tsx`)**
+
    - Shows a single table with Penumbra assets
    - Displays an asset distribution bar
    - Columns: Asset, Balance, Price, Value, Actions
@@ -77,32 +80,34 @@ The Portfolio page is structured with the following components:
 ## Technical Approach
 
 1. **Data Integration**:
+
    - Create a unified data structure that combines Penumbra and Cosmos assets - use the penumbra pd Asset for this.
    - Build utility functions to calculate total values and proportions - these might already exist.
 
 2. **UI Components**:
+
    - Modify `AssetsTable` to display combined assets
    - Create new visualization components for the dual asset bars - we already have an asset bar, so probably just extend that.
    - Implement expandable rows showing asset locations
    - Build modal components for deposit/withdraw actions
 
 3. **Additional Features**:
-   - Add loading and empty states for all new components 
+   - Add loading and empty states for all new components
 
 KEEP IN MIND THESE USER JOURNEYS: ## User Flows
 
 - A user with Cosmos assets and no Penumbra balances opens the portfolio page.
-    - The page prompts them to connect their Cosmos wallet.
-    - They connect a Cosmos wallet and the portfolio page is populated with their Cosmos balances
-    - They select an asset from the list and hit the Deposit button
-    - A modal dialog appears with the Skip deposit interface, pre-filled with the asset to deposit and Penumbra as the destination
-        - All the user has to input is the amount they wish to deposit
-    - The deposit completes and they see it reflected on the portfolio page
+  - The page prompts them to connect their Cosmos wallet.
+  - They connect a Cosmos wallet and the portfolio page is populated with their Cosmos balances
+  - They select an asset from the list and hit the Deposit button
+  - A modal dialog appears with the Skip deposit interface, pre-filled with the asset to deposit and Penumbra as the destination
+    - All the user has to input is the amount they wish to deposit
+  - The deposit completes and they see it reflected on the portfolio page
 - A user with Penumbra assets opens the portfolio page
-    - They see their asset allocations inside and outside of Penumbra
-    - They can see a list of all of their positions
-    - They can click through any position to the position details page in the Inspect tab
-    - They can close or withdraw open positions
-    - They can see a list of their history
-    - They can click the withdraw button next to any asset
-        - This opens a Penumbra dialog to withdraw that asset back to its origin chain
+  - They see their asset allocations inside and outside of Penumbra
+  - They can see a list of all of their positions
+  - They can click through any position to the position details page in the Inspect tab
+  - They can close or withdraw open positions
+  - They can see a list of their history
+  - They can click the withdraw button next to any asset
+    - This opens a Penumbra dialog to withdraw that asset back to its origin chain
