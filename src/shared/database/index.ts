@@ -491,7 +491,7 @@ class Pindexer {
       .where(exp =>
         exp.and([
           exp.eb('opening_height', '>=', startBlock),
-          exp.eb('closing_height', '<=', endBlock),
+          exp.eb('opening_height', '<=', endBlock),
         ]),
       )
       .innerJoin(positionExecutions.as('executions'), 'state.position_id', 'executions.position_id')
