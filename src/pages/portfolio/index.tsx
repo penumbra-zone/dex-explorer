@@ -9,6 +9,7 @@ import { AssetsTable } from './ui/assets-table';
 import { WalletConnect } from './ui/wallet-connect';
 import { useRegistry } from '@/shared/api/registry.ts';
 import { IbcChainProvider } from '@/features/cosmos/chain-provider.tsx';
+import { AssetBars } from './ui/asset-bars';
 
 interface PortfolioPageProps {
   isMobile: boolean;
@@ -57,13 +58,21 @@ function MobilePortfolioPage() {
 
 function DesktopPortfolioPage() {
   const { data } = useRegistry();
+
   if (!data) {
     return;
   }
+
   return (
     <IbcChainProvider registry={data}>
       <div className='sm:container mx-auto py-8'>
         <WalletConnect />
+
+        {/* Asset Allocation Bars */}
+        <div className='mb-8'>
+          <AssetBars />
+        </div>
+
         <AssetsTable />
       </div>
     </IbcChainProvider>
