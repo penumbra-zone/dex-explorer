@@ -21,23 +21,7 @@ interface AssetAllocation {
   hasError: boolean;
 }
 
-interface AssetBarsProps {
-  // No props needed now that hooks are internal
-}
-
-/** HSL color saturation for asset bars. Unit: % */
-const COLOR_SATURATION = 95;
-
-/** HSL color lightness for asset bars. Unit: % */
-const COLOR_LIGHTNESS = 53;
-
-/** Angle used in the golden ratio color distribution algorithm to ensure visually distinct colors. Unit: degrees */
-const GOLDEN_RATIO_ANGLE = 137.5;
-
-/** Minimum percentage threshold for an asset to be shown individually. Assets below this are grouped into "Other". Unit: % */
-const SMALL_ASSET_THRESHOLD = 2;
-
-export const AssetBars: React.FC<AssetBarsProps> = () => {
+export const AssetBars: React.FC = () => {
   // Move the hooks inside the component
   const { data: shieldedBalances, isLoading: isShieldedLoading } = useBalances();
   const { balances: publicBalances, isLoading: isPublicLoading } = useCosmosBalances();
@@ -46,6 +30,29 @@ export const AssetBars: React.FC<AssetBarsProps> = () => {
 
   if (isLoading) {
     return <LoadingBars />;
+  }
+
+  // If no data is available yet but we're not loading, show a minimal placeholder
+  const hasShieldedBalances = shieldedBalances && shieldedBalances.length > 0;
+  const hasPublicBalances = publicBalances.length > 0;
+
+  if (!hasShieldedBalances && !hasPublicBalances) {
+    return (
+      <Card>
+        <div className='p-6'>
+          <div className='flex justify-between items-center mb-4'>
+            <Text as='h4' large color='text.primary'>
+              Allocation
+            </Text>
+          </div>
+          <div className='flex flex-col h-24 justify-center items-center'>
+            <Text color='text.secondary'>
+              No assets found. Connect your wallets to see your asset allocation.
+            </Text>
+          </div>
+        </div>
+      </Card>
+    );
   }
 
   // Calculate values for shielded assets
@@ -111,6 +118,11 @@ export const AssetBars: React.FC<AssetBarsProps> = () => {
         ]
       : []),
   ];
+
+  // Show loading state if we're fetching with no data
+  if (displayAssets.length === 0) {
+    return <LoadingBars />;
+  }
 
   return (
     <Card>
@@ -194,6 +206,18 @@ export const AssetBars: React.FC<AssetBarsProps> = () => {
     </Card>
   );
 };
+
+/** HSL color saturation for asset bars. Unit: % */
+const COLOR_SATURATION = 95;
+
+/** HSL color lightness for asset bars. Unit: % */
+const COLOR_LIGHTNESS = 53;
+
+/** Angle used in the golden ratio color distribution algorithm to ensure visually distinct colors. Unit: degrees */
+const GOLDEN_RATIO_ANGLE = 137.5;
+
+/** Minimum percentage threshold for an asset to be shown individually. Assets below this are grouped into "Other". Unit: % */
+const SMALL_ASSET_THRESHOLD = 2;
 
 const LoadingBars = () => {
   return (
@@ -288,12 +312,12 @@ function calculateShieldedAssetAllocations(balances: BalancesResponse[]): AssetA
         throw new Error('Failed to format amount');
       }
 
-      // Fix the optional chaining
-      const primaryColor =
-        metadata.images &&
-        metadata.images[0] &&
-        metadata.images[0].theme &&
-        metadata.images[0].theme.primaryColorHex;
+      // Using if-checks instead of optional chaining for cleaner code
+      const images = metadata.images;
+      const image0 = images.length > 0 ? images[0] : null;
+      const theme = image0 ? image0.theme : null;
+      const primaryColor = theme ? theme.primaryColorHex : null;
+
       return {
         symbol: metadata.symbol,
         value: formattedAmount,
@@ -336,7 +360,7 @@ function calculatePublicAssetAllocations(balances: Balance[]): AssetAllocation[]
   const groupedBySymbol = balances.reduce<
     Record<string, { symbol: string; amount: number; denom: string; chain: string }>
   >((acc, balance) => {
-    const symbol = balance.symbol || balance.denom;
+    const symbol = balance.symbol ?? balance.denom;
     if (!symbol) {
       return acc;
     }

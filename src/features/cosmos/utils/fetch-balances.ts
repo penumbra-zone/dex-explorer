@@ -17,17 +17,28 @@ export const fetchChainBalances = async (
     );
     const endpoint = await chain.getRestEndpoint();
     const url = typeof endpoint === 'string' ? endpoint : endpoint.url;
-    const response = await fetch(`${url}/cosmos/bank/v1beta1/balances/${chainAddress}`);
 
-    if (!response.ok) {
-      return [];
+    try {
+      const response = await fetch(`${url}/cosmos/bank/v1beta1/balances/${chainAddress}`);
+
+      if (!response.ok) {
+        console.warn(
+          `Failed to fetch balances for chain ${chain.chainId}: ${response.status} ${response.statusText}`,
+        );
+        return [];
+      }
+
+      const data = (await response.json()) as BankBalancesResponse;
+
+      return data.balances
+        .filter(b => b.amount !== '0')
+        .map(b => decodeBalance({ ...b, chain: chain.chainId }, chain.assets));
+    } catch (fetchError) {
+      console.warn(`Failed to fetch balances for chain ${chain.chainId}:`, fetchError);
+      return []; // Return empty array on fetch error
     }
-
-    const data = (await response.json()) as BankBalancesResponse;
-    return data.balances
-      .filter(b => b.amount !== '0')
-      .map(b => decodeBalance({ ...b, chain: chain.chainId }, chain.assets));
   } catch (err) {
-    throw err instanceof Error ? err : new Error('Failed to fetch balances');
+    console.error(`Error in fetchChainBalances for chain ${chain.chainId}:`, err);
+    return []; // Return empty array instead of throwing to avoid breaking the UI
   }
 };
