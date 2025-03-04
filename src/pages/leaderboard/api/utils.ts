@@ -14,10 +14,10 @@ export const DEFAULT_INTERVAL: LeaderboardIntervalFilter = '7d';
 export const DEFAULT_LIMIT = 30;
 
 export interface LeaderboardSearchParams {
-  interval: LeaderboardIntervalFilter;
   limit: number;
-  base?: string;
-  quote?: string;
+  quote: string | undefined;
+  startBlock: number;
+  endBlock: number;
 }
 
 export interface LeaderboardData {
@@ -38,14 +38,14 @@ export interface LeaderboardPageInfo {
 
 export const getURLParams = (searchParams: URLSearchParams): LeaderboardSearchParams => {
   const limit = Number(searchParams.get('limit')) || DEFAULT_LIMIT;
-  const base = searchParams.get('base') ?? undefined;
   const quote = searchParams.get('quote') ?? undefined;
-  const interval = (searchParams.get('interval') ?? DEFAULT_INTERVAL) as LeaderboardIntervalFilter;
+  const startBlock = Number(searchParams.get('startBlock')) || 0;
+  const endBlock = Number(searchParams.get('endBlock')) || 0;
 
   return {
     limit,
-    interval,
-    base,
     quote,
+    startBlock,
+    endBlock,
   };
 };

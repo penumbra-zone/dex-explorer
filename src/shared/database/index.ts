@@ -463,9 +463,9 @@ class Pindexer {
 
   async queryLeaderboard(
     limit: number,
-    interval: string,
-    baseHex: string | undefined,
     quoteHex: string | undefined,
+    startBlock: number,
+    endBlock: number,
   ) {
     const positionExecutions = this.db
       .selectFrom('dex_ex_position_executions')
@@ -479,10 +479,6 @@ class Pindexer {
         sql<number>`sum(${exp.ref('fee_2')})`.as('fees2'),
         sql<number>`CAST(count(*) AS INTEGER)`.as('executionCount'),
       ])
-      .$if(baseHex !== undefined, qb =>
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- baseHex is defined
-        qb.where('context_asset_start', '=', Buffer.from(hexToUint8Array(baseHex!))),
-      )
       .$if(quoteHex !== undefined, qb =>
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- quoteHex is defined
         qb.where('context_asset_end', '=', Buffer.from(hexToUint8Array(quoteHex!))),
@@ -494,8 +490,8 @@ class Pindexer {
       .selectFrom('dex_ex_position_state as state')
       .where(exp =>
         exp.and([
-          exp.eb('closing_height', 'is', null),
-          sql<boolean>`${exp.ref('state.opening_time')} >= NOW() - CAST(${interval} AS INTERVAL)`,
+          exp.eb('opening_height', '>=', startBlock),
+          exp.eb('closing_height', '<=', endBlock),
         ]),
       )
       .innerJoin(positionExecutions.as('executions'), 'state.position_id', 'executions.position_id')

@@ -5,6 +5,7 @@ import { useState, useMemo, useCallback } from 'react';
 import cn from 'clsx';
 import orderBy from 'lodash/orderBy';
 import { Text } from '@penumbra-zone/ui/Text';
+import { Card } from '@penumbra-zone/ui/Card';
 import { TableCell } from '@penumbra-zone/ui/TableCell';
 import { SegmentedControl } from '@penumbra-zone/ui/SegmentedControl';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
@@ -23,6 +24,8 @@ import { DEFAULT_INTERVAL, LeaderboardIntervalFilter } from '../api/utils';
 import { uint8ArrayToHex } from '@penumbra-zone/types/hex';
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { pnum } from '@penumbra-zone/types/pnum';
+import { Tabs } from '@penumbra-zone/ui/Tabs';
+import { TxDetailsTab } from '@/pages/inspect/tx/ui/tx-viewer';
 
 const getAssetId = (value: AssetSelectorValue | undefined): string | undefined => {
   if (!value) {
@@ -38,12 +41,20 @@ const getAssetId = (value: AssetSelectorValue | undefined): string | undefined =
     : undefined;
 };
 
-export const LeaderboardTable = () => {
+export const LeaderboardTable = ({
+  startBlock,
+  endBlock,
+}: {
+  startBlock: number;
+  endBlock: number;
+}) => {
   const [parent] = useAutoAnimate();
 
   const [interval, setInterval] = useState(DEFAULT_INTERVAL);
   const [base, setBase] = useState<AssetSelectorValue>();
   const [quote, setQuote] = useState<AssetSelectorValue>();
+
+  const [tab, setTab] = useState<'All LPs' | 'My LPs'>('All LPs');
 
   const [sortBy, setSortBy] = useState<{
     key: string;
@@ -53,7 +64,6 @@ export const LeaderboardTable = () => {
     direction: 'desc',
   });
 
-  const baseAssetId = getAssetId(base);
   const quoteAssetId = getAssetId(quote);
 
   const {
@@ -62,9 +72,9 @@ export const LeaderboardTable = () => {
     isLoading,
   } = useLeaderboard({
     limit: 30,
-    interval,
-    base: baseAssetId,
     quote: quoteAssetId,
+    startBlock,
+    endBlock,
   });
 
   const { data: assets } = useAssets();
@@ -134,120 +144,115 @@ export const LeaderboardTable = () => {
   }
 
   return (
-    <>
-      <div className='flex gap-4 justify-between items-center text-text-primary'>
-        <Text large whitespace='nowrap'>
-          Leaderboard
-        </Text>
+    <Card>
+      <div className='px-2'>
+        <div className='flex gap-4 justify-between items-center text-text-primary'>
+          <Text xxl>LPs Leaderboard</Text>
 
-        <div className='flex gap-1 items-center'>
-          <div className='mr-2'>
-            <SegmentedControl
-              value={interval}
-              onChange={value => setInterval(value as LeaderboardIntervalFilter)}
-            >
-              <SegmentedControl.Item value='1h' />
-              <SegmentedControl.Item value='6h' />
-              <SegmentedControl.Item value='24h' />
-              <SegmentedControl.Item value='7d' />
-              <SegmentedControl.Item value='30d' />
-            </SegmentedControl>
-          </div>
-
-          <AssetSelector assets={assets} balances={balances} value={base} onChange={setBase} />
-          <Text large color='text.secondary'>
-            /
-          </Text>
           <AssetSelector assets={assets} balances={balances} value={quote} onChange={setQuote} />
         </div>
-      </div>
 
-      <div ref={parent} className='grid grid-cols-6 h-auto overflow-auto'>
-        <div className='grid grid-cols-subgrid col-span-6'>
-          <SortableTableHeader sortKey='positionId'>Position</SortableTableHeader>
-          <SortableTableHeader sortKey='executions'>Executions</SortableTableHeader>
-          <SortableTableHeader sortKey='fees1'>Fees1</SortableTableHeader>
-          <SortableTableHeader sortKey='volume1'>Volume1</SortableTableHeader>
-          <SortableTableHeader sortKey='fees2'>Fees2</SortableTableHeader>
-          <SortableTableHeader sortKey='volume2'>Volume2</SortableTableHeader>
+        <div>
+          <SegmentedControl value={tab} onChange={opt => setTab(opt as 'All LPs' | 'My LPs')}>
+            <SegmentedControl.Item
+              value='All LPs'
+              style={tab === 'All LPs' ? 'filled' : 'unfilled'}
+            >
+              All LPs
+            </SegmentedControl.Item>
+            <SegmentedControl.Item value='My LPs' style={tab === 'My LPs' ? 'filled' : 'unfilled'}>
+              My LPs
+            </SegmentedControl.Item>
+          </SegmentedControl>
         </div>
 
-        {isLoading ? (
-          Array.from({ length: 5 }).map((_, index) => (
-            <div className='grid grid-cols-subgrid col-span-6' key={index}>
-              <TableCell loading>--</TableCell>
-              <TableCell loading>--</TableCell>
-              <TableCell loading>--</TableCell>
-              <TableCell loading>--</TableCell>
-              <TableCell loading>--</TableCell>
-              <TableCell loading>--</TableCell>
-            </div>
-          ))
-        ) : (
-          <>
-            {sortedPositions.length ? (
-              sortedPositions.map((position, index) => (
-                <Link
-                  href={`/inspect/lp/${position.positionId}`}
-                  key={position.positionId}
-                  className={cn(
-                    'relative grid grid-cols-subgrid col-span-6',
-                    'bg-transparent hover:bg-action-hoverOverlay transition-colors',
-                  )}
-                >
-                  <TableCell
-                    numeric
-                    variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
-                  >
-                    <div className='flex max-w-[104px]'>
-                      <Text as='div' detailTechnical color='text.primary' truncate>
-                        {position.positionId}
-                      </Text>
-                      <span>
-                        <SquareArrowOutUpRight className='w-4 h-4 text-text-secondary' />
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell
-                    numeric
-                    variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
-                  >
-                    {position.executions}
-                  </TableCell>
-                  <TableCell
-                    numeric
-                    variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
-                  >
-                    <ValueViewComponent valueView={position.fees1} abbreviate={true} />
-                  </TableCell>
-                  <TableCell
-                    numeric
-                    variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
-                  >
-                    <ValueViewComponent valueView={position.volume1} abbreviate={true} />
-                  </TableCell>
-                  <TableCell
-                    numeric
-                    variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
-                  >
-                    <ValueViewComponent valueView={position.fees2} abbreviate={true} />
-                  </TableCell>
-                  <TableCell
-                    numeric
-                    variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
-                  >
-                    <ValueViewComponent valueView={position.volume2} abbreviate={true} />
-                  </TableCell>
-                </Link>
-              ))
-            ) : (
-              <div className='col-span-6'>
-                <TableCell>Nothing to display.</TableCell>
+        <div ref={parent} className='grid grid-cols-6 h-auto overflow-auto'>
+          <div className='grid grid-cols-subgrid col-span-6'>
+            <SortableTableHeader sortKey='positionId'>Position</SortableTableHeader>
+            <SortableTableHeader sortKey='executions'>Executions</SortableTableHeader>
+            <SortableTableHeader sortKey='fees1'>Fees1</SortableTableHeader>
+            <SortableTableHeader sortKey='volume1'>Volume1</SortableTableHeader>
+            <SortableTableHeader sortKey='fees2'>Fees2</SortableTableHeader>
+            <SortableTableHeader sortKey='volume2'>Volume2</SortableTableHeader>
+          </div>
+
+          {isLoading ? (
+            Array.from({ length: 5 }).map((_, index) => (
+              <div className='grid grid-cols-subgrid col-span-6' key={index}>
+                <TableCell loading>--</TableCell>
+                <TableCell loading>--</TableCell>
+                <TableCell loading>--</TableCell>
+                <TableCell loading>--</TableCell>
+                <TableCell loading>--</TableCell>
+                <TableCell loading>--</TableCell>
               </div>
-            )}
-          </>
-        )}
+            ))
+          ) : (
+            <>
+              {sortedPositions.length ? (
+                sortedPositions.map((position, index) => (
+                  <Link
+                    href={`/inspect/lp/${position.positionId}`}
+                    key={position.positionId}
+                    className={cn(
+                      'relative grid grid-cols-subgrid col-span-6',
+                      'bg-transparent hover:bg-action-hoverOverlay transition-colors',
+                    )}
+                  >
+                    <TableCell
+                      numeric
+                      variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
+                    >
+                      <div className='flex max-w-[104px]'>
+                        <Text as='div' detailTechnical color='text.primary' truncate>
+                          {position.positionId}
+                        </Text>
+                        <span>
+                          <SquareArrowOutUpRight className='w-4 h-4 text-text-secondary' />
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell
+                      numeric
+                      variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
+                    >
+                      {position.executions}
+                    </TableCell>
+                    <TableCell
+                      numeric
+                      variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
+                    >
+                      <ValueViewComponent valueView={position.fees1} abbreviate={true} />
+                    </TableCell>
+                    <TableCell
+                      numeric
+                      variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
+                    >
+                      <ValueViewComponent valueView={position.volume1} abbreviate={true} />
+                    </TableCell>
+                    <TableCell
+                      numeric
+                      variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
+                    >
+                      <ValueViewComponent valueView={position.fees2} abbreviate={true} />
+                    </TableCell>
+                    <TableCell
+                      numeric
+                      variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
+                    >
+                      <ValueViewComponent valueView={position.volume2} abbreviate={true} />
+                    </TableCell>
+                  </Link>
+                ))
+              ) : (
+                <div className='col-span-6'>
+                  <TableCell>Nothing to display.</TableCell>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
-    </>
+    </Card>
   );
 };
