@@ -16,6 +16,8 @@ import { useRegistry } from '@/shared/api/registry';
 import { usePenumbraIbcDenoms } from '@/features/penumbra/penumbra-ibc-utils';
 import { balanceToValueView } from '@/features/cosmos/utils/balance-to-value-view';
 import { Registry } from '@penumbra-labs/registry';
+import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { getStablecoins } from '@/shared/utils/stables';
 
 interface AssetAllocation {
   symbol: string;
@@ -103,14 +105,14 @@ export const AssetBars: React.FC = () => {
   const maxTotal = Math.max(shieldedTotal, publicTotal);
 
   // Calculate the width percentage for each bar - ensure at least minimal width if assets exist
-  // TODO: fix the way the public bar width is calculated
-  const shieldedBarWidth = 100; /* hasShieldedBalances
+  // Fix the shielded bar width calculation to properly scale
+  const shieldedBarWidth = hasShieldedBalances
     ? maxTotal > 0
       ? (shieldedTotal / maxTotal) * 100
       : shieldedTotal > 0
         ? 100
         : 0
-    : 0; */
+    : 0;
 
   const publicBarWidth = hasPublicBalances
     ? maxTotal > 0
@@ -484,26 +486,106 @@ function calculatePublicAssetAllocations(
     return [];
   }
 
+  // Find USDC metadata for price normalization
+  let usdcMetadata: Metadata | undefined;
+  if (registry) {
+    const allAssets = registry.getAllAssets();
+    const { usdc } = getStablecoins(allAssets, 'USDC');
+    usdcMetadata = usdc;
+  }
+
   // Group balances by symbol and sum amounts
   const groupedBySymbol = balances.reduce<
     Record<
       string,
-      { symbol: string; amount: number; denom: string; chain: string; displaySymbol: string }
+      {
+        symbol: string;
+        amount: number;
+        usdcValue: number; // Value normalized to USDC
+        denom: string;
+        chain: string;
+        displaySymbol: string;
+        metadata?: Metadata;
+      }
     >
   >((acc, balance) => {
     // Extract a display symbol for the asset
     // If we have a symbol from decodeBalance, use it
     // Otherwise, try to create a more readable version based on chain and denom
     let displaySymbol = balance.symbol;
+    let usdcValue = 0;
+    let metadata: Metadata | undefined;
 
-    // If registry is available, try to get a better name using balanceToValueView
-    if (registry && !displaySymbol && balance.denom.startsWith('ibc/')) {
+    // Use balanceToValueView to convert to Penumbra value (properly accounts for token exponents)
+    if (registry) {
       const valueView = balanceToValueView(balance, registry, penumbraIbcDenoms);
+
+      // Extract metadata for display and conversion purposes
       if (valueView.valueView.case === 'knownAssetId') {
-        const metadata = valueView.valueView.value.metadata;
+        metadata = valueView.valueView.value.metadata;
         if (metadata?.symbol) {
           displaySymbol = metadata.symbol;
         }
+
+        // Get the display exponent to properly scale the value
+        let exponent = 0;
+        if (metadata && 'denomUnits' in metadata && 'display' in metadata && metadata.display) {
+          const displayUnit = metadata.denomUnits.find(
+            unit => 'denom' in unit && unit.denom === metadata?.display,
+          );
+          if (displayUnit && 'exponent' in displayUnit) {
+            exponent = displayUnit.exponent;
+          }
+        }
+
+        // Calculate value accounting for token's exponent
+        const amount = parseFloat(balance.amount) || 0;
+        const normalizedValue = amount / Math.pow(10, exponent);
+
+        // If we have USDC metadata, convert the value to USDC equivalent
+        if (usdcMetadata && metadata) {
+          // For USDC itself, the conversion is 1:1
+          if (metadata.symbol === 'USDC') {
+            usdcValue = normalizedValue;
+          } else {
+            // For other assets, use a simple conversion based on exponents
+            // In a real implementation, this would use actual price data from an oracle or API
+            // For now, we're just normalizing based on exponents as a basic approach
+            // Ideally, this would be replaced with actual price data from pindexer
+            // The usdcPrice parameter would be the price of the asset in USDC
+            const estimatedUsdcPrice = 1.0; // Default price estimate (placeholder)
+
+            try {
+              // This is a simplified version that just handles exponent differences
+              // In a real implementation, this would use actual price data
+              usdcValue = normalizedValue * estimatedUsdcPrice;
+            } catch (error) {
+              console.error('Error computing USDC value:', error);
+              usdcValue = normalizedValue; // Fallback to normalized value
+            }
+          }
+        } else {
+          // If no USDC metadata, just use the normalized value
+          usdcValue = normalizedValue;
+        }
+      } else {
+        // For unknown assets, parse amount directly
+        const normalizedValue = parseFloat(balance.amount) || 0;
+        // Heuristic: unknown assets with very large amounts are likely small-value tokens
+        if (normalizedValue > 1000000) {
+          usdcValue = normalizedValue / 1000000;
+        } else {
+          usdcValue = normalizedValue;
+        }
+      }
+    } else {
+      // If registry is not available, use the raw amount but apply normalization heuristic
+      const normalizedValue = parseFloat(balance.amount) || 0;
+      // Apply normalization heuristic
+      if (normalizedValue > 1000000) {
+        usdcValue = normalizedValue / 1000000;
+      } else {
+        usdcValue = normalizedValue;
       }
     }
 
@@ -522,29 +604,34 @@ function calculatePublicAssetAllocations(
         symbol,
         displaySymbol,
         amount: 0,
+        usdcValue: 0,
         denom: balance.denom,
         chain: balance.chain,
+        metadata,
       };
     }
 
-    // Parse and sum amounts
+    // Parse and sum raw amounts for reference
     const amount = parseFloat(balance.amount) || 0;
     acc[symbol].amount += amount;
+    // Sum USDC values for allocation calculation
+    acc[symbol].usdcValue += usdcValue;
 
     return acc;
   }, {});
 
-  // Convert to array and calculate percentages
+  // Convert to array and calculate percentages based on USDC values
   const values = Object.values(groupedBySymbol);
-  const totalValue = values.reduce((acc, { amount }) => acc + amount, 0);
+  const totalUsdcValue = values.reduce((acc, { usdcValue }) => acc + usdcValue, 0);
 
   // Create allocations with colors
   return values
     .map((value, index) => ({
       symbol: value.symbol,
-      value: value.amount,
+      // Use USDC value for the allocation
+      value: value.usdcValue,
       color: `hsl(${(index * GOLDEN_RATIO_ANGLE) % 360}, ${COLOR_SATURATION}%, ${COLOR_LIGHTNESS}%)`,
-      percentage: totalValue > 0 ? (value.amount / totalValue) * 100 : 0,
+      percentage: totalUsdcValue > 0 ? (value.usdcValue / totalUsdcValue) * 100 : 0,
       hasError: false,
     }))
     .sort((a, b) => b.value - a.value);
