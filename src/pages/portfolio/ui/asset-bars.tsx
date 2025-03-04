@@ -35,20 +35,12 @@ export const AssetBars: React.FC = () => {
 
   const isLoading = isShieldedLoading || isPublicLoading;
 
-  console.debug('=== SHIELDED BALANCES DIAGNOSTIC ===');
-  console.debug('Shielded Balances Count:', shieldedBalances?.length ?? 0);
-  console.debug('Public Balances Count:', publicBalances.length);
-
   if (isLoading) {
     return <LoadingBars />;
   }
 
-  // If no data is available yet but we're not loading, show a minimal placeholder
   const hasShieldedBalances = shieldedBalances && shieldedBalances.length > 0;
   const hasPublicBalances = publicBalances.length > 0;
-
-  console.debug('Has Shielded Balances:', hasShieldedBalances);
-  console.debug('Has Public Balances:', hasPublicBalances);
 
   if (!hasShieldedBalances && !hasPublicBalances) {
     return (
@@ -69,43 +61,26 @@ export const AssetBars: React.FC = () => {
     );
   }
 
-  console.debug('Shielded Balances:', shieldedBalances);
-  console.debug('Public Balances:', publicBalances);
-  // IMPORTANT: Calculate values independently regardless of other wallet's state
-  // Calculate values for shielded assets - always provide an array even if null/undefined
+  // Calculate values independently regardless of other wallet's state
   const shieldedAllocations = shieldedBalances
     ? calculateShieldedAssetAllocations(shieldedBalances)
     : [];
-  console.debug('Calculated shielded allocations:', shieldedAllocations.length, 'assets');
-  console.debug(
-    'Shielded Allocations Detail:',
-    shieldedAllocations.map(a => a.symbol),
-  );
 
-  // Calculate values for public assets
   const publicAllocations = calculatePublicAssetAllocations(
     publicBalances,
     registry,
     penumbraIbcDenoms,
-  );
-  console.debug('Calculated public allocations:', publicAllocations.length, 'assets');
-  console.debug(
-    'Public Allocations Detail:',
-    publicAllocations.map(a => a.symbol),
   );
 
   // Calculate the max total value to scale the bars
   const shieldedTotal = shieldedAllocations.reduce((acc, { value }) => acc + value, 0);
   const publicTotal = publicAllocations.reduce((acc, { value }) => acc + value, 0);
 
-  console.debug('Shielded Total:', shieldedTotal);
-  console.debug('Public Total:', publicTotal);
-
   // Determine which total is larger for scaling
   const maxTotal = Math.max(shieldedTotal, publicTotal);
 
   // Calculate the width percentage for each bar - ensure at least minimal width if assets exist
-  // Fix the shielded bar width calculation to properly scale
+  // TODO: Fix the shielded bar width calculation to properly scale
   const shieldedBarWidth = hasShieldedBalances
     ? maxTotal > 0
       ? (shieldedTotal / maxTotal) * 100
@@ -121,9 +96,6 @@ export const AssetBars: React.FC = () => {
         ? 100
         : 0
     : 0;
-
-  console.debug('Shielded Bar Width:', shieldedBarWidth);
-  console.debug('Public Bar Width:', publicBarWidth);
 
   // Combine allocations for the legend, prioritizing by value
   const combinedAllocations = [...shieldedAllocations, ...publicAllocations]
@@ -325,46 +297,24 @@ const LoadingBars = () => {
   );
 };
 
-// Help function to calculate asset allocation from Penumbra balances
 function calculateShieldedAssetAllocations(balances: BalancesResponse[]): AssetAllocation[] {
-  console.debug('=== CALCULATE SHIELDED ALLOCATIONS ===');
-  console.debug('Input balances count:', balances.length);
-
   if (balances.length === 0) {
-    console.debug('No shielded balances to display');
     return [];
   }
 
-  // Filter out NFTs and special assets, but INCLUDE delegation tokens
+  // Filter out NFTs and special assets, but include delegation tokens
   const displayableBalances = balances.filter(balance => {
     const metadata = getMetadataFromBalancesResponse.optional(balance);
-
     // If we don't have a symbol, we can't display it
     if (!metadata?.symbol) {
-      console.debug('Filtering out balance with no symbol');
       return false;
     }
 
-    // IMPORTANT: Make sure to include delegation tokens!
-    // Include everything except LP NFTs and auction tokens
+    // Make sure to include delegation tokens, filter out LP NFTs and auction tokens
     const isLpNft = metadata.symbol.startsWith('lpNft');
     const isAuctionToken = metadata.symbol.startsWith('auction');
-    const shouldInclude = !isLpNft && !isAuctionToken;
-
-    // Log specifically for delegation tokens
-    if (metadata.symbol.includes('unbond')) {
-      console.debug(`Found delegation token: ${metadata.symbol}, including: ${shouldInclude}`);
-    }
-
-    console.debug(`Balance ${metadata.symbol}: ${shouldInclude ? 'including' : 'excluding'}`);
-    return shouldInclude;
+    return !isLpNft && !isAuctionToken;
   });
-
-  console.debug('Displayable balances count:', displayableBalances.length);
-  console.debug(
-    'Displayable balances symbols:',
-    displayableBalances.map(b => getMetadataFromBalancesResponse.optional(b)?.symbol),
-  );
 
   // Calculate values and handle errors
   const valuesWithMetadata = displayableBalances.map((balance, index) => {
@@ -372,16 +322,7 @@ function calculateShieldedAssetAllocations(balances: BalancesResponse[]): AssetA
     const metadata = getMetadataFromBalancesResponse.optional(balance);
     const amount = valueView?.valueView.value?.amount;
 
-    console.debug(`Processing balance ${metadata?.symbol}:`, {
-      hasMetadata: !!metadata,
-      hasValueView: !!valueView,
-      valueViewCase: valueView?.valueView.case,
-      hasAmount: !!amount,
-      amountValue: amount?.toString(),
-    });
-
     if (!amount || !metadata) {
-      console.debug('Missing amount or metadata for balance');
       return {
         symbol: 'Unknown',
         value: 0,
@@ -393,12 +334,6 @@ function calculateShieldedAssetAllocations(balances: BalancesResponse[]): AssetA
 
     try {
       const displayExponent = getDisplayDenomExponent(metadata);
-
-      console.debug(`Formatting amount for ${metadata.symbol}:`, {
-        rawAmount: String(amount),
-        displayExponent: displayExponent,
-      });
-
       const formattedAmount = Number(
         formatAmount({
           amount,
@@ -406,19 +341,11 @@ function calculateShieldedAssetAllocations(balances: BalancesResponse[]): AssetA
         }),
       );
 
-      console.debug(
-        `Formatted amount for ${metadata.symbol}: ${formattedAmount} (exponent: ${displayExponent})`,
-      );
-
       if (Number.isNaN(formattedAmount)) {
-        console.warn(`Failed to format amount for ${metadata.symbol}`);
         throw new Error('Failed to format amount');
       }
 
-      // All assets at this point should have a proper symbol
       const displaySymbol = metadata.symbol;
-
-      // Using if-checks instead of optional chaining for cleaner code
       const images = metadata.images;
       const image0 = images.length > 0 ? images[0] : null;
       const theme = image0 ? image0.theme : null;
@@ -434,10 +361,7 @@ function calculateShieldedAssetAllocations(balances: BalancesResponse[]): AssetA
         hasError: false,
       };
     } catch (error) {
-      // Use the symbol from metadata or fall back to Unknown
       const displaySymbol = metadata.symbol || 'Unknown';
-      console.warn(`Error processing ${displaySymbol}:`, error);
-
       return {
         symbol: displaySymbol,
         value: 0,
@@ -450,33 +374,16 @@ function calculateShieldedAssetAllocations(balances: BalancesResponse[]): AssetA
 
   // Calculate total value
   const totalValue = valuesWithMetadata.reduce((acc, { value }) => acc + value, 0);
-  console.debug('Total shielded value:', totalValue);
-  console.debug(
-    'Individual asset values:',
-    valuesWithMetadata.map(item => ({ symbol: item.symbol, value: item.value })),
-  );
 
   // Update percentages
-  const result = valuesWithMetadata
+  return valuesWithMetadata
     .map(item => ({
       ...item,
       percentage: totalValue > 0 ? (item.value / totalValue) * 100 : 0,
     }))
     .sort((a, b) => b.value - a.value);
-
-  console.debug(
-    'Final shielded allocations:',
-    result.map(r => ({
-      symbol: r.symbol,
-      value: r.value,
-      percentage: r.percentage,
-    })),
-  );
-
-  return result;
 }
 
-// Helper function to calculate asset allocations from Cosmos balances
 function calculatePublicAssetAllocations(
   balances: Balance[],
   registry: Registry | undefined,
@@ -509,9 +416,6 @@ function calculatePublicAssetAllocations(
       }
     >
   >((acc, balance) => {
-    // Extract a display symbol for the asset
-    // If we have a symbol from decodeBalance, use it
-    // Otherwise, try to create a more readable version based on chain and denom
     let displaySymbol = balance.symbol;
     let usdcValue = 0;
     let metadata: Metadata | undefined;
@@ -548,19 +452,10 @@ function calculatePublicAssetAllocations(
           if (metadata.symbol === 'USDC') {
             usdcValue = normalizedValue;
           } else {
-            // For other assets, use a simple conversion based on exponents
-            // In a real implementation, this would use actual price data from an oracle or API
-            // For now, we're just normalizing based on exponents as a basic approach
-            // Ideally, this would be replaced with actual price data from pindexer
-            // The usdcPrice parameter would be the price of the asset in USDC
             const estimatedUsdcPrice = 1.0; // Default price estimate (placeholder)
-
             try {
-              // This is a simplified version that just handles exponent differences
-              // In a real implementation, this would use actual price data
               usdcValue = normalizedValue * estimatedUsdcPrice;
             } catch (error) {
-              console.error('Error computing USDC value:', error);
               usdcValue = normalizedValue; // Fallback to normalized value
             }
           }
