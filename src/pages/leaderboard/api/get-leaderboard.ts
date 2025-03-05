@@ -61,11 +61,11 @@ export const GET = async (
             amount: position.fees2,
             metadata: metadata2,
           }),
-          openingTime: position.opening_time,
-          closingTime: position.closing_time,
-          positionRaw: position.position_raw,
-          openingHeight: position.opening_height,
-          closingHeight: position.closing_height,
+          openingTime: new Date(position.opening_time).getTime(),
+          // closingTime: position.closing_time,
+          // openingHeight: position.opening_height,
+          // closingHeight: position.closing_height,
+          state: position.state,
         } satisfies LeaderboardData;
       }),
     );

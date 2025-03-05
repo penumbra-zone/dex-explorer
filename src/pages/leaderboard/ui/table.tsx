@@ -26,6 +26,8 @@ import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_p
 import { pnum } from '@penumbra-zone/types/pnum';
 import { Tabs } from '@penumbra-zone/ui/Tabs';
 import { TxDetailsTab } from '@/pages/inspect/tx/ui/tx-viewer';
+import { stateToString } from '@/pages/trade/api/positions';
+import { formatDistanceToNowStrict } from 'date-fns';
 
 const getAssetId = (value: AssetSelectorValue | undefined): string | undefined => {
   if (!value) {
@@ -224,7 +226,15 @@ export const LeaderboardTable = ({
                       numeric
                       variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
                     >
-                      --
+                      {formatDistanceToNowStrict(position.openingTime, {
+                        addSuffix: false,
+                        roundingMethod: 'floor',
+                      })
+                        .replace(/ minutes?$/, 'm')
+                        .replace(/ hours?$/, 'h')
+                        .replace(/ days?$/, 'd')
+                        .replace(/ weeks?$/, 'w')
+                        .replace(/ months?$/, 'mo')}
                     </TableCell>
                     <TableCell
                       numeric
@@ -264,7 +274,7 @@ export const LeaderboardTable = ({
                       numeric
                       variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
                     >
-                      --
+                      {stateToString(position.state)}
                     </TableCell>
                     <TableCell
                       numeric

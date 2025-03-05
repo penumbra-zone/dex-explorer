@@ -10,7 +10,10 @@ import {
 } from '@/shared/database/schema.ts';
 import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { DurationWindow } from '@/shared/utils/duration.ts';
-import { PositionId } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
+import {
+  PositionId,
+  PositionState_PositionStateEnum,
+} from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { pindexerDb } from './client';
 import { hexToUint8Array } from '@penumbra-zone/types/hex';
 
@@ -500,7 +503,27 @@ class Pindexer {
       .limit(limit)
       .execute();
 
-    return results;
+    const withdrawals = await this.db
+      .selectFrom('dex_ex_position_withdrawals')
+      .select(['position_id'])
+      .where(
+        'position_id',
+        'in',
+        results.map(r => r.position_id),
+      )
+      .execute();
+
+    const withdrawalPositionIds = new Set(withdrawals.map(w => w.position_id.toString()));
+
+    return results.map(r => ({
+      ...r,
+      // eslint-disable-next-line no-nested-ternary -- this is a valid use case
+      state: withdrawalPositionIds.has(r.position_id.toString())
+        ? PositionState_PositionStateEnum.WITHDRAWN
+        : r.closing_height
+          ? PositionState_PositionStateEnum.CLOSED
+          : PositionState_PositionStateEnum.OPENED,
+    }));
   }
 }
 
