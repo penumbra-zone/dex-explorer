@@ -23,14 +23,14 @@ export const GET = async (
     const filters = getURLParams(new URLSearchParams(req.nextUrl.search));
     const result = await pindexer.queryLeaderboard(
       filters.limit,
+      filters.offset,
       filters.quote,
       filters.startBlock,
       filters.endBlock,
     );
 
     const mapped = await Promise.all(
-      result.map(position => {
-        console.log('TCL: position', position);
+      result.items.map(position => {
         const asset1 = new AssetId({ inner: position.context_asset_start });
         const asset2 = new AssetId({ inner: position.context_asset_end });
         const metadata1 = registry.tryGetMetadata(asset1);
@@ -62,9 +62,6 @@ export const GET = async (
             metadata: metadata2,
           }),
           openingTime: new Date(position.opening_time).getTime(),
-          // closingTime: position.closing_time,
-          // openingHeight: position.opening_height,
-          // closingHeight: position.closing_height,
           state: position.state,
         } satisfies LeaderboardData;
       }),
@@ -84,7 +81,9 @@ export const GET = async (
       ),
     );
 
-    return NextResponse.json(serialize({ data: uniquePositions, filters }));
+    return NextResponse.json(
+      serialize({ data: uniquePositions, filters, totalPages: result.totalPages }),
+    );
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }

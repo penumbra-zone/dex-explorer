@@ -466,6 +466,7 @@ class Pindexer {
 
   async queryLeaderboard(
     limit: number,
+    offset: number,
     quoteHex: string | undefined,
     startBlock: number,
     endBlock: number,
@@ -483,11 +484,23 @@ class Pindexer {
         sql<number>`CAST(count(*) AS INTEGER)`.as('executionCount'),
       ])
       .$if(quoteHex !== undefined, qb =>
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- quoteHex is defined
         qb.where('context_asset_end', '=', Buffer.from(hexToUint8Array(quoteHex!))),
       )
       .groupBy(['position_id', 'context_asset_start', 'context_asset_end'])
       .orderBy('executionCount', 'desc');
+
+    // Get total count first
+    const totalCount = await this.db
+      .selectFrom('dex_ex_position_state as state')
+      .where(exp =>
+        exp.and([
+          exp.eb('opening_height', '>=', startBlock),
+          exp.eb('opening_height', '<=', endBlock),
+        ]),
+      )
+      .innerJoin(positionExecutions.as('executions'), 'state.position_id', 'executions.position_id')
+      .select(sql<number>`count(*)`.as('count'))
+      .executeTakeFirstOrThrow();
 
     const results = await this.db
       .selectFrom('dex_ex_position_state as state')
@@ -501,6 +514,7 @@ class Pindexer {
       .selectAll('executions')
       .selectAll('state')
       .limit(limit)
+      .offset(offset)
       .execute();
 
     const withdrawals = await this.db
@@ -515,15 +529,18 @@ class Pindexer {
 
     const withdrawalPositionIds = new Set(withdrawals.map(w => w.position_id.toString()));
 
-    return results.map(r => ({
-      ...r,
-      // eslint-disable-next-line no-nested-ternary -- this is a valid use case
-      state: withdrawalPositionIds.has(r.position_id.toString())
-        ? PositionState_PositionStateEnum.WITHDRAWN
-        : r.closing_height
-          ? PositionState_PositionStateEnum.CLOSED
-          : PositionState_PositionStateEnum.OPENED,
-    }));
+    return {
+      totalPages: Math.ceil(Number(totalCount.count) / limit),
+      items: results.map(r => ({
+        ...r,
+        // eslint-disable-next-line no-nested-ternary -- allow nested ternary
+        state: withdrawalPositionIds.has(r.position_id.toString())
+          ? PositionState_PositionStateEnum.WITHDRAWN
+          : r.closing_height
+            ? PositionState_PositionStateEnum.CLOSED
+            : PositionState_PositionStateEnum.OPENED,
+      })),
+    };
   }
 }
 

@@ -11,37 +11,15 @@ import { SegmentedControl } from '@penumbra-zone/ui/SegmentedControl';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
 import Link from 'next/link';
 import { SquareArrowOutUpRight, ChevronUp, ChevronDown } from 'lucide-react';
-import {
-  AssetSelector,
-  AssetSelectorValue,
-  isBalancesResponse,
-} from '@penumbra-zone/ui/AssetSelector';
+import { AssetSelector, AssetSelectorValue } from '@penumbra-zone/ui/AssetSelector';
 import { useAssets } from '@/shared/api/assets';
 import { useBalances } from '@/shared/api/balances';
-import { getMetadataFromBalancesResponse } from '@penumbra-zone/getters/balances-response';
 import { useLeaderboard } from '@/pages/leaderboard/api/use-leaderboard';
-import { DEFAULT_INTERVAL, LeaderboardIntervalFilter } from '../api/utils';
-import { uint8ArrayToHex } from '@penumbra-zone/types/hex';
-import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
-import { pnum } from '@penumbra-zone/types/pnum';
-import { Tabs } from '@penumbra-zone/ui/Tabs';
-import { TxDetailsTab } from '@/pages/inspect/tx/ui/tx-viewer';
+import { formatAge, getAssetId } from './utils';
 import { stateToString } from '@/pages/trade/api/positions';
-import { formatDistanceToNowStrict } from 'date-fns';
-
-const getAssetId = (value: AssetSelectorValue | undefined): string | undefined => {
-  if (!value) {
-    return undefined;
-  }
-
-  const metadata: Metadata = isBalancesResponse(value)
-    ? getMetadataFromBalancesResponse(value)
-    : value;
-
-  return metadata.penumbraAssetId?.inner
-    ? uint8ArrayToHex(metadata.penumbraAssetId.inner)
-    : undefined;
-};
+import { useSearchParams } from 'next/navigation';
+import { pnum } from '@penumbra-zone/types/pnum';
+import Pagination from './pagination';
 
 export const LeaderboardTable = ({
   startBlock,
@@ -50,6 +28,9 @@ export const LeaderboardTable = ({
   startBlock: number;
   endBlock: number;
 }) => {
+  const searchParams = useSearchParams();
+  const page = Number(searchParams?.get('page')) ?? 1;
+  const [currentPage, setCurrentPage] = useState(page);
   const [parent] = useAutoAnimate();
   const [quote, setQuote] = useState<AssetSelectorValue>();
   const [tab, setTab] = useState<'All LPs' | 'My LPs'>('All LPs');
@@ -69,6 +50,7 @@ export const LeaderboardTable = ({
     isLoading,
   } = useLeaderboard({
     limit: 10,
+    offset: (currentPage - 1) * 10,
     quote: quoteAssetId,
     startBlock,
     endBlock,
@@ -76,7 +58,8 @@ export const LeaderboardTable = ({
 
   const { data: assets } = useAssets();
   const { data: balances } = useBalances();
-  const { data: positions } = leaderboard ?? {};
+  const { data: positions, totalPages } = leaderboard ?? {};
+  console.log('TCL: totalPages', totalPages);
   console.log('TCL: positions', positions);
 
   const sortedPositions = useMemo(() => {
@@ -226,15 +209,7 @@ export const LeaderboardTable = ({
                       numeric
                       variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
                     >
-                      {formatDistanceToNowStrict(position.openingTime, {
-                        addSuffix: false,
-                        roundingMethod: 'floor',
-                      })
-                        .replace(/ minutes?$/, 'm')
-                        .replace(/ hours?$/, 'h')
-                        .replace(/ days?$/, 'd')
-                        .replace(/ weeks?$/, 'w')
-                        .replace(/ months?$/, 'mo')}
+                      {formatAge(position.openingTime)}
                     </TableCell>
                     <TableCell
                       numeric
@@ -299,6 +274,12 @@ export const LeaderboardTable = ({
             </>
           )}
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
     </Card>
   );
