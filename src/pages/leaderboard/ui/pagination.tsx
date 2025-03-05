@@ -1,7 +1,10 @@
 'use client';
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Text } from '@penumbra-zone/ui/Text';
+import { DropdownMenu } from '@penumbra-zone/ui/DropdownMenu';
 import cn from 'clsx';
+import { Button } from '@penumbra-zone/ui/Button';
+import { useState } from 'react';
 
 interface PaginationProps {
   currentPage: number;
@@ -10,6 +13,8 @@ interface PaginationProps {
 }
 
 export default function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
+  const [value, setValue] = useState('10');
+
   const renderPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
@@ -26,8 +31,8 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
         <button
           key={i}
           className={cn(
-            'rounded-full px-3 py-1.5 mx-0.5 text-sm',
-            currentPage === i ? 'bg-primary text-white' : 'bg-secondary hover:bg-secondary/80',
+            'flex items-center justify-center rounded-full w-10 h-10 mx-3 text-sm',
+            currentPage === i ? 'bg-other-tonalFill10 text-text-primary' : 'text-text-secondary',
           )}
           onClick={() => onPageChange(i)}
         >
@@ -40,34 +45,54 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
   };
 
   return (
-    <div className='flex items-center justify-center py-2'>
-      <button
-        className={cn(
-          'rounded-full p-1.5 mx-0.5 bg-secondary',
-          currentPage > 1
-            ? 'hover:bg-secondary/80 cursor-pointer'
-            : 'opacity-50 cursor-not-allowed',
-        )}
-        onClick={() => currentPage > 1 && onPageChange(currentPage - 1)}
-        disabled={currentPage <= 1}
-      >
-        <ChevronLeft className='w-5 h-5' />
-      </button>
+    <div className='flex justify-between items-center'>
+      <Text color='text.secondary'>
+        {currentPage} out of {totalPages}
+      </Text>
+      <div className='flex items-center justify-center py-2'>
+        <button
+          className={cn(
+            'rounded-full py-2.5 px-4 mx-3 bg-other-tonalFill5',
+            currentPage > 1
+              ? 'cursor-pointer text-text-secondary'
+              : 'cursor-not-allowed text-text-muted',
+          )}
+          onClick={() => currentPage > 1 && onPageChange(currentPage - 1)}
+          disabled={currentPage <= 1}
+        >
+          Prev
+        </button>
 
-      {renderPageNumbers()}
+        {renderPageNumbers()}
 
-      <button
-        className={cn(
-          'rounded-full p-1.5 mx-0.5 bg-secondary',
-          currentPage < totalPages
-            ? 'hover:bg-secondary/80 cursor-pointer'
-            : 'opacity-50 cursor-not-allowed',
-        )}
-        onClick={() => currentPage < totalPages && onPageChange(currentPage + 1)}
-        disabled={currentPage >= totalPages}
-      >
-        <ChevronRight className='w-5 h-5' />
-      </button>
+        <button
+          className={cn(
+            'rounded-full py-2.5 px-4 mx-3 bg-other-tonalFill5',
+            currentPage < totalPages
+              ? 'cursor-pointer text-text-secondary'
+              : 'cursor-not-allowed text-text-muted',
+          )}
+          onClick={() => currentPage < totalPages && onPageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages}
+        >
+          Next
+        </button>
+      </div>
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <Text color='text.secondary'>Show 10</Text>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.RadioGroup value={value} onChange={setValue}>
+            <div className='flex flex-col gap-2'>
+              <DropdownMenu.RadioItem value='10'>10</DropdownMenu.RadioItem>
+              <DropdownMenu.RadioItem value='20'>20</DropdownMenu.RadioItem>
+              <DropdownMenu.RadioItem value='50'>50</DropdownMenu.RadioItem>
+              <DropdownMenu.RadioItem value='100'>100</DropdownMenu.RadioItem>
+            </div>
+          </DropdownMenu.RadioGroup>
+        </DropdownMenu.Content>
+      </DropdownMenu>
     </div>
   );
 }
