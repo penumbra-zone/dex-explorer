@@ -57,7 +57,7 @@ export const usePositions = (subaccount?: number) => {
 };
 
 export const updatePositionsQuery = async () => {
-  await queryClient.refetchQueries({ queryKey: ['positions'], enabled: true });
+  await queryClient.refetchQueries({ queryKey: ['positions'] });
 };
 
 export const stateToString = (state?: PositionState_PositionStateEnum) => {
