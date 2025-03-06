@@ -19,7 +19,7 @@ The Portfolio page is structured with the following components:
      - **Public Assets**: For connecting Cosmos wallet
    - Uses separate components for each wallet type:
      - `ConnectButton` for Penumbra wallet
-     - `CosmosConnectButton` for Cosmos wallet
+     - `CosmosConnectButton` for Cosmos wallet (now without displaying public assets)
 
 3. **Assets Table (`src/pages/portfolio/ui/assets-table.tsx`)**
 
@@ -53,8 +53,8 @@ The Portfolio page is structured with the following components:
 
 ### 2. Unified Asset Table
 
-- Create a single table with both shielded and public balances
-- Add columns:
+- Update the AssetsTable component to use the UnifiedAsset interface from useUnifiedAssets
+- Update columns and cell rendering for the new data format:
   - Shielded Balance
   - Public Balance
   - Price
@@ -73,25 +73,19 @@ The Portfolio page is structured with the following components:
 
 ### 4. Integration Improvements
 
-- Connect the `useBalances` hook from Cosmos to the main assets table
-- Merge Penumbra and Cosmos balances in a consistent format
-- Map assets between chains for proper display and operations
+- Finalize integration of the `useUnifiedAssets` hook with the AssetsTable component
+- Improve asset mapping between chains for proper display and operations
 
 ## Technical Approach
 
-1. **Data Integration**:
-
-   - Create a unified data structure that combines Penumbra and Cosmos assets - use the penumbra pd Asset for this.
-   - Build utility functions to calculate total values and proportions - these might already exist.
-
-2. **UI Components**:
+1. **UI Components**:
 
    - Modify `AssetsTable` to display combined assets
    - Create new visualization components for the dual asset bars - we already have an asset bar, so probably just extend that.
    - Implement expandable rows showing asset locations
    - Build modal components for deposit/withdraw actions
 
-3. **Additional Features**:
+2. **Additional Features**:
    - Add loading and empty states for all new components
 
 KEEP IN MIND THESE USER JOURNEYS: ## User Flows
@@ -114,54 +108,7 @@ KEEP IN MIND THESE USER JOURNEYS: ## User Flows
 
 ## Detailed Implementation Plan: Integrating Cosmos Assets into Assets Table
 
-### 1. Data Integration Strategy
-
-1. **Balance Aggregation:**
-   - Create a utility function that merges Penumbra (shielded) and Cosmos (public) balances
-   - Group assets by symbol/asset ID across both ecosystems
-   - For each unique asset, track both shielded and public balances separately
-
-2. **Data Structure:**
-   ```typescript
-   interface UnifiedAsset {
-     // Common asset information
-     symbol: string;
-     assetId?: string; // Penumbra asset ID if available
-     metadata: AssetMetadata; // Display metadata (name, icon, etc.)
-     
-     // Balances
-     shieldedBalance: {
-       amount: string;
-       valueView: ValueView; // Penumbra ValueView for consistent display
-       hasError: boolean;
-     } | null;
-     
-     publicBalance: {
-       amount: string;
-       denom: string;
-       chain: string; // Source chain information
-       valueView: ValueView; // Converted to ValueView format
-       hasError: boolean;
-     } | null;
-     
-     // Values (priced in USD or stablecoin)
-     shieldedValue: number;
-     publicValue: number;
-     totalValue: number;
-     
-     // Asset origin information (for deposit/withdraw)
-     originChain?: string;
-     canDeposit: boolean;
-     canWithdraw: boolean;
-   }
-   ```
-
-3. **Asset Mapping:**
-   - Create utilities to map between Penumbra and Cosmos assets
-   - Use the registry and IBC denom information to identify equivalent assets
-   - Handle special cases like wrapped assets (e.g., ATOM on Penumbra vs native ATOM)
-
-### 2. Component Modifications
+### 1. Component Modifications
 
 1. **Assets Table Refactoring:**
    - Update column structure to include both shielded and public balances
@@ -250,27 +197,22 @@ KEEP IN MIND THESE USER JOURNEYS: ## User Flows
    - Update loading state to reflect the new column structure
      - No wallets connected
 
-### 3. Implementation Steps
+### 2. Implementation Steps
 
-1. **Preparation:**
-   - Create a new hook `useUnifiedAssets` that combines data from `useBalances` (Penumbra) and Cosmos `useBalances`
-   - Implement asset mapping and balance aggregation functions
-   - Test data transformation with real data, captured in the tests.
-
-2. **UI Component Updates:**
+1. **UI Component Updates:**
    - Modify the `AssetsTable` component to use the unified data structure
    - Update columns and cell rendering for the new data format
    - Add conditional logic for displaying action buttons
 
-3. **Connection State Handling:**
+2. **Connection State Handling:**
    - Implement a new empty state for when no assets
 
-4. **Action Buttons:**
+3. **Action Buttons:**
    - Add placeholder buttons for deposit/withdraw actions
    - Implement logic to determine when buttons should be enabled
    - Prepare for modal integration in future steps
 
-### 4. Testing Scenarios
+### 3. Testing Scenarios
 
 1. **Data Display:**
    - Verify correct display of assets present in both Penumbra and Cosmos

@@ -43,7 +43,14 @@ export const WalletConnect = observer(() => {
           </Text>
 
           {status === State.Done ? (
-            <div className='overflow-y-auto flex-grow max-h-[280px]'></div>
+            <div className='space-y-2 text-3xl'>
+              <Text large color='text.primary'>
+                Manage your <span className='text-[#A3A3A3]'>Cosmos Wallet</span>
+              </Text>
+              <Text large color='text.primary'>
+                public assets and shield them in Penumbra
+              </Text>
+            </div>
           ) : (
             <div className='space-y-2 text-3xl'>
               <Text large color='text.primary'>
