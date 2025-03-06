@@ -32,7 +32,7 @@ import { PromiseClient } from '@connectrpc/connect';
 import { penumbra } from '@/shared/const/penumbra';
 import { ReactNode } from 'react';
 import { shorten } from '@penumbra-zone/types/string';
-import { updatePositionsQuery } from '../../api/positions';
+import { updatePositionsQuery } from '../../../../entities/position/api/use-positions';
 
 type BroadcastStatus = BroadcastTransactionResponse['status'];
 type BuildStatus = (AuthorizeAndBuildResponse | WitnessAndBuildResponse)['status'];

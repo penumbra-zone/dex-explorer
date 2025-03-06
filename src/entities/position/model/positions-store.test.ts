@@ -1,9 +1,9 @@
+import { BigNumber } from 'bignumber.js';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
   Position,
   PositionState_PositionStateEnum,
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
-import { ExecutedPosition, positionsStore } from './positions';
 import {
   Metadata,
   AssetId,
@@ -11,7 +11,7 @@ import {
 } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { compareAssetId } from '@/shared/math/position';
 import { pnum } from '@penumbra-zone/types/pnum';
-import { BigNumber } from 'bignumber.js';
+import { ExecutedPosition, positionsStore } from './store';
 
 describe('positionsStore', () => {
   const id1 = new Uint8Array(Array(32).fill(0xaa));

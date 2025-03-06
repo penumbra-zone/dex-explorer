@@ -7,9 +7,9 @@ import {
   PositionId,
   PositionState_PositionStateEnum,
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
+import { AddressIndex } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
 import { bech32mPositionId } from '@penumbra-zone/bech32m/plpid';
 import { queryClient } from '@/shared/const/queryClient';
-import { AddressIndex } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
 
 // 1) Query prax to get position ids
 // 2) Take those position ids and get position info from the node

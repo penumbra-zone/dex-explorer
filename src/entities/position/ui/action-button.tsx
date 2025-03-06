@@ -5,7 +5,7 @@ import {
   PositionId,
   PositionState_PositionStateEnum,
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
-import { positionsStore } from '@/pages/trade/model/positions';
+import { positionsStore } from '../model/store';
 import { Dash } from './dash';
 
 export const ActionButton = observer(({ id, position }: { id: PositionId; position: Position }) => {

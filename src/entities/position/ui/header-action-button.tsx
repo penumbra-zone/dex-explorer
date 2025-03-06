@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import { Button } from '@penumbra-zone/ui/Button';
-import { positionsStore, DisplayPosition } from '@/pages/trade/model/positions';
+import { positionsStore, DisplayPosition } from '../model/store';
 
 const MAX_ACTION_COUNT = 15;
 

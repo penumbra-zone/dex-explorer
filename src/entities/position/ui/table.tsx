@@ -6,6 +6,7 @@ import orderBy from 'lodash/orderBy';
 import { SquareArrowOutUpRight, ChevronUp, ChevronDown } from 'lucide-react';
 import { useEffect, useState, useCallback, useMemo, Fragment, ReactNode } from 'react';
 import { observer } from 'mobx-react-lite';
+import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { Text } from '@penumbra-zone/ui/Text';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
 import { Density } from '@penumbra-zone/ui/Density';
@@ -14,9 +15,8 @@ import { TableCell } from '@penumbra-zone/ui/TableCell';
 import { pnum } from '@penumbra-zone/types/pnum';
 import { connectionStore } from '@/shared/model/connection';
 import { useAssets } from '@/shared/api/assets';
-import { stateToString, usePositions } from '../../api/positions.ts';
-import { DisplayPosition, positionsStore } from '../../model/positions';
-import { usePathToMetadata } from '../../model/use-path';
+import { stateToString, usePositions } from '../api/use-positions.ts';
+import { DisplayPosition, positionsStore } from '../model/store';
 import { PositionsCurrentValue } from './positions-current-value';
 import { NotConnectedNotice } from './not-connected-notice';
 import { ErrorNotice } from './error-notice';
@@ -25,9 +25,14 @@ import { HeaderActionButton } from './header-action-button';
 import { ActionButton } from './action-button';
 import { Dash } from './dash';
 
-const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
+export interface PositionsTableProps {
+  showInactive: boolean;
+  base?: Metadata;
+  quote?: Metadata;
+}
+
+export const Positions = observer(({ showInactive, base, quote }: PositionsTableProps) => {
   const { connected, subaccount } = connectionStore;
-  const { baseAsset, quoteAsset } = usePathToMetadata();
   const { data: assets } = useAssets();
   const { data, isLoading, error } = usePositions(subaccount);
   const { displayPositions, setPositions, setAssets } = positionsStore;
@@ -126,10 +131,10 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
   }, [assets, setAssets]);
 
   useEffect(() => {
-    if (baseAsset && quoteAsset) {
-      positionsStore.setCurrentPair(baseAsset, quoteAsset);
+    if (base && quote) {
+      positionsStore.setCurrentPair(base, quote);
     }
-  }, [baseAsset, quoteAsset]);
+  }, [base, quote]);
 
   if (!connected) {
     return <NotConnectedNotice />;
@@ -187,7 +192,7 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                       )}
                     </TableCell>
 
-                    <TableCell variant={variant}>
+                    <TableCell loading={isLoading} variant={variant}>
                       {position.isWithdrawn ? (
                         <Dash />
                       ) : (
@@ -201,7 +206,7 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                       )}
                     </TableCell>
 
-                    <TableCell variant={variant}>
+                    <TableCell loading={isLoading} variant={variant}>
                       {position.isClosed || position.isWithdrawn ? (
                         <Dash />
                       ) : (
@@ -234,11 +239,11 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                       )}
                     </TableCell>
 
-                    <TableCell variant={variant}>
+                    <TableCell loading={isLoading} variant={variant}>
                       {position.isClosed || position.isWithdrawn ? <Dash /> : position.fee}
                     </TableCell>
 
-                    <TableCell variant={variant}>
+                    <TableCell loading={isLoading} variant={variant}>
                       {position.isClosed || position.isWithdrawn ? (
                         <Dash />
                       ) : (
@@ -250,11 +255,11 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                       )}
                     </TableCell>
 
-                    <TableCell variant={variant}>
+                    <TableCell loading={isLoading} variant={variant}>
                       {position.isWithdrawn ? <Dash /> : <PositionsCurrentValue order={order} />}
                     </TableCell>
 
-                    <TableCell variant={variant}>
+                    <TableCell loading={isLoading} variant={variant}>
                       <div className='flex max-w-[104px]'>
                         <Text as='div' detailTechnical color='text.primary' truncate>
                           {position.idString}
@@ -265,7 +270,7 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
                       </div>
                     </TableCell>
 
-                    <TableCell variant={variant}>
+                    <TableCell loading={isLoading} variant={variant}>
                       <ActionButton id={position.id} position={position.position} />
                     </TableCell>
                   </div>
@@ -277,5 +282,3 @@ const Positions = observer(({ showInactive }: { showInactive: boolean }) => {
     </div>
   );
 });
-
-export default Positions;
