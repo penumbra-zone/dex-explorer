@@ -19,7 +19,6 @@ export const HeaderActionButton = observer(
     if (openedPositions.length > 1) {
       return (
         <Button
-          density='slim'
           actionType='destructive'
           disabled={loading}
           onClick={() => void closePositions(openedPositions)}
@@ -40,7 +39,6 @@ export const HeaderActionButton = observer(
     if (closedPositions.length > 1) {
       return (
         <Button
-          density='slim'
           actionType='destructive'
           disabled={loading}
           onClick={() => void withdrawPositions(closedPositions)}
