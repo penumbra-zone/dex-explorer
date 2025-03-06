@@ -1732,7 +1732,7 @@ packages:
       '@penumbra-zone/wasm': 42.0.0
 
   '@penumbra-zone/perspective@file:../web/packages/perspective/penumbra-zone-perspective-49.0.0.tgz':
-    resolution: {integrity: sha512-vHkgrRPPiENzc/hkQGOJFWNTuipYbG6iksDS919KWTL9W0Eib8sKuGOV0dN073ajG3CqUwT+Ovt0nX0htNtDSA==, tarball: file:../web/packages/perspective/penumbra-zone-perspective-49.0.0.tgz}
+    resolution: {integrity: sha512-6IPoDiK75u8ND8SsTgWQ5Krqo3rhtU1YRo1kFgJQAHpP/79P0TEC1KEnF2pfWmfr7Bq7nAbXND1dkWS4Wg4jUw==, tarball: file:../web/packages/perspective/penumbra-zone-perspective-49.0.0.tgz}
     version: 49.0.0
     peerDependencies:
       '@bufbuild/protobuf': ^1.10.0
@@ -1773,7 +1773,7 @@ packages:
       '@penumbra-zone/protobuf': 8.0.0
 
   '@penumbra-zone/ui@file:../web/packages/ui/penumbra-zone-ui-13.13.0.tgz':
-    resolution: {integrity: sha512-joDA6rEypqsxEJmfpk0Yi5BDWHszA7ScpEvyfm8CCsEVFXx8gl5j7sV9gJcblwtaK3ss1zpJtapRqHpWQhLK2g==, tarball: file:../web/packages/ui/penumbra-zone-ui-13.13.0.tgz}
+    resolution: {integrity: sha512-RHtZukRhFywdEttP4sCz/n1vZ5m/sVf2eVLOPnZf7NooaVYe15xg8IVeTmgtCSCuohH3MXeLWK4ZNLXdOCmTpQ==, tarball: file:../web/packages/ui/penumbra-zone-ui-13.13.0.tgz}
     version: 13.13.0
 
   '@penumbra-zone/wasm@40.0.0':

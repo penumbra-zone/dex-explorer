@@ -56,7 +56,7 @@ function MobilePortfolioPage() {
 
 function DesktopPortfolioPage() {
   return (
-    <div className='sm:container mx-auto py-8'>
+    <div className='sm:container mx-auto py-8 flex flex-col gap-4'>
       <AssetsTable />
       <PortfolioPositionTabs />
     </div>
