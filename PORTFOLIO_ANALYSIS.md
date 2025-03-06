@@ -111,3 +111,178 @@ KEEP IN MIND THESE USER JOURNEYS: ## User Flows
   - They can see a list of their history
   - They can click the withdraw button next to any asset
     - This opens a Penumbra dialog to withdraw that asset back to its origin chain
+
+## Detailed Implementation Plan: Integrating Cosmos Assets into Assets Table
+
+### 1. Data Integration Strategy
+
+1. **Balance Aggregation:**
+   - Create a utility function that merges Penumbra (shielded) and Cosmos (public) balances
+   - Group assets by symbol/asset ID across both ecosystems
+   - For each unique asset, track both shielded and public balances separately
+
+2. **Data Structure:**
+   ```typescript
+   interface UnifiedAsset {
+     // Common asset information
+     symbol: string;
+     assetId?: string; // Penumbra asset ID if available
+     metadata: AssetMetadata; // Display metadata (name, icon, etc.)
+     
+     // Balances
+     shieldedBalance: {
+       amount: string;
+       valueView: ValueView; // Penumbra ValueView for consistent display
+       hasError: boolean;
+     } | null;
+     
+     publicBalance: {
+       amount: string;
+       denom: string;
+       chain: string; // Source chain information
+       valueView: ValueView; // Converted to ValueView format
+       hasError: boolean;
+     } | null;
+     
+     // Values (priced in USD or stablecoin)
+     shieldedValue: number;
+     publicValue: number;
+     totalValue: number;
+     
+     // Asset origin information (for deposit/withdraw)
+     originChain?: string;
+     canDeposit: boolean;
+     canWithdraw: boolean;
+   }
+   ```
+
+3. **Asset Mapping:**
+   - Create utilities to map between Penumbra and Cosmos assets
+   - Use the registry and IBC denom information to identify equivalent assets
+   - Handle special cases like wrapped assets (e.g., ATOM on Penumbra vs native ATOM)
+
+### 2. Component Modifications
+
+1. **Assets Table Refactoring:**
+   - Update column structure to include both shielded and public balances
+   - Add columns for shielded and public values
+   - Implement action buttons based on asset availability
+
+   ```tsx
+   <Table>
+     <Table.Thead>
+       <Table.Tr>
+         <Table.Th>Asset</Table.Th>
+         <Table.Th>Shielded Balance</Table.Th>
+         <Table.Th>Public Balance</Table.Th>
+         <Table.Th>Price</Table.Th>
+         <Table.Th>Total Value</Table.Th>
+         <Table.Th>Actions</Table.Th>
+       </Table.Tr>
+     </Table.Thead>
+     <Table.Tbody>
+       {unifiedAssets.map(asset => (
+         <Table.Tr key={asset.symbol}>
+           {/* Asset info */}
+           <Table.Td>
+             <div className="flex items-center gap-2">
+               <AssetIcon metadata={asset.metadata} />
+               <Text>{asset.symbol}</Text>
+             </div>
+           </Table.Td>
+           
+           {/* Shielded balance with withdraw button */}
+           <Table.Td>
+             <div className="flex items-center justify-between">
+               {asset.shieldedBalance ? (
+                 <ValueViewComponent valueView={asset.shieldedBalance.valueView} />
+               ) : (
+                 <Text color="text.tertiary">-</Text>
+               )}
+               {asset.canWithdraw && (
+                 <Button icon={ArrowUpRight} iconOnly>
+                   Withdraw
+                 </Button>
+               )}
+             </div>
+           </Table.Td>
+           
+           {/* Public balance with deposit button */}
+           <Table.Td>
+             <div className="flex items-center justify-between">
+               {asset.publicBalance ? (
+                 <ValueViewComponent valueView={asset.publicBalance.valueView} />
+               ) : (
+                 <Text color="text.tertiary">-</Text>
+               )}
+               {asset.canDeposit && (
+                 <Button icon={ArrowDownRight} iconOnly>
+                   Deposit
+                 </Button>
+               )}
+             </div>
+           </Table.Td>
+           
+           {/* Price */}
+           <Table.Td>
+             <Text color="text.secondary">-</Text> {/* Placeholder for future pricing */}
+           </Table.Td>
+           
+           {/* Total value */}
+           <Table.Td>
+             <Text>{asset.totalValue > 0 ? `$${asset.totalValue.toFixed(2)}` : '-'}</Text>
+           </Table.Td>
+           
+           {/* Actions */}
+           <Table.Td>
+             <div className="flex gap-2">
+               <Button disabled>Buy</Button>
+               <Button disabled>Sell</Button>
+             </div>
+           </Table.Td>
+         </Table.Tr>
+       ))}
+     </Table.Tbody>
+   </Table>
+   ```
+
+2. **Loading and Empty States:**
+   - Update loading state to reflect the new column structure
+     - No wallets connected
+
+### 3. Implementation Steps
+
+1. **Preparation:**
+   - Create a new hook `useUnifiedAssets` that combines data from `useBalances` (Penumbra) and Cosmos `useBalances`
+   - Implement asset mapping and balance aggregation functions
+   - Test data transformation with real data, captured in the tests.
+
+2. **UI Component Updates:**
+   - Modify the `AssetsTable` component to use the unified data structure
+   - Update columns and cell rendering for the new data format
+   - Add conditional logic for displaying action buttons
+
+3. **Connection State Handling:**
+   - Implement a new empty state for when no assets
+
+4. **Action Buttons:**
+   - Add placeholder buttons for deposit/withdraw actions
+   - Implement logic to determine when buttons should be enabled
+   - Prepare for modal integration in future steps
+
+### 4. Testing Scenarios
+
+1. **Data Display:**
+   - Verify correct display of assets present in both Penumbra and Cosmos
+   - Verify correct display of assets only in Penumbra
+   - Verify correct display of assets only in Cosmos
+
+2. **Balance Aggregation:**
+   - Verify that total value calculations are correct
+   - Verify that assets are properly grouped by symbol/identity
+
+3. **Connection States:**
+   - Test with only Penumbra wallet connected
+   - Test with only Cosmos wallet connected
+   - Test with both wallets connected
+   - Test with no wallets connected
