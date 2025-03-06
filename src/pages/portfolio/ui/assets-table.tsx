@@ -27,7 +27,6 @@ const LoadingState = () => {
                 <Table.Th>Public Balance</Table.Th>
                 <Table.Th>Price</Table.Th>
                 <Table.Th>Total Value</Table.Th>
-                <Table.Th>Actions</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -61,16 +60,6 @@ const LoadingState = () => {
                   <Table.Td>
                     <div className='w-24 h-5'>
                       <Skeleton />
-                    </div>
-                  </Table.Td>
-                  <Table.Td>
-                    <div className='flex gap-2'>
-                      <div className='w-8 h-8 rounded-full overflow-hidden'>
-                        <Skeleton />
-                      </div>
-                      <div className='w-8 h-8 rounded-full overflow-hidden'>
-                        <Skeleton />
-                      </div>
                     </div>
                   </Table.Td>
                 </Table.Tr>
@@ -148,7 +137,6 @@ export const AssetsTable = observer(() => {
                     <Table.Th>Public Balance</Table.Th>
                     <Table.Th>Price</Table.Th>
                     <Table.Th>Total Value</Table.Th>
-                    <Table.Th hAlign='right'>Actions</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
@@ -202,18 +190,6 @@ export const AssetsTable = observer(() => {
                       {/* Total value */}
                       <Table.Td>
                         <Text color='text.secondary'>-</Text>
-                      </Table.Td>
-
-                      {/* Actions */}
-                      <Table.Td hAlign='right'>
-                        <div className='flex gap-2 justify-end'>
-                          <Button icon={ArrowDownRight} iconOnly disabled>
-                            Sell
-                          </Button>
-                          <Button icon={ArrowUpRight} iconOnly disabled>
-                            Buy
-                          </Button>
-                        </div>
                       </Table.Td>
                     </Table.Tr>
                   ))}

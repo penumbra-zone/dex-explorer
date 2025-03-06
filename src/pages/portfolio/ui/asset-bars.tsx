@@ -18,6 +18,7 @@ import { balanceToValueView } from '@/features/cosmos/utils/balance-to-value-vie
 import { Registry } from '@penumbra-labs/registry';
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { getStablecoins } from '@/shared/utils/stables';
+import { assetPatterns } from '@penumbra-zone/types/assets';
 
 interface AssetAllocation {
   symbol: string;
@@ -310,10 +311,29 @@ function calculateShieldedAssetAllocations(balances: BalancesResponse[]): AssetA
       return false;
     }
 
-    // Make sure to include delegation tokens, filter out LP NFTs and auction tokens
-    const isLpNft = metadata.symbol.startsWith('lpNft');
-    const isAuctionToken = metadata.symbol.startsWith('auction');
-    return !isLpNft && !isAuctionToken;
+    // Enhanced filtering for delegation, unbonding, LP NFTs, and auction tokens
+    const symbol = metadata.symbol.toLowerCase(); // Convert to lowercase for case-insensitive matching
+
+    // Filter out unwanted asset types with multiple checks for each
+    return !(
+      // LP NFTs
+      (
+        symbol.startsWith('lpnft') ||
+        // Auction tokens
+        symbol.startsWith('auction') ||
+        // Delegation tokens - multiple checks
+        assetPatterns.delegationToken.matches(metadata.symbol) ||
+        symbol.startsWith('delum') ||
+        symbol.includes('delegation') ||
+        // Unbonding tokens - multiple checks
+        symbol.startsWith('unbond') ||
+        symbol.includes('unbonding') ||
+        // Other special tokens
+        symbol.includes('voting') ||
+        symbol.includes('vetoken') ||
+        symbol.includes('position-id')
+      )
+    );
   });
 
   // Calculate values and handle errors
