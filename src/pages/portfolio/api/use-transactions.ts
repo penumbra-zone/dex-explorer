@@ -16,8 +16,7 @@ export const useTransactions = (subaccount = 0) => {
 
         if (
           !tx.txInfo ||
-          !addresses ||
-          !addresses.some(address => getAddressIndex.optional(address)?.account === subaccount)
+          !addresses?.some(address => getAddressIndex.optional(address)?.account === subaccount)
         ) {
           return accum;
         }

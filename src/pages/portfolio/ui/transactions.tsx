@@ -19,11 +19,14 @@ import { BlockchainError } from '@/shared/ui/blockchain-error';
 const getTransactionLink = (id?: TransactionId) => {
   const hash = id?.inner ? uint8ArrayToHex(id.inner) : '';
 
-  return ({ children, ...rest }: { children?: ReactNode }) => (
+  const TxLink = ({ children, ...rest }: { children?: ReactNode }) => (
     <Link href={`/inspect/tx/${hash}`} {...rest}>
       {children}
     </Link>
   );
+  TxLink.displayName = 'TxLink';
+
+  return TxLink;
 };
 
 export const PortfolioTransactions = observer(() => {
