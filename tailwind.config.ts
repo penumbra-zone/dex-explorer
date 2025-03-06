@@ -24,6 +24,10 @@ export default withPenumbra({
         ...tailwindConfig.theme.extend.backgroundImage,
         shimmer:
           'linear-gradient(90deg, rgba(250, 250, 250, 0.05) 0%, rgba(250, 250, 250, 0.10) 100%)',
+        'radial-prax':
+          'radial-gradient(100% 100% at 50% 0%, #F49C43 0%, rgba(244, 156, 67, 0.1) 100%)',
+        'radial-cosmos':
+          'radial-gradient(100% 100% at 50% 0%, #4A4A4A 0%, rgba(74, 74, 74, 0.1) 100%)',
       },
       keyframes: {
         ...tailwindConfig.theme.extend.keyframes,
