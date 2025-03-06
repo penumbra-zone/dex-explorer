@@ -10,7 +10,6 @@ import {
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { Metadata, ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
-import { planBuildBroadcast } from '@/pages/trade/ui/order-form/helpers.tsx';
 import { connectionStore } from '@/shared/model/connection';
 import { AddressIndex } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
 import { isZero } from '@penumbra-zone/types/amount';
@@ -19,8 +18,9 @@ import { ViewService } from '@penumbra-zone/protobuf';
 import { openToast } from '@penumbra-zone/ui/Toast';
 import { pnum } from '@penumbra-zone/types/pnum';
 import { bech32mPositionId, positionIdFromBech32 } from '@penumbra-zone/bech32m/plpid';
-import { updatePositionsQuery } from '@/entities/position/api/use-positions';
 import { BigNumber } from 'bignumber.js';
+import { updatePositionsQuery } from '@/entities/position/api/use-positions';
+import { planBuildBroadcast } from '@/entities/transaction';
 import { isStablecoinSymbol, isNumeraireSymbol } from '@/shared/utils/is-symbol';
 
 export interface DisplayPosition {
