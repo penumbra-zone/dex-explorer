@@ -32,13 +32,14 @@ export interface LeaderboardData {
   fees2: ValueView;
   executions: number;
   openingTime: number;
+  closingTime: number;
   state: PositionState_PositionStateEnum;
 }
 
 export interface LeaderboardPageInfo {
   data: LeaderboardData[];
   filters: LeaderboardSearchParams;
-  totalPages: number;
+  totalCount: number;
 }
 
 export const getURLParams = (searchParams: URLSearchParams): LeaderboardSearchParams => {

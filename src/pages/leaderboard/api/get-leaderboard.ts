@@ -62,6 +62,7 @@ export const GET = async (
             metadata: metadata2,
           }),
           openingTime: new Date(position.opening_time).getTime(),
+          closingTime: new Date(position.closing_time).getTime(),
           state: position.state,
         } satisfies LeaderboardData;
       }),
@@ -82,7 +83,7 @@ export const GET = async (
     );
 
     return NextResponse.json(
-      serialize({ data: uniquePositions, filters, totalPages: result.totalPages }),
+      serialize({ data: uniquePositions, filters, totalCount: result.totalCount }),
     );
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 });

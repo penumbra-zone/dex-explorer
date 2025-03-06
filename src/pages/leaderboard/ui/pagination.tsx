@@ -3,17 +3,24 @@
 import { Text } from '@penumbra-zone/ui/Text';
 import { DropdownMenu } from '@penumbra-zone/ui/DropdownMenu';
 import cn from 'clsx';
-import { Button } from '@penumbra-zone/ui/Button';
 import { useState } from 'react';
 
 interface PaginationProps {
   currentPage: number;
-  totalPages: number;
+  totalCount: number | undefined;
   onPageChange: (page: number) => void;
+  limit: number;
+  setLimit: (limit: number) => void;
 }
 
-export default function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
-  const [value, setValue] = useState('10');
+export default function Pagination({
+  currentPage,
+  totalCount,
+  onPageChange,
+  limit,
+  setLimit,
+}: PaginationProps) {
+  const totalPages = totalCount ? Math.ceil(totalCount / limit) : 0;
 
   const renderPageNumbers = () => {
     const pages = [];
@@ -80,17 +87,25 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
       </div>
       <DropdownMenu>
         <DropdownMenu.Trigger>
-          <Text color='text.secondary'>Show 10</Text>
+          <button>
+            <Text color='text.secondary'>Show {limit}</Text>
+          </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Content>
-          <DropdownMenu.RadioGroup value={value} onChange={setValue}>
-            <div className='flex flex-col gap-2'>
-              <DropdownMenu.RadioItem value='10'>10</DropdownMenu.RadioItem>
-              <DropdownMenu.RadioItem value='20'>20</DropdownMenu.RadioItem>
-              <DropdownMenu.RadioItem value='50'>50</DropdownMenu.RadioItem>
-              <DropdownMenu.RadioItem value='100'>100</DropdownMenu.RadioItem>
-            </div>
-          </DropdownMenu.RadioGroup>
+          <div className='flex flex-col gap-2'>
+            <DropdownMenu.RadioGroup
+              value={String(limit)}
+              onChange={value => setLimit(Number(value))}
+            >
+              <div className='flex flex-col gap-2'>
+                {[10, 20, 50].map(value => (
+                  <DropdownMenu.RadioItem key={value} value={String(value)}>
+                    Show {value}
+                  </DropdownMenu.RadioItem>
+                ))}
+              </div>
+            </DropdownMenu.RadioGroup>
+          </div>
         </DropdownMenu.Content>
       </DropdownMenu>
     </div>

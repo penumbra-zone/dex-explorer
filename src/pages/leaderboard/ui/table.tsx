@@ -1,7 +1,7 @@
 'use client';
 
 import { useAutoAnimate } from '@formkit/auto-animate/react';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import cn from 'clsx';
 import orderBy from 'lodash/orderBy';
 import { Text } from '@penumbra-zone/ui/Text';
@@ -20,6 +20,7 @@ import { stateToString } from '@/pages/trade/api/positions';
 import { useSearchParams } from 'next/navigation';
 import { pnum } from '@penumbra-zone/types/pnum';
 import Pagination from './pagination';
+import { PointsPnl } from './points-pnl';
 
 export const LeaderboardTable = ({
   startBlock,
@@ -28,9 +29,11 @@ export const LeaderboardTable = ({
   startBlock: number;
   endBlock: number;
 }) => {
+  const totalCountRef = useRef<number>(0);
   const searchParams = useSearchParams();
-  const page = Number(searchParams?.get('page')) ?? 1;
+  const page = Number(searchParams?.get('page') ?? 1);
   const [currentPage, setCurrentPage] = useState(page);
+  console.log('TCL: currentPage', currentPage);
   const [parent] = useAutoAnimate();
   const [quote, setQuote] = useState<AssetSelectorValue>();
   const [tab, setTab] = useState<'All LPs' | 'My LPs'>('All LPs');
@@ -41,7 +44,7 @@ export const LeaderboardTable = ({
     key: 'volume2',
     direction: 'desc',
   });
-
+  const [limit, setLimit] = useState(10);
   const quoteAssetId = getAssetId(quote);
 
   const {
@@ -49,8 +52,8 @@ export const LeaderboardTable = ({
     error,
     isLoading,
   } = useLeaderboard({
-    limit: 10,
-    offset: (currentPage - 1) * 10,
+    limit,
+    offset: (currentPage - 1) * limit,
     quote: quoteAssetId,
     startBlock,
     endBlock,
@@ -58,8 +61,9 @@ export const LeaderboardTable = ({
 
   const { data: assets } = useAssets();
   const { data: balances } = useBalances();
-  const { data: positions, totalPages } = leaderboard ?? {};
-  console.log('TCL: totalPages', totalPages);
+  const { data: positions, totalCount } = leaderboard ?? {};
+  totalCountRef.current = totalCount ?? totalCountRef.current;
+  console.log('TCL: totalCount', totalCount);
   console.log('TCL: positions', positions);
 
   const sortedPositions = useMemo(() => {
@@ -162,110 +166,97 @@ export const LeaderboardTable = ({
           </div>
 
           {isLoading ? (
-            Array.from({ length: 5 }).map((_, index) => (
+            Array.from({ length: limit }).map((_, index) => (
               <div className='grid grid-cols-subgrid col-span-8' key={index}>
-                <TableCell loading>--</TableCell>
-                <TableCell loading>--</TableCell>
-                <TableCell loading>--</TableCell>
-                <TableCell loading>--</TableCell>
-                <TableCell loading>--</TableCell>
-                <TableCell loading>--</TableCell>
-                <TableCell loading>--</TableCell>
-                <TableCell loading>--</TableCell>
+                <TableCell loading>&nbsp;</TableCell>
+                <TableCell loading>&nbsp;</TableCell>
+                <TableCell loading>&nbsp;</TableCell>
+                <TableCell loading>&nbsp;</TableCell>
+                <TableCell loading>&nbsp;</TableCell>
+                <TableCell loading>&nbsp;</TableCell>
+                <TableCell loading>&nbsp;</TableCell>
+                <TableCell loading>&nbsp;</TableCell>
               </div>
             ))
           ) : (
             <>
               {sortedPositions.length ? (
-                sortedPositions.map((position, index) => (
-                  <Link
-                    href={`/inspect/lp/${position.positionId}`}
-                    key={position.positionId}
-                    className={cn(
-                      'relative grid grid-cols-subgrid col-span-8',
-                      'bg-transparent hover:bg-action-hoverOverlay transition-colors',
-                      '[&>*]:h-auto',
-                    )}
-                  >
-                    <TableCell
-                      numeric
-                      variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
+                sortedPositions.map((position, index) => {
+                  const variant = index !== sortedPositions.length - 1 ? 'cell' : 'lastCell';
+
+                  return (
+                    <Link
+                      href={`/inspect/lp/${position.positionId}`}
+                      key={position.positionId}
+                      className={cn(
+                        'relative grid grid-cols-subgrid col-span-8',
+                        'bg-transparent hover:bg-action-hoverOverlay transition-colors',
+                        '[&>*]:h-auto',
+                      )}
                     >
-                      {position.executions}
-                    </TableCell>
-                    <TableCell
-                      numeric
-                      variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
-                    >
-                      --
-                    </TableCell>
-                    <TableCell
-                      numeric
-                      variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
-                    >
-                      --
-                    </TableCell>
-                    <TableCell
-                      numeric
-                      variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
-                    >
-                      {formatAge(position.openingTime)}
-                    </TableCell>
-                    <TableCell
-                      numeric
-                      variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
-                    >
-                      <div className='flex flex-col gap-2 py-2'>
-                        <ValueViewComponent
-                          valueView={position.fees1}
-                          abbreviate={true}
-                          density='slim'
-                        />
-                        <ValueViewComponent
-                          valueView={position.fees2}
-                          abbreviate={true}
-                          density='slim'
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell
-                      numeric
-                      variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
-                    >
-                      <div className='flex flex-col gap-2 py-2'>
-                        <ValueViewComponent
-                          valueView={position.volume1}
-                          abbreviate={true}
-                          density='slim'
-                        />
-                        <ValueViewComponent
-                          valueView={position.volume2}
-                          abbreviate={true}
-                          density='slim'
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell
-                      numeric
-                      variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
-                    >
-                      {stateToString(position.state)}
-                    </TableCell>
-                    <TableCell
-                      numeric
-                      variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
-                    >
-                      <div className='flex max-w-[104px]'>
-                        <Text as='div' detailTechnical color='text.primary' truncate>
-                          {position.positionId}
-                        </Text>
-                        <span>
-                          <SquareArrowOutUpRight className='w-4 h-4 text-text-secondary' />
-                        </span>
-                      </div>
-                    </TableCell>
-                  </Link>
-                ))
+                      <TableCell numeric variant={variant}>
+                        {position.executions}
+                      </TableCell>
+                      <PointsPnl
+                        variant='cell'
+                        baseAsset={position.asset1}
+                        quoteAsset={position.asset2}
+                        startTime={position.openingTime}
+                        endTime={position.closingTime}
+                      />
+                      <TableCell numeric variant={variant}>
+                        {formatAge(position.openingTime)}
+                      </TableCell>
+                      <TableCell numeric variant={variant}>
+                        <div className='flex flex-col gap-2 py-2'>
+                          <ValueViewComponent
+                            valueView={position.fees1}
+                            abbreviate={true}
+                            density='slim'
+                          />
+                          <ValueViewComponent
+                            valueView={position.fees2}
+                            abbreviate={true}
+                            density='slim'
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell numeric variant={variant}>
+                        <div className='flex flex-col gap-2 py-2'>
+                          <ValueViewComponent
+                            valueView={position.volume1}
+                            abbreviate={true}
+                            density='slim'
+                          />
+                          <ValueViewComponent
+                            valueView={position.volume2}
+                            abbreviate={true}
+                            density='slim'
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell
+                        numeric
+                        variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
+                      >
+                        {stateToString(position.state)}
+                      </TableCell>
+                      <TableCell
+                        numeric
+                        variant={index !== sortedPositions.length - 1 ? 'cell' : 'lastCell'}
+                      >
+                        <div className='flex max-w-[104px]'>
+                          <Text as='div' detailTechnical color='text.primary' truncate>
+                            {position.positionId}
+                          </Text>
+                          <span>
+                            <SquareArrowOutUpRight className='w-4 h-4 text-text-secondary' />
+                          </span>
+                        </div>
+                      </TableCell>
+                    </Link>
+                  );
+                })
               ) : (
                 <div className='col-span-6'>
                   <TableCell>Nothing to display.</TableCell>
@@ -277,7 +268,9 @@ export const LeaderboardTable = ({
 
         <Pagination
           currentPage={currentPage}
-          totalPages={totalPages}
+          totalCount={totalCountRef.current}
+          limit={limit}
+          setLimit={setLimit}
           onPageChange={setCurrentPage}
         />
       </div>

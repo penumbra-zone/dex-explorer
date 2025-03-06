@@ -3,10 +3,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { LeaderboardPageInfo, LeaderboardSearchParams } from './utils';
 import { apiFetch } from '@/shared/utils/api-fetch';
-import { DexService } from '@penumbra-zone/protobuf';
-import { penumbra } from '@/shared/const/penumbra';
-import { PositionId } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
-import { positionIdFromBech32 } from '@penumbra-zone/bech32m/plpid';
 
 export const useLeaderboard = (filters: Partial<LeaderboardSearchParams>) => {
   return useQuery<LeaderboardPageInfo>({

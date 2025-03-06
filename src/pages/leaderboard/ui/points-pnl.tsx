@@ -1,0 +1,57 @@
+import { TableCell } from '@penumbra-zone/ui/TableCell';
+import { useIntersection } from '@/shared/utils/useIntersection';
+import { useRef, useState } from 'react';
+import { usePnL } from '../api/use-pnl';
+import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+
+export function PointsPnl({
+  variant,
+  baseAsset,
+  quoteAsset,
+  startTime,
+  endTime,
+}: {
+  variant: 'cell' | 'lastCell';
+  baseAsset: Metadata;
+  quoteAsset: Metadata;
+  startTime: number;
+  endTime: number;
+}) {
+  const cellRef = useRef<HTMLTableRowElement>(null);
+  const [enabled, setEnabled] = useState(false);
+
+  const {
+    data: pnl,
+    error,
+    isLoading,
+  } = usePnL({
+    variables: {
+      baseAsset,
+      quoteAsset,
+      startTime,
+      endTime,
+    },
+    enabled,
+  });
+
+  useIntersection(
+    cellRef,
+    isIntersecting => {
+      setEnabled(isIntersecting);
+    },
+    {
+      isIntersectingCallback: true,
+    },
+  );
+
+  return (
+    <div ref={cellRef}>
+      <TableCell numeric variant={variant} loading={isLoading}>
+        {Math.abs(pnl?.pnlPercentChange)}
+      </TableCell>
+      <TableCell numeric variant={variant} loading={isLoading}>
+        {pnl?.pnl}
+      </TableCell>
+    </div>
+  );
+}

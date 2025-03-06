@@ -121,6 +121,26 @@ class Pindexer {
     return query.execute();
   }
 
+  async getPrice({
+    baseAsset,
+    quoteAsset,
+    time,
+  }: {
+    baseAsset: AssetId;
+    quoteAsset: AssetId;
+    time: number;
+  }) {
+    return this.db
+      .selectFrom('dex_ex_price_charts')
+      .select(['close'])
+      .where('start_time', '=', new Date(time))
+      .where('the_window', '=', '1m')
+      .where('asset_start', '=', Buffer.from(baseAsset.inner))
+      .where('asset_end', '=', Buffer.from(quoteAsset.inner))
+      .orderBy('start_time', 'asc')
+      .executeTakeFirst();
+  }
+
   // Paginated pair summaries
   async summaries({
     window = '1d',
@@ -530,7 +550,7 @@ class Pindexer {
     const withdrawalPositionIds = new Set(withdrawals.map(w => w.position_id.toString()));
 
     return {
-      totalPages: Math.ceil(Number(totalCount.count) / limit),
+      totalCount: Number(totalCount.count),
       items: results.map(r => ({
         ...r,
         // eslint-disable-next-line no-nested-ternary -- allow nested ternary
