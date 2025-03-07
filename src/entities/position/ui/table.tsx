@@ -4,7 +4,7 @@ import cn from 'clsx';
 import Link from 'next/link';
 import orderBy from 'lodash/orderBy';
 import { SquareArrowOutUpRight, ChevronUp, ChevronDown } from 'lucide-react';
-import { useEffect, useState, useCallback, useMemo, Fragment, ReactNode } from 'react';
+import { useState, useCallback, useMemo, Fragment, ReactNode } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { Text } from '@penumbra-zone/ui/Text';
@@ -14,9 +14,10 @@ import { Tooltip } from '@penumbra-zone/ui/Tooltip';
 import { TableCell } from '@penumbra-zone/ui/TableCell';
 import { pnum } from '@penumbra-zone/types/pnum';
 import { connectionStore } from '@/shared/model/connection';
-import { useAssets } from '@/shared/api/assets';
+import { useGetMetadataByAssetId } from '@/shared/api/assets';
 import { stateToString, usePositions } from '../api/use-positions.ts';
-import { DisplayPosition, positionsStore } from '../model/store';
+import { getDisplayPositions } from '../model/get-display-positions';
+import { DisplayPosition } from '../model/types';
 import { PositionsCurrentValue } from './positions-current-value';
 import { NotConnectedNotice } from './not-connected-notice';
 import { ErrorNotice } from './error-notice';
@@ -33,9 +34,9 @@ export interface PositionsTableProps {
 
 export const Positions = observer(({ showInactive, base, quote }: PositionsTableProps) => {
   const { connected, subaccount } = connectionStore;
-  const { data: assets } = useAssets();
+  const getMetadataByAssetId = useGetMetadataByAssetId();
   const { data, isLoading, error } = usePositions(subaccount);
-  const { displayPositions, setPositions, setAssets } = positionsStore;
+  const displayPositions = getDisplayPositions(data, base, quote, getMetadataByAssetId);
   const [sortBy, setSortBy] = useState<{
     key: string;
     direction: 'desc' | 'asc';
@@ -119,22 +120,6 @@ export const Positions = observer(({ showInactive, base, quote }: PositionsTable
       },
     ],
   }) as DisplayPosition[];
-
-  useEffect(() => {
-    if (data) {
-      setPositions(data);
-    }
-  }, [data, setPositions]);
-
-  useEffect(() => {
-    setAssets(assets ?? []);
-  }, [assets, setAssets]);
-
-  useEffect(() => {
-    if (base && quote) {
-      positionsStore.setCurrentPair(base, quote);
-    }
-  }, [base, quote]);
 
   if (!connected) {
     return <NotConnectedNotice />;
