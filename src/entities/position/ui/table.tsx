@@ -7,7 +7,6 @@ import { ChevronDown, ChevronUp, SquareArrowOutUpRight } from 'lucide-react';
 import { Fragment, ReactNode, useCallback, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
-import { PositionState_PositionStateEnum } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { Text } from '@penumbra-zone/ui/Text';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
 import { Density } from '@penumbra-zone/ui/Density';
@@ -18,7 +17,7 @@ import { connectionStore } from '@/shared/model/connection';
 import { useGetMetadataByAssetId } from '@/shared/api/assets';
 import { usePositions } from '../api/use-positions';
 import { stateToString } from '../model/state-to-string';
-import { getDisplayPositions } from '../model/get-display-positions';
+import { getDisplayPositions, GetDisplayPositionsArgs } from '../model/get-display-positions';
 import { DisplayPosition } from '../model/types';
 import { PositionsCurrentValue } from './positions-current-value';
 import { NotConnectedNotice } from './not-connected-notice';
@@ -29,12 +28,12 @@ import { ActionButton } from './action-button';
 import { Dash } from './dash';
 
 export interface PositionsTableProps {
-  showInactive: boolean;
   base?: Metadata;
   quote?: Metadata;
+  stateFilter?: GetDisplayPositionsArgs['stateFilter'];
 }
 
-export const PositionsTable = observer(({ showInactive, base, quote }: PositionsTableProps) => {
+export const PositionsTable = observer(({ base, quote, stateFilter }: PositionsTableProps) => {
   const { connected, subaccount } = connectionStore;
   const getMetadataByAssetId = useGetMetadataByAssetId();
 
@@ -43,14 +42,8 @@ export const PositionsTable = observer(({ showInactive, base, quote }: Positions
     positions: data,
     asset1Filter: base,
     asset2Filter: quote,
+    stateFilter,
     getMetadataByAssetId,
-    stateFilter: showInactive
-      ? [
-          PositionState_PositionStateEnum.OPENED,
-          PositionState_PositionStateEnum.CLOSED,
-          PositionState_PositionStateEnum.WITHDRAWN,
-        ]
-      : [PositionState_PositionStateEnum.OPENED, PositionState_PositionStateEnum.CLOSED],
   });
 
   const [sortBy, setSortBy] = useState<{
@@ -127,7 +120,7 @@ export const PositionsTable = observer(({ showInactive, base, quote }: Positions
   }
 
   return (
-    <div className='p-4 grid grid-cols-[80px_1fr_1fr_80px_1fr_1fr_1fr_1fr] overflow-y-auto overflow-x-auto'>
+    <div className='grid grid-cols-[80px_1fr_1fr_80px_1fr_1fr_1fr_1fr] overflow-y-auto overflow-x-auto'>
       <Density slim>
         <div className='grid grid-cols-subgrid col-span-8'>
           <SortableTableHeader sortKey='type'>Type</SortableTableHeader>

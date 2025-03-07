@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
+import { PositionState_PositionStateEnum } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { Tabs } from '@penumbra-zone/ui/Tabs';
 import { Density } from '@penumbra-zone/ui/Density';
 import { Toggle } from '@penumbra-zone/ui/Toggle';
@@ -35,7 +36,21 @@ export const HistoryTabs = () => {
         </label>
       </div>
 
-      <PositionsTable showInactive={showInactive} base={baseAsset} quote={quoteAsset} />
+      <div className='p-4'>
+        <PositionsTable
+          base={baseAsset}
+          quote={quoteAsset}
+          stateFilter={
+            showInactive
+              ? [
+                  PositionState_PositionStateEnum.OPENED,
+                  PositionState_PositionStateEnum.CLOSED,
+                  PositionState_PositionStateEnum.WITHDRAWN,
+                ]
+              : [PositionState_PositionStateEnum.OPENED, PositionState_PositionStateEnum.CLOSED]
+          }
+        />
+      </div>
     </div>
   );
 };
