@@ -1,7 +1,7 @@
 import { DexService, ViewService } from '@penumbra-zone/protobuf';
 import { penumbra } from '@/shared/const/penumbra';
 import { connectionStore } from '@/shared/model/connection';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import {
   Position,
   PositionId,
@@ -10,17 +10,46 @@ import { AddressIndex } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys
 import { bech32mPositionId } from '@penumbra-zone/bech32m/plpid';
 import { queryClient } from '@/shared/const/queryClient';
 
+const BASE_LIMIT = 20;
+const BASE_PAGE = 0;
+
+/** Helper function that allows breaking early when using stream responses */
+async function* limitAsync<T>(
+  iterable: AsyncIterable<T>,
+  limit: number,
+  offset: number,
+): AsyncIterable<T> {
+  let count = 0;
+
+  for await (const item of iterable) {
+    if (count < offset) {
+      count++;
+      continue;
+    }
+
+    if (count >= offset + limit) {
+      break;
+    }
+
+    yield item;
+    count++;
+  }
+}
+
 // 1) Query prax to get position ids
 // 2) Take those position ids and get position info from the node
 // Context on two-step fetching process: https://github.com/penumbra-zone/penumbra/pull/4837
-const fetchQuery = async (subaccount?: number): Promise<Map<string, Position>> => {
+const fetchQuery = async (subaccount = 0, page = BASE_PAGE): Promise<Map<string, Position>> => {
   const ownedRes = await Array.fromAsync(
-    penumbra.service(ViewService).ownedPositionIds({
-      // In the future, it might change to `subaccount === 0`, so that the main account will become default
-      subaccount:
-        typeof subaccount === 'undefined' ? undefined : new AddressIndex({ account: subaccount }),
-    }),
+    limitAsync(
+      penumbra.service(ViewService).ownedPositionIds({
+        subaccount: new AddressIndex({ account: subaccount }),
+      }),
+      BASE_LIMIT,
+      BASE_LIMIT * page,
+    ),
   );
+
   const positionIds = ownedRes.map(r => r.positionId).filter(Boolean) as PositionId[];
 
   const positionsRes = await Array.fromAsync(
@@ -46,11 +75,14 @@ const fetchQuery = async (subaccount?: number): Promise<Map<string, Position>> =
 /**
  * Must be used within the `observer` mobX HOC
  */
-export const usePositions = (subaccount?: number) => {
-  return useQuery({
+export const usePositions = (subaccount = 0) => {
+  return useInfiniteQuery<Map<string, Position>>({
     queryKey: ['positions', subaccount],
-    queryFn: () => fetchQuery(subaccount),
-    retry: 1,
+    initialPageParam: BASE_PAGE,
+    getNextPageParam: (lastPage, _, lastPageParam) => {
+      return lastPage.size ? (lastPageParam as number) + 1 : undefined;
+    },
+    queryFn: ({ pageParam }) => fetchQuery(subaccount, pageParam as number),
     enabled: connectionStore.connected,
   });
 };

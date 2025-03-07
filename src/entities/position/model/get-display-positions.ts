@@ -190,7 +190,7 @@ export const getOrderValueViews = ({
 };
 
 export interface GetDisplayPositionsArgs {
-  positions: Map<string, Position> | undefined;
+  positions: Map<string, Position>[] | undefined;
   getMetadataByAssetId: GetMetadataByAssetId;
   asset1Filter?: Metadata;
   asset2Filter?: Metadata;
@@ -208,80 +208,84 @@ export const getDisplayPositions = ({
   asset2Filter,
   stateFilter,
 }: GetDisplayPositionsArgs): DisplayPosition[] => {
-  const mapped = [...(positions?.entries() ?? [])].map<DisplayPosition | undefined>(
-    ([id, position]) => {
-      const { phi, state } = position as ExecutedPosition;
-      const { component, pair } = phi;
-      const assetId1 = pair.asset1;
-      const assetId2 = pair.asset2;
+  // take the array of Map and reduce it to an array of entries
+  const entries =
+    positions?.reduce<[string, Position][]>((accum, current) => {
+      return accum.concat([...current.entries()]);
+    }, []) ?? [];
 
-      if (stateFilter?.length && !stateFilter.some(filter => filter === state.state)) {
-        return undefined;
-      }
+  // adapt each position to a DisplayPosition
+  const mapped = entries.map<DisplayPosition | undefined>(([id, position]) => {
+    const { phi, state } = position as ExecutedPosition;
+    const { component, pair } = phi;
+    const assetId1 = pair.asset1;
+    const assetId2 = pair.asset2;
 
-      if (
-        asset1Filter?.penumbraAssetId &&
-        !assetId1?.equals(asset1Filter.penumbraAssetId) &&
-        !assetId2?.equals(asset1Filter.penumbraAssetId)
-      ) {
-        return undefined;
-      }
+    if (stateFilter?.length && !stateFilter.some(filter => filter === state.state)) {
+      return undefined;
+    }
 
-      if (
-        asset2Filter?.penumbraAssetId &&
-        !assetId2?.equals(asset2Filter.penumbraAssetId) &&
-        !assetId1?.equals(asset2Filter.penumbraAssetId)
-      ) {
-        return undefined;
-      }
+    if (
+      asset1Filter?.penumbraAssetId &&
+      !assetId1?.equals(asset1Filter.penumbraAssetId) &&
+      !assetId2?.equals(asset1Filter.penumbraAssetId)
+    ) {
+      return undefined;
+    }
 
-      try {
-        const [asset1, asset2] = getCalculatedAssets(
-          position as ExecutedPosition,
-          getMetadataByAssetId,
-        );
+    if (
+      asset2Filter?.penumbraAssetId &&
+      !assetId2?.equals(asset2Filter.penumbraAssetId) &&
+      !assetId1?.equals(asset2Filter.penumbraAssetId)
+    ) {
+      return undefined;
+    }
 
-        // Now that we have computed all the price information using the canonical ordering,
-        // we can simply adjust our values if the directed pair is not the same as the canonical one:
-        const orders = getDirectionalOrders({
-          asset1,
-          asset2,
-          baseAsset: asset1Filter,
-          quoteAsset: asset2Filter,
-        }).map(getOrderValueViews);
+    try {
+      const [asset1, asset2] = getCalculatedAssets(
+        position as ExecutedPosition,
+        getMetadataByAssetId,
+      );
 
-        const isOpened = state.state === PositionState_PositionStateEnum.OPENED;
-        const isClosed = state.state === PositionState_PositionStateEnum.CLOSED;
-        const isWithdrawn = state.state === PositionState_PositionStateEnum.WITHDRAWN;
-        const fee = `${pnum(component.fee / 100).toFormattedString({ decimals: 2 })}%`;
+      // Now that we have computed all the price information using the canonical ordering,
+      // we can simply adjust our values if the directed pair is not the same as the canonical one:
+      const orders = getDirectionalOrders({
+        asset1,
+        asset2,
+        baseAsset: asset1Filter,
+        quoteAsset: asset2Filter,
+      }).map(getOrderValueViews);
 
-        return {
-          id: new PositionId(positionIdFromBech32(id)),
-          idString: id,
-          position,
-          orders,
-          isOpened,
-          isClosed,
-          isWithdrawn,
-          state: state.state,
-          fee: `${pnum(component.fee / 100).toFormattedString({ decimals: 2 })}%`,
-          sortValues: {
-            positionId: id,
-            type: isOpened
-              ? (orders[0]?.direction ?? stateToString(state.state))
-              : stateToString(state.state),
-            tradeAmount: isWithdrawn ? 0 : pnum(orders[0]?.amount).toNumber(),
-            effectivePrice:
-              isClosed || isWithdrawn ? 0 : pnum(orders[0]?.effectivePrice).toNumber(),
-            basePrice: isClosed || isWithdrawn ? 0 : pnum(orders[0]?.basePrice).toNumber(),
-            feeTier: isClosed || isWithdrawn ? 0 : Number(fee.replace('%', '')),
-          },
-        };
-      } catch (_) {
-        return undefined;
-      }
-    },
-  );
+      const isOpened = state.state === PositionState_PositionStateEnum.OPENED;
+      const isClosed = state.state === PositionState_PositionStateEnum.CLOSED;
+      const isWithdrawn = state.state === PositionState_PositionStateEnum.WITHDRAWN;
+      const fee = `${pnum(component.fee / 100).toFormattedString({ decimals: 2 })}%`;
+
+      return {
+        id: new PositionId(positionIdFromBech32(id)),
+        idString: id,
+        position,
+        orders,
+        isOpened,
+        isClosed,
+        isWithdrawn,
+        state: state.state,
+        fee: `${pnum(component.fee / 100).toFormattedString({ decimals: 2 })}%`,
+        sortValues: {
+          positionId: id,
+          type: isOpened
+            ? (orders[0]?.direction ?? stateToString(state.state))
+            : stateToString(state.state),
+          tradeAmount: isWithdrawn ? 0 : pnum(orders[0]?.amount).toNumber(),
+          effectivePrice: isClosed || isWithdrawn ? 0 : pnum(orders[0]?.effectivePrice).toNumber(),
+          basePrice: isClosed || isWithdrawn ? 0 : pnum(orders[0]?.basePrice).toNumber(),
+          feeTier: isClosed || isWithdrawn ? 0 : Number(fee.replace('%', '')),
+        },
+      };
+    } catch (_) {
+      return undefined;
+    }
+  });
 
   return mapped.filter(Boolean) as DisplayPosition[];
 };

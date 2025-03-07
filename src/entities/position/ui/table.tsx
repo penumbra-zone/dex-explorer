@@ -26,6 +26,8 @@ import { NoPositions } from './no-positions';
 import { HeaderActionButton } from './header-action-button';
 import { ActionButton } from './action-button';
 import { Dash } from './dash';
+import { useObserver } from '@/shared/utils/use-observer';
+import SpinnerIcon from '@/shared/assets/spinner-icon.svg';
 
 export interface PositionsTableProps {
   base?: Metadata;
@@ -37,13 +39,18 @@ export const PositionsTable = observer(({ base, quote, stateFilter }: PositionsT
   const { connected, subaccount } = connectionStore;
   const getMetadataByAssetId = useGetMetadataByAssetId();
 
-  const { data, isLoading, error } = usePositions(subaccount);
+  const { data, isLoading, isRefetching, isFetchingNextPage, fetchNextPage, error } =
+    usePositions(subaccount);
   const displayPositions = getDisplayPositions({
-    positions: data,
+    positions: data?.pages,
     asset1Filter: base,
     asset2Filter: quote,
     stateFilter,
     getMetadataByAssetId,
+  });
+
+  const { observerEl } = useObserver(isLoading || isRefetching || isFetchingNextPage, () => {
+    void fetchNextPage();
   });
 
   const [sortBy, setSortBy] = useState<{
@@ -136,7 +143,7 @@ export const PositionsTable = observer(({ base, quote, stateFilter }: PositionsT
         </div>
 
         {(isLoading ? loadingArr : sortedPositions).map((position, index) => (
-          <Fragment key={position.idString}>
+          <Fragment key={`${position.idString}${index}`}>
             {position.orders
               .slice(0, position.isWithdrawn ? 1 : Infinity)
               .map((order, orderIndex) => {
@@ -250,6 +257,15 @@ export const PositionsTable = observer(({ base, quote, stateFilter }: PositionsT
           </Fragment>
         ))}
       </Density>
+
+      {isFetchingNextPage && (
+        <div className='flex grid-cols-subgrid col-span-8 items-center justify-center h-6 my-1'>
+          <SpinnerIcon className='animate-spin' />
+        </div>
+      )}
+
+      {/* An element that triggers the infinite scroll when visible */}
+      <div className='h-1 w-full' ref={observerEl} />
     </div>
   );
 });
