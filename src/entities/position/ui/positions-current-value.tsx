@@ -2,7 +2,7 @@ import { useMarketPrice } from '@/pages/trade/model/useMarketPrice';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
 import { pnum } from '@penumbra-zone/types/pnum';
 import { Skeleton } from '@penumbra-zone/ui/Skeleton';
-import { DisplayPosition } from '../model/store';
+import { DisplayPosition } from '../model/types';
 
 export const PositionsCurrentValue = ({ order }: { order: DisplayPosition['orders'][number] }) => {
   const { baseAsset, quoteAsset } = order;

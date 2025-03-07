@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Button } from '@penumbra-zone/ui/Button';
-import { DisplayPosition } from '../model/store';
+import { DisplayPosition } from '../model/types';
 import { withdrawPositions } from '../api/withdraw-positions';
 import { closePositions } from '../api/close-positions';
 
