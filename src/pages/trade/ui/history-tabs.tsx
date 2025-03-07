@@ -4,7 +4,7 @@ import { Tabs } from '@penumbra-zone/ui/Tabs';
 import { Density } from '@penumbra-zone/ui/Density';
 import { Toggle } from '@penumbra-zone/ui/Toggle';
 import { Text } from '@penumbra-zone/ui/Text';
-import { Positions } from '@/entities/position';
+import { PositionsTable } from '@/entities/position';
 import { usePathToMetadata } from '../model/use-path';
 
 enum PositionsTabsType {
@@ -35,7 +35,7 @@ export const HistoryTabs = () => {
         </label>
       </div>
 
-      <Positions showInactive={showInactive} base={baseAsset} quote={quoteAsset} />
+      <PositionsTable showInactive={showInactive} base={baseAsset} quote={quoteAsset} />
     </div>
   );
 };

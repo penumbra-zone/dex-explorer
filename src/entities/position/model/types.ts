@@ -27,6 +27,14 @@ export interface DisplayPosition {
   isOpened: boolean;
   isClosed: boolean;
   state: PositionState_PositionStateEnum;
+  sortValues: {
+    type: string;
+    tradeAmount: number;
+    effectivePrice: number;
+    basePrice: number;
+    feeTier: number;
+    positionId: string;
+  };
 }
 
 export interface CalculatedAsset {

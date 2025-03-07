@@ -3,6 +3,7 @@ import { GetMetadataByAssetId } from '@/shared/api/assets';
 import { CalculatedAsset, ExecutedPosition } from './types';
 import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 
+/** Takes a Position and returns the assets involved in the position with their calculated value */
 export const getCalculatedAssets = (
   position: ExecutedPosition,
   getMetadataByAssetId: GetMetadataByAssetId,

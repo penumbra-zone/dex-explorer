@@ -3,10 +3,11 @@
 import cn from 'clsx';
 import Link from 'next/link';
 import orderBy from 'lodash/orderBy';
-import { SquareArrowOutUpRight, ChevronUp, ChevronDown } from 'lucide-react';
-import { useState, useCallback, useMemo, Fragment, ReactNode } from 'react';
+import { ChevronDown, ChevronUp, SquareArrowOutUpRight } from 'lucide-react';
+import { Fragment, ReactNode, useCallback, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { PositionState_PositionStateEnum } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { Text } from '@penumbra-zone/ui/Text';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
 import { Density } from '@penumbra-zone/ui/Density';
@@ -15,7 +16,8 @@ import { TableCell } from '@penumbra-zone/ui/TableCell';
 import { pnum } from '@penumbra-zone/types/pnum';
 import { connectionStore } from '@/shared/model/connection';
 import { useGetMetadataByAssetId } from '@/shared/api/assets';
-import { stateToString, usePositions } from '../api/use-positions.ts';
+import { usePositions } from '../api/use-positions';
+import { stateToString } from '../model/state-to-string';
 import { getDisplayPositions } from '../model/get-display-positions';
 import { DisplayPosition } from '../model/types';
 import { PositionsCurrentValue } from './positions-current-value';
@@ -32,11 +34,25 @@ export interface PositionsTableProps {
   quote?: Metadata;
 }
 
-export const Positions = observer(({ showInactive, base, quote }: PositionsTableProps) => {
+export const PositionsTable = observer(({ showInactive, base, quote }: PositionsTableProps) => {
   const { connected, subaccount } = connectionStore;
   const getMetadataByAssetId = useGetMetadataByAssetId();
+
   const { data, isLoading, error } = usePositions(subaccount);
-  const displayPositions = getDisplayPositions(data, base, quote, getMetadataByAssetId);
+  const displayPositions = getDisplayPositions({
+    positions: data,
+    asset1Filter: base,
+    asset2Filter: quote,
+    getMetadataByAssetId,
+    stateFilter: showInactive
+      ? [
+          PositionState_PositionStateEnum.OPENED,
+          PositionState_PositionStateEnum.CLOSED,
+          PositionState_PositionStateEnum.WITHDRAWN,
+        ]
+      : [PositionState_PositionStateEnum.OPENED, PositionState_PositionStateEnum.CLOSED],
+  });
+
   const [sortBy, setSortBy] = useState<{
     key: string;
     direction: 'desc' | 'asc';
@@ -46,31 +62,8 @@ export const Positions = observer(({ showInactive, base, quote }: PositionsTable
   });
 
   const sortedPositions = useMemo<DisplayPosition[]>(() => {
-    return orderBy(
-      displayPositions
-        .filter(position => (showInactive ? true : !position.isWithdrawn))
-        .map(position => ({
-          ...position,
-          sortValues: {
-            type: position.isOpened ? position.orders[0]?.direction : stateToString(position.state),
-            tradeAmount: position.isWithdrawn ? 0 : pnum(position.orders[0]?.amount).toNumber(),
-            effectivePrice:
-              position.isClosed || position.isWithdrawn
-                ? 0
-                : pnum(position.orders[0]?.effectivePrice).toNumber(),
-            basePrice:
-              position.isClosed || position.isWithdrawn
-                ? 0
-                : pnum(position.orders[0]?.basePrice).toNumber(),
-            feeTier:
-              position.isClosed || position.isWithdrawn ? 0 : Number(position.fee.replace('%', '')),
-            positionId: position.idString,
-          },
-        })),
-      `sortValues.${sortBy.key}`,
-      sortBy.direction,
-    );
-  }, [displayPositions, showInactive, sortBy]);
+    return orderBy([...displayPositions], `sortValues.${sortBy.key}`, sortBy.direction);
+  }, [displayPositions, sortBy]);
 
   const SortableTableHeader = useCallback(
     ({ sortKey, children }: { sortKey: string; children: ReactNode }) => {

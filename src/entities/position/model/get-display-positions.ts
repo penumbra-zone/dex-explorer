@@ -6,11 +6,12 @@ import {
 import { positionIdFromBech32 } from '@penumbra-zone/bech32m/plpid';
 import { pnum } from '@penumbra-zone/types/pnum';
 import { GetMetadataByAssetId } from '@/shared/api/assets';
-import { CalculatedAsset, DisplayPosition, ExecutedPosition } from './types';
-import { getCalculatedAssets } from './get-calculated-assets';
 import { isZero } from '@penumbra-zone/types/amount';
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { isNumeraireSymbol, isStablecoinSymbol } from '@/shared/utils/is-symbol';
+import { getCalculatedAssets } from './get-calculated-assets';
+import { CalculatedAsset, DisplayPosition, ExecutedPosition } from './types';
+import { stateToString } from './state-to-string';
 
 export const getOrdersByBaseQuoteAssets = (
   baseAsset: CalculatedAsset,
@@ -73,25 +74,27 @@ export const getDirectionalOrders = ({
 }: {
   asset1: CalculatedAsset;
   asset2: CalculatedAsset;
-  baseAsset: Metadata;
-  quoteAsset: Metadata;
+  baseAsset?: Metadata;
+  quoteAsset?: Metadata;
 }): { direction: string; baseAsset: CalculatedAsset; quoteAsset: CalculatedAsset }[] => {
-  const wellOrdered =
-    baseAsset.penumbraAssetId?.equals(asset1.asset.penumbraAssetId) &&
-    quoteAsset.penumbraAssetId?.equals(asset2.asset.penumbraAssetId);
+  if (baseAsset && quoteAsset) {
+    const wellOrdered =
+      baseAsset.penumbraAssetId?.equals(asset1.asset.penumbraAssetId) &&
+      quoteAsset.penumbraAssetId?.equals(asset2.asset.penumbraAssetId);
 
-  const orderFlipped =
-    baseAsset.penumbraAssetId?.equals(asset2.asset.penumbraAssetId) &&
-    quoteAsset.penumbraAssetId?.equals(asset1.asset.penumbraAssetId);
+    const orderFlipped =
+      baseAsset.penumbraAssetId?.equals(asset2.asset.penumbraAssetId) &&
+      quoteAsset.penumbraAssetId?.equals(asset1.asset.penumbraAssetId);
 
-  // Happy path: we have a "Current pair" view which informs how we should render BASE/QUOTE assets.
-  if (wellOrdered) {
-    return getOrdersByBaseQuoteAssets(asset1, asset2);
-  }
+    // Happy path: we have a "Current pair" view which informs how we should render BASE/QUOTE assets.
+    if (wellOrdered) {
+      return getOrdersByBaseQuoteAssets(asset1, asset2);
+    }
 
-  // We check if flipping asset 1 and asset 2 would result in a base/quote match:
-  if (orderFlipped) {
-    return getOrdersByBaseQuoteAssets(asset2, asset1);
+    // We check if flipping asset 1 and asset 2 would result in a base/quote match:
+    if (orderFlipped) {
+      return getOrdersByBaseQuoteAssets(asset2, asset1);
+    }
   }
 
   // If it fails, this means that the position we want to render is not on the "Current pair"
@@ -186,55 +189,99 @@ export const getOrderValueViews = ({
   };
 };
 
-export const getDisplayPositions = (
-  positionsById: Map<string, Position> | undefined,
-  baseAsset: Metadata | undefined,
-  quoteAsset: Metadata | undefined,
-  getMetadataByAssetId: GetMetadataByAssetId,
-) => {
-  const positions = [...(positionsById?.entries() ?? [])].map(([id, position]) => {
-    const { phi, state } = position as ExecutedPosition;
-    const { component } = phi;
+export interface GetDisplayPositionsArgs {
+  positions: Map<string, Position> | undefined;
+  getMetadataByAssetId: GetMetadataByAssetId;
+  asset1Filter?: Metadata;
+  asset2Filter?: Metadata;
+  stateFilter?: PositionState_PositionStateEnum[];
+}
 
-    const [asset1, asset2] = (() => {
-      try {
-        return getCalculatedAssets(position as ExecutedPosition, getMetadataByAssetId);
-      } catch (e) {
-        // this.getCalculatedAssets() throws if the assets are not found in the registry
-        // e.g. if the position was created in `pcli`
-        return [];
+/**
+ * Takes the result of `usePositions` query and adapts it to UI
+ * by filtering positions by status/metadata, mapping into a better format, and sorting them.
+ */
+export const getDisplayPositions = ({
+  positions,
+  getMetadataByAssetId,
+  asset1Filter,
+  asset2Filter,
+  stateFilter,
+}: GetDisplayPositionsArgs): DisplayPosition[] => {
+  const mapped = [...(positions?.entries() ?? [])].map<DisplayPosition | undefined>(
+    ([id, position]) => {
+      const { phi, state } = position as ExecutedPosition;
+      const { component, pair } = phi;
+      const assetId1 = pair.asset1;
+      const assetId2 = pair.asset2;
+
+      if (stateFilter?.length && !stateFilter.some(filter => filter === state.state)) {
+        return undefined;
       }
-    })();
 
-    if (!baseAsset || !quoteAsset || !asset1 || !asset2) {
-      return undefined;
-    }
+      if (
+        asset1Filter?.penumbraAssetId &&
+        !assetId1?.equals(asset1Filter.penumbraAssetId) &&
+        !assetId2?.equals(asset1Filter.penumbraAssetId)
+      ) {
+        return undefined;
+      }
 
-    // Now that we have computed all the price information using the canonical ordering,
-    // we can simply adjust our values if the directed pair is not the same as the canonical one:
-    const orders = getDirectionalOrders({
-      asset1,
-      asset2,
-      baseAsset,
-      quoteAsset,
-    }).map(getOrderValueViews);
+      if (
+        asset2Filter?.penumbraAssetId &&
+        !assetId2?.equals(asset2Filter.penumbraAssetId) &&
+        !assetId1?.equals(asset2Filter.penumbraAssetId)
+      ) {
+        return undefined;
+      }
 
-    return {
-      id: new PositionId(positionIdFromBech32(id)),
-      idString: id,
-      position,
-      orders,
-      fee: `${pnum(component.fee / 100).toFormattedString({ decimals: 2 })}%`,
-      // TODO:
-      // We do not yet filter `Closed` positions to allow auto-closing position to provide visual
-      // feedback about execution. This is probably best later replaced by either a notification, or a
-      // dedicated view. Fine for now.
-      isWithdrawn: state.state === PositionState_PositionStateEnum.WITHDRAWN,
-      isOpened: state.state === PositionState_PositionStateEnum.OPENED,
-      isClosed: state.state === PositionState_PositionStateEnum.CLOSED,
-      state: state.state,
-    };
-  });
+      try {
+        const [asset1, asset2] = getCalculatedAssets(
+          position as ExecutedPosition,
+          getMetadataByAssetId,
+        );
 
-  return positions.filter(Boolean) as DisplayPosition[];
+        // Now that we have computed all the price information using the canonical ordering,
+        // we can simply adjust our values if the directed pair is not the same as the canonical one:
+        const orders = getDirectionalOrders({
+          asset1,
+          asset2,
+          baseAsset: asset1Filter,
+          quoteAsset: asset2Filter,
+        }).map(getOrderValueViews);
+
+        const isOpened = state.state === PositionState_PositionStateEnum.OPENED;
+        const isClosed = state.state === PositionState_PositionStateEnum.CLOSED;
+        const isWithdrawn = state.state === PositionState_PositionStateEnum.WITHDRAWN;
+        const fee = `${pnum(component.fee / 100).toFormattedString({ decimals: 2 })}%`;
+
+        return {
+          id: new PositionId(positionIdFromBech32(id)),
+          idString: id,
+          position,
+          orders,
+          isOpened,
+          isClosed,
+          isWithdrawn,
+          state: state.state,
+          fee: `${pnum(component.fee / 100).toFormattedString({ decimals: 2 })}%`,
+          sortValues: {
+            positionId: id,
+            type: isOpened
+              ? (orders[0]?.direction ?? stateToString(state.state))
+              : stateToString(state.state),
+            tradeAmount: isWithdrawn ? 0 : pnum(orders[0]?.amount).toNumber(),
+            effectivePrice:
+              isClosed || isWithdrawn ? 0 : pnum(orders[0]?.effectivePrice).toNumber(),
+            basePrice: isClosed || isWithdrawn ? 0 : pnum(orders[0]?.basePrice).toNumber(),
+            feeTier: isClosed || isWithdrawn ? 0 : Number(fee.replace('%', '')),
+          },
+        };
+      } catch (_) {
+        return undefined;
+      }
+    },
+  );
+
+  return mapped.filter(Boolean) as DisplayPosition[];
 };

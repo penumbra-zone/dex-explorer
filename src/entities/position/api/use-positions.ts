@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Position,
   PositionId,
-  PositionState_PositionStateEnum,
 } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { AddressIndex } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
 import { bech32mPositionId } from '@penumbra-zone/bech32m/plpid';
@@ -58,27 +57,4 @@ export const usePositions = (subaccount?: number) => {
 
 export const updatePositionsQuery = async () => {
   await queryClient.refetchQueries({ queryKey: ['positions'] });
-};
-
-export const stateToString = (state?: PositionState_PositionStateEnum) => {
-  switch (state) {
-    case PositionState_PositionStateEnum.UNSPECIFIED: {
-      return 'Unspecified';
-    }
-    case PositionState_PositionStateEnum.OPENED: {
-      return 'Opened';
-    }
-    case PositionState_PositionStateEnum.CLOSED: {
-      return 'Closed';
-    }
-    case PositionState_PositionStateEnum.WITHDRAWN: {
-      return 'Withdrawn';
-    }
-    case PositionState_PositionStateEnum.CLAIMED: {
-      return 'Claimed';
-    }
-    case undefined: {
-      return 'Unspecified';
-    }
-  }
 };
