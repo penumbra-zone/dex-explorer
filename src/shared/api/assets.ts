@@ -32,11 +32,13 @@ export const useAssets = () => {
   return connectionStore.connected ? accountAssets : registryAssets;
 };
 
+export type GetMetadataByAssetId = (assetId?: AssetId) => Metadata | undefined;
+
 /**
  * A hook that returns a synchronous function for querying the metadata by assetId.
  * Needed for an optimized client-side asset fetching.
  */
-export const useGetMetadataByAssetId = () => {
+export const useGetMetadataByAssetId = (): GetMetadataByAssetId => {
   const { data } = useAssets();
 
   const assetIdMap = useMemo(() => {
