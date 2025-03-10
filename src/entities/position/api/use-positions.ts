@@ -9,32 +9,10 @@ import {
 import { AddressIndex } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
 import { bech32mPositionId } from '@penumbra-zone/bech32m/plpid';
 import { queryClient } from '@/shared/const/queryClient';
+import { limitAsync } from '@/shared/utils/limit-async';
 
 const BASE_LIMIT = 20;
 const BASE_PAGE = 0;
-
-/** Helper function that allows breaking early when using stream responses */
-async function* limitAsync<T>(
-  iterable: AsyncIterable<T>,
-  limit: number,
-  offset: number,
-): AsyncIterable<T> {
-  let count = 0;
-
-  for await (const item of iterable) {
-    if (count < offset) {
-      count++;
-      continue;
-    }
-
-    if (count >= offset + limit) {
-      break;
-    }
-
-    yield item;
-    count++;
-  }
-}
 
 // 1) Query prax to get position ids
 // 2) Take those position ids and get position info from the node
