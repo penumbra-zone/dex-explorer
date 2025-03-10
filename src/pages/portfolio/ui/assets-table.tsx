@@ -143,12 +143,6 @@ const ExpandedRowContent = ({
     });
   }
 
-  // Note: In a real implementation, LP positions would be fetched from a separate query
-  // and added to the locations array. This would include:
-  // - Open LP positions with Close LPs action
-  // - Closed LP positions with Withdraw LPs action
-  // - Additional public balances from other chains
-
   return (
     <div className='bg-[rgba(20,20,20,0.6)] backdrop-blur-md rounded-b-xl'>
       {locations.length > 0 ? (

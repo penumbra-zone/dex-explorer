@@ -7,24 +7,40 @@ import { CosmosConnectButton } from '@/features/cosmos/cosmos-connect-button.tsx
 import { useUnifiedAssets } from '../hooks/use-unified-assets';
 
 export const WalletConnect = observer(() => {
-  const { unifiedAssets, isPenumbraConnected } = useUnifiedAssets();
+  const { unifiedAssets, isPenumbraConnected, isCosmosConnected } = useUnifiedAssets();
 
-  // Calculate the total value of all assets
-  const totalAssetValue = useMemo(() => {
+  // Calculate the total value of all shielded assets (Penumbra)
+  const totalShieldedValue = useMemo(() => {
     if (!Array.isArray(unifiedAssets) || unifiedAssets.length === 0) {
       return 0;
     }
 
-    return unifiedAssets.reduce((total, asset) => total + asset.totalValue, 0);
+    return unifiedAssets.reduce((total, asset) => total + asset.shieldedValue, 0);
   }, [unifiedAssets]);
 
-  // Format the total value with commas and 2 decimal places
-  const formattedTotalValue = useMemo(() => {
-    return totalAssetValue.toLocaleString('en-US', {
+  // Calculate the total value of all public assets (Cosmos)
+  const totalPublicValue = useMemo(() => {
+    if (!Array.isArray(unifiedAssets) || unifiedAssets.length === 0) {
+      return 0;
+    }
+
+    return unifiedAssets.reduce((total, asset) => total + asset.publicValue, 0);
+  }, [unifiedAssets]);
+
+  // Format the values with commas and 2 decimal places
+  const formattedShieldedValue = useMemo(() => {
+    return totalShieldedValue.toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
-  }, [totalAssetValue]);
+  }, [totalShieldedValue]);
+
+  const formattedPublicValue = useMemo(() => {
+    return totalPublicValue.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }, [totalPublicValue]);
 
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-8'>
@@ -41,7 +57,7 @@ export const WalletConnect = observer(() => {
           {isPenumbraConnected ? (
             // Show total asset value when connected
             <div className='space-y-2'>
-              <div className='text-7xl font-mono text-[#F49C43]'>{formattedTotalValue} USDC</div>
+              <div className='text-7xl font-mono text-[#F49C43]'>{formattedShieldedValue} USDC</div>
             </div>
           ) : (
             // Show connect prompt when not connected
@@ -69,16 +85,13 @@ export const WalletConnect = observer(() => {
             Public Assets
           </Text>
 
-          {isPenumbraConnected ? (
-            <div className='space-y-2 text-3xl'>
-              <Text large color='text.primary'>
-                Manage your <span className='text-[#A3A3A3]'>Cosmos Wallet</span>
-              </Text>
-              <Text large color='text.primary'>
-                public assets and shield them in Penumbra
-              </Text>
+          {isCosmosConnected ? (
+            // Show total public asset value when connected
+            <div className='space-y-2'>
+              <div className='text-7xl font-mono text-[#6F6E84]'>{formattedPublicValue} USDC</div>
             </div>
           ) : (
+            // Show connect prompt when not connected
             <div className='space-y-2 text-3xl'>
               <Text large color='text.primary'>
                 Connect your <span className='text-[#A3A3A3]'>Cosmos Wallet</span> to
