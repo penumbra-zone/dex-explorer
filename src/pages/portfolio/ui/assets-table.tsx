@@ -10,8 +10,7 @@ import { Button } from '@penumbra-zone/ui/Button';
 import { observer } from 'mobx-react-lite';
 import { useUnifiedAssets } from '../hooks/use-unified-assets';
 import { useState } from 'react';
-import { useAutoAnimate } from '@formkit/auto-animate/react';
-import cn from 'clsx';
+import { useAssetPrices } from '../hooks/use-asset-prices';
 
 const LoadingState = () => {
   return (
@@ -25,10 +24,11 @@ const LoadingState = () => {
           <Table>
             <Table.Thead>
               <Table.Tr>
-                <Table.Th>Asset</Table.Th>
                 <Table.Th>Shielded Balance</Table.Th>
                 <Table.Th>Public Balance</Table.Th>
                 <Table.Th>Price</Table.Th>
+                <Table.Th>Shielded Value</Table.Th>
+                <Table.Th>Public Value</Table.Th>
                 <Table.Th>Total Value</Table.Th>
               </Table.Tr>
             </Table.Thead>
@@ -43,6 +43,11 @@ const LoadingState = () => {
                       <div className='w-20 h-5'>
                         <Skeleton />
                       </div>
+                    </div>
+                  </Table.Td>
+                  <Table.Td>
+                    <div className='w-24 h-5'>
+                      <Skeleton />
                     </div>
                   </Table.Td>
                   <Table.Td>
@@ -116,7 +121,9 @@ const ExpandedRowContent = ({
     amount: string | undefined;
     token: string;
     action?: string;
-    valueUSDC: number;
+    shieldedValue: number;
+    publicValue: number;
+    totalValue: number;
   }[] = [];
 
   // Add shielded balance (on Penumbra) if it exists
@@ -127,7 +134,9 @@ const ExpandedRowContent = ({
       amount: asset.shieldedBalance.amount,
       token: asset.symbol,
       action: 'Unshield',
-      valueUSDC: asset.shieldedValue,
+      shieldedValue: asset.shieldedValue,
+      publicValue: 0,
+      totalValue: asset.shieldedValue,
     });
   }
 
@@ -139,7 +148,9 @@ const ExpandedRowContent = ({
       amount: asset.publicBalance.amount,
       token: asset.symbol,
       action: 'Shield',
-      valueUSDC: asset.publicValue,
+      shieldedValue: 0,
+      publicValue: asset.publicValue,
+      totalValue: asset.publicValue,
     });
   }
 
@@ -151,22 +162,81 @@ const ExpandedRowContent = ({
             key={`${location.type}-${index}`}
             className='grid grid-cols-6 py-3 px-4 border-t border-gray-800 first:border-t-0'
           >
-            {/* Asset location info - spans first two columns */}
-            <div className='flex items-center gap-1 text-sm text-gray-400 col-span-2'>
-              <div className='ml-8'>
-                {/* Display amount in token */}
-                <Text color='text.primary'>
-                  {location.amount} {location.token}
-                </Text>
-                {/* Display location label */}
-                <Text small color='text.secondary'>
-                  {location.label}
-                </Text>
-              </div>
+            {/* Shielded balance */}
+            <div className='text-right'>
+              {location.type === 'shielded' ? (
+                <div className='flex items-center gap-1'>
+                  <div className='ml-8'>
+                    <Text color='text.primary'>
+                      {location.amount} {location.token}
+                    </Text>
+                    <Text small color='text.secondary'>
+                      {location.label}
+                    </Text>
+                  </div>
+                </div>
+              ) : (
+                <Text color='text.secondary'>-</Text>
+              )}
             </div>
 
-            {/* Action button - at the end of the first column */}
-            <div className='flex justify-end'>
+            {/* Public balance */}
+            <div className='text-right'>
+              {location.type === 'public' ? (
+                <div className='flex items-center gap-1'>
+                  <div className='ml-8'>
+                    <Text color='text.primary'>
+                      {location.amount} {location.token}
+                    </Text>
+                    <Text small color='text.secondary'>
+                      {location.label}
+                    </Text>
+                  </div>
+                </div>
+              ) : (
+                <Text color='text.secondary'>-</Text>
+              )}
+            </div>
+
+            {/* Price - same for all instances of an asset */}
+            <div className='text-right'>
+              {asset.totalValue > 0 && asset.shieldedBalance ? (
+                <Text>
+                  {(asset.totalValue / parseFloat(asset.shieldedBalance.amount || '1')).toFixed(2)}{' '}
+                  USDC
+                </Text>
+              ) : (
+                <Text color='text.secondary'>-</Text>
+              )}
+            </div>
+
+            {/* Shielded Value */}
+            <div className='text-right'>
+              {location.shieldedValue > 0 ? (
+                <Text>{location.shieldedValue.toFixed(2)} USDC</Text>
+              ) : (
+                <Text color='text.secondary'>-</Text>
+              )}
+            </div>
+
+            {/* Public Value */}
+            <div className='text-right'>
+              {location.publicValue > 0 ? (
+                <Text>{location.publicValue.toFixed(2)} USDC</Text>
+              ) : (
+                <Text color='text.secondary'>-</Text>
+              )}
+            </div>
+
+            {/* Total value */}
+            <div className='text-right flex items-center justify-between'>
+              {location.totalValue > 0 ? (
+                <Text>{location.totalValue.toFixed(2)} USDC</Text>
+              ) : (
+                <Text color='text.secondary'>-</Text>
+              )}
+
+              {/* Action button */}
               {location.action && (
                 <Button
                   actionType={location.action === 'Shield' ? 'accent' : 'default'}
@@ -176,34 +246,6 @@ const ExpandedRowContent = ({
                 </Button>
               )}
             </div>
-
-            {/* Price column - should align with main table */}
-            <div className='text-right'>
-              {/* In a real implementation, we would use the actual price data */}
-              <Text color='text.secondary'>
-                {asset.symbol === 'USDC' ? '1.00 USDC' : '6.00 USDC'}
-              </Text>
-            </div>
-
-            {/* Value columns - these should align with the main table */}
-            <div className='text-right'>
-              {location.type === 'shielded' ? (
-                <Text>{location.valueUSDC.toFixed(2)} USDC</Text>
-              ) : (
-                <Text color='text.secondary'>-</Text>
-              )}
-            </div>
-
-            <div className='text-right'>
-              {location.type === 'public' ? (
-                <Text>{location.valueUSDC.toFixed(2)} USDC</Text>
-              ) : (
-                <Text color='text.secondary'>-</Text>
-              )}
-            </div>
-
-            {/* Total value - empty for sub-rows */}
-            <div></div>
           </div>
         ))
       ) : (
@@ -223,97 +265,173 @@ const AssetRow = observer(
     asset,
     isExpanded,
     toggleExpanded,
+    price,
+    isCosmosConnected,
   }: {
     asset: ReturnType<typeof useUnifiedAssets>['unifiedAssets'][0];
     isExpanded: boolean;
     toggleExpanded: () => void;
+    price?: { price: number; quoteSymbol: string };
+    isCosmosConnected: boolean;
   }) => {
-    const [parent] = useAutoAnimate();
-
+    // Remove unused variables that cause linter errors
     return (
-      <div ref={parent}>
-        <div
-          className={cn(
-            'cursor-pointer hover:bg-[rgba(250,250,250,0.02)]',
-            isExpanded && 'bg-[rgba(250,250,250,0.02)] rounded-t-2xl',
-          )}
-          onClick={toggleExpanded}
-        >
-          <Table.Tr>
-            {/* Asset info */}
-            <Table.Td>
-              <div className='flex items-center gap-2'>
+      <>
+        <Table.Tr>
+          {/* Shielded balance with asset icon, name and withdraw button */}
+          <Table.Td>
+            <div className='flex items-center justify-between'>
+              <div
+                className='flex items-center gap-2 cursor-pointer'
+                onClick={() => toggleExpanded()}
+              >
                 <AssetIcon metadata={asset.metadata} />
-                <Text>{asset.symbol}</Text>
-                <div className='ml-2' onClick={e => e.stopPropagation()}>
-                  {isExpanded ? (
-                    <Button actionType='accent' icon={ChevronUp} iconOnly onClick={toggleExpanded}>
-                      Collapse
-                    </Button>
-                  ) : (
-                    <Button
-                      actionType='accent'
-                      icon={ChevronDown}
-                      iconOnly
-                      onClick={toggleExpanded}
-                    >
-                      Expand
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </Table.Td>
-
-            {/* Shielded balance with withdraw button */}
-            <Table.Td>
-              <div className='flex items-center justify-between'>
                 {asset.shieldedBalance ? (
-                  <ValueViewComponent valueView={asset.shieldedBalance.valueView} />
-                ) : (
-                  <Text color='text.secondary'>-</Text>
-                )}
-                {asset.canWithdraw && asset.shieldedBalance && (
-                  <div onClick={e => e.stopPropagation()}>
-                    <Button icon={ArrowUpRight} iconOnly disabled>
-                      Withdraw
-                    </Button>
+                  <div className='flex flex-col'>
+                    <Text>
+                      {asset.shieldedBalance.amount} {asset.symbol}
+                    </Text>
+                    {isExpanded && (
+                      <Text small color='text.secondary'>
+                        on Penumbra
+                      </Text>
+                    )}
                   </div>
+                ) : (
+                  <Text>{asset.symbol}</Text>
                 )}
+                {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               </div>
-            </Table.Td>
+              {asset.canWithdraw && asset.shieldedBalance && (
+                <div onClick={e => e.stopPropagation()}>
+                  <Button icon={ArrowUpRight} iconOnly>
+                    Unshield
+                  </Button>
+                </div>
+              )}
+            </div>
+          </Table.Td>
 
-            {/* Public balance with deposit button */}
-            <Table.Td>
+          {/* Public balance with deposit button */}
+          <Table.Td>
+            {isCosmosConnected ? (
               <div className='flex items-center justify-between'>
                 {asset.publicBalance ? (
-                  <ValueViewComponent valueView={asset.publicBalance.valueView} />
+                  <>
+                    <ValueViewComponent
+                      valueView={asset.publicBalance.valueView}
+                      trailingZeros={false}
+                      priority='tertiary'
+                    />
+                    {asset.canDeposit && (
+                      <div onClick={e => e.stopPropagation()}>
+                        <Button icon={ArrowDownRight} iconOnly>
+                          Shield
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <Text color='text.secondary'>-</Text>
                 )}
-                {asset.canDeposit && asset.publicBalance && (
-                  <div onClick={e => e.stopPropagation()}>
-                    <Button icon={ArrowDownRight} iconOnly disabled>
-                      Deposit
-                    </Button>
-                  </div>
-                )}
+              </div>
+            ) : (
+              <Text color='text.secondary'>Cosmos wallet not connected</Text>
+            )}
+          </Table.Td>
+
+          {/* Price information */}
+          <Table.Td>
+            {price ? (
+              <div className='flex flex-col'>
+                <Text color='text.primary'>
+                  {price.price < 0.01
+                    ? price.price.toFixed(6)
+                    : price.price < 1
+                      ? price.price.toFixed(4)
+                      : price.price < 1000
+                        ? price.price.toFixed(2)
+                        : price.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}{' '}
+                  USDC
+                </Text>
+              </div>
+            ) : (
+              <Text color='text.secondary'>-</Text>
+            )}
+          </Table.Td>
+
+          {/* Shielded Value */}
+          <Table.Td>
+            {asset.shieldedValue > 0 ? (
+              <Text>
+                {asset.shieldedValue < 0.01
+                  ? asset.shieldedValue.toFixed(6)
+                  : asset.shieldedValue < 1
+                    ? asset.shieldedValue.toFixed(4)
+                    : asset.shieldedValue < 1000
+                      ? asset.shieldedValue.toFixed(2)
+                      : asset.shieldedValue.toLocaleString(undefined, {
+                          maximumFractionDigits: 2,
+                        })}{' '}
+                USDC
+              </Text>
+            ) : (
+              <Text color='text.secondary'>-</Text>
+            )}
+          </Table.Td>
+
+          {/* Public Value */}
+          <Table.Td>
+            {asset.publicValue > 0 ? (
+              <Text>
+                {asset.publicValue < 0.01
+                  ? asset.publicValue.toFixed(6)
+                  : asset.publicValue < 1
+                    ? asset.publicValue.toFixed(4)
+                    : asset.publicValue < 1000
+                      ? asset.publicValue.toFixed(2)
+                      : asset.publicValue.toLocaleString(undefined, {
+                          maximumFractionDigits: 2,
+                        })}{' '}
+                USDC
+              </Text>
+            ) : (
+              <Text color='text.secondary'>-</Text>
+            )}
+          </Table.Td>
+
+          {/* Total value */}
+          <Table.Td>
+            {asset.totalValue > 0 ? (
+              <Text>
+                {asset.totalValue < 0.01
+                  ? asset.totalValue.toFixed(6)
+                  : asset.totalValue < 1
+                    ? asset.totalValue.toFixed(4)
+                    : asset.totalValue < 1000
+                      ? asset.totalValue.toFixed(2)
+                      : asset.totalValue.toLocaleString(undefined, {
+                          maximumFractionDigits: 2,
+                        })}{' '}
+                USDC
+              </Text>
+            ) : (
+              <Text color='text.secondary'>-</Text>
+            )}
+          </Table.Td>
+        </Table.Tr>
+
+        {/* Expanded row content outside the table structure */}
+        {isExpanded && (
+          <Table.Tr>
+            <Table.Td colSpan={6}>
+              <div className='p-0 expanded-content'>
+                <ExpandedRowContent asset={asset} />
               </div>
             </Table.Td>
-
-            {/* Price */}
-            <Table.Td>
-              <Text color='text.secondary'>-</Text>
-            </Table.Td>
-
-            {/* Total value */}
-            <Table.Td>
-              <Text color='text.secondary'>-</Text>
-            </Table.Td>
           </Table.Tr>
-        </div>
-
-        {isExpanded && <ExpandedRowContent asset={asset} />}
-      </div>
+        )}
+      </>
     );
   },
 );
@@ -321,7 +439,9 @@ const AssetRow = observer(
 export const AssetsTable = observer(() => {
   const { unifiedAssets, isLoading, isPenumbraConnected, isCosmosConnected } = useUnifiedAssets();
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
-  const [parent] = useAutoAnimate();
+
+  // Get price data for all assets - adding only the prices object, not the loading state
+  const { prices } = useAssetPrices(unifiedAssets.map(asset => asset.metadata));
 
   const toggleRow = (symbol: string) => {
     setExpandedRows(prev => ({
@@ -334,53 +454,48 @@ export const AssetsTable = observer(() => {
     return <LoadingState />;
   }
 
-  // Check if any wallet is connected
-  const isAnyWalletConnected = isPenumbraConnected || isCosmosConnected;
-  if (!isAnyWalletConnected) {
+  if (!isPenumbraConnected && !isCosmosConnected) {
     return <NotConnectedNotice />;
   }
 
-  // Check if there are any assets to display
-  const hasAnyAssets = unifiedAssets.length > 0;
-  if (!hasAnyAssets) {
+  if (unifiedAssets.length === 0) {
     return <NoAssetsNotice />;
   }
 
   return (
-    <div className='m-4 sm:m-0'>
-      <Card>
-        <div className='sm:p-3 p-1'>
-          <Text large color='text.primary'>
-            Assets
-          </Text>
+    <Card>
+      <div className='p-3'>
+        <Text as={'h4'} large color='text.primary'>
+          Assets
+        </Text>
 
-          <Density compact>
-            <div ref={parent} className='overflow-scroll sm:overflow-hidden sm:m-0 -mr-4'>
-              <Table>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>Asset</Table.Th>
-                    <Table.Th>Shielded Balance</Table.Th>
-                    <Table.Th>Public Balance</Table.Th>
-                    <Table.Th>Price</Table.Th>
-                    <Table.Th>Total Value</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {unifiedAssets.map(asset => (
-                    <AssetRow
-                      key={asset.symbol}
-                      asset={asset}
-                      isExpanded={!!expandedRows[asset.symbol]}
-                      toggleExpanded={() => toggleRow(asset.symbol)}
-                    />
-                  ))}
-                </Table.Tbody>
-              </Table>
-            </div>
-          </Density>
-        </div>
-      </Card>
-    </div>
+        <Density compact>
+          <Table>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Shielded Balance</Table.Th>
+                <Table.Th>Public Balance</Table.Th>
+                <Table.Th>Price</Table.Th>
+                <Table.Th>Shielded Value</Table.Th>
+                <Table.Th>Public Value</Table.Th>
+                <Table.Th>Total Value</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {unifiedAssets.map(asset => (
+                <AssetRow
+                  key={asset.symbol}
+                  asset={asset}
+                  isExpanded={!!expandedRows[asset.symbol]}
+                  toggleExpanded={() => toggleRow(asset.symbol)}
+                  price={prices[asset.symbol]}
+                  isCosmosConnected={isCosmosConnected}
+                />
+              ))}
+            </Table.Tbody>
+          </Table>
+        </Density>
+      </div>
+    </Card>
   );
 });

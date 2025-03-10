@@ -1,19 +1,15 @@
-import { useBalances as usePenumbraBalances } from '@/shared/api/balances';
 import { useBalances as useCosmosBalances } from '@/features/cosmos/use-augmented-balances';
 import { useRegistry } from '@/shared/api/registry';
 import { usePenumbraIbcDenoms } from '@/features/penumbra/penumbra-ibc-utils';
 import { connectionStore } from '@/shared/model/connection';
-import { AddressIndex } from '@penumbra-zone/protobuf/penumbra/core/keys/v1/keys_pb';
-import { BalancesResponse } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
-import { Balance } from '@/features/cosmos/types';
-import {
-  getMetadataFromBalancesResponse,
-  getBalanceView,
-} from '@penumbra-zone/getters/balances-response';
+import { getMetadataFromBalancesResponse, getBalanceView } from '@penumbra-zone/getters/balances-response';
+import { ValueView, Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { useMemo, useEffect } from 'react';
+import { useAssetPrices } from './use-asset-prices';
+import { useWallet } from '@cosmos-kit/react';
+import { WalletStatus } from '@cosmos-kit/core';
+import { useBalances as usePenumbraBalances } from '@/shared/api/balances';
 import { balanceToValueView } from '@/features/cosmos/utils/balance-to-value-view';
-import { Metadata, ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
-import { useMemo } from 'react';
-import { assetPatterns } from '@penumbra-zone/types/assets';
 
 /**
  * Interface representing a unified asset with both shielded and public balances
@@ -34,8 +30,8 @@ export interface UnifiedAsset {
   publicBalance: {
     amount: string;
     denom: string;
-    chain: string; // Source chain information
-    valueView: ValueView; // Converted to ValueView format
+    chain?: string; // Source chain information
+    valueView?: ValueView; // Converted to ValueView format
     hasError: boolean;
   } | null;
 
@@ -44,53 +40,50 @@ export interface UnifiedAsset {
   publicValue: number;
   totalValue: number;
 
-  // Asset origin information (for deposit/withdraw)
-  originChain?: string;
+  // Capabilities
   canDeposit: boolean;
   canWithdraw: boolean;
+  originChain?: string; // Origin chain for deposit/withdraw operations
 }
 
-// Helper function to normalize asset symbols for matching
-const normalizeSymbol = (symbol: string): string => {
-  if (!symbol) return '';
-
-  // Convert to uppercase
-  let normalized = symbol.toUpperCase();
-
-  // Handle special cases for Penumbra's native token
-  if (normalized === 'PENUMBRA' || normalized === 'PNMBR') {
-    return 'UM';
+// Helper functions
+const getDisplayExponent = (metadata: Metadata): number => {
+  if (!metadata.display) {
+    return 0;
   }
 
-  // Clean up symbols - remove special characters
-  normalized = normalized.replace(/[^A-Z0-9]/g, '');
-
-  return normalized;
+  const displayUnit = metadata.denomUnits ? metadata.denomUnits.find((unit) => unit.denom === metadata.display) : undefined;
+  return displayUnit?.exponent ?? 0;
 };
 
-// Helper function to check if an asset should be filtered out
+const normalizeSymbol = (symbol: string): string => {
+  return symbol.toLowerCase();
+};
+
 const shouldFilterAsset = (symbol: string): boolean => {
-  if (!symbol) return true;
-
   const lowerSymbol = symbol.toLowerCase();
-
+  
   return (
-    // LP NFTs
     lowerSymbol.startsWith('lpnft') ||
-    // Auction tokens
-    lowerSymbol.startsWith('auction') ||
-    // Delegation tokens - multiple checks
-    assetPatterns.delegationToken.matches(symbol) ||
-    lowerSymbol.startsWith('delum') ||
-    lowerSymbol.includes('delegation') ||
-    // Unbonding tokens - multiple checks
-    lowerSymbol.startsWith('unbond') ||
-    lowerSymbol.includes('unbonding') ||
-    // Other special tokens
-    lowerSymbol.includes('voting') ||
-    lowerSymbol.includes('vetoken') ||
-    lowerSymbol.includes('position-id')
+    lowerSymbol.includes('position_id') ||
+    lowerSymbol.includes('auction') ||
+    (lowerSymbol.includes('delegation') && !lowerSymbol.includes('delegator_reward')) ||
+    lowerSymbol.includes('unbonding')
   );
+};
+
+/**
+ * Determines if an asset can be deposited to Penumbra based on IBC denoms
+ */
+const canDepositToPenumbra = (symbol: string, ibcDenoms: string[]): boolean => {
+  // Consider assets with matching IBC denoms as depositable
+  // This is a simplified version - actual logic might be more complex
+  if (symbol === 'USDC' || symbol === 'ATOM' || symbol === 'OSMO') {
+    return true;
+  }
+  
+  // Check if the symbol appears in IBC denoms
+  return ibcDenoms.some(denom => denom.includes(symbol));
 };
 
 /**
@@ -98,272 +91,279 @@ const shouldFilterAsset = (symbol: string): boolean => {
  */
 export const useUnifiedAssets = () => {
   // Get Penumbra balances
-  const addressIndex = new AddressIndex({ account: connectionStore.subaccount });
-  const { data: penumbraBalances = [], isLoading: penumbraLoading } = usePenumbraBalances(
-    addressIndex.account,
-  );
+  const penumbraBalancesResult = usePenumbraBalances();
+  const { data: penumbraBalances = [], isLoading: penumbraLoading } = penumbraBalancesResult;
 
-  // Get Cosmos balances
+  // Get Cosmos balances and wallet status
   const { balances: cosmosBalances = [], isLoading: cosmosLoading } = useCosmosBalances();
+  const { status: cosmosWalletStatus } = useWallet();
 
   // Get registry and IBC denoms for asset mapping
-  const { data: registry } = useRegistry();
-  const { ibcDenoms: penumbraIbcDenoms = [] } = usePenumbraIbcDenoms();
+  const { data: registry, isLoading: registryLoading } = useRegistry();
+  const { ibcDenoms: penumbraIbcDenoms = [], isLoading: ibcDenomsLoading } = usePenumbraIbcDenoms();
 
-  // Combine balances into unified assets
-  const unifiedAssets = useMemo(() => {
-    // Create a map to store unified assets by symbol
-    const assetMap = new Map<string, UnifiedAsset>();
+  // Debugging - log penumbra connection and balances state
+  useEffect(() => {
+    console.log('Penumbra connection status:', connectionStore.connected);
+    console.log('Penumbra balances result:', penumbraBalancesResult);
+    console.log('Penumbra balances length:', penumbraBalances?.length || 0);
+  }, [penumbraBalances, penumbraBalancesResult]);
 
-    // First, process and collect all asset metadata to ensure consistent display
-    const metadataMap = new Map<string, Metadata>();
+  // Get all assets for price data
+  const allAssets = useMemo(() => {
+    if (!registry) {
+      return [];
+    }
+    return Array.from(registry.getAllAssets());
+  }, [registry]);
 
-    // Process Penumbra (shielded) balances
-    penumbraBalances.forEach(balance => {
-      const metadata = getMetadataFromBalancesResponse.optional(balance);
-      const valueView = getBalanceView.optional(balance);
+  // Get price data for all assets
+  const { prices = {}, isLoading: pricesLoading } = useAssetPrices(allAssets);
 
-      // Skip if we don't have metadata or valueView
-      if (!metadata?.symbol || !valueView) {
-        return;
-      }
+  // Determine if we're ready to process data
+  const isLoading =
+    penumbraLoading || cosmosLoading || registryLoading || ibcDenomsLoading || pricesLoading;
 
-      // Filter out special assets for Penumbra
-      if (shouldFilterAsset(metadata.symbol)) {
-        return;
-      }
+  // Check connection status
+  const isPenumbraConnected = connectionStore.connected;
+  const isCosmosConnected = cosmosWalletStatus === WalletStatus.Connected;
 
-      // Store the metadata for consistent display
-      const normalizedSymbol = normalizeSymbol(metadata.symbol);
-      if (!metadataMap.has(normalizedSymbol)) {
-        metadataMap.set(normalizedSymbol, metadata);
-      }
-
-      // Get or create the unified asset
-      let asset = assetMap.get(normalizedSymbol);
-      if (!asset) {
-        asset = {
-          symbol: metadata.symbol,
-          assetId: metadata.penumbraAssetId?.inner.toString('hex'),
-          metadata,
-          shieldedBalance: null,
-          publicBalance: null,
-          shieldedValue: 0,
-          publicValue: 0,
-          totalValue: 0,
-          canDeposit: false,
-          canWithdraw: true, // Penumbra assets can always be withdrawn
-        };
-        assetMap.set(normalizedSymbol, asset);
-      }
-
-      // Get display exponent for value calculation
-      let displayExponent = 0;
-      if (metadata.denomUnits && metadata.display) {
-        const displayUnit = metadata.denomUnits.find(unit => unit.denom === metadata.display);
-        if (displayUnit) {
-          displayExponent = displayUnit.exponent;
-        }
-      }
-
-      // Calculate value (placeholder for now, will be replaced with actual pricing)
-      const amount = valueView.valueView.value?.amount?.value || '0';
-      const numericAmount = Number(amount) / Math.pow(10, displayExponent);
-
-      // Update the asset with shielded balance information
-      asset.shieldedBalance = {
-        amount: numericAmount.toString(),
-        valueView,
-        hasError: false,
-      };
-      asset.shieldedValue = numericAmount; // Placeholder, will be replaced with actual pricing
-      asset.totalValue = asset.shieldedValue + asset.publicValue;
-    });
-
-    // Special case for UM token - ensure we always have it in the map
-    if (!metadataMap.has('UM') && registry) {
-      const umAsset = Array.from(registry.getAllAssets()).find(
-        asset => asset.symbol.toUpperCase() === 'UM' || asset.symbol.toUpperCase() === 'PENUMBRA',
-      );
-
-      if (umAsset) {
-        metadataMap.set('UM', umAsset);
-        console.log('Added UM metadata to metadata map');
-      }
+  // Create unified assets from Penumbra (shielded) balances
+  const shieldedAssets = useMemo(() => {
+    console.log('Creating shielded assets. Connected:', isPenumbraConnected, 'Balances:', penumbraBalances?.length || 0);
+    
+    if (!isPenumbraConnected || !penumbraBalances?.length) {
+      console.log('No shielded assets - either not connected or no balances');
+      return [];
     }
 
-    // Process Cosmos (public) balances - do NOT filter these since they're correctly displayed
-    console.log('Processing Cosmos balances:');
-    cosmosBalances.forEach(balance => {
-      console.log(
-        `Cosmos balance: ${balance.symbol}, amount: ${balance.amount}, chain: ${balance.chain}`,
-      );
+    return penumbraBalances
+      .map(balance => {
+        try {
+          const metadata = getMetadataFromBalancesResponse(balance);
+          const valueView = getBalanceView(balance);
+          
+          console.log('Processing balance with metadata:', metadata?.symbol);
+          
+          // Skip if missing necessary data
+          if (!metadata?.symbol) {
+            return null;
+          }
+          
+          // Filter out special assets
+          if (shouldFilterAsset(metadata.symbol)) {
+            return null;
+          }
+          
+          // Get display exponent for calculations
+          const displayExponent = getDisplayExponent(metadata);
+          
+          // Debug valueView structure
+          console.log('ValueView for', metadata.symbol, ':', JSON.stringify(valueView, null, 2));
+          
+          // Get amount - using a more robust extraction method
+          let amount = '0';
+          
+          if (valueView.valueView.case === 'knownAssetId') {
+            amount = String(valueView.valueView.value.amount);
+            console.log('Amount from knownAssetId:', amount);
+          } else if (valueView.valueView.case === 'unknownAssetId') {
+            amount = String(valueView.valueView.value.amount);
+            console.log('Amount from unknownAssetId:', amount);
+          }
+          
+          // Convert to numeric amount
+          const numericAmount = Number(amount) / Math.pow(10, displayExponent) || 0;
+          console.log('Numeric amount after conversion:', numericAmount, 'Display exponent:', displayExponent);
+          
+          // Get price information
+          const priceData = prices[metadata.symbol];
+          let assetValue = 0;
+          
+          if (priceData?.quoteSymbol === 'USDC' && !isNaN(priceData.price)) {
+            // Use price data if available
+            assetValue = numericAmount * priceData.price;
+          } else if (metadata.symbol === 'USDC') {
+            // Special case for USDC
+            assetValue = numericAmount;
+          }
+          
+          console.log('Successfully processed shielded asset:', metadata.symbol, 'Amount:', numericAmount);
+          
+          // Create asset object
+          return {
+            symbol: metadata.symbol,
+            assetId: metadata.penumbraAssetId?.inner.toString('hex'),
+            metadata,
+            shieldedBalance: {
+              amount: numericAmount.toString(),
+              valueView,
+              hasError: false,
+            },
+            publicBalance: null,
+            shieldedValue: assetValue,
+            publicValue: 0,
+            totalValue: assetValue,
+            canDeposit: false,
+            canWithdraw: true,
+          };
+        } catch (error) {
+          console.error('Error processing Penumbra balance', error);
+          return null;
+        }
+      })
+      .filter(Boolean) as UnifiedAsset[];
+  }, [isPenumbraConnected, penumbraBalances, prices]);
 
-      // Special handling for undefined symbol with large balance on osmosis-1 chain
-      // This is likely the Penumbra/UM token
-      if (!balance.symbol && balance.chain === 'osmosis-1' && Number(balance.amount) > 1000000) {
-        console.log('Found likely UM token with undefined symbol:', balance);
+  // Create unified assets from Cosmos (public) balances
+  const publicAssets = useMemo(() => {
+    if (!isCosmosConnected || !cosmosBalances.length || !registry) {
+      return [];
+    }
 
-        // Find UM asset in the map
-        const umAsset = assetMap.get('UM');
-        if (umAsset) {
-          console.log('Updating UM asset with osmosis balance');
+    return cosmosBalances
+      .map(balance => {
+        try {
+          // Skip balances without symbol or special cases
+          if (!balance.symbol) {
+            return null;
+          }
+          
+          if (balance.chain === 'osmosis-1' && balance.symbol === 'UM') {
+            return null;
+          }
+          
+          // Skip if filtered
+          if (shouldFilterAsset(balance.symbol)) {
+            return null;
+          }
 
-          // Convert balance to ValueView
-          const valueView = registry
-            ? balanceToValueView(
-                { ...balance, symbol: 'UM' }, // Add the symbol for conversion
-                registry,
-                penumbraIbcDenoms,
-              )
-            : null;
-
-          if (valueView) {
-            // Get display exponent for value calculation
-            let displayExponent = 0;
-            if (umAsset.metadata?.denomUnits && umAsset.metadata.display) {
-              const displayUnit = umAsset.metadata.denomUnits.find(
-                unit => unit.denom === umAsset.metadata.display,
-              );
-              if (displayUnit) {
-                displayExponent = displayUnit.exponent;
-              }
-            }
-
-            // Calculate value (placeholder for now, will be replaced with actual pricing)
-            const numericAmount = Number(balance.amount) / Math.pow(10, displayExponent);
-
-            // Update the asset with public balance information
-            umAsset.publicBalance = {
+          // Create valueView for consistent display
+          const valueView = balanceToValueView(balance, registry, penumbraIbcDenoms);
+          
+          // Skip if we couldn't create a valueView
+          if (!valueView) {
+            return null;
+          }
+          
+          // Try to find metadata
+          let metadata: Metadata;
+          
+          // Use metadata from valueView if available
+          if (valueView.valueView.case === 'knownAssetId' && valueView.valueView.value.metadata) {
+            metadata = valueView.valueView.value.metadata;
+          } else {
+            // Create basic metadata from balance info
+            metadata = new Metadata({
+              symbol: balance.symbol,
+              name: balance.symbol,
+              display: balance.denom,
+              base: balance.denom,
+            });
+          }
+          
+          // Get display exponent
+          const displayExponent = getDisplayExponent(metadata);
+          
+          // Convert to numeric amount
+          const numericAmount = Number(balance.amount) / Math.pow(10, displayExponent) || 0;
+          
+          // Determine if this asset can be deposited to Penumbra
+          const canDeposit = canDepositToPenumbra(balance.symbol, penumbraIbcDenoms);
+          
+          // Get price information
+          const priceData = balance.symbol === 'UM' ? prices['UM'] : prices[balance.symbol];
+          let assetValue = 0;
+          
+          if (priceData?.quoteSymbol === 'USDC' && !isNaN(priceData.price)) {
+            assetValue = numericAmount * priceData.price;
+          } else if (balance.symbol === 'USDC') {
+            assetValue = numericAmount;
+          }
+          
+          // Create asset object
+          return {
+            symbol: balance.symbol,
+            assetId: '',
+            metadata,
+            shieldedBalance: null,
+            publicBalance: {
               amount: numericAmount.toString(),
               denom: balance.denom,
               chain: balance.chain,
               valueView,
               hasError: false,
-            };
-            umAsset.publicValue = numericAmount; // Placeholder, will be replaced with actual pricing
-            umAsset.totalValue = umAsset.shieldedValue + umAsset.publicValue;
-            umAsset.canDeposit = true;
-
-            // Set origin chain if not already set
-            if (!umAsset.originChain) {
-              umAsset.originChain = balance.chain;
-            }
-
-            console.log('Updated UM asset:', umAsset);
-          }
+            },
+            shieldedValue: 0,
+            publicValue: assetValue,
+            totalValue: assetValue,
+            canDeposit,
+            canWithdraw: false,
+            originChain: balance.chain,
+          };
+        } catch (error) {
+          console.error('Error processing Cosmos balance', error);
+          return null;
         }
+      })
+      .filter(Boolean) as UnifiedAsset[];
+  }, [isCosmosConnected, cosmosBalances, registry, prices, penumbraIbcDenoms]);
 
-        // Skip normal processing since we've handled this special case
-        return;
-      }
-
-      if (!registry || !balance.symbol) {
-        return;
-      }
-
-      // Convert Cosmos balance to Penumbra ValueView for consistent display
-      const valueView = balanceToValueView(balance, registry, penumbraIbcDenoms);
-
-      // Extract metadata for matching with Penumbra assets
-      let metadata: Metadata | undefined;
-      let symbol = balance.symbol;
-
-      if (valueView.valueView.case === 'knownAssetId') {
-        metadata = valueView.valueView.value.metadata;
-        if (metadata?.symbol) {
-          symbol = metadata.symbol;
-        }
-      }
-
-      if (!metadata) {
-        return;
-      }
-
-      // Normalize the symbol for consistent matching with Penumbra assets
-      const normalizedSymbol = normalizeSymbol(symbol);
-
-      // Special case for Penumbra's native token
-      let lookupSymbol = normalizedSymbol;
-      if (symbol.toUpperCase() === 'PENUMBRA') {
-        lookupSymbol = 'UM';
-        console.log('Found PENUMBRA token, using UM as lookup key:', { symbol, lookupSymbol });
-      }
-
-      // Use the metadata from Penumbra if available for consistent display
-      const preferredMetadata = metadataMap.get(lookupSymbol) || metadata;
-
-      // Get or create the unified asset
-      let asset = assetMap.get(lookupSymbol);
-      if (!asset) {
-        asset = {
-          symbol: preferredMetadata.symbol || symbol,
-          metadata: preferredMetadata,
-          shieldedBalance: null,
-          publicBalance: null,
-          shieldedValue: 0,
-          publicValue: 0,
-          totalValue: 0,
-          originChain: balance.chain,
-          canDeposit: true, // Public assets can be deposited to Penumbra
-          canWithdraw: false,
-        };
-        assetMap.set(lookupSymbol, asset);
-        console.log(`Created new asset for ${lookupSymbol}`);
-      } else {
-        console.log(`Found existing asset for ${lookupSymbol}, updating public balance`);
-      }
-
-      // Get display exponent for value calculation
-      let displayExponent = 0;
-      if (metadata.denomUnits && metadata.display) {
-        const displayUnit = metadata.denomUnits.find(unit => unit.denom === metadata.display);
-        if (displayUnit) {
-          displayExponent = displayUnit.exponent;
-        }
-      }
-
-      // Calculate value (placeholder for now, will be replaced with actual pricing)
-      const numericAmount = Number(balance.amount) / Math.pow(10, displayExponent);
-
-      // Update the asset with public balance information
-      asset.publicBalance = {
-        amount: numericAmount.toString(),
-        denom: balance.denom,
-        chain: balance.chain,
-        valueView,
-        hasError: false,
-      };
-      asset.publicValue = numericAmount; // Placeholder, will be replaced with actual pricing
-      asset.totalValue = asset.shieldedValue + asset.publicValue;
-
-      // Set origin chain if not already set
-      if (!asset.originChain) {
-        asset.originChain = balance.chain;
-      }
-
-      // Enable deposit for public assets
-      asset.canDeposit = true;
+  // Merge shielded and public assets
+  const unifiedAssets = useMemo(() => {
+    const assetMap = new Map<string, UnifiedAsset>();
+    
+    console.log('Merging assets - Shielded count:', shieldedAssets.length, 'Public count:', publicAssets.length);
+    
+    // Process shielded assets first
+    shieldedAssets.forEach(asset => {
+      const key = normalizeSymbol(asset.symbol);
+      assetMap.set(key, asset);
     });
+    
+    // Merge in public assets
+    publicAssets.forEach(asset => {
+      const key = normalizeSymbol(asset.symbol);
+      const existing = assetMap.get(key);
+      
+      if (existing) {
+        // Merge with existing shielded asset
+        existing.publicBalance = asset.publicBalance;
+        existing.publicValue = asset.publicValue;
+        existing.totalValue = existing.shieldedValue + asset.publicValue;
+        existing.canDeposit = asset.canDeposit;
+        existing.originChain = asset.originChain;
+      } else {
+        // Add new public-only asset
+        assetMap.set(key, asset);
+      }
+    });
+    
+    // Convert to array and sort by total value
+    return Array.from(assetMap.values())
+      .sort((a, b) => b.totalValue - a.totalValue);
+  }, [shieldedAssets, publicAssets]);
 
-    // Convert map to array and sort by total value
-    const sortedAssets = Array.from(assetMap.values()).sort((a, b) => b.totalValue - a.totalValue);
+  // Calculate totals
+  const totalShieldedValue = useMemo(() => {
+    return unifiedAssets.reduce((total, asset) => total + asset.shieldedValue, 0);
+  }, [unifiedAssets]);
 
-    // Final debug output
-    console.log('Final asset map keys:', Array.from(assetMap.keys()));
-    const hasUm = assetMap.has('UM');
-    console.log('Has UM token?', hasUm);
-    if (hasUm) {
-      console.log('UM asset details:', assetMap.get('UM'));
-    }
+  const totalPublicValue = useMemo(() => {
+    return unifiedAssets.reduce((total, asset) => total + asset.publicValue, 0);
+  }, [unifiedAssets]);
 
-    return sortedAssets;
-  }, [penumbraBalances, cosmosBalances, registry, penumbraIbcDenoms]);
+  const totalValue = useMemo(() => {
+    return totalShieldedValue + totalPublicValue;
+  }, [totalShieldedValue, totalPublicValue]);
 
   return {
     unifiedAssets,
-    isLoading: penumbraLoading || cosmosLoading,
-    isPenumbraConnected: connectionStore.connected,
-    isCosmosConnected: cosmosBalances.length > 0 || cosmosLoading,
+    totalShieldedValue,
+    totalPublicValue,
+    totalValue,
+    isLoading,
+    isPenumbraConnected,
+    isCosmosConnected,
   };
 };

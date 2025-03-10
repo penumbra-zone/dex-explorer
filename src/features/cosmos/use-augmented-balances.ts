@@ -32,11 +32,17 @@ export const useBalances = () => {
           const address = chain.address;
 
           if (!address) {
+            console.debug(`No address available for chain ${chain.chainId}`);
             return;
           }
 
           // Fetch balances for this chain
           const chainBalances = await fetchChainBalances(address, chain);
+          if (chainBalances.length === 0) {
+            console.debug(`No balances found for chain ${chain.chainId}`);
+          } else {
+            console.debug(`Found ${chainBalances.length} balances for chain ${chain.chainId}`);
+          }
           allBalances.push(...chainBalances);
         } catch (err) {
           console.warn(`Error fetching balances for chain ${chain.chainId}:`, err);
@@ -119,11 +125,11 @@ export const useBalances = () => {
     retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff starting at 1s
   });
 
-  // Provide empty balances array instead of undefined
-  // to ensure component doesn't treat it as "loading" when wallet not connected
+  // Return empty balances array when wallet is not connected
+  // This ensures components don't treat it as "loading" when wallet is not connected
   return {
     balances: result.data ?? [],
-    isLoading: result.isLoading,
+    isLoading: result.isLoading && status === WalletStatus.Connected,
     error: result.error ? String(result.error) : null,
     refetch: result.refetch,
   };
