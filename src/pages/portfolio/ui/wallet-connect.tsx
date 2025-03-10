@@ -1,14 +1,31 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Shield, Eye } from 'lucide-react';
 import { ConnectButton } from '@/features/connect/connect-button';
 import { observer } from 'mobx-react-lite';
-import { useWalletClient } from '@cosmos-kit/react';
-import { State } from '@cosmos-kit/core';
 import { CosmosConnectButton } from '@/features/cosmos/cosmos-connect-button.tsx';
+import { useUnifiedAssets } from '../hooks/use-unified-assets';
 
 export const WalletConnect = observer(() => {
-  const { status } = useWalletClient();
+  const { unifiedAssets, isPenumbraConnected } = useUnifiedAssets();
+
+  // Calculate the total value of all assets
+  const totalAssetValue = useMemo(() => {
+    if (!Array.isArray(unifiedAssets) || unifiedAssets.length === 0) {
+      return 0;
+    }
+
+    return unifiedAssets.reduce((total, asset) => total + asset.totalValue, 0);
+  }, [unifiedAssets]);
+
+  // Format the total value with commas and 2 decimal places
+  const formattedTotalValue = useMemo(() => {
+    return totalAssetValue.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }, [totalAssetValue]);
+
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-8'>
       {/* Shielded Assets Card */}
@@ -20,15 +37,25 @@ export const WalletConnect = observer(() => {
           <Text large color='text.primary'>
             Shielded Assets
           </Text>
-          <div className='space-y-2 text-3xl'>
-            <Text large color='text.primary'>
-              Connect your <span className='text-[#F49C43]'>Prax Wallet</span> to
-            </Text>
-            <Text large color='text.primary'>
-              access shielded assets and liquidity positions
-            </Text>
-          </div>
-          <ConnectButton variant='default' actionType='default' />
+
+          {isPenumbraConnected ? (
+            // Show total asset value when connected
+            <div className='space-y-2'>
+              <div className='text-7xl font-mono text-[#F49C43]'>{formattedTotalValue} USDC</div>
+            </div>
+          ) : (
+            // Show connect prompt when not connected
+            <div className='space-y-2 text-3xl'>
+              <Text large color='text.primary'>
+                Connect your <span className='text-[#F49C43]'>Prax Wallet</span> to
+              </Text>
+              <Text large color='text.primary'>
+                access shielded assets and liquidity positions
+              </Text>
+            </div>
+          )}
+
+          {!isPenumbraConnected && <ConnectButton variant='default' actionType='default' />}
         </div>
       </div>
 
@@ -42,7 +69,7 @@ export const WalletConnect = observer(() => {
             Public Assets
           </Text>
 
-          {status === State.Done ? (
+          {isPenumbraConnected ? (
             <div className='space-y-2 text-3xl'>
               <Text large color='text.primary'>
                 Manage your <span className='text-[#A3A3A3]'>Cosmos Wallet</span>
