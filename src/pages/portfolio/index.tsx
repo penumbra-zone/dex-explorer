@@ -1,19 +1,22 @@
 'use client';
 
 import React from 'react';
+import { observer } from 'mobx-react-lite';
 import { XCircle } from 'lucide-react';
 import { Button } from '@penumbra-zone/ui/Button';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Density } from '@penumbra-zone/ui/Density';
 import { AssetsTable } from './ui/assets-table';
+import { connectionStore } from '@/shared/model/connection';
+import { Onboarding } from './ui/onboarding';
 
 interface PortfolioPageProps {
   isMobile: boolean;
 }
 
-export function PortfolioPage({ isMobile }: PortfolioPageProps): React.ReactNode {
+export const PortfolioPage = ({ isMobile }: PortfolioPageProps): React.ReactNode => {
   return isMobile ? <MobilePortfolioPage /> : <DesktopPortfolioPage />;
-}
+};
 
 function MobilePortfolioPage() {
   return (
@@ -53,10 +56,13 @@ function MobilePortfolioPage() {
   );
 }
 
-function DesktopPortfolioPage() {
+const DesktopPortfolioPage = observer(() => {
+  const { connected } = connectionStore;
+
   return (
     <div className='sm:container mx-auto py-8'>
+      <Onboarding />
       <AssetsTable />
     </div>
   );
-}
+});
