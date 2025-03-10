@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pindexer } from '@/shared/database';
 import { hexToUint8Array } from '@penumbra-zone/types/hex';
+import { AssetId } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const grpcEndpoint = process.env['PENUMBRA_GRPC_ENDPOINT'];
@@ -23,7 +24,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   const startTime = searchParams.get('startTime') ?? 0;
+  console.log('TCL: startTime', startTime);
   const endTime = searchParams.get('endTime') ?? Date.now();
+  console.log('TCL: endTime', endTime);
   if (!startTime) {
     return NextResponse.json({ error: 'Missing required startTime' }, { status: 400 });
   }
@@ -34,23 +37,25 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const startPrice = await pindexer.getPrice({
     baseAssetId,
     quoteAssetId,
-    time: startTime,
+    time: Number(startTime),
   });
+  console.log('TCL: startPrice', startPrice);
 
   const endPrice = await pindexer.getPrice({
     baseAssetId,
     quoteAssetId,
-    time: endTime,
+    time: Number(endTime),
   });
+  console.log('TCL: endPrice', endPrice);
 
-  if (!startPrice?.close || !endPrice?.close) {
+  if (!startPrice || !endPrice || typeof startPrice !== 'number' || typeof endPrice !== 'number') {
     return NextResponse.json({ error: 'Price not found' }, { status: 400 });
   }
 
   return NextResponse.json({
-    startPrice: startPrice?.close,
-    endPrice: endPrice?.close,
-    pnl: endPrice?.close - startPrice?.close,
-    pnlPercentage: ((endPrice?.close - startPrice?.close) / startPrice?.close) * 100,
+    startPrice: startPrice,
+    endPrice: endPrice,
+    pnl: endPrice - startPrice,
+    pnlPercentage: ((endPrice - startPrice) / startPrice) * 100,
   });
 }

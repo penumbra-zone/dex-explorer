@@ -24,7 +24,7 @@ export const usePnL = ({
         throw new Error('Missing required base or quote asset ID');
       }
 
-      const resp = await apiFetch('/api/position/pnl', {
+      const resp = await apiFetch('/api/pnl', {
         baseAssetId: uint8ArrayToHex(variables.baseAsset.penumbraAssetId.inner),
         quoteAssetId: uint8ArrayToHex(variables.quoteAsset.penumbraAssetId.inner),
         startTime: variables.startTime.toString(),

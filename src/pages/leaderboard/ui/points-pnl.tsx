@@ -33,6 +33,7 @@ export function PointsPnl({
     },
     enabled,
   });
+  console.log('TCL: pnl', pnl);
 
   useIntersection(
     cellRef,
@@ -45,7 +46,7 @@ export function PointsPnl({
   );
 
   return (
-    <div ref={cellRef}>
+    <div ref={cellRef} className='grid grid-cols-subgrid col-span-2 [&>*]:h-auto'>
       <TableCell numeric variant={variant} loading={isLoading}>
         {Math.abs(pnl?.pnlPercentChange)}
       </TableCell>

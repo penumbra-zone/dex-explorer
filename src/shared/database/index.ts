@@ -122,23 +122,39 @@ class Pindexer {
   }
 
   async getPrice({
-    baseAsset,
-    quoteAsset,
+    baseAssetId,
+    quoteAssetId,
     time,
   }: {
-    baseAsset: AssetId;
-    quoteAsset: AssetId;
+    baseAssetId: AssetId;
+    quoteAssetId: AssetId;
     time: number;
   }) {
-    return this.db
+    const roundedDateTime = new Date(Math.floor(time / 60000) * 60000);
+
+    const result = await this.db
       .selectFrom('dex_ex_price_charts')
-      .select(['close'])
-      .where('start_time', '=', new Date(time))
+      .select(['close', 'start_time'])
+      // .where('start_time', '=', roundedDateTime)
       .where('the_window', '=', '1m')
-      .where('asset_start', '=', Buffer.from(baseAsset.inner))
-      .where('asset_end', '=', Buffer.from(quoteAsset.inner))
-      .orderBy('start_time', 'asc')
+      .where('asset_start', '=', Buffer.from(baseAssetId.inner))
+      .where('asset_end', '=', Buffer.from(quoteAssetId.inner))
       .executeTakeFirst();
+    console.log('TCL: result', result);
+
+    if (!result) {
+      return await this.db
+        .selectFrom('dex_ex_price_charts')
+        .select(['close', 'start_time'])
+        .where('the_window', '=', '1m')
+        .where('asset_start', '=', Buffer.from(baseAssetId.inner))
+        .where('asset_end', '=', Buffer.from(quoteAssetId.inner))
+        .orderBy('start_time', 'desc') // take last entry
+        .executeTakeFirst();
+    }
+    console.log('TCL: result', result);
+
+    return result.close;
   }
 
   // Paginated pair summaries
