@@ -7,7 +7,9 @@ import { Button } from '@penumbra-zone/ui/Button';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Density } from '@penumbra-zone/ui/Density';
 import { AssetsTable } from './ui/assets-table';
-import { connectionStore } from '@/shared/model/connection';
+import { WalletConnect } from './ui/wallet-connect';
+import { useRegistry } from '@/shared/api/registry.ts';
+import { IbcChainProvider } from '@/features/cosmos/chain-provider.tsx';
 import { Onboarding } from './ui/onboarding';
 
 interface PortfolioPageProps {
@@ -57,12 +59,18 @@ function MobilePortfolioPage() {
 }
 
 const DesktopPortfolioPage = observer(() => {
-  const { connected } = connectionStore;
+  const { data } = useRegistry();
+
+  if (!data) {
+    return;
+  }
 
   return (
-    <div className='sm:container mx-auto py-8'>
-      <Onboarding />
-      <AssetsTable />
-    </div>
+    <IbcChainProvider registry={data}>
+      <div className='sm:container mx-auto py-8'>
+        <Onboarding />
+        <AssetsTable />
+      </div>
+    </IbcChainProvider>
   );
 });

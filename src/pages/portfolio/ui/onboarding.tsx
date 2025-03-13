@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import Image from 'next/image';
+import { useChain } from '@cosmos-kit/react';
 import { Wallet2 } from 'lucide-react';
 import { ExternalLink, Wallet, ShieldCheck } from 'lucide-react';
 import { Text } from '@penumbra-zone/ui/Text';
@@ -12,6 +13,8 @@ import { Dialog } from '@penumbra-zone/ui/Dialog';
 import { PenumbraClient } from '@penumbra-zone/client';
 import { connectionStore } from '@/shared/model/connection';
 import { useProviderManifests } from '@/shared/api/providerManifests';
+import { CosmosConnectButton } from '@/features/cosmos/cosmos-connect-button';
+import { useUnifiedAssets } from '../hooks/use-unified-assets';
 
 const OnboardingCard = ({
   title,
@@ -39,38 +42,16 @@ const OnboardingCard = ({
   );
 };
 
-interface CosmosWallet {
-  getOfflineSigner: (chainId: string) => any;
-  enable: (chainId: string) => Promise<void>;
-}
-
-declare global {
-  interface Window {
-    keplr?: CosmosWallet;
-    cosmostation?: CosmosWallet;
-    leap?: CosmosWallet;
-  }
-}
-
-function getCosmosWallet(): CosmosWallet | undefined {
-  if (window.keplr) {
-    return window.keplr;
-  }
-  if (window.cosmostation) {
-    return window.cosmostation;
-  }
-  if (window.leap) {
-    return window.leap;
-  }
-  return undefined;
-}
-
 export const Onboarding = observer(() => {
   const { connected } = connectionStore;
   const [isOpen, setIsOpen] = useState(false);
   const { data: providerManifests } = useProviderManifests();
   const providerOrigins = useMemo(() => Object.keys(PenumbraClient.getProviders()), []);
-  const cosmosWallet = getCosmosWallet();
+
+  const { isPenumbraConnected, isCosmosConnected, totalPublicValue, totalShieldedValue } =
+    useUnifiedAssets();
+
+  const cosmosWallet = false;
 
   const onConnectClick = () => {
     if (providerOrigins.length > 1) {
@@ -139,19 +120,20 @@ export const Onboarding = observer(() => {
               title='Connect Cosmos Wallet'
               description='Connect to Veil and manage public assets and shield them in Penumbra.'
               footer={
-                !cosmosWallet ? (
-                  <Button
-                    actionType='unshield'
-                    priority='primary'
-                    density='compact'
-                    icon={ExternalLink}
-                    onClick={() => {
-                      window.open('https://praxwallet.com/', '_blank', 'noopener,noreferrer');
-                    }}
-                  >
-                    Connect
-                  </Button>
+                !isCosmosConnected ? (
+                  <CosmosConnectButton variant='default' actionType='default' />
                 ) : (
+                  // <Button
+                  //   actionType='unshield'
+                  //   priority='primary'
+                  //   density='compact'
+                  //   icon={ExternalLink}
+                  //   onClick={() => {
+                  //     window.open('https://praxwallet.com/', '_blank', 'noopener,noreferrer');
+                  //   }}
+                  // >
+                  //   Connect
+                  // </Button>
                   <div className='flex items-center gap-1 h-8'>
                     <Icon IconComponent={ShieldCheck} size='sm' color='primary.light' />
                     <Text color='primary.light' small>
