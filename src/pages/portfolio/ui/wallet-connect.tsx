@@ -7,25 +7,8 @@ import { CosmosConnectButton } from '@/features/cosmos/cosmos-connect-button.tsx
 import { useUnifiedAssets } from '../hooks/use-unified-assets';
 
 export const WalletConnect = observer(() => {
-  const { unifiedAssets, isPenumbraConnected, isCosmosConnected } = useUnifiedAssets();
-
-  // Calculate the total value of all shielded assets (Penumbra)
-  const totalShieldedValue = useMemo(() => {
-    if (!Array.isArray(unifiedAssets) || unifiedAssets.length === 0) {
-      return 0;
-    }
-
-    return unifiedAssets.reduce((total, asset) => total + asset.shieldedValue, 0);
-  }, [unifiedAssets]);
-
-  // Calculate the total value of all public assets (Cosmos)
-  const totalPublicValue = useMemo(() => {
-    if (!Array.isArray(unifiedAssets) || unifiedAssets.length === 0) {
-      return 0;
-    }
-
-    return unifiedAssets.reduce((total, asset) => total + asset.publicValue, 0);
-  }, [unifiedAssets]);
+  const { isPenumbraConnected, isCosmosConnected, totalPublicValue, totalShieldedValue } =
+    useUnifiedAssets();
 
   // Format the values with commas and 2 decimal places
   const formattedShieldedValue = useMemo(() => {

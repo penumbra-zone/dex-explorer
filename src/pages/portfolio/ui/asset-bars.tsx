@@ -2,7 +2,6 @@ import React from 'react';
 import { Card } from '@penumbra-zone/ui/Card';
 import { Text } from '@penumbra-zone/ui/Text';
 import { BalancesResponse } from '@penumbra-zone/protobuf/penumbra/view/v1/view_pb';
-import { Balance } from '@/features/cosmos/types';
 import {
   getMetadataFromBalancesResponse,
   getBalanceView,
@@ -11,14 +10,16 @@ import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { formatAmount } from '@penumbra-zone/types/amount';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { useBalances } from '@/shared/api/balances';
-import { useBalances as useCosmosBalances } from '@/features/cosmos/use-augmented-balances';
+import {
+  useBalances as useCosmosBalances,
+  usePenumbraIbcDenoms,
+} from '@/features/cosmos/use-augmented-balances';
 import { useRegistry } from '@/shared/api/registry';
-import { usePenumbraIbcDenoms } from '@/features/penumbra/penumbra-ibc-utils';
-import { balanceToValueView } from '@/features/cosmos/utils/balance-to-value-view';
 import { Registry } from '@penumbra-labs/registry';
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { getStablecoins } from '@/shared/utils/stables';
 import { assetPatterns } from '@penumbra-zone/types/assets';
+import { Asset } from '@chain-registry/types';
 
 interface AssetAllocation {
   symbol: string;
@@ -32,7 +33,6 @@ export const AssetBars: React.FC = () => {
   const { data: shieldedBalances, isLoading: isShieldedLoading } = useBalances();
   const { balances: publicBalances, isLoading: isPublicLoading } = useCosmosBalances();
   const { data: registry } = useRegistry();
-  const { ibcDenoms: penumbraIbcDenoms = [] } = usePenumbraIbcDenoms();
 
   const isLoading = isShieldedLoading || isPublicLoading;
 
@@ -67,11 +67,7 @@ export const AssetBars: React.FC = () => {
     ? calculateShieldedAssetAllocations(shieldedBalances)
     : [];
 
-  const publicAllocations = calculatePublicAssetAllocations(
-    publicBalances,
-    registry,
-    penumbraIbcDenoms,
-  );
+  const publicAllocations = calculatePublicAssetAllocations(publicBalances, registry);
 
   // Calculate the max total value to scale the bars
   const shieldedTotal = shieldedAllocations.reduce((acc, { value }) => acc + value, 0);
@@ -404,10 +400,10 @@ function calculateShieldedAssetAllocations(balances: BalancesResponse[]): AssetA
     .sort((a, b) => b.value - a.value);
 }
 
+/*TODO: this needs prices from summaries, fetched according to the coingecko_id usdc data */
 function calculatePublicAssetAllocations(
-  balances: Balance[],
+  balances: { asset: Asset; amount: string }[],
   registry: Registry | undefined,
-  penumbraIbcDenoms: string[] = [],
 ): AssetAllocation[] {
   if (balances.length === 0) {
     return [];
@@ -435,102 +431,29 @@ function calculatePublicAssetAllocations(
         metadata?: Metadata;
       }
     >
-  >((acc, balance) => {
-    let displaySymbol = balance.symbol;
-    let usdcValue = 0;
-    let metadata: Metadata | undefined;
+  >((acc, { asset, amount }) => {
+    const metadata = new Metadata({
+      base: asset.base,
+      display: asset.display,
+      denomUnits: asset.denom_units,
+      symbol: asset.symbol,
+      penumbraAssetId: { inner: new Uint8Array([1]) },
+      coingeckoId: asset.coingecko_id,
+      images: asset.images,
+      name: asset.name,
+      description: asset.description,
+    });
 
-    // Use balanceToValueView to convert to Penumbra value (properly accounts for token exponents)
-    if (registry) {
-      const valueView = balanceToValueView(balance, registry, penumbraIbcDenoms);
-
-      // Extract metadata for display and conversion purposes
-      if (valueView.valueView.case === 'knownAssetId') {
-        metadata = valueView.valueView.value.metadata;
-        if (metadata?.symbol) {
-          displaySymbol = metadata.symbol;
-        }
-
-        // Get the display exponent to properly scale the value
-        let exponent = 0;
-        if (metadata && 'denomUnits' in metadata && 'display' in metadata && metadata.display) {
-          const displayUnit = metadata.denomUnits.find(
-            unit => 'denom' in unit && unit.denom === metadata?.display,
-          );
-          if (displayUnit && 'exponent' in displayUnit) {
-            exponent = displayUnit.exponent;
-          }
-        }
-
-        // Calculate value accounting for token's exponent
-        const amount = parseFloat(balance.amount) || 0;
-        const normalizedValue = amount / Math.pow(10, exponent);
-
-        // If we have USDC metadata, convert the value to USDC equivalent
-        if (usdcMetadata && metadata) {
-          // For USDC itself, the conversion is 1:1
-          if (metadata.symbol === 'USDC') {
-            usdcValue = normalizedValue;
-          } else {
-            const estimatedUsdcPrice = 1.0; // Default price estimate (placeholder)
-            try {
-              usdcValue = normalizedValue * estimatedUsdcPrice;
-            } catch (error) {
-              usdcValue = normalizedValue; // Fallback to normalized value
-            }
-          }
-        } else {
-          // If no USDC metadata, just use the normalized value
-          usdcValue = normalizedValue;
-        }
-      } else {
-        // For unknown assets, parse amount directly
-        const normalizedValue = parseFloat(balance.amount) || 0;
-        // Heuristic: unknown assets with very large amounts are likely small-value tokens
-        if (normalizedValue > 1000000) {
-          usdcValue = normalizedValue / 1000000;
-        } else {
-          usdcValue = normalizedValue;
-        }
-      }
-    } else {
-      // If registry is not available, use the raw amount but apply normalization heuristic
-      const normalizedValue = parseFloat(balance.amount) || 0;
-      // Apply normalization heuristic
-      if (normalizedValue > 1000000) {
-        usdcValue = normalizedValue / 1000000;
-      } else {
-        usdcValue = normalizedValue;
-      }
-    }
-
-    // All balances at this point should have a symbol, but just in case use the denom as fallback
-    if (!displaySymbol) {
-      displaySymbol = balance.denom;
-    }
-
-    const symbol = displaySymbol;
-    if (!symbol) {
-      return acc;
-    }
-
-    if (!acc[symbol]) {
-      acc[symbol] = {
-        symbol,
-        displaySymbol,
-        amount: 0,
-        usdcValue: 0,
-        denom: balance.denom,
-        chain: balance.chain,
-        metadata,
-      };
-    }
-
-    // Parse and sum raw amounts for reference
-    const amount = parseFloat(balance.amount) || 0;
-    acc[symbol].amount += amount;
-    // Sum USDC values for allocation calculation
-    acc[symbol].usdcValue += usdcValue;
+    acc[asset.symbol] = {
+      ...asset,
+      amount: 0,
+      usdcValue: 0,
+      symbol: asset.symbol,
+      displaySymbol: asset.display,
+      chain: '',
+      denom: asset.symbol,
+      metadata,
+    };
 
     return acc;
   }, {});
