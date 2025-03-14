@@ -11,7 +11,6 @@ import { useAssetPrices } from './use-asset-prices';
 import { useWallet } from '@cosmos-kit/react';
 import { WalletStatus } from '@cosmos-kit/core';
 import { useBalances as usePenumbraBalances } from '@/shared/api/balances';
-import { isStablecoinSymbol } from '@/shared/utils/is-symbol.ts';
 import { pnum } from '@penumbra-zone/types/pnum';
 
 /**
@@ -69,6 +68,8 @@ const shouldFilterAsset = (symbol: string): boolean => {
 /**
  * Determines if an asset can be deposited to Penumbra based on IBC denoms
  */
+// @ts-expect-error -- TODO: will be useful later
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- will be useful later
 const canDepositToPenumbra = (symbol: string, ibcDenoms: string[]): boolean => {
   /*  TODO: can deposit to penumbra == has an IBC to penumbra - this can be decided from the ibc connections in the penumbra registry */
   return ibcDenoms.some(denom => denom.includes(symbol));
@@ -76,7 +77,6 @@ const canDepositToPenumbra = (symbol: string, ibcDenoms: string[]): boolean => {
 
 /**
  * Hook that combines Penumbra (shielded) and Cosmos (public) balances into a unified asset structure.
- * TODO: this hook should also return pricing data
  */
 export const useUnifiedAssets = () => {
   const { data: penumbraBalances = [], isLoading: penumbraLoading } = usePenumbraBalances();
@@ -85,8 +85,13 @@ export const useUnifiedAssets = () => {
 
   const { data: registry, isLoading: registryLoading } = useRegistry();
 
-  // TODO: only fetch prices for our unified assets
-  const { prices = {}, isLoading: pricesLoading } = useAssetPrices([]);
+  const { data: pricesArray, isLoading: pricesLoading } = useAssetPrices([
+    ...penumbraBalances.map(getMetadataFromBalancesResponse).map(metadata => metadata.symbol),
+    ...cosmosBalances.map(bal => bal.asset.symbol),
+  ]);
+  console.debug('pricesArray', pricesArray);
+
+  const prices = Object.fromEntries(pricesArray?.map(price => [price.symbol, price.price]) ?? []);
 
   // Determine if we're ready to process data
   const isLoading = penumbraLoading || cosmosLoading || registryLoading || pricesLoading;
@@ -115,13 +120,7 @@ export const useUnifiedAssets = () => {
           let assetValue = 0;
           const numericAmount = pnum(valueView).toNumber();
 
-          if (priceData?.quoteSymbol === 'USDC' && !isNaN(priceData.price)) {
-            // Use price data if available
-            assetValue = numericAmount * priceData.price;
-          } else if (isStablecoinSymbol(metadata.symbol)) {
-            // Special case for USDC
-            assetValue = numericAmount;
-          }
+          assetValue = numericAmount * (priceData ?? 0);
 
           // Create asset object
           return {
@@ -187,6 +186,13 @@ export const useUnifiedAssets = () => {
             },
           });
 
+          // Get price information
+          const priceData = prices[metadata.symbol];
+          let assetValue = 0;
+          const numericAmount = pnum(valueView).toNumber();
+
+          assetValue = numericAmount * (priceData ?? 0);
+
           // Create asset object
           return {
             symbol: asset.symbol,
@@ -201,8 +207,8 @@ export const useUnifiedAssets = () => {
               hasError: false,
             },
             shieldedValue: 0,
-            publicValue: 0,
-            totalValue: 0,
+            publicValue: assetValue,
+            totalValue: assetValue,
             canDeposit: true,
             canWithdraw: false,
             originChain: '',
@@ -213,7 +219,7 @@ export const useUnifiedAssets = () => {
         }
       })
       .filter(Boolean) as UnifiedAsset[];
-  }, [isCosmosConnected, cosmosBalances, registry]);
+  }, [isCosmosConnected, cosmosBalances, registry, prices]);
 
   // Merge shielded and public assets
   const unifiedAssets = useMemo(() => {

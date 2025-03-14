@@ -345,14 +345,7 @@ const AssetRow = observer(
             {price ? (
               <div className='flex flex-col'>
                 <Text color='text.primary'>
-                  {price.price < 0.01
-                    ? price.price.toFixed(6)
-                    : price.price < 1
-                      ? price.price.toFixed(4)
-                      : price.price < 1000
-                        ? price.price.toFixed(2)
-                        : price.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}{' '}
-                  USDC
+                  {price.price.toFixed(4)} {price.quoteSymbol}
                 </Text>
               </div>
             ) : (
@@ -363,18 +356,7 @@ const AssetRow = observer(
           {/* Shielded Value */}
           <Table.Td>
             {asset.shieldedValue > 0 ? (
-              <Text>
-                {asset.shieldedValue < 0.01
-                  ? asset.shieldedValue.toFixed(6)
-                  : asset.shieldedValue < 1
-                    ? asset.shieldedValue.toFixed(4)
-                    : asset.shieldedValue < 1000
-                      ? asset.shieldedValue.toFixed(2)
-                      : asset.shieldedValue.toLocaleString(undefined, {
-                          maximumFractionDigits: 2,
-                        })}{' '}
-                USDC
-              </Text>
+              <Text>{asset.shieldedValue.toFixed(2)} USDC</Text>
             ) : (
               <Text color='text.secondary'>-</Text>
             )}
@@ -383,18 +365,7 @@ const AssetRow = observer(
           {/* Public Value */}
           <Table.Td>
             {asset.publicValue > 0 ? (
-              <Text>
-                {asset.publicValue < 0.01
-                  ? asset.publicValue.toFixed(6)
-                  : asset.publicValue < 1
-                    ? asset.publicValue.toFixed(4)
-                    : asset.publicValue < 1000
-                      ? asset.publicValue.toFixed(2)
-                      : asset.publicValue.toLocaleString(undefined, {
-                          maximumFractionDigits: 2,
-                        })}{' '}
-                USDC
-              </Text>
+              <Text>{asset.publicValue.toFixed(2)} USDC</Text>
             ) : (
               <Text color='text.secondary'>-</Text>
             )}
@@ -403,18 +374,7 @@ const AssetRow = observer(
           {/* Total value */}
           <Table.Td>
             {asset.totalValue > 0 ? (
-              <Text>
-                {asset.totalValue < 0.01
-                  ? asset.totalValue.toFixed(6)
-                  : asset.totalValue < 1
-                    ? asset.totalValue.toFixed(4)
-                    : asset.totalValue < 1000
-                      ? asset.totalValue.toFixed(2)
-                      : asset.totalValue.toLocaleString(undefined, {
-                          maximumFractionDigits: 2,
-                        })}{' '}
-                USDC
-              </Text>
+              <Text>{asset.totalValue.toFixed(2)} USDC</Text>
             ) : (
               <Text color='text.secondary'>-</Text>
             )}
@@ -441,7 +401,7 @@ export const AssetsTable = observer(() => {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
   // Get price data for all assets - adding only the prices object, not the loading state
-  const { prices } = useAssetPrices(unifiedAssets.map(asset => asset.metadata));
+  const { data: prices } = useAssetPrices(unifiedAssets.map(asset => asset.symbol));
 
   const toggleRow = (symbol: string) => {
     setExpandedRows(prev => ({
@@ -488,7 +448,10 @@ export const AssetsTable = observer(() => {
                   asset={asset}
                   isExpanded={!!expandedRows[asset.symbol]}
                   toggleExpanded={() => toggleRow(asset.symbol)}
-                  price={prices[asset.symbol]}
+                  price={{
+                    price: prices?.find(p => p.symbol === asset.symbol)?.price ?? 0,
+                    quoteSymbol: 'USDC',
+                  }}
                   isCosmosConnected={isCosmosConnected}
                 />
               ))}

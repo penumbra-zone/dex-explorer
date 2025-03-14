@@ -10,10 +10,7 @@ import { getDisplayDenomExponent } from '@penumbra-zone/getters/metadata';
 import { formatAmount } from '@penumbra-zone/types/amount';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { useBalances } from '@/shared/api/balances';
-import {
-  useBalances as useCosmosBalances,
-  usePenumbraIbcDenoms,
-} from '@/features/cosmos/use-augmented-balances';
+import { useBalances as useCosmosBalances } from '@/features/cosmos/use-augmented-balances';
 import { useRegistry } from '@/shared/api/registry';
 import { Registry } from '@penumbra-labs/registry';
 import { Metadata } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
@@ -33,6 +30,8 @@ export const AssetBars: React.FC = () => {
   const { data: shieldedBalances, isLoading: isShieldedLoading } = useBalances();
   const { balances: publicBalances, isLoading: isPublicLoading } = useCosmosBalances();
   const { data: registry } = useRegistry();
+
+  // TODO: fetch prices here and pass them down to calculations. or just directly calculate the asset prices here in useMemo.
 
   const isLoading = isShieldedLoading || isPublicLoading;
 
