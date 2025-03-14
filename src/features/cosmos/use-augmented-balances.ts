@@ -1,5 +1,5 @@
 import { useWallet } from '@cosmos-kit/react';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { ChainWalletBase, WalletStatus } from '@cosmos-kit/core';
 import { useRegistry } from '@/shared/api/registry';
 import { Chain } from '@penumbra-labs/registry';
@@ -74,38 +74,43 @@ export const useBalances = () => {
   const { chainWallets, status } = useWallet();
   const { data: registry } = useRegistry();
 
-  const fetchAllChainBalances = async (): Promise<{ asset: Asset; amount: string }[]> => {
-    return [
-      await Promise.all(
-        chainWallets.map(async chain => {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- okay
-          const balances = await fetchChainBalances(chain.address!, chain);
-          return balances.map(coin => {
-            return { asset: augmentToAsset(coin.denom, chain.chainName), amount: coin.amount };
-          });
-        }),
-      ),
-    ].flat(2);
-  };
-
-  const result = useQuery({
-    queryKey: [
-      'cosmos-balances',
-      status,
-      chainWallets.map(chain => chain.chainId).join(','),
-      // Use a stable string representation of the registry to avoid unnecessary invalidation
-      registry ? 'registry-available' : 'no-registry',
-    ],
-    queryFn: fetchAllChainBalances,
-    enabled: status === WalletStatus.Connected && chainWallets.length > 0,
-    retry: 3, // Retry failed requests 3 times
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff starting at 1s
+  const result = useQueries({
+    queries: chainWallets.map(chain => ({
+      queryKey: [
+        'cosmos-balances',
+        status,
+        chain.chainId,
+        registry ? 'registry-available' : 'no-registry',
+      ],
+      queryFn: async () => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- okay
+        const balances = await fetchChainBalances(chain.address!, chain);
+        return balances.map(coin => {
+          return { asset: augmentToAsset(coin.denom, chain.chainName), amount: coin.amount };
+        });
+      },
+      enabled: status === WalletStatus.Connected && chainWallets.length > 0,
+      retry: 3, // Retry failed requests 3 times
+      // retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff starting at 1s
+    })),
+    combine: results => {
+      return {
+        data: results
+          .map(result => result.data)
+          .flat(2)
+          .filter(Boolean),
+        isLoading: results.some(result => result.isLoading),
+        error: results.find(r => r.error !== null)?.error ?? null,
+        // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression -- this is fine.
+        refetch: results.forEach(result => void result.refetch()),
+      };
+    },
   });
 
   return {
-    balances: result.data ?? [],
+    balances: result.data,
     isLoading: result.isLoading && status === WalletStatus.Connected,
     error: result.error ? String(result.error) : null,
-    refetch: result.refetch,
+    refetch: result,
   };
 };
