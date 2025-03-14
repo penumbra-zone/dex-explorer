@@ -10,6 +10,7 @@ import { AssetsTable } from './ui/assets-table';
 import { useRegistry } from '@/shared/api/registry.ts';
 import { IbcChainProvider } from '@/features/cosmos/chain-provider.tsx';
 import { Onboarding } from './ui/onboarding';
+import { PortfolioPositionTabs } from './ui/position-tabs';
 
 interface PortfolioPageProps {
   isMobile: boolean;
@@ -66,9 +67,10 @@ const DesktopPortfolioPage = observer(() => {
 
   return (
     <IbcChainProvider registry={data}>
-      <div className='sm:container mx-auto py-8'>
+      <div className='sm:container mx-auto py-8 flex flex-col gap-4'>
         <Onboarding />
         <AssetsTable />
+        <PortfolioPositionTabs />
       </div>
     </IbcChainProvider>
   );

@@ -54,85 +54,83 @@ export const Onboarding = observer(() => {
   };
 
   return (
-    <div className='mb-4'>
-      <Card>
-        <div className='sm:p-3 p-1'>
-          <div className='mb-1'>
-            <Text xxl color='text.primary'>
-              Getting Started with Veil
-            </Text>
-          </div>
-          <div className='mb-4'>
-            <Text body color='text.secondary'>
-              To manage your assets, you’ll need to follow a few steps...
-            </Text>
-          </div>
-          <div className='flex gap-2'>
-            <OnboardingCard
-              title='Install & Connect Prax Wallet'
-              description='Connect to Veil and gain access to shielded assets and liquidity positions.'
-              footer={
-                providerOrigins.length === 0 ? (
-                  <Button
-                    actionType='accent'
-                    priority='primary'
-                    density='compact'
-                    icon={ExternalLink}
-                    onClick={() => {
-                      window.open('https://praxwallet.com/', '_blank', 'noopener,noreferrer');
-                    }}
-                  >
-                    Install
-                  </Button>
-                ) : (
-                  <>
-                    {!isPenumbraConnected ? (
-                      <Button
-                        actionType='accent'
-                        priority='primary'
-                        density='compact'
-                        icon={Wallet}
-                        onClick={onConnectClick}
-                      >
-                        Connect
-                      </Button>
-                    ) : (
-                      <div className='flex items-center gap-1 h-8'>
-                        <Icon IconComponent={ShieldCheck} size='sm' color='primary.light' />
-                        <Text color='primary.light' small>
-                          Connected
-                        </Text>
-                      </div>
-                    )}
-                  </>
-                )
-              }
-            />
-            <OnboardingCard
-              title='Connect Cosmos Wallet'
-              description='Connect to Veil and manage public assets and shield them in Penumbra.'
-              footer={
-                !isCosmosConnected ? (
-                  <CosmosConnectButton variant='minimal' actionType='unshield'>
-                    Connect
-                  </CosmosConnectButton>
-                ) : (
-                  <div className='flex items-center gap-1 h-8'>
-                    <Icon IconComponent={ShieldCheck} size='sm' color='unshield.light' />
-                    <Text color='unshield.light' small>
-                      Connected
-                    </Text>
-                  </div>
-                )
-              }
-            />
-            <OnboardingCard
-              title='Shield Your Assets'
-              description='With a Cosmos Wallet connected, shield your public assets into Penumbra directly from the assets table below.'
-            />
-          </div>
+    <Card>
+      <div className='sm:p-3 p-1'>
+        <div className='mb-1'>
+          <Text xxl color='text.primary'>
+            Getting Started with Veil
+          </Text>
         </div>
-      </Card>
+        <div className='mb-4'>
+          <Text body color='text.secondary'>
+            To manage your assets, you’ll need to follow a few steps...
+          </Text>
+        </div>
+        <div className='flex gap-2'>
+          <OnboardingCard
+            title='Install & Connect Prax Wallet'
+            description='Connect to Veil and gain access to shielded assets and liquidity positions.'
+            footer={
+              providerOrigins.length === 0 ? (
+                <Button
+                  actionType='accent'
+                  priority='primary'
+                  density='compact'
+                  icon={ExternalLink}
+                  onClick={() => {
+                    window.open('https://praxwallet.com/', '_blank', 'noopener,noreferrer');
+                  }}
+                >
+                  Install
+                </Button>
+              ) : (
+                <>
+                  {!isPenumbraConnected ? (
+                    <Button
+                      actionType='accent'
+                      priority='primary'
+                      density='compact'
+                      icon={Wallet}
+                      onClick={onConnectClick}
+                    >
+                      Connect
+                    </Button>
+                  ) : (
+                    <div className='flex items-center gap-1 h-8'>
+                      <Icon IconComponent={ShieldCheck} size='sm' color='primary.light' />
+                      <Text color='primary.light' small>
+                        Connected
+                      </Text>
+                    </div>
+                  )}
+                </>
+              )
+            }
+          />
+          <OnboardingCard
+            title='Connect Cosmos Wallet'
+            description='Connect to Veil and manage public assets and shield them in Penumbra.'
+            footer={
+              !isCosmosConnected ? (
+                <CosmosConnectButton variant='minimal' actionType='unshield'>
+                  Connect
+                </CosmosConnectButton>
+              ) : (
+                <div className='flex items-center gap-1 h-8'>
+                  <Icon IconComponent={ShieldCheck} size='sm' color='unshield.light' />
+                  <Text color='unshield.light' small>
+                    Connected
+                  </Text>
+                </div>
+              )
+            }
+          />
+          <OnboardingCard
+            title='Shield Your Assets'
+            description='With a Cosmos Wallet connected, shield your public assets into Penumbra directly from the assets table below.'
+          />
+        </div>
+      </div>
       <Dialog isOpen={isOpen} onClose={() => setIsOpen(false)}>
         <Dialog.Content title='Choose wallet'>
           <Dialog.RadioGroup>
@@ -162,6 +160,6 @@ export const Onboarding = observer(() => {
           </Dialog.RadioGroup>
         </Dialog.Content>
       </Dialog>
-    </div>
+    </Card>
   );
 });
