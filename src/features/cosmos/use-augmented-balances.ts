@@ -98,7 +98,7 @@ export const useBalances = () => {
         data: results
           .map(result => result.data)
           .flat(2)
-          .filter(Boolean),
+          .filter(Boolean) as { asset: Asset; amount: string }[],
         isLoading: results.some(result => result.isLoading),
         error: results.find(r => r.error !== null)?.error ?? null,
         // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression -- this is fine.

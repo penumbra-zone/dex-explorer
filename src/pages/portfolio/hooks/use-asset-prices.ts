@@ -21,7 +21,7 @@ export const useAssetPrices = (symbols: string[] = []) => {
           }),
         ),
       );
-      console.debug(symbols);
+
       // we inject USDC and USDY and hardcode them to 1 USD
       return [
         ...results

@@ -89,7 +89,6 @@ export const useUnifiedAssets = () => {
     ...penumbraBalances.map(getMetadataFromBalancesResponse).map(metadata => metadata.symbol),
     ...cosmosBalances.map(bal => bal.asset.symbol),
   ]);
-  console.debug('pricesArray', pricesArray);
 
   const prices = Object.fromEntries(pricesArray?.map(price => [price.symbol, price.price]) ?? []);
 
