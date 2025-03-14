@@ -10,10 +10,11 @@ import { useRegistry } from '@/shared/api/registry.ts';
 interface CosmosConnectButtonProps {
   actionType?: ButtonProps['actionType'];
   variant?: 'default' | 'minimal';
+  children?: React.ReactNode;
 }
 
 const CosmosConnectButtonInner = observer(
-  ({ actionType = 'accent', variant = 'default' }: CosmosConnectButtonProps) => {
+  ({ actionType = 'accent', variant = 'default', children }: CosmosConnectButtonProps) => {
     const { data: registry } = useRegistry();
     const penumbraIbcChains = chainsInPenumbraRegistry(registry?.ibcConnections ?? []).map(
       c => c.chain_name,
@@ -36,7 +37,7 @@ const CosmosConnectButtonInner = observer(
           </Button>
         ) : (
           <Button icon={Wallet2} actionType={actionType} onClick={handleConnect}>
-            Connect Cosmos Wallet
+            {children ?? 'Connect Cosmos Wallet'}
           </Button>
         )}
       </Density>

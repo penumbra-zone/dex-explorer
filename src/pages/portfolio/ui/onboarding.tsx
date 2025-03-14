@@ -43,21 +43,17 @@ const OnboardingCard = ({
 };
 
 export const Onboarding = observer(() => {
-  const { connected } = connectionStore;
+  const { connect } = connectionStore;
   const [isOpen, setIsOpen] = useState(false);
   const { data: providerManifests } = useProviderManifests();
   const providerOrigins = useMemo(() => Object.keys(PenumbraClient.getProviders()), []);
-
-  const { isPenumbraConnected, isCosmosConnected, totalPublicValue, totalShieldedValue } =
-    useUnifiedAssets();
-
-  const cosmosWallet = false;
+  const { isPenumbraConnected, isCosmosConnected } = useUnifiedAssets();
 
   const onConnectClick = () => {
     if (providerOrigins.length > 1) {
       setIsOpen(true);
     } else if (providerOrigins.length === 1 && providerOrigins[0]) {
-      void connectionStore.connect(providerOrigins[0]);
+      void connect(providerOrigins[0]);
     }
   };
 
@@ -90,11 +86,11 @@ export const Onboarding = observer(() => {
                       window.open('https://praxwallet.com/', '_blank', 'noopener,noreferrer');
                     }}
                   >
-                    Install Prax
+                    Install
                   </Button>
                 ) : (
                   <>
-                    {!connected ? (
+                    {!isPenumbraConnected ? (
                       <Button
                         actionType='accent'
                         priority='primary'
@@ -121,19 +117,10 @@ export const Onboarding = observer(() => {
               description='Connect to Veil and manage public assets and shield them in Penumbra.'
               footer={
                 !isCosmosConnected ? (
-                  <CosmosConnectButton variant='default' actionType='default' />
+                  <CosmosConnectButton variant='minimal' actionType='unshield'>
+                    Connect
+                  </CosmosConnectButton>
                 ) : (
-                  // <Button
-                  //   actionType='unshield'
-                  //   priority='primary'
-                  //   density='compact'
-                  //   icon={ExternalLink}
-                  //   onClick={() => {
-                  //     window.open('https://praxwallet.com/', '_blank', 'noopener,noreferrer');
-                  //   }}
-                  // >
-                  //   Connect
-                  // </Button>
                   <div className='flex items-center gap-1 h-8'>
                     <Icon IconComponent={ShieldCheck} size='sm' color='primary.light' />
                     <Text color='primary.light' small>
@@ -172,7 +159,7 @@ export const Onboarding = observer(() => {
                       alt={manifest.name}
                     />
                   }
-                  onSelect={() => connect(key)}
+                  onSelect={() => void connect(key)}
                 />
               ))}
             </div>
