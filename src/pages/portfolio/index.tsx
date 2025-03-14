@@ -7,7 +7,6 @@ import { Button } from '@penumbra-zone/ui/Button';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Density } from '@penumbra-zone/ui/Density';
 import { AssetsTable } from './ui/assets-table';
-import { WalletConnect } from './ui/wallet-connect';
 import { useRegistry } from '@/shared/api/registry.ts';
 import { IbcChainProvider } from '@/features/cosmos/chain-provider.tsx';
 import { Onboarding } from './ui/onboarding';

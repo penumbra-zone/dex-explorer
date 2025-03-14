@@ -67,14 +67,6 @@ const shouldFilterAsset = (symbol: string): boolean => {
 };
 
 /**
- * Determines if an asset can be deposited to Penumbra based on IBC denoms
- */
-const canDepositToPenumbra = (symbol: string, ibcDenoms: string[]): boolean => {
-  /*  TODO: can deposit to penumbra == has an IBC to penumbra - this can be decided from the ibc connections in the penumbra registry */
-  return ibcDenoms.some(denom => denom.includes(symbol));
-};
-
-/**
  * Hook that combines Penumbra (shielded) and Cosmos (public) balances into a unified asset structure.
  * TODO: this hook should also return pricing data
  */
@@ -104,7 +96,6 @@ export const useUnifiedAssets = () => {
       .filter(balance => {
         try {
           const metadata = getMetadataFromBalancesResponse(balance);
-          console.log('TCL: shieldedAssets -> metadata', metadata);
           return !shouldFilterAsset(metadata.symbol);
         } catch (error) {
           console.error('Error processing Penumbra balance', error);

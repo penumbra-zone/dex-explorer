@@ -1,14 +1,11 @@
 import { useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import Image from 'next/image';
-import { useChain } from '@cosmos-kit/react';
-import { Wallet2 } from 'lucide-react';
 import { ExternalLink, Wallet, ShieldCheck } from 'lucide-react';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Card } from '@penumbra-zone/ui/Card';
 import { Icon } from '@penumbra-zone/ui/Icon';
-import { Button, ButtonProps } from '@penumbra-zone/ui/Button';
-import { Density } from '@penumbra-zone/ui/Density';
+import { Button } from '@penumbra-zone/ui/Button';
 import { Dialog } from '@penumbra-zone/ui/Dialog';
 import { PenumbraClient } from '@penumbra-zone/client';
 import { connectionStore } from '@/shared/model/connection';
@@ -43,7 +40,6 @@ const OnboardingCard = ({
 };
 
 export const Onboarding = observer(() => {
-  const { connect } = connectionStore;
   const [isOpen, setIsOpen] = useState(false);
   const { data: providerManifests } = useProviderManifests();
   const providerOrigins = useMemo(() => Object.keys(PenumbraClient.getProviders()), []);
@@ -53,7 +49,7 @@ export const Onboarding = observer(() => {
     if (providerOrigins.length > 1) {
       setIsOpen(true);
     } else if (providerOrigins.length === 1 && providerOrigins[0]) {
-      void connect(providerOrigins[0]);
+      void connectionStore.connect(providerOrigins[0]);
     }
   };
 
@@ -68,7 +64,7 @@ export const Onboarding = observer(() => {
           </div>
           <div className='mb-4'>
             <Text body color='text.secondary'>
-              To manage your assets, you'll need to follow a few steps...
+              To manage your assets, you’ll need to follow a few steps...
             </Text>
           </div>
           <div className='flex gap-2'>
@@ -122,8 +118,8 @@ export const Onboarding = observer(() => {
                   </CosmosConnectButton>
                 ) : (
                   <div className='flex items-center gap-1 h-8'>
-                    <Icon IconComponent={ShieldCheck} size='sm' color='primary.light' />
-                    <Text color='primary.light' small>
+                    <Icon IconComponent={ShieldCheck} size='sm' color='unshield.light' />
+                    <Text color='unshield.light' small>
                       Connected
                     </Text>
                   </div>
@@ -159,7 +155,7 @@ export const Onboarding = observer(() => {
                       alt={manifest.name}
                     />
                   }
-                  onSelect={() => void connect(key)}
+                  onSelect={() => void connectionStore.connect(key)}
                 />
               ))}
             </div>

@@ -19,7 +19,6 @@ const CosmosConnectButtonInner = observer(
     const penumbraIbcChains = chainsInPenumbraRegistry(registry?.ibcConnections ?? []).map(
       c => c.chain_name,
     );
-    console.log('TCL: penumbraIbcChains', penumbraIbcChains);
     const chains = useChains(penumbraIbcChains);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- Osmosis is always available
     const { address, disconnect, openView, isWalletConnected } = (chains['osmosis'] ??
