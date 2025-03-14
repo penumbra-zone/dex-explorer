@@ -23,7 +23,7 @@ const OnboardingCard = ({
   footer?: React.ReactNode;
 }) => {
   return (
-    <div className='flex-1 p-4 border border-other-tonalStroke rounded-lg bg-other-tonalFill5'>
+    <div className='w-full sm:flex-1 p-4 border border-other-tonalStroke rounded-lg bg-other-tonalFill5'>
       <div className='mb-1'>
         <Text as='div' body color='text.primary'>
           {title}
@@ -66,7 +66,7 @@ export const Onboarding = observer(() => {
             To manage your assets, you’ll need to follow a few steps...
           </Text>
         </div>
-        <div className='flex gap-2'>
+        <div className='flex flex-wrap gap-2 sm:flex-nowrap'>
           <OnboardingCard
             title='Install & Connect Prax Wallet'
             description='Connect to Veil and gain access to shielded assets and liquidity positions.'
