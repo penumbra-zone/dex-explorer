@@ -33,11 +33,13 @@ export const PortfolioPositionTabs = () => {
           </Density>
         </div>
 
-        {tab === PortfolioTab.OpenPositions && <PortfolioOpenPositions />}
+        <div className='max-h-[500px] overflow-y-auto' style={{ overflowAnchor: 'none' }}>
+          {tab === PortfolioTab.OpenPositions && <PortfolioOpenPositions />}
 
-        {tab === PortfolioTab.ClosedPositions && <PortfolioClosedPositions />}
+          {tab === PortfolioTab.ClosedPositions && <PortfolioClosedPositions />}
 
-        {tab === PortfolioTab.History && <PortfolioTransactions />}
+          {tab === PortfolioTab.History && <PortfolioTransactions />}
+        </div>
       </div>
     </Card>
   );
