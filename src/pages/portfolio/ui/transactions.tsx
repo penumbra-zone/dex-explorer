@@ -56,7 +56,7 @@ export const PortfolioTransactions = observer(() => {
   };
 
   return (
-    <div className='flex flex-col gap-1'>
+    <div className='flex flex-col gap-1' style={{ overflowAnchor: 'none' }}>
       {isLoading &&
         Array.from({ length: 3 }).map((_, index) => (
           <div key={index} className='h-[72px]'>
