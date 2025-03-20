@@ -81,6 +81,7 @@ export const VotingFooter = observer(({ isBanned }: { isBanned: boolean }) => {
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- temporary
   if (didVote) {
     return (
       <div className='flex flex-col gap-8'>
@@ -100,6 +101,7 @@ export const VotingFooter = observer(({ isBanned }: { isBanned: boolean }) => {
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- temporary
   if (delegatedAmount) {
     return (
       <div className='flex flex-col gap-8'>

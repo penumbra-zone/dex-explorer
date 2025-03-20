@@ -3,7 +3,7 @@ import { Text } from '@penumbra-zone/ui/Text';
 
 export const Explainer = () => {
   return (
-    <div className='flex flex-col w-1/2 gap-12'>
+    <div className='flex flex-col w-full md:w-1/2 gap-12'>
       <Text variant='h1' color='text.primary'>
         Liquidity Tournament
       </Text>

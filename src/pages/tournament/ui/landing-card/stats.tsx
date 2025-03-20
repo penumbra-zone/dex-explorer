@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { Text } from '@penumbra-zone/ui/Text';
 import { pnum } from '@penumbra-zone/types/pnum';
 import { round } from '@penumbra-zone/types/round';
@@ -79,7 +80,7 @@ export const Stats = ({
         </Text>
         {results.map(asset => (
           <div key={asset.symbol} className='flex gap-3'>
-            <img src={asset.imgUrl} alt={asset.symbol} width={32} height={32} />
+            <Image src={asset.imgUrl} alt={asset.symbol} width={32} height={32} />
             <div className='flex w-full flex-col gap-2'>
               <div className='flex justify-between w-full'>
                 <Text technical color='text.primary'>
