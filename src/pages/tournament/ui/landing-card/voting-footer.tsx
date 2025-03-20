@@ -4,18 +4,39 @@ import { Ban, Coins, Check, Wallet2, WalletMinimal, ExternalLink } from 'lucide-
 import { observer } from 'mobx-react-lite';
 import { connectionStore } from '@/shared/model/connection';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
-import {
-  Metadata,
-  ValueView,
-  ValueView_KnownAssetId,
-} from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
+import { Metadata, ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
 
 export const VotingFooter = observer(({ isBanned }: { isBanned: boolean }) => {
   const { connected } = connectionStore;
 
+  // dummy data
   const delegatedAmount = 1000;
-  const didVote = true;
+  const didVote = false;
+  const valueView = new ValueView({
+    valueView: {
+      value: {
+        amount: new Amount({ lo: 133700000n }),
+        metadata: new Metadata({
+          base: 'um',
+          display: 'um',
+          denomUnits: [
+            {
+              denom: 'um',
+              exponent: 6,
+            },
+          ],
+          symbol: 'um',
+          penumbraAssetId: { inner: new Uint8Array([1]) },
+          coingeckoId: 'um',
+          images: [],
+          name: 'um',
+          description: 'um',
+        }),
+      },
+      case: 'knownAssetId',
+    },
+  });
 
   if (isBanned) {
     return (
@@ -70,29 +91,7 @@ export const VotingFooter = observer(({ isBanned }: { isBanned: boolean }) => {
           <Text variant='small' color='text.secondary'>
             You have already voted in this epoch. Come back next epoch to vote again.
           </Text>
-          {/* <ValueViewComponent
-            valueView={
-              new ValueView({
-                valueView: {
-                  value: {
-                    amount: new Amount({ lo: 10000n }),
-                    metadata: new Metadata({
-                      base: 'um',
-                      display: 'um',
-                      denomUnits: [],
-                      symbol: 'um',
-                      penumbraAssetId: { inner: new Uint8Array([1]) },
-                      coingeckoId: 'um',
-                      images: [],
-                      name: 'um',
-                      description: 'um',
-                    }),
-                  },
-                  case: 'knownAssetId',
-                },
-              })
-            }
-          /> */}
+          <ValueViewComponent valueView={valueView} />
         </div>
         <div className='flex gap-2'>
           <Button actionType='default'>Details</Button>
@@ -111,29 +110,7 @@ export const VotingFooter = observer(({ isBanned }: { isBanned: boolean }) => {
           <Text variant='small' color='text.secondary'>
             You’ve delegated UM and now eligible to vote in this epoch.
           </Text>
-          {/* <ValueViewComponent
-            valueView={
-              new ValueView({
-                valueView: {
-                  value: {
-                    amount: new Amount({ lo: 10000n }),
-                    metadata: new Metadata({
-                      base: 'um',
-                      display: 'um',
-                      denomUnits: [],
-                      symbol: 'um',
-                      penumbraAssetId: { inner: new Uint8Array([1]) },
-                      coingeckoId: 'um',
-                      images: [],
-                      name: 'um',
-                      description: 'um',
-                    }),
-                  },
-                  case: 'knownAssetId',
-                },
-              })
-            }
-          /> */}
+          <ValueViewComponent valueView={valueView} />
         </div>
         <div className='flex gap-2'>
           <Button actionType='accent' icon={ExternalLink}>
