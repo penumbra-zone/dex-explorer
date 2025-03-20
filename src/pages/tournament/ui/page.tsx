@@ -9,5 +9,5 @@ export const TournamentPage = () => {
       <PenumbraWaves />
       <MyRewards />
     </section>
-  )
+  );
 };

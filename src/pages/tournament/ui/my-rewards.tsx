@@ -21,11 +21,11 @@ export const MyRewards = observer(() => {
   const { connected } = connectionStore;
 
   const { data: total, isLoading } = useTotalRewards();
-  const isTotalZero = total ? isZero(getAmount(total)): true;
+  const isTotalZero = total ? isZero(getAmount(total)) : true;
 
   const [parent] = useAutoAnimate();
   const [expanded, setExpanded] = useState(false);
-  const toggleExpanded = () => setExpanded((prev) => !prev);
+  const toggleExpanded = () => setExpanded(prev => !prev);
 
   const [tab, setTab] = useState<'lp' | 'voting'>('lp');
 
@@ -37,8 +37,12 @@ export const MyRewards = observer(() => {
     <section ref={parent} className='p-6 rounded-lg bg-other-tonalFill5 backdrop-blur-lg'>
       <div className='flex justify-between items-center'>
         <div className='flex flex-col gap-1'>
-          <Text xxl color='text.primary'>My Total Rewards</Text>
-          <Text small color='text.secondary'>Cumulative from all epochs, voting and LPs rewards</Text>
+          <Text xxl color='text.primary'>
+            My Total Rewards
+          </Text>
+          <Text small color='text.secondary'>
+            Cumulative from all epochs, voting and LPs rewards
+          </Text>
         </div>
 
         {isLoading || !total ? (
@@ -53,23 +57,24 @@ export const MyRewards = observer(() => {
 
             <Density compact>
               {!isTotalZero && (
-                <Button iconOnly priority='primary' icon={expanded ? ChevronUp : ChevronDown} onClick={toggleExpanded}>
+                <Button
+                  iconOnly
+                  priority='primary'
+                  icon={expanded ? ChevronUp : ChevronDown}
+                  onClick={toggleExpanded}
+                >
                   Show reward details
                 </Button>
               )}
             </Density>
           </div>
         )}
-
       </div>
 
       {expanded && (
         <div className='flex flex-col gap-4 mt-4'>
           <div className='[&_button]:grow'>
-            <SegmentedControl
-              value={tab}
-              onChange={value => setTab(value as typeof tab)}
-            >
+            <SegmentedControl value={tab} onChange={value => setTab(value as typeof tab)}>
               <SegmentedControl.Item style='filled' value='lp'>
                 LPs Rewards
               </SegmentedControl.Item>
