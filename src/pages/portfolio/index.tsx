@@ -13,7 +13,7 @@ import { IbcChainProvider } from '@/features/cosmos/chain-provider.tsx';
 import { Onboarding } from './ui/onboarding';
 import { PortfolioPositionTabs } from './ui/position-tabs';
 import { AssetBars } from './ui/asset-bars';
-import { useUnifiedAssets } from '@/pages/portfolio/api/use-unified-assets.tsx';
+import { useUnifiedAssets } from '@/pages/portfolio/api/use-unified-assets';
 
 interface PortfolioPageProps {
   isMobile: boolean;
