@@ -12,6 +12,7 @@ import { connectionStore } from '@/shared/model/connection';
 import { useProviderManifests } from '@/shared/api/providerManifests';
 import { CosmosConnectButton } from '@/features/cosmos/cosmos-connect-button';
 import { useUnifiedAssets } from '../hooks/use-unified-assets';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const dismissedKey = 'veil-portfolio-onboarding-dismissed';
 const isPhase2 = false;
@@ -43,6 +44,9 @@ const OnboardingCard = ({
 };
 
 export const Onboarding = observer(() => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const showOnboarding = searchParams?.get('showOnboarding');
   const [isOpen, setIsOpen] = useState(false);
   const { data: providerManifests } = useProviderManifests();
   const providerOrigins = useMemo(() => Object.keys(PenumbraClient.getProviders()), []);
@@ -60,12 +64,17 @@ export const Onboarding = observer(() => {
   const dismiss = () => {
     setIsDismissed(true);
     localStorage.setItem(dismissedKey, 'true');
+    router.push('/portfolio');
   };
 
   useEffect(() => {
-    const storedValue = localStorage.getItem(dismissedKey);
-    setIsDismissed(storedValue === 'true' ? true : false);
-  }, []);
+    if (showOnboarding) {
+      setIsDismissed(false);
+    } else {
+      const storedValue = localStorage.getItem(dismissedKey);
+      setIsDismissed(storedValue === 'true' ? true : false);
+    }
+  }, [showOnboarding]);
 
   if (isDismissed) {
     return null;
