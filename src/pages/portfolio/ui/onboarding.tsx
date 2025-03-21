@@ -8,7 +8,7 @@ import { Button } from '@penumbra-zone/ui/Button';
 import { PenumbraClient } from '@penumbra-zone/client';
 import { ConnectButton } from '@/features/connect/connect-button';
 import { CosmosConnectButton } from '@/features/cosmos/cosmos-connect-button';
-import { useUnifiedAssets } from '../hooks/use-unified-assets';
+import { useUnifiedAssets } from '../api/use-unified-assets';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 const dismissedKey = 'veil-portfolio-onboarding-dismissed';
