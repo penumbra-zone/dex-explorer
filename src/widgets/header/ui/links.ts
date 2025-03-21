@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { MoonStar, ArrowUpFromDot, Coins, Star } from 'lucide-react';
+import { MoonStar, ArrowUpFromDot, Coins } from 'lucide-react';
 import { PagePath } from '@/shared/const/pages';
 
 export const HEADER_LINKS = [
@@ -31,11 +31,12 @@ export const HEADER_LINKS = [
     value: PagePath.Inspect,
     icon: MoonStar,
   },
-  {
-    as: Link,
-    tabProps: { href: PagePath.Tournament },
-    label: 'Tournament',
-    value: PagePath.Tournament,
-    icon: Star,
-  },
+  // TODO: Uncomment when the Tournament page is ready
+  // {
+  //   as: Link,
+  //   tabProps: { href: PagePath.Tournament },
+  //   label: 'Tournament',
+  //   value: PagePath.Tournament,
+  //   icon: Star,
+  // },
 ];

@@ -83,6 +83,7 @@ export const MyLpRewards = observer(() => {
       {!isLoading && total >= BASE_LIMIT && (
         <Pagination
           totalItems={total}
+          visibleItems={rewards.length}
           value={page}
           limit={limit}
           onChange={setPage}
