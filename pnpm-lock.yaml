@@ -15,7 +15,7 @@ importers:
         specifier: ^1.10.0
         version: 1.10.0
       '@chain-registry/types':
-        specifier: ^0.50.82
+        specifier: ^0.50.93
         version: 0.50.94
       '@chakra-ui/icons':
         specifier: ^2.2.4
@@ -36,11 +36,14 @@ importers:
         specifier: ^0.33.0
         version: 0.33.1
       '@cosmjs/stargate':
-        specifier: 0.33.0
+        specifier: ^0.33.0
         version: 0.33.0
       '@cosmos-kit/core':
-        specifier: ^2.14.0
+        specifier: ^2.15.5
         version: 2.15.5
+      '@cosmos-kit/cosmostation':
+        specifier: ^2.14.6
+        version: 2.14.6(@cosmjs/amino@0.32.4)(@cosmjs/proto-signing@0.33.1)(@walletconnect/types@2.19.1)(typescript@5.8.2)(zod@3.24.2)
       '@cosmos-kit/keplr':
         specifier: ^2.14.7
         version: 2.14.7(@cosmjs/amino@0.32.4)(@cosmjs/proto-signing@0.33.1)(@walletconnect/sign-client@2.19.1(typescript@5.8.2)(zod@3.24.2))(@walletconnect/types@2.19.1)(starknet@6.23.1)(typescript@5.8.2)(zod@3.24.2)
@@ -66,7 +69,7 @@ importers:
         specifier: ^1.26.2
         version: 1.26.2(@types/react@18.3.18)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@keplr-wallet/types':
-        specifier: ^0.12.190
+        specifier: ^0.12.199
         version: 0.12.202(starknet@6.23.1)
       '@penumbra-labs/registry':
         specifier: ^12.4.0
@@ -126,7 +129,7 @@ importers:
         specifier: ^9.1.2
         version: 9.1.2
       chain-registry:
-        specifier: ^1.69.136
+        specifier: ^1.69.151
         version: 1.69.155
       chart.js:
         specifier: ^4.4.7
