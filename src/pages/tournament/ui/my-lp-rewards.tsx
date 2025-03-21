@@ -1,3 +1,4 @@
+import { observer } from 'mobx-react-lite';
 import { useState } from 'react';
 import { ChevronRight, ExternalLink } from 'lucide-react';
 import { bech32mPositionId } from '@penumbra-zone/bech32m/plpid';
@@ -7,15 +8,17 @@ import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
 import { Button } from '@penumbra-zone/ui/Button';
 import { Density } from '@penumbra-zone/ui/Density';
 import { useLpRewards, BASE_LIMIT, BASE_PAGE, Reward } from '../api/use-lp-rewards';
-import { observer } from 'mobx-react-lite';
+import { useSortableTableHeaders } from './sortable-table-header';
 
 export const MyLpRewards = observer(() => {
   const [page, setPage] = useState(BASE_PAGE);
   const [limit, setLimit] = useState(BASE_LIMIT);
+  const { getTableHeader, sortBy } = useSortableTableHeaders<keyof Required<Reward>['sort']>();
+
   const {
     query: { data, isLoading },
     total,
-  } = useLpRewards(page, limit);
+  } = useLpRewards(page, limit, sortBy.key, sortBy.direction);
 
   const loadingArr = new Array(5).fill({ positionId: {} }) as Reward[];
   const rewards = data ?? loadingArr;
@@ -30,9 +33,9 @@ export const MyLpRewards = observer(() => {
       <Density compact>
         <div className='grid grid-cols-[auto_1fr_1fr_100px_32px]'>
           <div className='grid grid-cols-subgrid col-span-5'>
-            <TableCell heading>Epoch</TableCell>
-            <TableCell heading>Position ID</TableCell>
-            <TableCell heading>Reward</TableCell>
+            {getTableHeader('epoch', 'Epoch')}
+            {getTableHeader('positionId', 'Position ID')}
+            {getTableHeader('reward', 'Reward')}
             <TableCell heading> </TableCell>
             <TableCell heading> </TableCell>
           </div>

@@ -8,14 +8,18 @@ import { Density } from '@penumbra-zone/ui/Density';
 import { Button } from '@penumbra-zone/ui/Button';
 import { useVotingRewards, BASE_PAGE, BASE_LIMIT, VotingReward } from '../api/use-voting-rewards';
 import { Vote } from './vote';
+import { useSortableTableHeaders } from './sortable-table-header';
 
 export const MyVotingRewards = observer(() => {
   const [page, setPage] = useState(BASE_PAGE);
   const [limit, setLimit] = useState(BASE_LIMIT);
+  const { getTableHeader, sortBy } =
+    useSortableTableHeaders<keyof Required<VotingReward>['sort']>();
+
   const {
     query: { data, isLoading },
     total,
-  } = useVotingRewards(page, limit);
+  } = useVotingRewards(page, limit, sortBy.key, sortBy.direction);
 
   const loadingArr = new Array(5).fill({}) as VotingReward[];
   const rewards = data ?? loadingArr;
@@ -30,9 +34,9 @@ export const MyVotingRewards = observer(() => {
       <Density compact>
         <div className='grid grid-cols-[auto_1fr_1fr_32px]'>
           <div className='grid grid-cols-subgrid col-span-4'>
-            <TableCell heading>Epoch</TableCell>
+            {getTableHeader('epoch', 'Epoch')}
             <TableCell heading>Casted Vote</TableCell>
-            <TableCell heading>Reward</TableCell>
+            {getTableHeader('reward', 'Reward')}
             <TableCell heading> </TableCell>
           </div>
 
