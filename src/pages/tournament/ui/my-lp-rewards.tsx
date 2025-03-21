@@ -1,5 +1,6 @@
-import { observer } from 'mobx-react-lite';
+import Link from 'next/link';
 import { useState } from 'react';
+import { observer } from 'mobx-react-lite';
 import { ChevronRight, ExternalLink } from 'lucide-react';
 import { bech32mPositionId } from '@penumbra-zone/bech32m/plpid';
 import { Pagination } from '@penumbra-zone/ui/Pagination';
@@ -31,7 +32,7 @@ export const MyLpRewards = observer(() => {
   return (
     <>
       <Density compact>
-        <div className='grid grid-cols-[auto_1fr_1fr_100px_32px]'>
+        <div className='grid grid-cols-[auto_1fr_1fr_100px_48px]'>
           <div className='grid grid-cols-subgrid col-span-5'>
             {getTableHeader('epoch', 'Epoch')}
             {getTableHeader('positionId', 'Position ID')}
@@ -41,9 +42,10 @@ export const MyLpRewards = observer(() => {
           </div>
 
           {rewards.map((reward, index) => (
-            <div
+            <Link
+              href={`/inspect/lp/${isLoading ? index : bech32mPositionId(reward.positionId)}`}
               key={isLoading ? index : bech32mPositionId(reward.positionId)}
-              className='grid grid-cols-subgrid col-span-5'
+              className='grid grid-cols-subgrid col-span-5 hover:bg-action-hoverOverlay transition-colors cursor-pointer'
             >
               <TableCell cell loading={isLoading}>
                 Epoch #{reward.epoch}
@@ -75,7 +77,7 @@ export const MyLpRewards = observer(() => {
                   </Button>
                 </Density>
               </TableCell>
-            </div>
+            </Link>
           ))}
         </div>
       </Density>

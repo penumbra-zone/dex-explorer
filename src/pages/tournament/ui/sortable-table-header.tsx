@@ -25,7 +25,7 @@ export const SortableTableHeader = <KEY extends string = string>({
     <TableCell heading>
       <button
         className={cn(
-          'flex bg-none border-none',
+          'flex bg-none border-none items-center gap-1',
           active ? 'text-text-primary' : 'text-text-secondary',
         )}
         onClick={() => {
