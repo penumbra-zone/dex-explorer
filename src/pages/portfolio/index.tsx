@@ -21,10 +21,11 @@ interface PortfolioPageProps {
 
 export const PortfolioPage = ({ isMobile }: PortfolioPageProps): React.ReactNode => {
   const { data } = useRegistry();
+  if (isMobile) {
+    return <MobilePortfolioPage />;
+  }
 
-  return isMobile ? (
-    <MobilePortfolioPage />
-  ) : data ? (
+  return data ? (
     <IbcChainProvider registry={data}>
       <DesktopPortfolioPage />
     </IbcChainProvider>
