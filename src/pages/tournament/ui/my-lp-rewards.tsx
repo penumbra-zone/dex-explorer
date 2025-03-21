@@ -45,7 +45,7 @@ export const MyLpRewards = observer(() => {
               <TableCell cell loading={isLoading}>
                 Epoch #{reward.epoch}
               </TableCell>
-              <TableCell cell>
+              <TableCell cell loading={isLoading}>
                 {!isLoading && (
                   <>
                     <div className='max-w-full truncate'>
