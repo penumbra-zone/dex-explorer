@@ -7,17 +7,28 @@ import { Button } from '@penumbra-zone/ui/Button';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Density } from '@penumbra-zone/ui/Density';
 import { AssetsTable } from './ui/assets-table';
+import { WalletConnect } from './ui/wallet-connect';
 import { useRegistry } from '@/shared/api/registry.ts';
 import { IbcChainProvider } from '@/features/cosmos/chain-provider.tsx';
 import { Onboarding } from './ui/onboarding';
 import { PortfolioPositionTabs } from './ui/position-tabs';
+import { AssetBars } from './ui/asset-bars';
+import { useUnifiedAssets } from '@/pages/portfolio/api/use-unified-assets.tsx';
 
 interface PortfolioPageProps {
   isMobile: boolean;
 }
 
 export const PortfolioPage = ({ isMobile }: PortfolioPageProps): React.ReactNode => {
-  return isMobile ? <MobilePortfolioPage /> : <DesktopPortfolioPage />;
+  const { data } = useRegistry();
+
+  return isMobile ? (
+    <MobilePortfolioPage />
+  ) : data ? (
+    <IbcChainProvider registry={data}>
+      <DesktopPortfolioPage />
+    </IbcChainProvider>
+  ) : null;
 };
 
 function MobilePortfolioPage() {
@@ -50,7 +61,6 @@ function MobilePortfolioPage() {
         </Density>
       </div>
 
-      {/* Go Back Button */}
       <Button>
         <Text body>Go Back</Text>
       </Button>
@@ -59,19 +69,23 @@ function MobilePortfolioPage() {
 }
 
 const DesktopPortfolioPage = observer(() => {
-  const { data } = useRegistry();
-
-  if (!data) {
-    return;
-  }
+  const { isPenumbraConnected, isCosmosConnected, totalShieldedValue } = useUnifiedAssets();
+  const shouldShowOnboarding =
+    !isPenumbraConnected || !isCosmosConnected || totalShieldedValue === 0;
 
   return (
-    <IbcChainProvider registry={data}>
-      <div className='sm:container mx-auto py-8 flex flex-col gap-4'>
-        <Onboarding />
-        <AssetsTable />
-        <PortfolioPositionTabs />
+    <div className='sm:container mx-auto py-8 flex flex-col gap-4'>
+      {shouldShowOnboarding && <Onboarding />}
+
+      <WalletConnect />
+
+      {/* Asset Allocation Bars */}
+      <div className='mb-8'>
+        <AssetBars />
       </div>
-    </IbcChainProvider>
+
+      <AssetsTable />
+      <PortfolioPositionTabs />
+    </div>
   );
 });
