@@ -1,17 +1,17 @@
 'use client';
 
-// import { round } from '@penumbra-zone/types/round';
 import { Text } from '@penumbra-zone/ui/Text';
-import { InfoCard } from './info-card';
-import { pluralizeAndShortify } from '@/shared/utils/pluralize';
 import { shortify } from '@penumbra-zone/types/shortify';
 import { getFormattedAmtFromValueView } from '@penumbra-zone/types/value-view';
-import { useStats } from '@/pages/explore/api/use-stats';
-import { useRegistry } from '@/shared/api/registry';
 import { ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { DirectedTradingPair } from '@penumbra-zone/protobuf/penumbra/core/component/dex/v1/dex_pb';
 import { Registry } from '@penumbra-labs/registry';
+import { round } from '@penumbra-zone/types/round';
+import { useRegistry } from '@/shared/api/registry';
+import { pluralizeAndShortify } from '@/shared/utils/pluralize';
 import { isNumeraireSymbol, isStablecoinSymbol } from '@/shared/utils/is-symbol';
+import { useStats } from '../api/use-stats';
+import { InfoCard } from './info-card';
 
 const GreenValueText = ({ value }: { value: ValueView }) => {
   const symbol =
@@ -96,9 +96,19 @@ export const ExploreStats = () => {
         )}
       </InfoCard>
       <InfoCard title='Top Price Mover (24h)' loading={isLoading}>
-        <Text large color='text.primary'>
-          -
-        </Text>
+        {registry && stats?.topPriceMover ? (
+          <>
+            <DirectedTradingPairText registry={registry} pair={stats.largestPair.pair} />
+            <Text large color={stats.topPriceMover.percent ? 'success.light' : 'destructive.light'}>
+              {stats.topPriceMover.percent && '+'}
+              {round({ value: stats.topPriceMover.percent, decimals: 1 })}%
+            </Text>
+          </>
+        ) : (
+          <Text large color='text.primary'>
+            -
+          </Text>
+        )}
       </InfoCard>
     </div>
   );
