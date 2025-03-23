@@ -70,11 +70,11 @@ function MobilePortfolioPage() {
 }
 
 const DesktopPortfolioPage = observer(() => {
-  const { isPenumbraConnected, isCosmosConnected, totalShieldedValue } = useUnifiedAssets();
+  const { isPenumbraConnected, isCosmosConnected } = useUnifiedAssets();
   const [onBoardingDismissed] = useState(false);
   return (
     <div className='sm:container mx-auto py-8 flex flex-col gap-4'>
-      {!onBoardingDismissed && totalShieldedValue === 0 && <Onboarding />}
+      {!onBoardingDismissed && <Onboarding />}
 
       <WalletConnect onboardingDismissed={onBoardingDismissed} />
 
