@@ -33,7 +33,7 @@ const CosmosConnectButtonInner = observer(
         {isWalletConnected && address ? (
           <Button
             icon={Wallet2}
-            aria-title={address}
+            aria-description={address}
             actionType={actionType}
             onClick={() => void disconnect()}
           >
