@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { XCircle } from 'lucide-react';
 import { Button } from '@penumbra-zone/ui/Button';
@@ -71,19 +71,20 @@ function MobilePortfolioPage() {
 
 const DesktopPortfolioPage = observer(() => {
   const { isPenumbraConnected, isCosmosConnected, totalShieldedValue } = useUnifiedAssets();
-  const shouldShowOnboarding =
-    !isPenumbraConnected || !isCosmosConnected || totalShieldedValue === 0;
-
+  const [onBoardingDismissed] = useState(false);
   return (
     <div className='sm:container mx-auto py-8 flex flex-col gap-4'>
-      {shouldShowOnboarding && <Onboarding />}
+      {!onBoardingDismissed && totalShieldedValue === 0 && <Onboarding />}
 
-      <WalletConnect />
+      <WalletConnect onboardingDismissed={onBoardingDismissed} />
 
       {/* Asset Allocation Bars */}
-      <div className='mb-8'>
-        <AssetBars />
-      </div>
+      {isPenumbraConnected ||
+        (isCosmosConnected && (
+          <div className='mb-8'>
+            <AssetBars />
+          </div>
+        ))}
 
       <AssetsTable />
       <PortfolioPositionTabs />
