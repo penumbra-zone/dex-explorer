@@ -1,15 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import Image from 'next/image';
-import { ExternalLink, Wallet, ShieldCheck, X } from 'lucide-react';
+import { ExternalLink, ShieldCheck, X } from 'lucide-react';
 import { Text } from '@penumbra-zone/ui/Text';
 import { Card } from '@penumbra-zone/ui/Card';
 import { Icon } from '@penumbra-zone/ui/Icon';
 import { Button } from '@penumbra-zone/ui/Button';
-import { Dialog } from '@penumbra-zone/ui/Dialog';
 import { PenumbraClient } from '@penumbra-zone/client';
-import { connectionStore } from '@/shared/model/connection';
-import { useProviderManifests } from '@/shared/api/providerManifests';
+import { ConnectButton } from '@/features/connect/connect-button';
 import { CosmosConnectButton } from '@/features/cosmos/cosmos-connect-button';
 import { useUnifiedAssets } from '../hooks/use-unified-assets';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -47,19 +44,9 @@ export const Onboarding = observer(() => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const showOnboarding = searchParams?.get('showOnboarding');
-  const [isOpen, setIsOpen] = useState(false);
-  const { data: providerManifests } = useProviderManifests();
   const providerOrigins = useMemo(() => Object.keys(PenumbraClient.getProviders()), []);
   const { isPenumbraConnected, isCosmosConnected } = useUnifiedAssets();
   const [isDismissed, setIsDismissed] = useState(true);
-
-  const onConnectClick = () => {
-    if (providerOrigins.length > 1) {
-      setIsOpen(true);
-    } else if (providerOrigins.length === 1 && providerOrigins[0]) {
-      void connectionStore.connect(providerOrigins[0]);
-    }
-  };
 
   const dismiss = () => {
     setIsDismissed(true);
@@ -121,15 +108,9 @@ export const Onboarding = observer(() => {
                 ) : (
                   <>
                     {!isPenumbraConnected ? (
-                      <Button
-                        actionType='accent'
-                        priority='primary'
-                        density='compact'
-                        icon={Wallet}
-                        onClick={onConnectClick}
-                      >
+                      <ConnectButton actionType='accent' variant='minimal'>
                         Connect
-                      </Button>
+                      </ConnectButton>
                     ) : (
                       <div className='flex items-center gap-1 h-8'>
                         <Icon IconComponent={ShieldCheck} size='sm' color='primary.light' />
@@ -166,35 +147,6 @@ export const Onboarding = observer(() => {
             />
           </div>
         </div>
-        <Dialog isOpen={isOpen} onClose={() => setIsOpen(false)}>
-          <Dialog.Content title='Choose wallet'>
-            <Dialog.RadioGroup>
-              <div className='flex flex-col gap-2 pt-1'>
-                {Object.entries(providerManifests ?? {}).map(([key, manifest]) => (
-                  <Dialog.RadioItem
-                    key={key}
-                    value={key}
-                    title={<Text color='text.primary'>{manifest.name}</Text>}
-                    description={
-                      <Text detail color='text.secondary'>
-                        {manifest.description}
-                      </Text>
-                    }
-                    startAdornment={
-                      <Image
-                        height={32}
-                        width={32}
-                        src={URL.createObjectURL(manifest.icons['128'])}
-                        alt={manifest.name}
-                      />
-                    }
-                    onSelect={() => void connectionStore.connect(key)}
-                  />
-                ))}
-              </div>
-            </Dialog.RadioGroup>
-          </Dialog.Content>
-        </Dialog>
       </Card>
     );
   }
@@ -250,15 +202,9 @@ export const Onboarding = observer(() => {
             description='Connect to Veil and gain access to shielded assets and liquidity positions.'
             footer={
               !isPenumbraConnected ? (
-                <Button
-                  actionType='accent'
-                  priority='primary'
-                  density='compact'
-                  icon={Wallet}
-                  onClick={onConnectClick}
-                >
+                <ConnectButton actionType='accent' variant='minimal'>
                   Connect
-                </Button>
+                </ConnectButton>
               ) : (
                 <div className='flex items-center gap-1 h-8'>
                   <Icon IconComponent={ShieldCheck} size='sm' color='primary.light' />
