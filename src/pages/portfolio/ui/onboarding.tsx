@@ -55,7 +55,7 @@ export const Onboarding = observer(() => {
   };
 
   useEffect(() => {
-    if (showOnboarding) {
+    if (showOnboarding === 'true') {
       setIsDismissed(false);
     } else {
       const storedValue = localStorage.getItem(dismissedKey);
