@@ -1,11 +1,12 @@
 import { Button } from '@penumbra-zone/ui/Button';
 import { Text } from '@penumbra-zone/ui/Text';
-import { Ban, Coins, Check, Wallet2, WalletMinimal, ExternalLink } from 'lucide-react';
+import { Ban, Coins, Check, Wallet2, ExternalLink } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import { connectionStore } from '@/shared/model/connection';
 import { ValueViewComponent } from '@penumbra-zone/ui/ValueView';
 import { Metadata, ValueView } from '@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb';
 import { Amount } from '@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb';
+import { ConnectButton } from '@/features/connect/connect-button';
 
 export const VotingFooter = observer(({ isBanned }: { isBanned: boolean }) => {
   const { connected } = connectionStore;
@@ -72,9 +73,9 @@ export const VotingFooter = observer(({ isBanned }: { isBanned: boolean }) => {
           </Text>
         </div>
         <div className='flex gap-2'>
-          <Button actionType='accent' icon={WalletMinimal}>
+          <ConnectButton actionType='accent' variant='default'>
             Connect Prax Wallet
-          </Button>
+          </ConnectButton>
           <Button actionType='default'>Details</Button>
         </div>
       </div>
