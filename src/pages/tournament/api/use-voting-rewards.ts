@@ -52,6 +52,7 @@ export const useVotingRewards = (
     queryKey: ['my-voting-rewards', page, limit, sortKey, sortDirection],
     enabled: connectionStore.connected,
     queryFn: async () => {
+      // TODO: use backend API to fetch, filter, and sort rewards
       return new Promise(resolve => {
         setTimeout(() => {
           const data = DUMMY_VOTING_REWARDS;

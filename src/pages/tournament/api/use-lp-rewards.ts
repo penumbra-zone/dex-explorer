@@ -57,6 +57,7 @@ export const useLpRewards = (
     queryKey: ['my-lp-rewards', page, limit, sortKey, sortDirection],
     enabled: connectionStore.connected,
     queryFn: async () => {
+      // TODO: use backend API to fetch, filter, and sort rewards
       return new Promise(resolve => {
         setTimeout(() => {
           const data = DUMMY_LP_REWARDS;

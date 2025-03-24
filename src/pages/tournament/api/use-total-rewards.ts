@@ -8,6 +8,7 @@ export const useTotalRewards = () => {
     queryKey: ['my-total-rewards'],
     enabled: connectionStore.connected,
     queryFn: async () => {
+      // TODO: use backend API to fetch, filter, and sort rewards
       return new Promise(resolve => {
         setTimeout(() => {
           resolve(DUMMY_VALUE_VIEW);
