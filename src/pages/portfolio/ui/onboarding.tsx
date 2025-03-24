@@ -11,8 +11,8 @@ import { CosmosConnectButton } from '@/features/cosmos/cosmos-connect-button';
 import { useUnifiedAssets } from '../api/use-unified-assets';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-const dismissedKey = 'veil-portfolio-onboarding-dismissed';
-const isPhase2 = false;
+export const dismissedKey = 'veil-portfolio-onboarding-dismissed';
+const isPhase2 = true;
 
 const OnboardingCard = ({
   title,
@@ -57,6 +57,7 @@ export const Onboarding = observer(() => {
   useEffect(() => {
     if (showOnboarding === 'true') {
       setIsDismissed(false);
+      localStorage.setItem(dismissedKey, 'false');
     } else {
       const storedValue = localStorage.getItem(dismissedKey);
       setIsDismissed(storedValue === 'true' ? true : false);
