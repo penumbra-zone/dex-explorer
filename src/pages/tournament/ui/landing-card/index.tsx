@@ -60,7 +60,7 @@ export const LandingCard = observer(() => {
             symbol={symbol}
             results={results}
           />
-          <VotingFooter isBanned={isBanned} />
+          <VotingFooter isBanned={isBanned} epoch={epoch} />
         </div>
       </div>
     </GradientCard>
