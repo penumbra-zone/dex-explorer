@@ -3,7 +3,7 @@
 A DEX explorer for [Penumbra](https://penumbra.zone/).
 
 > [!WARNING]
-> This repository is deprecated in favor of [Penumbra's official monorepo](https://github.com/penumbra-zone/web). It is no longer maintained and will not receive updates. Please refer to the monorepo for the latest developments and features.
+> This repository is deprecated in favor of [the Penumbra web monorepo](https://github.com/penumbra-zone/web). It is no longer maintained and will not receive updates. Please refer to the monorepo for the latest developments and features.
 
 ## Getting Started
 
